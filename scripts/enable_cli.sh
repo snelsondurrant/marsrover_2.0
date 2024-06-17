@@ -16,9 +16,9 @@ fi
 
 # Are we running on Jetson Orin architecture (the rover)?
 if [ "$(uname -m)" == "aarch64" ]; then
-    export FASTRTPS_DEFAULT_PROFILES_FILE="/home/marsrover-docker/rover_ws/rover_super_client_config.xml"
+    export FASTRTPS_DEFAULT_PROFILES_FILE="~/scripts/config/rover_super_client_config.xml"
 else
-    export FASTRTPS_DEFAULT_PROFILES_FILE="/home/marsrover-docker/rover_ws/base_super_client_config.xml"
+    export FASTRTPS_DEFAULT_PROFILES_FILE="~/scripts/config/base_super_client_config.xml"
 fi
 
 ros2 daemon stop
