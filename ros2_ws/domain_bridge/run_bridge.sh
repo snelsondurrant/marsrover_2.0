@@ -9,5 +9,5 @@
 # for reference in the future, but it is not recommended for use in the current project.
 # - Nelson Durrant, Jan 2025
 
-source ~/mars_ws/install/setup.bash
-ros2 run domain_bridge domain_bridge ~/mars_ws/domain_bridge/mars_bridge_config.yaml
+source ~/ros2_ws/install/setup.bash
+ros2 run domain_bridge domain_bridge ~/ros2_ws/domain_bridge/mars_bridge_config.yaml
