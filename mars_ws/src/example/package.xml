@@ -3,7 +3,7 @@
 <package format="3">
   <name>example</name>
   <version>0.0.1</version>
-  <description>Example package for Autonomy ROS2 nodes</description>
+  <description>Example package for byu-marsrover nodes</description>
   <maintainer email="snelsondurrant@gmail.com">Nelson Durrant</maintainer>
   <license>Apache-2.0</license>
 

@@ -4,7 +4,7 @@
 # Simply pulls all available updates
 
 # Docker updates
-docker pull byuawesomerover/autonomy_ros2:latest
+docker pull byuawesomerover/byu-marsrover:latest
 
 # GitHub updates
 git pull

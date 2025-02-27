@@ -59,9 +59,9 @@ RUN python3 -m pip install -U \
     pytest-rerunfailures
 
 # Build ROS 2 from source
-RUN mkdir -p ~/ros2_humble/src
-WORKDIR /home/${NAME}/ros2_humble
-RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/humble/ros2.repos src
+RUN mkdir -p ~/ros2_jazzy/src
+WORKDIR /home/${NAME}/ros2_jazzy
+RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/jazzy/ros2.repos src
 
 USER root
 RUN apt update && apt upgrade -y

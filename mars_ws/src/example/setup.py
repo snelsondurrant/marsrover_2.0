@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='Nelson Durrant',
     maintainer_email='snelsondurrant@gmail.com',
-    description='Example package for Autonomy ROS2 nodes',
+    description='Example package for byu-marsrover nodes',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={

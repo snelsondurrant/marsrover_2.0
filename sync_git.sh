@@ -35,7 +35,7 @@ then
 fi
 
 # Connect to the rover and pull the base station branch
-ssh marsrover@$ROVER_IP_ADDRESS "cd ~/Autonomy-ROS2; \
+ssh marsrover@$ROVER_IP_ADDRESS "cd ~/byu-marsrover; \
     git checkout $current_branch; \
     git pull base $current_branch"
 
