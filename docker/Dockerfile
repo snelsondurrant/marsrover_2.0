@@ -41,12 +41,12 @@ RUN apt update && apt install -y ros-jazzy-nav2-minimal-tb*
 
 # Install mapviz for the GPS demo
 RUN apt update && apt install -y \
-    ros-jazzy-robot-localization \
-    ros-jazzy-mapviz
+    ros-jazzy-robot-localization
 
-# Bug fix -- why doesn't this work for arm64?
+# Mapviz doesn't work on arm64
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
+    ros-jazzy-mapviz \
     ros-jazzy-mapviz-plugins \
     ros-jazzy-tile-map; \
 fi
