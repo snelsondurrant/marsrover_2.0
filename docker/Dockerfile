@@ -1,6 +1,7 @@
 # Created by Nelson Durrant, Oct 2024
 FROM ros:jazzy-ros-base
 ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
 
 # Define a username for the new user
 ARG NAME=marsrover
@@ -41,9 +42,14 @@ RUN apt update && apt install -y ros-jazzy-nav2-minimal-tb*
 # Install mapviz for the GPS demo
 RUN apt update && apt install -y \
     ros-jazzy-robot-localization \
-    ros-jazzy-mapviz \
+    ros-jazzy-mapviz
+
+# Bug fix -- why doesn't this work for arm64?
+if [ "$TARGETARCH" = "amd64" ]; then
+RUN apt update && apt install -y \
     ros-jazzy-mapviz-plugins \
     ros-jazzy-tile-map
+fi
 
 # Set up a new user
 RUN useradd -ms /bin/bash $NAME
