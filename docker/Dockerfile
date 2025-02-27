@@ -39,7 +39,6 @@ RUN apt update && apt install -y \
 RUN apt update && apt install -y ros-jazzy-nav2-minimal-tb*
 
 # Install mapviz for the GPS demo
-RUN source /opt/ros/jazzy/setup.bash
 RUN apt update && apt install \
     ros-jazzy-robot-localization \
     ros-jazzy-mapviz \
