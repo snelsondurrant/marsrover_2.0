@@ -26,7 +26,7 @@
 
 --
 
-### Helpful Resources:
+### Basic Resources:
 
 Linux Command Line Tutorial - [https://linuxjourney.com/lesson/the-shell](https://linuxjourney.com/lesson/the-shell)
 
@@ -41,6 +41,10 @@ ROS 2 CLI Tutorials - [https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tool
 ROS 2 Code Tutorials - [https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries.html)
 
 Robotics in ROS 2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+
+--
+
+### Deep Dive Resources:
 
 Diff Drive w ros2_controls Tutorial - [https://control.ros.org/jazzy/doc/ros2_control_demos/example_2/doc/userdoc.html](https://control.ros.org/jazzy/doc/ros2_control_demos/example_2/doc/userdoc.html)
 
