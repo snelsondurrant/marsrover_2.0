@@ -45,10 +45,10 @@ RUN apt update && apt install -y \
     ros-jazzy-mapviz
 
 # Bug fix -- why doesn't this work for arm64?
-if [ "$TARGETARCH" = "amd64" ]; then
-RUN apt update && apt install -y \
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+    apt update && apt install -y \
     ros-jazzy-mapviz-plugins \
-    ros-jazzy-tile-map
+    ros-jazzy-tile-map; \
 fi
 
 # Set up a new user
