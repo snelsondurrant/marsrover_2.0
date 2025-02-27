@@ -33,17 +33,18 @@ RUN apt update && apt install -y \
     x11-xserver-utils \
     xauth
 
-# Install the Nav2 package
+# Install the navigation2 package
 RUN apt update && apt install -y \
     ros-jazzy-navigation2 \
     ros-jazzy-nav2-bringup
 RUN apt update && apt install -y ros-jazzy-nav2-minimal-tb*
 
-# Install mapviz for the GPS demo
+# Install the robot-localization package
 RUN apt update && apt install -y \
     ros-jazzy-robot-localization
 
-# Mapviz doesn't work on arm64
+# Install mapviz packages
+# Mapviz isn't supported on arm64
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
     ros-jazzy-mapviz \
