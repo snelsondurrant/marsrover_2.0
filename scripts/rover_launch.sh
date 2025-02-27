@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 #
-# Launches tasks over SSH using the 'rover_runtime' tmux session
+# Launches tasks on the rover over SSH using the 'rover_runtime' tmux session
 
 function printInfo {
   # print blue

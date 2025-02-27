@@ -29,7 +29,7 @@ tmux send-keys -t bridge_session:0.1 "cd ~/ros1_msgs_ws" ENTER
 tmux send-keys -t bridge_session:0.1 "catkin_make_isolated --install" ENTER
 
 # Build ROS 2 messages
-tmux send-keys -t bridge_session:0.2 "source ~/ros2_jazzy/install/setup.bash" ENTER
+tmux send-keys -t bridge_session:0.2 "source ~/ros2_iron/install/setup.bash" ENTER
 tmux send-keys -t bridge_session:0.2 "cd ~/ros2_msgs_ws" ENTER
 tmux send-keys -t bridge_session:0.2 "colcon build" ENTER
 
@@ -45,7 +45,7 @@ done
 # Source ROS 1 and ROS 2 environments and build the ROS 1 bridge
 tmux send-keys -t bridge_session:0.0 "source /opt/ros/noetic/setup.bash" ENTER
 tmux send-keys -t bridge_session:0.0 "source ~/ros1_msgs_ws/install_isolated/setup.bash" ENTER
-tmux send-keys -t bridge_session:0.0 "source ~/ros2_jazzy/install/setup.bash" ENTER
+tmux send-keys -t bridge_session:0.0 "source ~/ros2_iron/install/setup.bash" ENTER
 tmux send-keys -t bridge_session:0.0 "source ~/ros2_msgs_ws/install/local_setup.bash" ENTER
 tmux send-keys -t bridge_session:0.0 "cd ~/bridge_ws" ENTER
 tmux send-keys -t bridge_session:0.0 "colcon build --packages-select ros1_bridge --cmake-force-configure" ENTER

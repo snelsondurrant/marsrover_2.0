@@ -34,11 +34,11 @@ GitHub Basics Tutorial - [https://docs.github.com/en/get-started/start-your-jour
 
 Docker Concepts and Tutorials - [https://docs.docker.com/get-started/introduction/whats-next/](https://docs.docker.com/get-started/introduction/whats-next/)
 
-ROS 2 Concepts - [https://docs.ros.org/en/jazzy/Concepts/Basic.html](https://docs.ros.org/en/jazzy/Concepts/Basic.html)
+ROS 2 Concepts - [https://docs.ros.org/en/iron/Concepts/Basic.html](https://docs.ros.org/en/iron/Concepts/Basic.html)
 
-ROS 2 CLI Tutorials - [https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools.html)
+ROS 2 CLI Tutorials - [https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html)
 
-ROS 2 Code Tutorials - [https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries.html)
+ROS 2 Code Tutorials - [https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html)
 
 Robotics in ROS 2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
@@ -46,7 +46,7 @@ Robotics in ROS 2 Tutorials - [https://github.com/henki-robotics/robotics_essent
 
 ### Deep Dive Resources:
 
-Diff Drive w ros2_controls Tutorial - [https://control.ros.org/jazzy/doc/ros2_control_demos/example_2/doc/userdoc.html](https://control.ros.org/jazzy/doc/ros2_control_demos/example_2/doc/userdoc.html)
+Diff Drive w ros2_controls Tutorial - [https://control.ros.org/iron/doc/ros2_control_demos/example_2/doc/userdoc.html](https://control.ros.org/iron/doc/ros2_control_demos/example_2/doc/userdoc.html)
 
 GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 

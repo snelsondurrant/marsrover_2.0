@@ -34,14 +34,14 @@ tmux send-keys -t bridge_session:0.3 "source ~/ros1_msgs_ws/install_isolated/set
 tmux send-keys -t bridge_session:0.3 "roscore" ENTER
 
 # Start publishing from ROS 2
-tmux send-keys -t bridge_session:0.2 "source ~/ros2_jazzy/install/setup.bash" ENTER
+tmux send-keys -t bridge_session:0.2 "source ~/ros2_iron/install/setup.bash" ENTER
 tmux send-keys -t bridge_session:0.2 "source ~/ros2_msgs_ws/install/local_setup.bash" ENTER
 tmux send-keys -t bridge_session:0.2 "ros2 topic pub /test $TEST_MSG_TYPE '$TEST_MSG_DATA'" ENTER
 
 # Start the bridge
 tmux send-keys -t bridge_session:0.1 "source /opt/ros/noetic/setup.bash" ENTER
 tmux send-keys -t bridge_session:0.1 "source ~/ros1_msgs_ws/install_isolated/setup.bash" ENTER
-tmux send-keys -t bridge_session:0.1 "source ~/ros2_jazzy/install/setup.bash" ENTER
+tmux send-keys -t bridge_session:0.1 "source ~/ros2_iron/install/setup.bash" ENTER
 tmux send-keys -t bridge_session:0.1 "source ~/ros2_msgs_ws/install/local_setup.bash" ENTER
 tmux send-keys -t bridge_session:0.1 "source ~/bridge_ws/install/local_setup.bash" ENTER
 tmux send-keys -t bridge_session:0.1 "ros2 run ros1_bridge dynamic_bridge --bridge-all-topics" ENTER

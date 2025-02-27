@@ -1,6 +1,6 @@
 ## Simple ROS 1 Bridge Guide
 
-This guide outlines the steps to set up and run a containerized bridge between ROS 1 Noetic and ROS 2 Jazzy. It allows for the inclusion of custom message types.
+This guide outlines the steps to set up and run a containerized bridge between ROS 1 Noetic and ROS 2 Iron. It allows for the inclusion of custom message types.
 
 --
 
