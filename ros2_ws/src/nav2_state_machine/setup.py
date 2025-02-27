@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'nav2_gps_waypoint_follower_demo'
+package_name = 'nav2_state_machine'
 
 setup(
     name=package_name,
@@ -21,9 +21,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='root',
-    maintainer_email='pedro.gonzalez@eia.edu.co',
-    description='Demo package for following GPS waypoints with nav2',
+    maintainer='snelsondurrant',
+    maintainer_email='snelsondurrant@gmail.com',
+    description='State machine for the BYU Mars Rover using Nav2',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

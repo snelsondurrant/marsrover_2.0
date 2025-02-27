@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>nav2_gps_waypoint_follower_demo</name>
+  <name>nav2_state_machine</name>
   <version>0.0.0</version>
-  <description>Demo package for following GPS waypoints with nav2</description>
-  <maintainer email="pedro.gonzalez@eia.edu.co">pepisg</maintainer>
-  <maintainer email="stevenmacenski@gmail.com">Steve Macenski</maintainer>
+  <description>State machine for the BYU Mars Rover using Nav2</description>
+  <maintainer email="snelsondurrant@gmail.com">snelsondurrant</maintainer>
   <license>MIT</license>
 
   <depend>navigation2</depend>
