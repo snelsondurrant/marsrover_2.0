@@ -48,7 +48,7 @@ RUN apt update && apt install -y \
     xauth
 USER $NAME
 
-# Install the Nav2 package
+# Install the navigation2 package
 USER root
 RUN apt update && apt install -y \
     ros-iron-navigation2 \
@@ -56,17 +56,18 @@ RUN apt update && apt install -y \
     ros-iron-turtlebot3-gazebo
 USER $NAME
 
-# Install mapviz for the GPS demo
+# Install the robot-localization package
 USER root
 RUN apt update && apt install -y \
-    ros-iron-robot-localization \
-    ros-iron-mapviz
+    ros-iron-robot-localization
 USER $NAME
 
-# Bug fix -- why doesn't this work for arm64?
+# Install mapviz packages
+# Mapviz isn't supported on arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
+    ros-iron-mapviz \
     ros-iron-mapviz-plugins \
     ros-iron-tile-map; \
 fi
