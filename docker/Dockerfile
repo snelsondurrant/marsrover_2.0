@@ -30,8 +30,13 @@ RUN apt update && apt install -y \
     x11-apps \
     x11-utils \
     x11-xserver-utils \
-    xauth \
-    ros-jazzy-rqt*
+    xauth
+
+# Install the nav2 package
+RUN apt update && apt install -y \
+    ros-jazzy-navigation2 \
+    ros-jazzy-nav2-bringup
+RUN apt update && apt install -y ros-jazzy-nav2-minimal-tb*
 
 # Set up a new user
 RUN useradd -ms /bin/bash $NAME
