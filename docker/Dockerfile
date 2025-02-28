@@ -51,11 +51,17 @@ USER $NAME
 
 # Install the navigation2 package
 USER root
-RUN apt update && apt install -y \
-    ros-iron-navigation2 \
+RUN apt update && apt install -y ros-iron-navigation2
+USER $NAME
+
+# Install gazebo and turtlebot3 packages
+USER root
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+    apt update && apt install -y \
     ros-iron-nav2-bringup \
-    ros-iron-turtlebot3-gazebo
+    ros-iron-turtlebot3-gazebo; \
     # if we ever switch to the new gazebo, change this to ros-<ros2-distro>-nav2-minimal-tb*
+fi
 USER $NAME
 
 # Install the robot-localization package
@@ -65,7 +71,6 @@ RUN apt update && apt install -y \
 USER $NAME
 
 # Install mapviz packages
-# Mapviz isn't supported on arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \

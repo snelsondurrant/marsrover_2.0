@@ -52,12 +52,6 @@ class StateMachine():
 
         self.hex_coord = [(2.0, 0.0), (1.0, 1.73), (-1.0, 1.73), (-2.0, 0.0), (-1.0, -1.73), (1.0, -1.73)]
 
-        # self.goal_pose = PoseStamped()
-        # self.goal_pose.header.frame_id = 'map'
-        # self.goal_pose.header.stamp = navigator.get_clock().now().to_msg()
-        # self.goal_pose.pose.position.x = 0.0
-        # self.goal_pose.pose.position.y = 0.0
-
     def pose_nav(self, pose, leg_id):
         """
         Function to navigate to a pose
@@ -163,7 +157,7 @@ class StateMachine():
         # Iterate through the gps legs
         for gps in gps_legs:
 
-            print(gps ': Starting GPS leg')
+            print(gps, ': Starting GPS leg')
             gps_nav(gps)
 
         # Iterate through the aruco legs
