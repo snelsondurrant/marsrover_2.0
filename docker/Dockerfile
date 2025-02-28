@@ -46,7 +46,8 @@ RUN apt update && apt install -y \
     x11-utils \
     x11-xserver-utils \
     xauth \
-    ros-iron-rviz2
+    ros-iron-rviz2 \
+    python3-tk
 USER $NAME
 
 # Install the navigation2 package

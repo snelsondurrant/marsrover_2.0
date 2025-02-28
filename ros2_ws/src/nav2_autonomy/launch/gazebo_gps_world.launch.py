@@ -63,8 +63,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='both',
-        parameters=[{'robot_description': robot_description,
-                    'use_sim_time': "True"}]) # Fix for pose timing - Nelson Durrant, Feb 2025
+        parameters=[{'robot_description': robot_description}])
 
     # Create the launch description and populate
     ld = LaunchDescription()

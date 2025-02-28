@@ -136,11 +136,11 @@ class StateMachine():
 
         print(leg_id, 'Starting hex search')
 
-        # Generate a hex pattern in the base_link frame
+        # Generate a hex pattern in the base_footprint frame
         for coord in self.hex_coord:
             # TODO: Convert these into the world frame
             hex_pose = PoseStamped()
-            hex_pose.header.frame_id = "base_link"
+            hex_pose.header.frame_id = "base_footprint"
             hex_pose.header.stamp = self.navigator.get_clock().now().to_msg()
             hex_pose.pose.position.x = coord[0]
             hex_pose.pose.position.y = coord[1]
@@ -166,7 +166,7 @@ class StateMachine():
         """
 
         pose = PoseStamped()
-        pose.header.frame_id = 'base_link'
+        pose.header.frame_id = 'base_footprint'
         pose.header.stamp = self.navigator.get_clock().now().to_msg()
         pose.pose.position.x = 1.0
         pose.pose.position.y = 0.0

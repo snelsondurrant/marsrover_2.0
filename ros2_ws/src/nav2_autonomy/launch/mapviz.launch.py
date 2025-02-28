@@ -16,7 +16,7 @@ def generate_launch_description():
             executable="mapviz",
             name="mapviz",
             parameters=[{"config": mapviz_config_file,
-                         "use_sim_time": "True"}], # Fix for pose timing - Nelson Durrant, Feb 2025
+                         "use_sim_time": True}], # Fix for pose timing - Nelson Durrant, Feb 2025
         ),
         launch_ros.actions.Node(
             package="swri_transform_util",
@@ -25,13 +25,13 @@ def generate_launch_description():
             remappings=[
                 ("fix", "gps/fix"),
             ],
-            parameters=[{"use_sim_time": "True"}], # Fix for pose timing - Nelson Durrant, Feb 2025
+            parameters=[{"use_sim_time": True}], # Fix for pose timing - Nelson Durrant, Feb 2025
         ),
         launch_ros.actions.Node(
             package="tf2_ros",
             executable="static_transform_publisher",
             name="swri_transform",
             arguments=["0", "0", "0", "0", "0", "0", "map", "origin"],
-            parameters=[{"use_sim_time": "True"}], # Fix for pose timing - Nelson Durrant, Feb 2025
+            parameters=[{"use_sim_time": True}], # Fix for pose timing - Nelson Durrant, Feb 2025
         )
     ])
