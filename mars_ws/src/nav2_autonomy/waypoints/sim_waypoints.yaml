@@ -1,34 +1,34 @@
 # Created by Nelson Durrant, Feb 2025
 waypoints:
 # 1st waypoint (GPS only)
-- leg_id: gps1
+- leg: gps1
   latitude: 38.16145913583337
   longitude: -122.45449318511245
 # 2nd waypoint (GPS only)
-- leg_id: gps2
+- leg: gps2
   latitude: 38.16136978908988
   longitude: -122.45451766573258
 # 3rd waypoint (Aruco)
-- leg_id: aruco1
+- leg: aruco1
   latitude: 38.161409228722206
   longitude: -122.4544291698969
   aruco_id: 0
 # 4th waypoint (Aruco)
-- leg_id: aruco2
+- leg: aruco2
   latitude: 38.161485012237335
   longitude: -122.4546188339309
   aruco_id: 0
 # 5th waypoint (Aruco)
-- leg_id: aruco3
+- leg: aruco3
   latitude: 38.16145913583337
   longitude: -122.45449318511245
   aruco_id: 0
 # 6th waypoint (Mallet)
-- leg_id: mallet
+- leg: mallet
   latitude: 38.16136978908988
   longitude: -122.45451766573258
 # 7th waypoint (Bottle)
-- leg_id: bottle
+- leg: bottle
   latitude: 38.161409228722206
   longitude: -122.4544291698969
 
