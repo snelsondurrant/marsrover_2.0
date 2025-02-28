@@ -4,7 +4,7 @@
 # Starts and stops the ROS 1 bridge image
 
 # Match this username to the one defined in the Dockerfile
-export NAME=marsrover
+export NAME=marsrover-bridge
 
 function printInfo {
   	echo -e "\033[0m\033[36m[INFO] $1\033[0m"

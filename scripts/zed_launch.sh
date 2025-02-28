@@ -35,7 +35,7 @@ fi
 if ! ssh marsrover@$ROVER_IP_ADDRESS "tmux has-session -t foxy_runtime" &> /dev/null
 then
     printInfo "Setting up the ZED tmux session..."
-    # Send tmux commands to the rover's Docker container over SSH
+    # Send tmux commands to the rover over SSH
     ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s foxy_runtime; \
         tmux set-option -g default-terminal "screen-256color"; \
         tmux set -g mouse on; \

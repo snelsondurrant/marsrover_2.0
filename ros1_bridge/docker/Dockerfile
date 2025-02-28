@@ -1,8 +1,9 @@
 # Created by Nelson Durrant, Oct 2024
 FROM ros:noetic-ros-base
 
-# Define a username for the new user
-ARG NAME=marsrover
+# Define a username and password for the new user
+ARG NAME=marsrover-bridge
+ARG PASS=marsrover
 
 # Update and upgrade
 RUN apt update && apt upgrade -y
@@ -16,7 +17,7 @@ RUN apt update && apt install -y \
 RUN useradd -ms /bin/bash ${NAME}
 RUN usermod -aG sudo ${NAME}
 RUN usermod -aG dialout ${NAME}
-RUN echo "${NAME}:${NAME}" | chpasswd
+RUN echo "${NAME}:${PASS}" | chpasswd
 USER ${NAME}
 WORKDIR /home/${NAME}
 

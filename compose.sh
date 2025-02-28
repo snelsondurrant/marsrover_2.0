@@ -18,46 +18,49 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
+# Match this username to the one defined in the Dockerfile
+export NAME=marsrover-docker
+
 case $1 in
   	"down")
-    	printWarning "Stopping the marsrover container..."
+    	printWarning "Stopping the marsrover-cnt container..."
     	docker compose -f docker/docker-compose.yaml down
     	;;
   	*)
-    	printInfo "Loading the marsrover container..."
+    	printInfo "Loading the marsrover-cnt container..."
     	docker compose -f docker/docker-compose.yaml up -d
 
     	# Are we running on Jetson Orin architecture (the rover)?
     	if [ ! "$(uname -m)" == "aarch64" ]; then
 
 			# Check if a 'rover_dev' tmux session already exists
-			if [ "$(docker exec -it marsrover tmux list-sessions | grep rover_dev)" == "" ]; then
+			if [ "$(docker exec -it marsrover-cnt tmux list-sessions | grep rover_dev)" == "" ]; then
 
 				# If not, create a new 'rover_dev' tmux session
 				printWarning "Creating a new tmux session..."
-				docker exec -it marsrover tmux new-session -d -s rover_dev
-				docker exec -it marsrover tmux select-pane -t 0 -T rover_dev
-				docker exec -it marsrover tmux send-keys "clear && cat ~/scripts/introduction.txt" Enter
+				docker exec -it marsrover-cnt tmux new-session -d -s rover_dev
+				docker exec -it marsrover-cnt tmux select-pane -t 0 -T rover_dev
+				docker exec -it marsrover-cnt tmux send-keys "clear && cat ~/scripts/introduction.txt" Enter
 
 				# Full color and mouse options
-				docker exec -it marsrover tmux set-option -g default-terminal "screen-256color"
-				docker exec -it marsrover tmux set -g mouse on
+				docker exec -it marsrover-cnt tmux set-option -g default-terminal "screen-256color"
+				docker exec -it marsrover-cnt tmux set -g mouse on
 			fi
 			# Attach to the 'rover_dev' tmux session
-			docker exec -it marsrover tmux attach -t rover_dev
+			docker exec -it marsrover-cnt tmux attach -t rover_dev
 		else
 
 			sleep 1 # IMPORTANT! Give the Docker container a chance to start up
 			# Check if a 'rover_runtime' tmux session already exists
-			if [ "$(docker exec -it marsrover tmux list-sessions | grep rover_runtime)" == "" ]; then
+			if [ "$(docker exec -it marsrover-cnt tmux list-sessions | grep rover_runtime)" == "" ]; then
 
 				# If not, create a new 'rover_dev' tmux session
 				printWarning "Running entrypoint.sh again..."
-				docker exec -it marsrover bash /home/marsrover/scripts/entrypoint.sh
+				docker exec -it marsrover-cnt bash /home/marsrover-docker/scripts/entrypoint.sh
 			fi
 
 			# Enter the 'rover_runtime' tmux session on the rover
-			docker exec -it marsrover tmux attach -t rover_runtime
+			docker exec -it marsrover-cnt tmux attach -t rover_runtime
 		fi
     ;;
 esac

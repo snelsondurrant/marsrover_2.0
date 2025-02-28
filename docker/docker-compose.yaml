@@ -2,19 +2,19 @@
 services:
   autonomy_ros2:
     image: byuawesomerover/byu-marsrover:latest
-    container_name: marsrover
+    container_name: marsrover-cnt
     build: .
-    user: marsrover
+    user: ${NAME}
     network_mode: host
     privileged: true
     environment:
       - DISPLAY=$DISPLAY # Required for GUI applications
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
-      - ../ros2_ws:/home/marsrover/ros2_ws
-      - ../mapproxy:/home/marsrover/mapproxy
-      - ../demo_ws:/home/marsrover/demo_ws
-      - ./scripts:/home/marsrover/scripts
+      - ../ros2_ws:/home/${NAME}/ros2_ws
+      - ../mapproxy:/home/${NAME}/mapproxy
+      - ../demo_ws:/home/${NAME}/demo_ws
+      - ./scripts:/home/${NAME}/scripts
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
       - /var/run/docker.sock:/var/run/docker.sock # Required for docker in docker
@@ -22,4 +22,4 @@ services:
     stdin_open: true  # Equivalent to -it in docker run
     tty: true  # Equivalent to -it in docker run
     restart: always  # Optional: Keeps the container running after exit unless you want it to be removed like with --rm
-    command: ["/bin/bash", "-c", "/home/marsrover/scripts/entrypoint.sh", "/bin/bash"]
+    command: ["/bin/bash", "-c", "/home/${NAME}/scripts/entrypoint.sh", "/bin/bash"]

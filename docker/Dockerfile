@@ -3,8 +3,9 @@ FROM ros:iron-ros-base
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
-# Define a username for the new user
-ARG NAME=marsrover
+# Define a username and password for the new user
+ARG NAME=marsrover-docker
+ARG PASS=marsrover
 
 # Update and upgrade
 RUN apt update && apt upgrade -y
@@ -15,7 +16,7 @@ RUN usermod -aG sudo $NAME
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN usermod -aG video $NAME
 RUN usermod -aG dialout $NAME
-RUN echo "$NAME:$NAME" | chpasswd
+RUN echo "$NAME:$PASS" | chpasswd
 USER $NAME
 WORKDIR /home/$NAME
 
