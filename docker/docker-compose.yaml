@@ -1,7 +1,7 @@
 # Created by Nelson Durrant, Oct 2024
 services:
   autonomy_ros2:
-    image: byuawesomerover/byu-marsrover:latest
+    image: byuawesomerover/byu-cougars:latest
     container_name: marsrover
     build: .
     user: marsrover
@@ -13,6 +13,7 @@ services:
     volumes:
       - ../ros2_ws:/home/marsrover/ros2_ws
       - ../mapproxy:/home/marsrover/mapproxy
+      - ../demo_ws:/home/marsrover/demo_ws
       - ./scripts:/home/marsrover/scripts
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host

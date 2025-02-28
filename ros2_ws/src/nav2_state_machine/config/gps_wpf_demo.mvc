@@ -22,9 +22,11 @@ displays:
       visible: true
       collapsed: false
       custom_sources:
-        []
-      bing_api_key: ""
-      source: Bing Maps (terrain)
+      - name: MyMapProxy # Custom map source - Nelson Durrant, Feb 2025
+        url: "http://localhost:8080/tms/1.0.0/my_map/{z}/{x}/{y}.png"
+        attribution: "My Map Data"
+    bing_api_key: ""
+    source: MyMapProxy
   - type: mapviz_plugins/point_click_publisher
     name: new display
     config:

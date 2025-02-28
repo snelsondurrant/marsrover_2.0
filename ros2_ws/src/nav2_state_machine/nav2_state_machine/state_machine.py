@@ -6,7 +6,8 @@ Pretty cool, right?
 """
 
 import rclpy
-from nav2_simple_commander.robot_navigator import BasicNavigator
+from geometry_msgs.msg import PoseStamped
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 import yaml
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -32,18 +33,18 @@ class YamlWaypointParser:
         gepose_wps = []
         for wp in self.wps_dict["waypoints"]:
             if wp["leg_id"] == leg_id:    
-                latitude, longitude = wp["latitude"], wp["longitude"], wp["yaw"] # Need to generate intermittent values somehow
-            gepose_wps.append(latLonYaw2Geopose(latitude, longitude, yaw))
+                latitude, longitude = wp["latitude"], wp["longitude"] # Need to generate intermittent values somehow
+                gepose_wps.append(latLonYaw2Geopose(latitude, longitude, 0.0))
         return gepose_wps
 
 
 class StateMachine():
     """
-    Class to use nav2 gps waypoint follower to follow a set of waypoints logged in a yaml file
+    Class to use run the competition task using nav2
     """
 
     def __init__(self, wps_file_path):
-        self.navigator = BasicNavigator("basic_navigator")
+        self.navigator = BasicNavigator()
         self.wp_parser = YamlWaypointParser(wps_file_path)
 
         self.gps_legs = ["gps1", "gps2"]
@@ -57,74 +58,74 @@ class StateMachine():
         Function to navigate to a pose
         """
 
-        print(leg_id, ': Starting pose navigation')
+        print(leg_id, 'Starting pose navigation')
 
         self.navigator.goToPose(pose)
         while (not self.navigator.isTaskComplete()):
             time.sleep(0.1)
 
-        result = self.navigator.getTaskResult()
+        result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            print(leg_id, ': Pose navigation completed')
+            print(leg_id, 'Pose navigation completed')
         elif result == TaskResult.CANCELED:
-            print(leg_id, ': Pose navigation canceled')
+            print(leg_id, 'Pose navigation canceled')
         elif result == TaskResult.FAILED:
-            print(leg_id, ': Pose navigation failed')
+            print(leg_id, 'Pose navigation failed')
 
     def gps_nav(self, leg_id):
         """
         Function to navigate through GPS waypoints
         """
 
-        print(leg_id, ': Starting GPS navigation')
+        print(leg_id, 'Starting GPS navigation')
 
         wps = self.wp_parser.get_wps(leg_id)
         self.navigator.followGpsWaypoints(wps)
         while (not self.navigator.isTaskComplete()):
             time.sleep(0.1)
         
-        result = self.navigator.getTaskResult()
+        result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            print(leg_id, ': GPS navigation completed')
+            print(leg_id, 'GPS navigation completed')
         elif result == TaskResult.CANCELED:
-            print(leg_id, ': GPS navigation canceled')
+            print(leg_id, 'GPS navigation canceled')
         elif result == TaskResult.FAILED:
-            print(leg_id, ': GPS navigation failed')
+            print(leg_id, 'GPS navigation failed')
 
     def spin_search(self, leg_id):
         """
         Function to spin in place
         """
 
-        print(leg_id, ': Starting spin search')
+        print(leg_id, 'Starting spin search')
 
 
         self.navigator.spin(spin_dist=3.14)
         while (not self.navigator.isTaskComplete()):
 
-            if leg_id is in self.aruco_legs:
+            if leg_id in self.aruco_legs:
                 # Check for the aruco tag
                 pose = self.aruco_check(leg_id)
                 if pose:
                     self.navigator.cancelTask()
                     return pose
 
-            elif leg_id is in self.object_legs:
+            elif leg_id in self.object_legs:
                 # Check for the object
-                pose = self.object_check(leg)
+                pose = self.object_check(leg_id)
                 if pose:
                     self.navigator.cancelTask()
                     return pose
 
             time.sleep(0.1)
 
-        result = self.navigator.getTaskResult()
+        result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            print(leg_id, ': Spin search completed')
+            print(leg_id, 'Spin search completed')
         elif result == TaskResult.CANCELED:
-            print(leg_id, ': Spin search canceled')
+            print(leg_id, 'Spin search canceled')
         elif result == TaskResult.FAILED:
-            print(leg_id, ': Spin search failed')
+            print(leg_id, 'Spin search failed')
         
         return False
 
@@ -133,18 +134,18 @@ class StateMachine():
         Function to search in a hex pattern
         """
 
-        print(leg_id, ': Starting hex search')
+        print(leg_id, 'Starting hex search')
 
         # Generate a hex pattern in the base_link frame
         for coord in self.hex_coord:
             hex_pose = PoseStamped()
-            hex_pose.header.frame_id = 'base_link'
-            hex_pose.header.stamp = navigator.get_clock().now().to_msg()
+            hex_pose.header.frame_id = "base_link"
+            hex_pose.header.stamp = self.navigator.get_clock().now().to_msg()
             hex_pose.pose.position.x = coord[0]
             hex_pose.pose.position.y = coord[1]
             
-            pose_nav(hex_pose, leg_id)
-            found_pose = spin_search(leg_id)
+            self.pose_nav(hex_pose, leg_id)
+            found_pose = self.spin_search(leg_id)
             # Did the last spin search find it?
             if found_pose:
                 return found_pose
@@ -165,7 +166,7 @@ class StateMachine():
 
         pose = PoseStamped()
         pose.header.frame_id = 'base_link'
-        pose.header.stamp = navigator.get_clock().now().to_msg()
+        pose.header.stamp = self.navigator.get_clock().now().to_msg()
         pose.pose.position.x = 1.0
         pose.pose.position.y = 0.0
 
@@ -179,42 +180,44 @@ class StateMachine():
         self.navigator.waitUntilNav2Active(localizer='robot_localization')
 
         # Iterate through the gps legs
-        for gps in gps_legs:
+        for gps in self.gps_legs:
 
-            print(gps, ': Starting GPS leg')
-            gps_nav(gps)
+            print(gps, 'Starting GPS leg')
+            self.gps_nav(gps)
 
         # Iterate through the aruco legs
-        for aruco in aruco_legs:
+        for aruco in self.aruco_legs:
 
-            print(aruco, ': Starting aruco leg')
-            gps_nav(aruco)
+            print(aruco, 'Starting aruco leg')
+            self.gps_nav(aruco)
 
             # Look for the aruco tag
-            aruco_loc = self.spin_search() # Do a spin search
+            aruco_loc = self.spin_search(aruco) # Do a spin search
             if not aruco_loc:
-                aruco_loc = self.hex_search() # Do a hex search
+                aruco_loc = self.hex_search(aruco) # Do a hex search
             if not aruco_loc:
-                print(aruco, ': Could not find the aruco tag')
+                print(aruco, 'Could not find the aruco tag')
             else:
-                print(aruco, ': Found the aruco tag at: ', aruco_loc)
-                pose_nav(aruco_loc, aruco)
+                print(aruco, 'Found the aruco tag at: ')
+                print(aruco_loc)
+                self.pose_nav(aruco_loc, aruco)
 
         # Iterate through the object legs
-        for obj in object_legs:
+        for obj in self.object_legs:
 
-            print(obj, ': Starting object leg')
-            gps_nav(obj)
+            print(obj, 'Starting object leg')
+            self.gps_nav(obj)
 
             # Look for the object
-            obj_loc = self.spin_search() # Do a spin search
+            obj_loc = self.spin_search(obj) # Do a spin search
             if not obj_loc:
-                obj_loc = self.hex_search() # Do a hex search
+                obj_loc = self.hex_search(obj) # Do a hex search
             if not obj_loc:
-                print(obj, ': Could not find the object')
+                print(obj, 'Could not find the object')
             else:
-                print(obj, ': Found the object at: ', obj_loc)
-                pose_nav(obj_loc, obj)
+                print(obj, 'Found the object at: ')
+                print(obj_loc)
+                self.pose_nav(obj_loc, obj)
 
 
 def main():
@@ -222,14 +225,14 @@ def main():
 
     # allow to pass the waypoints file as an argument
     default_yaml_file_path = os.path.join(get_package_share_directory(
-        "nav2_state_machine"), "waypoints", "comp_waypoints.yaml")
+        "nav2_state_machine"), "config", "comp_waypoints.yaml")
     if len(sys.argv) > 1:
         yaml_file_path = sys.argv[1]
     else:
         yaml_file_path = default_yaml_file_path
 
-    gps_wpf = GpsWpCommander(yaml_file_path)
-    gps_wpf.start_wpf()
+    nav2_sm = StateMachine(yaml_file_path)
+    nav2_sm.run_state_machine()
 
 
 if __name__ == "__main__":
