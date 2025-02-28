@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'nav2_state_machine'
+package_name = 'nav2_autonomy'
 
 setup(
     name=package_name,
@@ -23,12 +23,12 @@ setup(
     zip_safe=True,
     maintainer='snelsondurrant',
     maintainer_email='snelsondurrant@gmail.com',
-    description='State machine for the BYU Mars Rover using Nav2',
+    description='Autonomy capability for the BYU Mars Rover using Nav2',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'state_machine = nav2_state_machine.state_machine:main',
+            'state_machine = nav2_autonomy.state_machine:main',
         ],
     },
 )

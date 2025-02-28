@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>nav2_state_machine</name>
+  <name>nav2_autonomy</name>
   <version>0.0.0</version>
-  <description>State machine for the BYU Mars Rover using Nav2</description>
+  <description>Autonomy capability for the BYU Mars Rover using Nav2</description>
   <maintainer email="snelsondurrant@gmail.com">snelsondurrant</maintainer>
   <license>MIT</license>
 

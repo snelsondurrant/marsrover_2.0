@@ -24,7 +24,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the launch directory
     gps_wpf_dir = get_package_share_directory(
-        "nav2_state_machine")
+        "nav2_autonomy")
     launch_dir = os.path.join(gps_wpf_dir, 'launch')
     world = os.path.join(gps_wpf_dir, "worlds", "sonoma_raceway.world")
 

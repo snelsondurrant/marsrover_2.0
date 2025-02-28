@@ -5,7 +5,7 @@ import launch_ros.actions
 import os
 from ament_index_python.packages import get_package_share_directory
 
-gps_wpf_dir = get_package_share_directory("nav2_state_machine")
+gps_wpf_dir = get_package_share_directory("nav2_autonomy")
 mapviz_config_file = os.path.join(gps_wpf_dir, "config", "gps_wpf_demo.mvc")
 
 
