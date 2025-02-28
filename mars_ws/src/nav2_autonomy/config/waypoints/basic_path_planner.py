@@ -8,6 +8,8 @@ import yaml
 import matplotlib.pyplot as plt
 
 # Distance between intermediary waypoints (in lat/lon degrees)
+# If the waypoints are too far apart, they won't be in the global costmap
+# and the navigation2 stack won't be able to plan a path between them
 STEP_SIZE = 0.0001
 
 # Check the arguments for the logging file path
