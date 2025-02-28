@@ -31,3 +31,5 @@ waypoints:
 - leg_id: bottle
   latitude: 38.161409228722206
   longitude: -122.4544291698969
+
+# Find a way to publish these on the map?

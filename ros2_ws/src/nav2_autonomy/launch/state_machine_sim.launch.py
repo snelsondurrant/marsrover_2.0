@@ -64,7 +64,7 @@ def generate_launch_description():
             os.path.join(bringup_dir, "launch", "navigation_launch.py")
         ),
         launch_arguments={
-            "use_sim_time": "True",
+            "use_sim_time": "False", # Fix for pose times - Nelson Durrant, Feb 2025
             "params_file": configured_params,
             "autostart": "True",
         }.items(),
@@ -75,7 +75,7 @@ def generate_launch_description():
             os.path.join(bringup_dir, "launch", 'rviz_launch.py')),
         condition=IfCondition(use_rviz),
         launch_arguments={
-            "use_sim_time": "True", # Fix for pose times - Nelson Durrant, Feb 2025
+            "use_sim_time": "False", # Fix for pose times - Nelson Durrant, Feb 2025
         }.items()
     )
 
