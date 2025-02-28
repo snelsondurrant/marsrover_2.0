@@ -98,9 +98,24 @@ class StateMachine():
 
         print(leg_id, ': Starting spin search')
 
+
         self.navigator.spin(spin_dist=3.14)
         while (not self.navigator.isTaskComplete()):
-            # if found the tag or object, cancel, return the loc
+
+            if leg_id is in self.aruco_legs:
+                # Check for the aruco tag
+                pose = self.aruco_check(leg_id)
+                if pose:
+                    self.navigator.cancelTask()
+                    return pose
+
+            elif leg_id is in self.object_legs:
+                # Check for the object
+                pose = self.object_check(leg)
+                if pose:
+                    self.navigator.cancelTask()
+                    return pose
+
             time.sleep(0.1)
 
         result = self.navigator.getTaskResult()
@@ -122,15 +137,17 @@ class StateMachine():
 
         # Generate a hex pattern in the base_link frame
         for coord in self.hex_coord:
-            pose = PoseStamped()
-            pose.header.frame_id = 'base_link'
-            pose.header.stamp = navigator.get_clock().now().to_msg()
-            pose.pose.position.x = coord[0]
-            pose.pose.position.y = coord[1]
+            hex_pose = PoseStamped()
+            hex_pose.header.frame_id = 'base_link'
+            hex_pose.header.stamp = navigator.get_clock().now().to_msg()
+            hex_pose.pose.position.x = coord[0]
+            hex_pose.pose.position.y = coord[1]
             
-            pose_nav(pose, leg_id)
-            spin_search(leg_id)
-            # if found the tag or object, cancel, return the loc
+            pose_nav(hex_pose, leg_id)
+            found_pose = spin_search(leg_id)
+            # Did the last spin search find it?
+            if found_pose:
+                return found_pose
         
         return False
 
@@ -146,7 +163,14 @@ class StateMachine():
         Function to check for the object
         """
 
-        return False
+        pose = PoseStamped()
+        pose.header.frame_id = 'base_link'
+        pose.header.stamp = navigator.get_clock().now().to_msg()
+        pose.pose.position.x = 1.0
+        pose.pose.position.y = 0.0
+
+        return pose
+
 
     def run_state_machine(self):
         """
