@@ -1,7 +1,7 @@
 # Created by Nelson Durrant, Oct 2024
 services:
   autonomy_ros2:
-    image: byuawesomerover/byu-cougars:latest
+    image: byuawesomerover/byu-marsrover:latest
     container_name: marsrover
     build: .
     user: marsrover
