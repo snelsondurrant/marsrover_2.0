@@ -13,6 +13,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
     tmux send-keys -t rover_runtime.0 "clear" Enter
 
     # Launch ROS 2 nodes on system startup
+    tmux send-keys -t rover_runtime.0 "source ~/mars_ws/install/setup.bash" Enter
     tmux send-keys -t rover_runtime.0 "ros2 launch mobility rover_xbox_launch.py" Enter
 
     # Full color and mouse options

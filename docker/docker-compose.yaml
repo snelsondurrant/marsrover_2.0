@@ -11,7 +11,7 @@ services:
       - DISPLAY=$DISPLAY # Required for GUI applications
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
-      - ../ros2_ws:/home/${NAME}/ros2_ws
+      - ../mars_ws:/home/${NAME}/mars_ws
       - ../mapproxy:/home/${NAME}/mapproxy
       - ../demo_ws:/home/${NAME}/demo_ws
       - ./scripts:/home/${NAME}/scripts
