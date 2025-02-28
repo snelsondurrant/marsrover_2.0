@@ -58,7 +58,7 @@ class StateMachine():
 
         self.run_flag = False
 
-        self.legs = ["gps1", "gps2", "aruco1", "aruco2", "aruco3", "mallet", "bottle"]
+        self.legs = ["start", "gps1", "gps2", "aruco1", "aruco2", "aruco3", "mallet", "bottle"]
 
         self.gps_legs = ["gps1", "gps2"]
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
@@ -200,6 +200,12 @@ class StateMachine():
             print(leg, 'Starting gps leg')
             self.gps_nav(leg)
 
+            # Don't wait or flash the LED for the start leg
+            if leg == 'start':
+                return
+            
+            # TODO: Wait and flash LED
+
         # Iterate through the aruco legs
         elif leg in self.aruco_legs:
 
@@ -217,6 +223,8 @@ class StateMachine():
                 print(aruco_loc)
                 self.pose_nav(aruco_loc, leg)
 
+                # TODO: Wait and flash LED
+
         # Iterate through the object legs
         elif leg in self.obj_legs:
 
@@ -233,6 +241,8 @@ class StateMachine():
                 print(leg, 'Found the object at: ')
                 print(obj_loc)
                 self.pose_nav(obj_loc, leg)
+
+                # TODO: Wait and flash LED
 
     def run_state_machine(self):
         """
@@ -254,7 +264,7 @@ def main():
 
     # allow to pass the waypoints file as an argument
     yaml_file_path = os.path.join(get_package_share_directory(
-        "nav2_autonomy"), "waypoints", "sim_waypoints.yaml")
+        "nav2_autonomy"), "config", "waypoints/sim_waypoints.yaml")
 
     nav2_sm = StateMachine(yaml_file_path)
     nav2_sm.run_state_machine()
