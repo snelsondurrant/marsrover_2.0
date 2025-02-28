@@ -45,14 +45,20 @@ RUN apt update && apt install -y \
     x11-apps \
     x11-utils \
     x11-xserver-utils \
-    xauth \
-    ros-iron-rviz2 \
-    python3-tk
+    xauth
 USER $NAME
 
 # Install the navigation2 package
 USER root
 RUN apt update && apt install -y ros-iron-navigation2
+USER $NAME
+
+# Install tutorial-specific packages
+USER root
+RUN apt update && apt install -y \
+    ros-iron-teleop-twist-keyboard \
+    ros-iron-rviz2 \
+    python3-tk
 USER $NAME
 
 # Install gazebo and turtlebot3 packages

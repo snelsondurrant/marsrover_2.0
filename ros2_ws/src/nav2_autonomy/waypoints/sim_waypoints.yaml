@@ -32,4 +32,5 @@ waypoints:
   latitude: 38.161409228722206
   longitude: -122.4544291698969
 
-# Find a way to publish these on the map?
+# TODO: Add better waypoints
+# TODO: Find a way to publish these on mapviz
