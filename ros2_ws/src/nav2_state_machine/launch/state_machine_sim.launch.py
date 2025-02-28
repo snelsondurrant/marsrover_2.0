@@ -72,7 +72,7 @@ def generate_launch_description():
 
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(bringup_dir, "launch", 'rviz_launch.py', 'use_sim_time:=true')),
+            os.path.join(bringup_dir, "launch", 'rviz_launch.py')),
         condition=IfCondition(use_rviz),
         launch_arguments={
             "use_sim_time": "True", # Fix for pose times - Nelson Durrant, Feb 2025
