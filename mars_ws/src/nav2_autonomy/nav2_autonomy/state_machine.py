@@ -47,9 +47,13 @@ class StateMachine():
         self.navigator = BasicNavigator()
         self.wp_parser = YamlWaypointParser(wps_file_path)
 
+        self.run_flag = False
+
+        self.legs = ["gps1", "gps2", "aruco1", "aruco2", "aruco3", "mallet", "bottle"]
+
         self.gps_legs = ["gps1", "gps2"]
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
-        self.object_legs = ["mallet", "bottle"]
+        self.obj_legs = ["mallet", "bottle"]
 
         self.hex_coord = [(2.0, 0.0), (1.0, 1.73), (-1.0, 1.73), (-2.0, 0.0), (-1.0, -1.73), (1.0, -1.73)]
 
@@ -110,9 +114,9 @@ class StateMachine():
                     self.navigator.cancelTask()
                     return pose
 
-            elif leg_id in self.object_legs:
+            elif leg_id in self.obj_legs:
                 # Check for the object
-                pose = self.object_check(leg_id)
+                pose = self.obj_check(leg_id)
                 if pose:
                     self.navigator.cancelTask()
                     return pose
@@ -161,7 +165,7 @@ class StateMachine():
 
         return False
 
-    def object_check(self, leg_id):
+    def obj_check(self, leg_id):
         """
         Function to check for the object
         """
@@ -175,21 +179,20 @@ class StateMachine():
 
         return pose
 
-
-    def run_state_machine(self):
+    def exec_leg(self, leg):
         """
-        Function to run the competition state machine
+        Function to execute task legs
         """
         self.navigator.waitUntilNav2Active(localizer='robot_localization')
 
         # Iterate through the gps legs
-        for gps in self.gps_legs:
+        if leg in self.gps_legs:
 
             print(gps, 'Starting GPS leg')
             self.gps_nav(gps)
 
         # Iterate through the aruco legs
-        for aruco in self.aruco_legs:
+        elif leg in self.aruco_legs:
 
             print(aruco, 'Starting aruco leg')
             self.gps_nav(aruco)
@@ -206,7 +209,7 @@ class StateMachine():
                 self.pose_nav(aruco_loc, aruco)
 
         # Iterate through the object legs
-        for obj in self.object_legs:
+        elif leg in self.obj_legs:
 
             print(obj, 'Starting object leg')
             self.gps_nav(obj)
@@ -221,6 +224,20 @@ class StateMachine():
                 print(obj, 'Found the object at: ')
                 print(obj_loc)
                 self.pose_nav(obj_loc, obj)
+
+    def run_state_machine(self):
+        """
+        Function to run the competition state machine
+        """
+
+        while True:
+            while not self.run_flag:
+                time.sleep(1)
+
+            for leg in self.legs:
+                if self.run_flag:
+                    break
+                self.exec_leg(leg)
 
 
 def main():
