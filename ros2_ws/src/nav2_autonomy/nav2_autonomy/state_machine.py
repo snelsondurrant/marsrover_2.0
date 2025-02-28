@@ -138,6 +138,7 @@ class StateMachine():
 
         # Generate a hex pattern in the base_link frame
         for coord in self.hex_coord:
+            # TODO: Convert these into the world frame
             hex_pose = PoseStamped()
             hex_pose.header.frame_id = "base_link"
             hex_pose.header.stamp = self.navigator.get_clock().now().to_msg()
@@ -224,12 +225,8 @@ def main():
     rclpy.init()
 
     # allow to pass the waypoints file as an argument
-    default_yaml_file_path = os.path.join(get_package_share_directory(
+    yaml_file_path = os.path.join(get_package_share_directory(
         "nav2_autonomy"), "waypoints", "sim_waypoints.yaml")
-    if len(sys.argv) > 1:
-        yaml_file_path = sys.argv[1]
-    else:
-        yaml_file_path = default_yaml_file_path
 
     nav2_sm = StateMachine(yaml_file_path)
     nav2_sm.run_state_machine()
