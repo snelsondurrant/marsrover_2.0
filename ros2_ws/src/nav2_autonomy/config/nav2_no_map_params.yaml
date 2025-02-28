@@ -12,7 +12,7 @@ bt_navigator:
     robot_base_frame: base_link
     odom_topic: /odom
     bt_loop_duration: 10
-    default_server_timeout: 40 # Fix for crashes - Nelson Durrant, Feb 2025
+    default_server_timeout: 100 # Fix for crashes - Nelson Durrant, Feb 2025
     navigators: ["navigate_to_pose", "navigate_through_poses"]
     navigate_to_pose:
       plugin: "nav2_bt_navigator/NavigateToPoseNavigator"
@@ -203,8 +203,8 @@ global_costmap:
       # fit on a big static costmap. Thus it is recommended to use a rolling global costmap large enough to 
       # contain each pair of successive waypoints. See: https://github.com/ros-planning/navigation2/issues/2174
       rolling_window: True
-      width: 100 # Adjusted this - Nelson Durrant, Feb 2025
-      height: 100 # Adjusted this - Nelson Durrant, Feb 2025
+      width: 500 # Adjusted this - Nelson Durrant, Feb 2025
+      height: 500 # Adjusted this - Nelson Durrant, Feb 2025
       track_unknown_space: true
       # no static map
       plugins: ["obstacle_layer", "inflation_layer"]

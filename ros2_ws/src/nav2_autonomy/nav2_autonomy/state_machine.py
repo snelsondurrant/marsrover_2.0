@@ -138,7 +138,8 @@ class StateMachine():
 
         # Generate a hex pattern in the base_link frame
         for coord in self.hex_coord:
-            # TODO: Convert these into the world frame
+            # TODO: Convert these into GPS points using the last one
+            # TODO: Fix the relative frame hex error
             hex_pose = PoseStamped()
             hex_pose.header.frame_id = "base_link"
             hex_pose.header.stamp = self.navigator.get_clock().now().to_msg()
@@ -165,6 +166,7 @@ class StateMachine():
         Function to check for the object
         """
 
+        # TODO: Convert these into GPS points
         pose = PoseStamped()
         pose.header.frame_id = 'base_link'
         pose.header.stamp = self.navigator.get_clock().now().to_msg()
