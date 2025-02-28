@@ -4,7 +4,7 @@
   <name>nav2_autonomy</name>
   <version>0.0.0</version>
   <description>Autonomy capability for the BYU Mars Rover using Nav2</description>
-  <maintainer email="snelsondurrant@gmail.com">snelsondurrant</maintainer>
+  <maintainer email="snelsondurrant@gmail.com">Nelson Durrant</maintainer>
   <license>MIT</license>
 
   <depend>navigation2</depend>

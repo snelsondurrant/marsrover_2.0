@@ -1,4 +1,4 @@
-#! #!/bin/bash
+#!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 
 source ~/mars_ws/install/setup.bash

@@ -22,7 +22,7 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='snelsondurrant',
+    maintainer='Nelson Durrant',
     maintainer_email='snelsondurrant@gmail.com',
     description='Autonomy capability for the BYU Mars Rover using Nav2',
     license='MIT',
