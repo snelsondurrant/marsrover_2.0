@@ -14,7 +14,7 @@ import os
 import sys
 import time
 
-from nav2_gps_waypoint_follower_demo.utils.gps_utils import latLonYaw2Geopose
+from nav2_state_machine.utils.gps_utils import latLonYaw2Geopose
 
 
 class YamlWaypointParser:
