@@ -12,7 +12,7 @@ services:
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
       - ../ros2_ws:/home/marsrover/ros2_ws
-      - ../demo_ws:/home/marsrover/demo_ws
+      - ../mapproxy:/home/marsrover/mapproxy
       - ./scripts:/home/marsrover/scripts
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host

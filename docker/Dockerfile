@@ -45,7 +45,8 @@ RUN apt update && apt install -y \
     x11-apps \
     x11-utils \
     x11-xserver-utils \
-    xauth
+    xauth \
+    ros-iron-rviz2
 USER $NAME
 
 # Install the navigation2 package
@@ -54,6 +55,7 @@ RUN apt update && apt install -y \
     ros-iron-navigation2 \
     ros-iron-nav2-bringup \
     ros-iron-turtlebot3-gazebo
+    # if we ever switch to the new gazebo, change this to ros-<ros2-distro>-nav2-minimal-tb*
 USER $NAME
 
 # Install the robot-localization package
