@@ -82,7 +82,6 @@ USER $NAME
 
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
-RUN echo "source /home/$NAME/ros2_ws/install/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
 RUN touch ~/.hushlogin
 
