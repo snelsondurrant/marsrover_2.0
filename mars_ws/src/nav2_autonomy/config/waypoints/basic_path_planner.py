@@ -87,6 +87,9 @@ for leg in orig_wps_data["waypoints"]:
 
 # Plot the new waypoints in matplotlib
 plt.figure()
+plt.xlabel("Latitude")
+plt.ylabel("Longitude")
+plt.gca().invert_yaxis() # North American map
 for wp in new_wps_data["waypoints"]:
     if wp["orig_wp"]:
         if wp["leg"] == "start":
