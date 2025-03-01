@@ -89,7 +89,10 @@ for leg in orig_wps_data["waypoints"]:
 plt.figure()
 for wp in new_wps_data["waypoints"]:
     if wp["orig_wp"]:
-        plt.plot(wp["latitude"], wp["longitude"], 'bo')
+        if wp["leg"] == "start":
+            plt.plot(wp["latitude"], wp["longitude"], 'go')
+        else:
+            plt.plot(wp["latitude"], wp["longitude"], 'bo')
     else:
         plt.plot(wp["latitude"], wp["longitude"], 'ro')
 plt.show()
