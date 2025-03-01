@@ -9,7 +9,8 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import SetBool
-from aruco_opencv_msgs.msg import ArucoDetection
+from aruco_opencv_msgs.msg import ArucoDetection, MarkerPose
+from vision_msgs.msg import Detection3DArray, ObjectHypothesisWithPose
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -70,7 +71,7 @@ class StateMachine(Node):
 
     Subscribers:
         - /aruco_detections (aruco_opencv_msgs/ArucoDetection)
-        - TODO: Add obj detection subscriber
+        - /zed/detections
     Publishers:
         - /mapviz/goal (sensor_msgs/NavSatFix)
         - /mapviz/inter (sensor_msgs/NavSatFix)
@@ -92,6 +93,9 @@ class StateMachine(Node):
         self.wp_parser = YamlArucoWaypointParser(wps_file_path)
 
         self.legs = self.wp_parser.get_legs()
+        self.gps_legs = ["start", "gps1", "gps2"]
+        self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
+        self.obj_legs = ["mallet", "bottle"]
 
         self.run_flag = False
         self.found_flag = False
@@ -106,21 +110,7 @@ class StateMachine(Node):
             (-1.0, -1.73),
             (1.0, -1.73),
         ]
-
-        # Declare parameters
-        self.declare_parameters(
-            namespace="",
-            parameters=[
-                ("gps_legs", ["gps1", "gps2"]),
-                ("aruco_legs", ["aruco1", "aruco2", "aruco3"]),
-                ("obj_legs", ["mallet", "bottle"]),
-                ("hex_scalar", 0.00001),
-            ],
-        )
-        self.gps_legs = self.get_parameter("gps_legs").value
-        self.aruco_legs = self.get_parameter("aruco_legs").value
-        self.obj_legs = self.get_parameter("obj_legs").value
-        self.hex_scalar = self.get_parameter("hex_scalar").value
+        self.hex_scalar = 0.00001
 
         # Aruco pose subscriber
         aruco_callback_group = MutuallyExclusiveCallbackGroup()

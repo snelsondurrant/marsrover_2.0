@@ -1,7 +1,0 @@
-# Created by Nelson Durrant, Feb 2025
-state_machine:
-  ros__parameters:
-    gps_legs: ["gps1", gps2"]
-    aruco_legs: ["aruco1", "aruco2", "aruco3"]
-    obj_legs: ["mallet", "bottle"]
-    hex_scalar: 0.00001

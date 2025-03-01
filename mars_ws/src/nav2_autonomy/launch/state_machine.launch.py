@@ -11,8 +11,6 @@ import launch.actions
 def generate_launch_description():
     gps_wpf_dir = get_package_share_directory(
         "nav2_autonomy")
-    rl_params_file = os.path.join(
-        gps_wpf_dir, "config", "state_machine_params.yaml")
     wps_file = os.path.join(
         gps_wpf_dir, "waypoints/output", "sim_basic_waypoints.yaml")
 
@@ -22,7 +20,7 @@ def generate_launch_description():
                 package = "nav2_autonomy",
                 executable = "state_machine",
                 output = "screen",
-                parameters = [ rl_params_file, {"use_sim_time": True, "wps_file_path": wps_file}],
+                parameters = [{"use_sim_time": True, "wps_file_path": wps_file}],
             ),
         ]
     )
