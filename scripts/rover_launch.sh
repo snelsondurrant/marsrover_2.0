@@ -71,7 +71,7 @@ case "$1" in
         ssh marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT "\
             tmux split-window -h -t rover_runtime; \
             tmux select-pane -t rover_runtime.1; \
-            tmux send-keys -t rover_runtime.1 'ros2 launch start rover_task_autonomy_new_launch.py'" # NO ENTER 
+            tmux send-keys -t rover_runtime.1 'ros2 launch nav2_autonomy full_stack.py'" # NO ENTER 
         ;;
     "servicing")
         printWarning "Not implemented yet"

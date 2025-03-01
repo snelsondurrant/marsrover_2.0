@@ -12,7 +12,7 @@ source "/opt/ros/$ROS_DISTRO/setup.bash" # source ROS distro
 # Are we running on Jetson Orin architecture (the rover)?
 if [ "$(uname -m)" == "aarch64" ]; then
 
-    fastdds discovery --server-id 0 # start on port 11811
+    fastdds discovery --server-id 0 & # start on port 11811
 
     # Start a new 'rover_runtime' tmux session
     tmux new-session -d -s rover_runtime
