@@ -93,6 +93,10 @@ class StateMachine():
         print(leg, 'Starting gps navigation')
 
         wps = self.wp_parser.get_wps(leg)
+
+        # Publish the last gps position (our goal) to mapviz
+        print(wps[-1]) # TODO: publish this
+
         self.navigator.followGpsWaypoints(wps)
         while (not self.navigator.isTaskComplete()):
             time.sleep(0.1)
