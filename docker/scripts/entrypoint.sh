@@ -30,5 +30,7 @@ fi
 # Start the SSH daemon in the Docker container
 sudo /usr/sbin/sshd -D
 
+# exec "$@"
+
 # IMPORTANT! Keeps the container running
-exec "$@"
+exec /bin/bash
