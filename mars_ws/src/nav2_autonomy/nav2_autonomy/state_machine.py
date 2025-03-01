@@ -27,7 +27,6 @@ tags = []
 wps = []
 
 
-
 class YamlArucoWaypointParser:
     """
     Parse a set of legs, aruco tags, and GPS waypoints from a yaml file
@@ -60,7 +59,7 @@ class YamlArucoWaypointParser:
                 )  # Need to generate intermittent values somehow
                 gepose_wps.append(latLonYaw2Geopose(latitude, longitude))
         return aruco_tags, gepose_wps
-    
+
 
 class StateMachine(Node):
     """
@@ -125,7 +124,11 @@ class StateMachine(Node):
         # Aruco pose subscriber
         aruco_callback_group = MutuallyExclusiveCallbackGroup()
         self.aruco_subscriber = self.create_subscription(
-            ArucoDetection, "/aruco_detections", self.aruco_callback, 10, callback_group=aruco_callback_group
+            ArucoDetection,
+            "/aruco_detections",
+            self.aruco_callback,
+            10,
+            callback_group=aruco_callback_group,
         )
         self.aruco_subscriber  # prevent unused variable warning
 
@@ -136,7 +139,10 @@ class StateMachine(Node):
 
         enable_callback_group = MutuallyExclusiveCallbackGroup()
         self.enable_service = self.create_service(
-            SetBool, "/nav2_sm/enable", self.enable_callback, callback_group=enable_callback_group
+            SetBool,
+            "/nav2_sm/enable",
+            self.enable_callback,
+            callback_group=enable_callback_group,
         )
 
         self.get_logger().info("State machine node initialized")
