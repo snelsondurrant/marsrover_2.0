@@ -16,6 +16,7 @@ RUN usermod -aG sudo $NAME
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN usermod -aG video $NAME
 RUN usermod -aG dialout $NAME
+RUN groupadd docker
 RUN usermod -aG docker $NAME
 RUN echo "$NAME:$PASS" | chpasswd
 USER $NAME
