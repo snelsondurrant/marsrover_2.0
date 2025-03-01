@@ -2,7 +2,7 @@
 services:
   byu-marsrover:
     image: byuawesomerover/byu-marsrover:latest
-    container_name: marsrover-cnt
+    container_name: marsrover-ct
     build: .
     user: ${NAME}
     network_mode: host
