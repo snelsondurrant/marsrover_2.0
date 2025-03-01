@@ -73,6 +73,7 @@ class StateMachine(Node):
         - TODO: Add obj detection subscriber
     Publishers:
         - /mapviz/goal (sensor_msgs/NavSatFix)
+        - /mapviz/inter (sensor_msgs/NavSatFix)
     Services:
         - /nav2_sm/enable (std_srvs/SetBool)
     """
