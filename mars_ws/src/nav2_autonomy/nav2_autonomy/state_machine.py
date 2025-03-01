@@ -30,12 +30,18 @@ wps = []
 
 class YamlArucoWaypointParser:
     """
-    Parse a set of aruco tags and GPS waypoints from a yaml file
+    Parse a set of legs, aruco tags, and GPS waypoints from a yaml file
     """
 
     def __init__(self, wps_file_path: str) -> None:
         with open(wps_file_path, "r") as wps_file:
             self.wps_dict = yaml.safe_load(wps_file)
+
+    def get_legs(self):
+        """
+        Get an array of leg names from the yaml file
+        """
+        return self.wps_dict["legs"]
 
     def get_wps(self, leg):
         """
@@ -85,6 +91,8 @@ class StateMachine(Node):
         wps_file_path = self.get_parameter("wps_file_path").value
         self.wp_parser = YamlArucoWaypointParser(wps_file_path)
 
+        self.legs = self.wp_parser.get_legs()
+
         self.run_flag = False
         self.found_flag = False
         self.tags = []
@@ -103,26 +111,12 @@ class StateMachine(Node):
         self.declare_parameters(
             namespace="",
             parameters=[
-                (
-                    "legs",
-                    [
-                        "start",
-                        "gps1",
-                        "gps2",
-                        "aruco1",
-                        "aruco2",
-                        "aruco3",
-                        "mallet",
-                        "bottle",
-                    ],
-                ),
                 ("gps_legs", ["gps1", "gps2"]),
                 ("aruco_legs", ["aruco1", "aruco2", "aruco3"]),
                 ("obj_legs", ["mallet", "bottle"]),
                 ("hex_scalar", 0.00001),
             ],
         )
-        self.legs = self.get_parameter("legs").value
         self.gps_legs = self.get_parameter("gps_legs").value
         self.aruco_legs = self.get_parameter("aruco_legs").value
         self.obj_legs = self.get_parameter("obj_legs").value

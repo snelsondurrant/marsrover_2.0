@@ -32,6 +32,7 @@ except Exception as ex:
 
 # YAML object to store new waypoints
 new_wps_data = {
+    "legs": orig_wps_data["legs"],
     "aruco_tags": orig_wps_data["aruco_tags"],
     "waypoints": []
 }
@@ -43,20 +44,24 @@ last_gps_position = {
 }
 
 # Generate intermediary waypoints
-for leg in orig_wps_data["waypoints"]:
+for leg in orig_wps_data["legs"]:
 
     if leg["leg"] == "start":
-        last_gps_position["latitude"] = leg["latitude"]
-        last_gps_position["longitude"] = leg["longitude"]
-        new_wps_data["waypoints"].append(leg)
+        for wp in orig_wps_data["waypoints"]:
+            if wp["leg"] == "start":
+                last_gps_position["latitude"] = wp["latitude"]
+                last_gps_position["longitude"] = wp["longitude"]
+                new_wps_data["waypoints"].append(wp)
         continue
     else:
 
         # Calculate intermediary waypoints
         start_lat = last_gps_position["latitude"]
         start_lon = last_gps_position["longitude"]
-        end_lat = leg["latitude"]
-        end_lon = leg["longitude"]
+        for wp in orig_wps_data["waypoints"]:
+            if wp["leg"] == leg["leg"]:
+                end_lat = wp["latitude"]
+                end_lon = wp["longitude"]
 
         # Calculate the distance between the two points
         distance = ((end_lat - start_lat)**2 + (end_lon - start_lon)**2)**0.5
@@ -86,9 +91,11 @@ for leg in orig_wps_data["waypoints"]:
             new_wps_data["waypoints"].append(data)
 
         # Add the original waypoint and save as the last GPS position
-        last_gps_position["latitude"] = end_lat
-        last_gps_position["longitude"] = end_lon
-        new_wps_data["waypoints"].append(leg)
+        for wp in orig_wps_data["waypoints"]:
+            if wp["leg"] == leg["leg"]:
+                new_wps_data["waypoints"].append(wp)
+                last_gps_position["latitude"] = wp["latitude"]
+                last_gps_position["longitude"] = wp["longitude"]
 
 # Plot the new waypoints in matplotlib
 plt.figure()

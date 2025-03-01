@@ -1,5 +1,11 @@
 # Created by Nelson Durrant, Feb 2025
-# config/state_machine_params.yaml controls which legs the rover will complete in what order
+
+# Legs to perform in order
+legs:
+- leg: start # ALWAYS INCLUDE THIS
+- leg: gps1
+- leg: aruco1
+- leg: mallet
 
 # Aruco tags for the rover to detect
 aruco_tags:
@@ -10,7 +16,7 @@ aruco_tags:
 - leg: aruco3
   id: 0
 
-# Simulated waypoints for the turtlebot to follow
+# Waypoints for the rover to follow
 waypoints:
 # Start waypoint
 - leg: start
@@ -24,8 +30,8 @@ waypoints:
   orig_wp: true
 # 2nd waypoint (GPS only)
 - leg: gps2
-  latitude: 38.160576
-  longitude: -122.452829
+  latitude: 0.0
+  longitude: 0.0
   orig_wp: true
 # 3rd waypoint (Aruco)
 - leg: aruco1
@@ -34,13 +40,13 @@ waypoints:
   orig_wp: true
 # 4th waypoint (Aruco)
 - leg: aruco2
-  latitude: 38.161801
-  longitude: -122.454508
+  latitude: 0.0
+  longitude: 0.0
   orig_wp: true
 # 5th waypoint (Aruco)
 - leg: aruco3
-  latitude: 38.162221
-  longitude: -122.455083
+  latitude: 0.0
+  longitude: 0.0
   orig_wp: true
 # 6th waypoint (Mallet)
 - leg: mallet
@@ -49,8 +55,6 @@ waypoints:
   orig_wp: true
 # 7th waypoint (Bottle)
 - leg: bottle
-  latitude: 38.161535
-  longitude: -122.454720
+  latitude: 0.0
+  longitude: 0.0
   orig_wp: true
-
-# TODO: Find a way to publish these on mapviz

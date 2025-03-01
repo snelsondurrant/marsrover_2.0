@@ -1,10 +1,7 @@
 # Created by Nelson Durrant, Feb 2025
 state_machine:
   ros__parameters:
-    # Adjust "legs" to get the rover to complete the legs in a different order
-    legs: ["gps1", "gps2", "aruco1", "aruco2", "aruco3", "mallet", "bottle"]
     gps_legs: ["gps1", gps2"]
     aruco_legs: ["aruco1", "aruco2", "aruco3"]
     obj_legs: ["mallet", "bottle"]
-    hex_coords: [(2.0, 0.0), (1.0, 1.73), (-1.0, 1.73), (-2.0, 0.0), (-1.0, -1.73), (1.0, -1.73)]
     hex_scalar: 0.00001
