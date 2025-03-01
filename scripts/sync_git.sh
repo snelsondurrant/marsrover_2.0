@@ -40,3 +40,5 @@ ssh marsrover@$ROVER_IP_ADDRESS "cd ~/byu-marsrover; \
     git pull base $current_branch"
 
 printInfo "Successfully pulled $current_branch onto the rover"
+
+# TODO: Add tmux functionality
