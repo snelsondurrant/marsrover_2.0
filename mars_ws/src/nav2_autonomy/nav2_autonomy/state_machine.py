@@ -383,10 +383,11 @@ def main(args=None):
     rclpy.init(args=args)
 
     nav2_sm = StateMachine()
+    # Create a multi-threaded executor for Nav2 locking issues
     executor = MultiThreadedExecutor()
     executor.add_node(nav2_sm)
 
-    # Create a separate thread for spinning the node
+    # Create a separate thread for spinning the executor so we can run the state machine
     spin_thread = threading.Thread(target=spin_in_thread, args=(executor,))
     spin_thread.start()
 

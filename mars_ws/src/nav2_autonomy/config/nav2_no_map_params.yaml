@@ -12,7 +12,7 @@ bt_navigator:
     robot_base_frame: base_link
     odom_topic: /odom
     bt_loop_duration: 10
-    default_server_timeout: 100 # Fix for crashes - Nelson Durrant, Feb 2025
+    default_server_timeout: 200 # Fix for crashes - Nelson Durrant, Feb 2025
     navigators: ["navigate_to_pose", "navigate_through_poses"]
     navigate_to_pose:
       plugin: "nav2_bt_navigator/NavigateToPoseNavigator"
@@ -111,11 +111,11 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.26
+      max_vel_x: 5.0 # Changed this - Nelson Durrant, Feb 2025
       max_vel_y: 0.0
       max_vel_theta: 1.0
       min_speed_xy: 0.0
-      max_speed_xy: 0.26
+      max_speed_xy: 0.26 # Changed this - Nelson Durrant, Feb 2025
       min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
