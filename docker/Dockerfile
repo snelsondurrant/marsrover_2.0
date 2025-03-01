@@ -48,7 +48,8 @@ RUN apt update && apt install -y \
     x11-apps \
     x11-utils \
     x11-xserver-utils \
-    xauth
+    xauth \
+    ros-iron-rqt*
 USER $NAME
 
 # Install the navigation2 and robot_localization packages
