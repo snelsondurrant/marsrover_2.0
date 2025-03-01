@@ -64,6 +64,10 @@ for leg in orig_wps_data["waypoints"]:
         # Calculate the number of intermediary waypoints
         num_waypoints = int(distance / STEP_SIZE)
 
+        if num_waypoints == 0:
+            new_wps_data["waypoints"].append(leg)
+            continue
+
         # Calculate the step size for each intermediary waypoint
         step_lat = (end_lat - start_lat) / num_waypoints
         step_lon = (end_lon - start_lon) / num_waypoints
@@ -103,8 +107,13 @@ plt.show()
 
 # Write our new waypoints to a new YAML file
 try:
-    with open('output/basic_waypoints.yaml', 'w') as yaml_file:
-        yaml.dump(new_wps_data, yaml_file, default_flow_style=False)
+    # Check if the old path had 'sim' in it
+    if 'sim' in orig_wps_file_path:
+        with open('output/sim_basic_waypoints.yaml', 'w') as yaml_file:
+            yaml.dump(new_wps_data, yaml_file, default_flow_style=False)
+    else:
+        with open('output/basic_waypoints.yaml', 'w') as yaml_file:
+            yaml.dump(new_wps_data, yaml_file, default_flow_style=False)
 except Exception as ex:
     print(f"Error: {str(ex)}")
     sys.exit(1)

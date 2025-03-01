@@ -13,7 +13,7 @@ def generate_launch_description():
                 executable="aruco_tracker_autostart",
                 name="aruco_tracker_autostart",
                 output="screen",
-                parameters=[{"cam_base_topic": "camera1/image_raw", "marker_size": 0.15, "image_is_rectified": True}],
+                parameters=[{"cam_base_topic": "camera1/image_raw", "marker_size": 0.15, "image_is_rectified": True, "use_sim_time": True}],
             ),
         ]
     )

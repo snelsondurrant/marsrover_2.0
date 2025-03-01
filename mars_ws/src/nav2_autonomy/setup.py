@@ -18,6 +18,7 @@ setup(
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*')),
         (os.path.join('share', package_name, 'models/turtlebot_waffle_gps'),
          glob('models/turtlebot_waffle_gps/*')),
+         (os.path.join('share', package_name, 'waypoints/output'), glob('waypoints/output/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

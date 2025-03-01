@@ -88,17 +88,11 @@ def generate_launch_description():
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'aruco_opencv.launch.py')),
-            launch_arguments={
-                "use_sim_time": "True",
-            }.items(),
     )
 
     state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(launch_dir, 'state_machine.launch.py'))
-            launch_arguments={
-                "use_sim_time": "True",
-            }.items(),
+            os.path.join(launch_dir, 'state_machine.launch.py')),
     )
 
     # Create the launch description and populate

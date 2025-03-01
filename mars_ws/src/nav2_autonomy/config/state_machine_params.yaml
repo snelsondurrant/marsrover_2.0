@@ -7,3 +7,4 @@ state_machine:
     aruco_legs: ["aruco1", "aruco2", "aruco3"]
     obj_legs: ["mallet", "bottle"]
     hex_coords: [(2.0, 0.0), (1.0, 1.73), (-1.0, 1.73), (-2.0, 0.0), (-1.0, -1.73), (1.0, -1.73)]
+    hex_scalar: 0.00001

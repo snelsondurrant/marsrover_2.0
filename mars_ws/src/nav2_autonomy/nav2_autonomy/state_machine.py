@@ -9,14 +9,23 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import SetBool
-from aruco_opencv_msgs.msg import ArucoDetections, MarkerPose
+from aruco_opencv_msgs.msg import ArucoDetection
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 import yaml
-from ament_index_python.packages import get_package_share_directory
-import os
 import time
+import threading
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
+
+# Globals (interface between ROS node and state machine)
+wps_file_path = ""
+run_flag = False
+found_flag = False
+tags = []
+wps = []
+
 
 
 class YamlArucoWaypointParser:
@@ -25,7 +34,7 @@ class YamlArucoWaypointParser:
     """
 
     def __init__(self, wps_file_path: str) -> None:
-        with open(wps_file_path, 'r') as wps_file:
+        with open(wps_file_path, "r") as wps_file:
             self.wps_dict = yaml.safe_load(wps_file)
 
     def get_wps(self, leg):
@@ -38,11 +47,14 @@ class YamlArucoWaypointParser:
                 aruco_tags.append(tag)
         gepose_wps = []
         for wp in self.wps_dict["waypoints"]:
-            if wp["leg"] == leg:    
-                latitude, longitude = wp["latitude"], wp["longitude"] # Need to generate intermittent values somehow
+            if wp["leg"] == leg:
+                latitude, longitude = (
+                    wp["latitude"],
+                    wp["longitude"],
+                )  # Need to generate intermittent values somehow
                 gepose_wps.append(latLonYaw2Geopose(latitude, longitude))
         return aruco_tags, gepose_wps
-
+    
 
 class StateMachine(Node):
     """
@@ -52,18 +64,25 @@ class StateMachine(Node):
     :date: Feb 2025
 
     Subscribers:
-        - /aruco_detections (aruco_opencv_msgs/ArucoDetections)
+        - /aruco_detections (aruco_opencv_msgs/ArucoDetection)
         - TODO: Add obj detection subscriber
     Publishers:
         - /mapviz/goal (sensor_msgs/NavSatFix)
     Services:
-        - *toggle service
+        - /nav2_sm/enable (std_srvs/SetBool)
     """
 
-    def __init__(self, wps_file_path):
+    def __init__(self):
 
-        super().__init__('nav2_state_machine')
+        super().__init__("nav2_state_machine")
         self.navigator = BasicNavigator()
+
+        self.declare_parameter("wps_file_path", "")
+        if not self.get_parameter("wps_file_path").value:
+            self.get_logger().fatal("No waypoint file path provided")
+            rclpy.shutdown()
+
+        wps_file_path = self.get_parameter("wps_file_path").value
         self.wp_parser = YamlArucoWaypointParser(wps_file_path)
 
         self.run_flag = False
@@ -71,38 +90,62 @@ class StateMachine(Node):
         self.tags = []
         self.wps = []
 
+        self.hex_coord = [
+            (2.0, 0.0),
+            (1.0, 1.73),
+            (-1.0, 1.73),
+            (-2.0, 0.0),
+            (-1.0, -1.73),
+            (1.0, -1.73),
+        ]
+
         # Declare parameters
         self.declare_parameters(
-            namespace='',
+            namespace="",
             parameters=[
-                ('legs', ["start", "gps1", "gps2", "aruco1", "aruco2", "aruco3", "mallet", "bottle"]),
-                ('gps_legs', ["gps1", "gps2"]),
-                ('aruco_legs', ["aruco1", "aruco2", "aruco3"]),
-                ('obj_legs', ["mallet", "bottle"]),
-                ('hex_coord', [(2.0, 0.0), (1.0, 1.73), (-1.0, 1.73), (-2.0, 0.0), (-1.0, -1.73), (1.0, -1.73)]),
-                ('hex_scalar', 0.00001),
-            ]
+                (
+                    "legs",
+                    [
+                        "start",
+                        "gps1",
+                        "gps2",
+                        "aruco1",
+                        "aruco2",
+                        "aruco3",
+                        "mallet",
+                        "bottle",
+                    ],
+                ),
+                ("gps_legs", ["gps1", "gps2"]),
+                ("aruco_legs", ["aruco1", "aruco2", "aruco3"]),
+                ("obj_legs", ["mallet", "bottle"]),
+                ("hex_scalar", 0.00001),
+            ],
         )
-        self.legs = self.get_parameter('legs').value
-        self.gps_legs = self.get_parameter('gps_legs').value
-        self.aruco_legs = self.get_parameter('aruco_legs').value
-        self.obj_legs = self.get_parameter('obj_legs').value
-        self.hex_coord = self.get_parameter('hex_coord').value
-        self.hex_scalar = self.get_parameter('hex_scalar').value
+        self.legs = self.get_parameter("legs").value
+        self.gps_legs = self.get_parameter("gps_legs").value
+        self.aruco_legs = self.get_parameter("aruco_legs").value
+        self.obj_legs = self.get_parameter("obj_legs").value
+        self.hex_scalar = self.get_parameter("hex_scalar").value
 
         # Aruco pose subscriber
+        aruco_callback_group = MutuallyExclusiveCallbackGroup()
         self.aruco_subscriber = self.create_subscription(
-            ArucoDetections, 'aruco_detections', self.aruco_callback, 10)
-        self.aruco_subscriber   # prevent unused variable warning
+            ArucoDetection, "/aruco_detections", self.aruco_callback, 10, callback_group=aruco_callback_group
+        )
+        self.aruco_subscriber  # prevent unused variable warning
 
         # TODO: Add object detection subscriber
 
         # Mapviz publisher (to show the goal in mapviz)
-        self.wps_mapviz_publisher = self.create_publisher(NavSatFix, 'mapviz/goal', 10)
+        self.wps_mapviz_publisher = self.create_publisher(NavSatFix, "/mapviz/goal", 10)
 
-        self.enable_service = self.create_service(SetBool, 'sm/enable', self.enable_callback)
+        enable_callback_group = MutuallyExclusiveCallbackGroup()
+        self.enable_service = self.create_service(
+            SetBool, "/nav2_sm/enable", self.enable_callback, callback_group=enable_callback_group
+        )
 
-        self.get_logger().info('State machine node initialized')
+        self.get_logger().info("State machine node initialized")
 
     def enable_callback(self, request, response):
         """
@@ -112,15 +155,17 @@ class StateMachine(Node):
         # Enable or disable the state machine
         if request.data:
             self.run_flag = True
-            self.get_logger().info('State machine enabled')
+            self.get_logger().info("State machine enabled")
         else:
             self.run_flag = False
-            self.get_logger().info('State machine disabled')
+            self.get_logger().info("State machine disabled")
 
         response.success = True
-        response.message = 'State machine enabled' if request.data else 'State machine disabled'
+        response.message = (
+            "State machine enabled" if request.data else "State machine disabled"
+        )
 
-        return
+        return response
 
     def aruco_callback(self, msg):
         """
@@ -138,50 +183,51 @@ class StateMachine(Node):
 
         for marker in msg.markers:
             if marker.marker_id in self.tags:
-                self.get_logger().info('Found aruco tag', marker.marker_id, throttle_duration_sec=1)
+                self.get_logger().info(
+                    "Found aruco tag: " + marker.marker_id, throttle_duration_sec=1
+                )
                 self.found_flag = True
-                self.found_pose = marker.pose # TODO: Convert to GeoPose ?
+                self.found_pose = marker.pose  # TODO: Convert to GeoPose ?
 
     def gps_nav(self, leg):
         """
         Function to navigate through GPS waypoints
         """
 
-        self.get_logger().info(leg, 'Starting GPS navigation')
+        self.get_logger().info(leg + " Starting GPS navigation")
 
         # Store relevant tags and waypoints
         self.tags, self.wps = self.wp_parser.get_wps(leg)
 
         # Publish the last GPS position in leg (our goal) to mapviz
         navsat_fix = NavSatFix()
-        navsat_fix.header.frame_id = 'map'
+        navsat_fix.header.frame_id = "map"
         navsat_fix.header.stamp = self.navigator.get_clock().now().to_msg()
         navsat_fix.latitude = self.wps[-1].position.latitude
         navsat_fix.longitude = self.wps[-1].position.longitude
         self.wps_mapviz_publisher.publish(navsat_fix)
 
         self.navigator.followGpsWaypoints(self.wps)
-        while (not self.navigator.isTaskComplete()):
+        while not self.navigator.isTaskComplete():
             time.sleep(0.1)
-        
+
         result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.get_logger().info(leg, 'GPS navigation completed')
+            self.get_logger().info(leg + " GPS navigation completed")
         elif result == TaskResult.CANCELED:
-            self.get_logger().warn(leg, 'GPS navigation canceled')
+            self.get_logger().warn(leg + " GPS navigation canceled")
         elif result == TaskResult.FAILED:
-            self.get_logger().error(leg, 'GPS navigation failed')
+            self.get_logger().error(leg + " GPS navigation failed")
 
     def spin_search(self, leg):
         """
         Function to spin in place
         """
 
-        self.get_logger().info(leg, 'Starting spin search')
-
+        self.get_logger().info(leg + " Starting spin search")
 
         self.navigator.spin(spin_dist=3.14)
-        while (not self.navigator.isTaskComplete()):
+        while not self.navigator.isTaskComplete():
 
             if leg in self.aruco_legs:
                 # Check for the aruco tag
@@ -201,12 +247,12 @@ class StateMachine(Node):
 
         result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.get_logger().info(leg, 'Spin search completed')
+            self.get_logger().info(leg + " Spin search completed")
         elif result == TaskResult.CANCELED:
-            self.get_logger().warn(leg, 'Spin search canceled')
+            self.get_logger().warn(leg + " Spin search canceled")
         elif result == TaskResult.FAILED:
-            self.get_logger().error(leg, 'Spin search failed')
-        
+            self.get_logger().error(leg + " Spin search failed")
+
         return False
 
     def hex_search(self, leg):
@@ -214,7 +260,7 @@ class StateMachine(Node):
         Function to search in a hex pattern
         """
 
-        self.get_logger().info(leg, 'Starting hex search')
+        self.get_logger().info(leg + " Starting hex search")
 
         # Generate a hex pattern in the base_link frame
         for coord in self.hex_coord:
@@ -222,13 +268,13 @@ class StateMachine(Node):
             hex_lat = self.wps[-1].position.latitude + coord[0] * self.hex_scalar
             hex_lon = self.wps[-1].position.longitude + coord[1] * self.hex_scalar
             hex_pose = latLonYaw2Geopose(hex_lat, hex_lon)
-            
+
             self.gps_nav(hex_pose, leg)
             found_pose = self.spin_search(leg)
             # Did the last spin search find it?
             if found_pose:
                 return found_pose
-        
+
         return False
 
     def aruco_check(self, leg):
@@ -258,83 +304,93 @@ class StateMachine(Node):
         """
         Function to execute task legs
         """
-        self.navigator.waitUntilNav2Active(localizer='robot_localization')
+        self.navigator.waitUntilNav2Active(localizer="robot_localization")
 
         # Iterate through the GPS legs
         if leg in self.gps_legs:
 
-            self.get_logger().info(leg, 'Starting GPS leg')
+            self.get_logger().info(leg + " Starting GPS leg")
             self.gps_nav(leg)
 
             # Don't wait or flash the LED for the start leg
-            if leg == 'start':
+            if leg == "start":
                 return
-            
+
             # TODO: Wait and flash LED
+            time.sleep(5)
 
         # Iterate through the aruco legs
         elif leg in self.aruco_legs:
 
-            self.get_logger().info(leg, 'Starting aruco leg')
+            self.get_logger().info(leg + " Starting aruco leg")
             self.gps_nav(leg)
 
             # Look for the aruco tag
-            aruco_loc = self.spin_search(leg) # Do a spin search
+            aruco_loc = self.spin_search(leg)  # Do a spin search
             if not aruco_loc:
-                aruco_loc = self.hex_search(leg) # Do a hex search
+                aruco_loc = self.hex_search(leg)  # Do a hex search
             if not aruco_loc:
-                self.get_logger().error(leg, 'Could not find the aruco tag')
+                self.get_logger().error(leg + " Could not find the aruco tag")
             else:
-                self.get_logger().info(leg, 'Found the aruco tag at:', aruco_loc)
+                self.get_logger().info(leg + " Found the aruco tag at:", aruco_loc)
                 self.gps_nav(aruco_loc, leg)
 
                 # TODO: Wait and flash LED
+                time.sleep(5)
 
         # Iterate through the object legs
         elif leg in self.obj_legs:
 
-            self.get_logger().info(leg, 'Starting object leg')
+            self.get_logger().info(leg + " Starting object leg")
             self.gps_nav(leg)
 
             # Look for the object
-            obj_loc = self.spin_search(leg) # Do a spin search
+            obj_loc = self.spin_search(leg)  # Do a spin search
             if not obj_loc:
-                obj_loc = self.hex_search(leg) # Do a hex search
+                obj_loc = self.hex_search(leg)  # Do a hex search
             if not obj_loc:
-                self.get_logger().error(leg, 'Could not find the object')
+                self.get_logger().error(leg + " Could not find the object")
             else:
-                self.get_logger().info(leg, 'Found the object at:', obj_loc)
+                self.get_logger().info(leg + " Found the object at:", obj_loc)
                 self.gps_nav(obj_loc, leg)
 
                 # TODO: Wait and flash LED
+                time.sleep(5)
 
     def run_state_machine(self):
         """
         Function to run the competition state machine
         """
+        while not self.run_flag:
+            time.sleep(1)
 
-        while True:
-            while not self.run_flag:
-                time.sleep(1)
+        for leg in self.legs:
+            if not self.run_flag:
+                break
+            self.exec_leg(leg)
 
-            for leg in self.legs:
-                if self.run_flag:
-                    break
-                self.exec_leg(leg)
+        self.get_logger().info("State machine completed")
+
+
+def spin_in_thread(exec):
+    """
+    Function to spin the executor in a separate thread
+    """
+    exec.spin()
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    # allow to pass the waypoints file as an argument
-    yaml_file_path = os.path.join(get_package_share_directory(
-        "nav2_autonomy"), "config", "waypoints/output/basic_waypoints.yaml")
+    nav2_sm = StateMachine()
+    executor = MultiThreadedExecutor()
+    executor.add_node(nav2_sm)
 
-    nav2_sm = StateMachine(yaml_file_path)
+    # Create a separate thread for spinning the node
+    spin_thread = threading.Thread(target=spin_in_thread, args=(executor,))
+    spin_thread.start()
 
-    while rclpy.ok():
-        nav2_sm.spin_some()
-        nav2_sm.run_state_machine()
+    nav2_sm.run_state_machine()
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
