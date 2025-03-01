@@ -5,17 +5,18 @@
 # - This script won't throw any errors, but the container will crash immediately
 # - Be very careful editing it!
 
+# From ros_entrypoint.sh
+set -e
+source "/opt/ros/$ROS_DISTRO/setup.bash" # source ROS distro
+
 # Are we running on Jetson Orin architecture (the rover)?
 if [ "$(uname -m)" == "aarch64" ]; then
+
+    fastdds discovery --server-id 0 # start on port 11811
 
     # Start a new 'rover_runtime' tmux session
     tmux new-session -d -s rover_runtime
     tmux send-keys -t rover_runtime.0 "clear" Enter
-
-    # Make a new window for Fast DDS discovery
-    tmux new-window -t rover_runtime
-    tmux send-keys -t rover_runtime.1 "clear" Enter
-    tmux send-keys -t rover_runtime.1 "fastdds discovery --server-id 0" Enter # start on port 11811
     
     # Launch ROS 2 nodes on system startup
     tmux send-keys -t rover_runtime.0 "source ~/mars_ws/install/setup.bash" Enter
@@ -29,8 +30,6 @@ fi
 
 # Start the SSH daemon in the Docker container
 sudo /usr/sbin/sshd -D
-
-# exec "$@"
 
 # IMPORTANT! Keeps the container running
 exec /bin/bash
