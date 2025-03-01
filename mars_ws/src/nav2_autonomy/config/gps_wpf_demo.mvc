@@ -66,4 +66,14 @@ displays:
       color: "#ffaa00"
       draw_style: points
       position_tolerance: 0
-      buffer_size: 10
+      buffer_size: 20
+  - type: mapviz_plugins/navsat
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      topic: /mapviz/inter
+      color: "#ff00ff"
+      draw_style: points
+      position_tolerance: 0
+      buffer_size: 100

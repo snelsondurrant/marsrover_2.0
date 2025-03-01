@@ -134,9 +134,11 @@ class StateMachine(Node):
 
         # TODO: Add object detection subscriber
 
-        # Mapviz publisher (to show the goal in mapviz)
-        self.wps_mapviz_publisher = self.create_publisher(NavSatFix, "/mapviz/goal", 10)
+        # Mapviz publishers (to show the goals in mapviz)
+        self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "/mapviz/goal", 10)
+        self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "/mapviz/inter", 10)
 
+        # Enable service
         enable_callback_group = MutuallyExclusiveCallbackGroup()
         self.enable_service = self.create_service(
             SetBool,
@@ -199,13 +201,22 @@ class StateMachine(Node):
         # Store relevant tags and waypoints
         self.tags, self.wps = self.wp_parser.get_wps(leg)
 
+        for wp in self.wps:
+            # Publish the GPS position in leg to mapviz
+            navsat_fix = NavSatFix()
+            navsat_fix.header.frame_id = "map"
+            navsat_fix.header.stamp = self.navigator.get_clock().now().to_msg()
+            navsat_fix.latitude = wp.position.latitude
+            navsat_fix.longitude = wp.position.longitude
+            self.mapviz_inter_publisher.publish(navsat_fix)
+
         # Publish the last GPS position in leg (our goal) to mapviz
         navsat_fix = NavSatFix()
         navsat_fix.header.frame_id = "map"
         navsat_fix.header.stamp = self.navigator.get_clock().now().to_msg()
         navsat_fix.latitude = self.wps[-1].position.latitude
         navsat_fix.longitude = self.wps[-1].position.longitude
-        self.wps_mapviz_publisher.publish(navsat_fix)
+        self.mapviz_goal_publisher.publish(navsat_fix)
 
         self.navigator.followGpsWaypoints(self.wps)
         while not self.navigator.isTaskComplete():
