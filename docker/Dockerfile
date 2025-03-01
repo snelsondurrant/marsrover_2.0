@@ -64,6 +64,7 @@ RUN apt update && apt install -y \
 USER $NAME
 
 # Install gazebo and turtlebot3 packages
+# For some reason, these packages are not available for arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
@@ -80,6 +81,7 @@ RUN apt update && apt install -y \
 USER $NAME
 
 # Install mapviz packages
+# For some reason, these packages are not available for arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
@@ -98,9 +100,14 @@ RUN touch ~/.hushlogin
 # IMPORTANT! When adding dependencies or Dockerfile commands
 # below, please document your changes following this format:
 #     
-#     # What do these commands do? - Name, Month Year
+#     # What do these commands do? - Full Name, Month Year
 #     # Why do we need them? Which ROS 2 nodes require them?
 #     < Add Dockerfile commands here >
 #
 ###############################################################
 
+# Install matplotlib - Nelson Durrant, Oct 2024
+# Used for plotting the path planning script results
+USER root
+RUN apt update && apt install -y python3-matplotlib
+USER $NAME
