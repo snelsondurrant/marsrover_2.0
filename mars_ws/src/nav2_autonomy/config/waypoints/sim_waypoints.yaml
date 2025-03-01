@@ -1,4 +1,14 @@
 # Created by Nelson Durrant, Feb 2025
+
+# Aruco tags for the rover to detect
+aruco_tags:
+- leg: aruco1
+  id: 0
+- leg: aruco2
+  id: 0
+- leg: aruco3
+  id: 0
+
 # Simulated waypoints for the turtlebot to follow
 waypoints:
 # Start waypoint
@@ -21,19 +31,16 @@ waypoints:
   latitude: 38.161268
   longitude: -122.453233
   orig_wp: true
-  aruco_id: 0
 # 4th waypoint (Aruco)
 - leg: aruco2
   latitude: 38.161801
   longitude: -122.454508
   orig_wp: true
-  aruco_id: 0
 # 5th waypoint (Aruco)
 - leg: aruco3
   latitude: 38.162221
   longitude: -122.455083
   orig_wp: true
-  aruco_id: 0
 # 6th waypoint (Mallet)
 - leg: mallet
   latitude: 38.162333

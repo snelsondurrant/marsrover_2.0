@@ -1,4 +1,14 @@
 # Created by Nelson Durrant, Feb 2025
+
+# Aruco tags for the rover to detect
+aruco_tags:
+- leg: aruco1
+  id: 0
+- leg: aruco2
+  id: 0
+- leg: aruco3
+  id: 0
+
 # Real waypoints for the rover to follow
 waypoints:
 # Start waypoint

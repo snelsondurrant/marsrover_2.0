@@ -1,3 +1,10 @@
+aruco_tags:
+- id: 0
+  leg: aruco1
+- id: 0
+  leg: aruco2
+- id: 0
+  leg: aruco3
 waypoints:
 - latitude: 38.161479
   leg: start
@@ -111,8 +118,7 @@ waypoints:
   leg: aruco1
   longitude: -122.4531825
   orig_wp: false
-- aruco_id: 0
-  latitude: 38.161268
+- latitude: 38.161268
   leg: aruco1
   longitude: -122.453233
   orig_wp: true
@@ -164,8 +170,7 @@ waypoints:
   leg: aruco2
   longitude: -122.45440992307692
   orig_wp: false
-- aruco_id: 0
-  latitude: 38.161801
+- latitude: 38.161801
   leg: aruco2
   longitude: -122.454508
   orig_wp: true
@@ -193,8 +198,7 @@ waypoints:
   leg: aruco3
   longitude: -122.45500085714286
   orig_wp: false
-- aruco_id: 0
-  latitude: 38.162221
+- latitude: 38.162221
   leg: aruco3
   longitude: -122.455083
   orig_wp: true

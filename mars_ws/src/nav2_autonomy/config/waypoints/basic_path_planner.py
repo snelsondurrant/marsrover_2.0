@@ -32,6 +32,7 @@ except Exception as ex:
 
 # YAML object to store new waypoints
 new_wps_data = {
+    "aruco_tags": orig_wps_data["aruco_tags"],
     "waypoints": []
 }
 

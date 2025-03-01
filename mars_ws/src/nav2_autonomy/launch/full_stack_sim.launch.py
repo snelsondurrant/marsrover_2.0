@@ -85,6 +85,22 @@ def generate_launch_description():
         condition=IfCondition(use_mapviz)
     )
 
+    aruco_opencv_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_dir, 'aruco_opencv.launch.py')),
+            launch_arguments={
+                "use_sim_time": "True",
+            }.items(),
+    )
+
+    state_machine_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_dir, 'state_machine.launch.py'))
+            launch_arguments={
+                "use_sim_time": "True",
+            }.items(),
+    )
+
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -102,5 +118,9 @@ def generate_launch_description():
     ld.add_action(rviz_cmd)
     ld.add_action(declare_use_mapviz_cmd)
     ld.add_action(mapviz_cmd)
+
+    # custom launch
+    ld.add_action(aruco_opencv_cmd)
+    ld.add_action(state_machine_cmd)
 
     return ld

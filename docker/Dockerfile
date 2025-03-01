@@ -51,9 +51,11 @@ RUN apt update && apt install -y \
     xauth
 USER $NAME
 
-# Install the navigation2 package
+# Install the navigation2 and robot_localization packages
 USER root
-RUN apt update && apt install -y ros-iron-navigation2
+RUN apt update && apt install -y \
+    ros-iron-navigation2 \
+    ros-iron-robot-localization
 USER $NAME
 
 # Install tutorial-specific packages
@@ -75,10 +77,9 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
 fi
 USER $NAME
 
-# Install the robot-localization package
+# Install the aruco_opencv package
 USER root
-RUN apt update && apt install -y \
-    ros-iron-robot-localization
+RUN apt update && apt install -y ros-iron-aruco-opencv
 USER $NAME
 
 # Install mapviz packages
