@@ -123,6 +123,7 @@ class StateMachine(Node):
         # Mapviz publishers (to show the goals in mapviz)
         self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
         self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "mapviz/inter", 10)
+        self.mapviz_hex_publisher = self.create_publisher(NavSatFix, "mapviz/hex", 10)
 
         # Enable service
         enable_callback_group = MutuallyExclusiveCallbackGroup()
@@ -176,12 +177,12 @@ class StateMachine(Node):
                 self.found_flag = True
                 self.found_pose = marker.pose
 
-    def pose_nav(self, pose, leg_id):
+    def pose_nav(self, pose, leg):
         """
         Function to navigate to a pose
         """
 
-        self.get_logger().info(leg_id + " Starting pose navigation")
+        self.get_logger().info(leg + " Starting pose navigation")
 
         self.navigator.goToPose(pose)
         while (not self.navigator.isTaskComplete()):
@@ -189,11 +190,11 @@ class StateMachine(Node):
 
         result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.get_logger().info(leg_id + " Pose navigation completed")
+            self.get_logger().info(leg + " Pose navigation completed")
         elif result == TaskResult.CANCELED:
-            self.get_logger().warn(leg_id + " Pose navigation canceled")
+            self.get_logger().warn(leg + " Pose navigation canceled")
         elif result == TaskResult.FAILED:
-            self.get_logger().error(leg_id + " Pose navigation failed")
+            self.get_logger().error(leg + " Pose navigation failed")
 
     def gps_nav(self, leg, hex_flag=False):
         """
