@@ -14,7 +14,7 @@ services:
       - ../mars_ws:/home/${NAME}/mars_ws
       - ../mapproxy:/home/${NAME}/mapproxy
       - ../demo_ws:/home/${NAME}/demo_ws
-      - ./scripts:/home/${NAME}/scripts
+      - ./startup:/startup
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
       - /var/run/docker.sock:/var/run/docker.sock # Required for docker in docker
@@ -22,5 +22,4 @@ services:
     stdin_open: true  # Equivalent to -it in docker run
     tty: true  # Equivalent to -it in docker run
     restart: always  # Optional: Keeps the container running after exit unless you want it to be removed like with --rm
-    # command: ["/bin/bash", "-c", "/home/marsrover-docker/scripts/entrypoint.sh", "/bin/bash"]
-    entrypoint: ["/bin/bash", "-c", "/home/${NAME}/scripts/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c", "/startup/entrypoint.sh"]
