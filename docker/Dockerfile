@@ -48,8 +48,7 @@ RUN apt update && apt install -y \
     x11-apps \
     x11-utils \
     x11-xserver-utils \
-    xauth \
-    ros-iron-rqt*
+    xauth 
 USER $NAME
 
 # Install the navigation2 and robot_localization packages
@@ -59,11 +58,11 @@ RUN apt update && apt install -y \
     ros-iron-robot-localization
 USER $NAME
 
-# Install tutorial-specific packages
+# Install graphical interface packages
 USER root
 RUN apt update && apt install -y \
-    ros-iron-teleop-twist-keyboard \
     ros-iron-rviz2 \
+    ros-iron-rqt* \
     python3-tk
 USER $NAME
 
@@ -92,6 +91,14 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     ros-iron-mapviz-plugins \
     ros-iron-tile-map; \
 fi
+USER $NAME
+
+# Install mobility packages
+USER root
+RUN apt update && apt install -y \
+    ros-iron-joy \
+    ros-iron-teleop-twist-joy \
+    ros-iron-teleop-twist-keyboard \
 USER $NAME
 
 # Set up automatic ROS 2 sourcing and colorized output
