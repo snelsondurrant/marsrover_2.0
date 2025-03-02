@@ -3,6 +3,9 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 import launch_ros.actions
+from ament_index_python.packages import get_package_share_directory
+from launch.conditions import UnlessCondition
+import os
 
 
 def generate_launch_description():
@@ -12,10 +15,20 @@ def generate_launch_description():
         'use_sim_time',
         default_value='False',
         description='Use simulation time')
+    cam_config_path = os.path.join(get_package_share_directory('nav2_autonomy'), 'config', 'aruco_cam_params.yaml')
 
     return LaunchDescription(
         [
             declare_use_sim_time_cmd,
+            launch_ros.actions.Node(
+                package='usb_cam',
+                executable='usb_cam_node_exe',
+                parameters=[cam_config_path],
+                condition=UnlessCondition(use_sim_time),
+                remappings=[
+                    ('/image_raw', '/aruco_cam/image_raw') # TODO: Check these mappings to match simulation
+                ]
+            ),
             # TODO: Add the usb webcam node
             launch_ros.actions.Node(
                 # https://github.com/fictionlab/ros_aruco_opencv
@@ -23,7 +36,7 @@ def generate_launch_description():
                 executable="aruco_tracker_autostart",
                 name="aruco_tracker_autostart",
                 output="screen",
-                parameters=[{"cam_base_topic": "camera1/image_raw", "marker_size": 0.15, "image_is_rectified": True, "use_sim_time": use_sim_time}],
+                parameters=[{"cam_base_topic": "aruco_cam/image_raw", "marker_size": 0.15, "use_sim_time": use_sim_time}],
             ),
         ]
     )

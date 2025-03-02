@@ -57,7 +57,7 @@ displays:
       draw_style: points
       position_tolerance: 0
       buffer_size: 1
-  - type: mapviz_plugins/navsat
+  - type: mapviz_plugins/navsat # GPS goal waypoint display
     name: new display
     config:
       visible: true
@@ -67,7 +67,7 @@ displays:
       draw_style: points
       position_tolerance: 0
       buffer_size: 20
-  - type: mapviz_plugins/navsat
+  - type: mapviz_plugins/navsat # GPS intermediate waypoint display
     name: new display
     config:
       visible: true
@@ -76,4 +76,14 @@ displays:
       color: "#ff00ff"
       draw_style: points
       position_tolerance: 0
-      buffer_size: 100
+      buffer_size: 200
+  - type: mapviz_plugins/navsat # GPS hex waypoint display
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      topic: /mapviz/hex
+      color: "#00ff00"
+      draw_style: points
+      position_tolerance: 0
+      buffer_size: 80
