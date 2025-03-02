@@ -2,6 +2,11 @@
 # Modified to listen to the nav_state Int8 message instead
 # TODO: I think this could be simplified a lot?
 
+# Also, for reference:
+# int8 AUTONOMOUS_STATE = 0
+# int8 TELEOPERATION_STATE = 1
+# int8 ARRIVAL_STATE = 2
+
 """
 This wrapper allows us to merge 2 arduinos into one to allow for more USB ports
 """
@@ -53,7 +58,7 @@ class RoverStatusNode(Node):
 
     def led_callback(self, data):
         # Update LED based on the rover state
-        data_array = f"L{data.data};"
+        data_array = f"L{data.data};" 
         q.put(data_array)
 
     # def gripper_callback(self, data):

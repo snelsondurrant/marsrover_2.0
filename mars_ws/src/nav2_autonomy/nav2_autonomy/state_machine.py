@@ -2,6 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import Int8
 from std_srvs.srv import SetBool
 from aruco_opencv_msgs.msg import ArucoDetection, MarkerPose
 from vision_msgs.msg import Detection3DArray, ObjectHypothesisWithPose
@@ -67,6 +68,7 @@ class StateMachine(Node):
     - aruco_detections (aruco_opencv_msgs/ArucoDetection)
     - /zed/detections (vision_msgs/Detection3DArray) # TODO: check this
     Publishers:
+    - nav_state (std_msgs/Int8) # TODO: Implement this better
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
     - mapviz/hex (sensor_msgs/NavSatFix)
@@ -124,6 +126,7 @@ class StateMachine(Node):
         self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
         self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "mapviz/inter", 10)
         self.mapviz_hex_publisher = self.create_publisher(NavSatFix, "mapviz/hex", 10)
+        self.nav_state_publisher = self.create_publisher(Int8, "nav_state", 10)
 
         # Enable service
         enable_callback_group = MutuallyExclusiveCallbackGroup()
@@ -145,9 +148,11 @@ class StateMachine(Node):
         if request.data:
             self.run_flag = True
             self.get_logger().info("State machine enabled")
+            self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
         else:
             self.run_flag = False
             self.get_logger().info("State machine disabled")
+            self.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
 
         response.success = True
         response.message = (
@@ -331,8 +336,10 @@ class StateMachine(Node):
             if leg == "start":
                 return
 
-            # TODO: Wait and flash LED
+            # Wait and flash the LED to indicate arrival
+            self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
             time.sleep(5)
+            self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
 
         # Iterate through the aruco legs
         elif leg in self.aruco_legs:
@@ -350,8 +357,10 @@ class StateMachine(Node):
                 self.get_logger().info(leg + " Found the aruco tag at:", aruco_loc)
                 self.pose_nav(aruco_loc, leg)
 
-                # TODO: Wait and flash LED
+                # Wait and flash the LED to indicate arrival
+                self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
                 time.sleep(5)
+                self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
 
         # Iterate through the object legs
         elif leg in self.obj_legs:
@@ -369,8 +378,10 @@ class StateMachine(Node):
                 self.get_logger().info(leg + " Found the object at:", obj_loc)
                 self.pose_nav(obj_loc, leg)
 
-                # TODO: Wait and flash LED
+                # Wait and flash the LED to indicate arrival
+                self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
                 time.sleep(5)
+                self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
 
     def run_state_machine(self):
         """
@@ -385,6 +396,7 @@ class StateMachine(Node):
             self.exec_leg(leg)
 
         self.get_logger().info("State machine completed")
+        self.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
 
 
 def spin_in_thread(exec):
@@ -406,13 +418,17 @@ def main(args=None):
     spin_thread = threading.Thread(target=spin_in_thread, args=(executor,))
     spin_thread.start()
 
-    nav2_sm.run_state_machine()
+    try:
+        nav2_sm.run_state_machine()
+    except:
+        nav2_sm.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
+    finally:
 
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    nav2_sm.destroy_node()
-    rclpy.shutdown()
+        # Destroy the node explicitly
+        # (optional - otherwise it will be done automatically
+        # when the garbage collector destroys the node object)
+        nav2_sm.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
