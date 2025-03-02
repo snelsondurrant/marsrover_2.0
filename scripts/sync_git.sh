@@ -35,6 +35,7 @@ then
 fi
 
 # Send tmux commands to the rover over SSH
+printInfo "Setting up the sync_git tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_git; \
     tmux set-option -g default-terminal "screen-256color"; \
     tmux set -g mouse on; \
