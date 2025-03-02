@@ -1,10 +1,4 @@
-"""
-Created by Nelson Durrant, Feb 2025
-
-State machine for the BYU Mars Rover using Nav2
-Pretty cool, right?
-"""
-
+# Created by Nelson Durrant, Feb 2025
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
@@ -116,7 +110,7 @@ class StateMachine(Node):
         aruco_callback_group = MutuallyExclusiveCallbackGroup()
         self.aruco_subscriber = self.create_subscription(
             ArucoDetection,
-            "/aruco_detections",
+            "aruco_detections",
             self.aruco_callback,
             10,
             callback_group=aruco_callback_group,
@@ -126,14 +120,14 @@ class StateMachine(Node):
         # TODO: Add object detection subscriber
 
         # Mapviz publishers (to show the goals in mapviz)
-        self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "/mapviz/goal", 10)
-        self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "/mapviz/inter", 10)
+        self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
+        self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "mapviz/inter", 10)
 
         # Enable service
         enable_callback_group = MutuallyExclusiveCallbackGroup()
         self.enable_service = self.create_service(
             SetBool,
-            "/nav2_sm/enable",
+            "nav2_sm/enable",
             self.enable_callback,
             callback_group=enable_callback_group,
         )
