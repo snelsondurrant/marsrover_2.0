@@ -39,6 +39,7 @@ then
     printError "No tmux session found in the rover's Docker container"
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover's Docker container is running the 'rover_runtime' tmux session"
+    echo "      -> Restart the Docker container using 'bash compose.sh down' and 'bash compose.sh'"
 
     exit
 fi
@@ -71,7 +72,9 @@ case "$1" in
         ssh marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT "\
             tmux split-window -h -t rover_runtime; \
             tmux select-pane -t rover_runtime.1; \
-            tmux send-keys -t rover_runtime.1 'ros2 launch nav2_autonomy full_stack.py'" # NO ENTER 
+            tmux send-keys -t rover_runtime.1 'export ROS_DISCOVERY_SERVER=127.0.0.1:11811' Enter; \
+            tmux send-keys -t rover_runtime.1 'source ~/mars_ws/install/setup.bash' Enter; \
+            tmux send-keys -t rover_runtime.1 'ros2 launch nav2_autonomy rover_task_autonomy.launch.py'" # NO ENTER 
         ;;
     "servicing")
         printWarning "Not implemented yet"

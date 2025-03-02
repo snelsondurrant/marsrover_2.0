@@ -34,11 +34,18 @@ then
     exit
 fi
 
-# Connect to the rover and pull the base station branch
-ssh marsrover@$ROVER_IP_ADDRESS "cd ~/byu-marsrover; \
-    git checkout $current_branch; \
-    git pull base $current_branch"
+# Send tmux commands to the rover over SSH
+ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_git; \
+    tmux set-option -g default-terminal "screen-256color"; \
+    tmux set -g mouse on; \
+    tmux send-keys -t sync_git.0 'clear' Enter; \
+    tmux send-keys -t sync_git.0 'cd ~/byu-marsrover/mars_ws' Enter; \
+    tmux send-keys -t sync_git.0 'git checkout $current_branch' Enter; \
+    tmux send-keys -t sync_git.0 'git pull base $current_branch' Enter; \
+    tmux send-keys -t sync_git.0 'colcon build'" # NO ENTER
 
-printInfo "Successfully pulled $current_branch onto the rover"
+# Attach to the 'sync_git' tmux session to view the output
+ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_git"
 
-# TODO: Add tmux functionality
+# Kill the tmux session on exit
+ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t sync_git"
