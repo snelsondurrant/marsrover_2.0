@@ -46,3 +46,5 @@ ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t foxy_runtime"
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t foxy_runtime"
+
+# TODO: Get the ZED running in a Docker container too, add the code to this repo

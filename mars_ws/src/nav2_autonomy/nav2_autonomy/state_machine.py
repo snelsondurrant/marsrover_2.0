@@ -66,7 +66,7 @@ class StateMachine(Node):
 
     Subscribers:
     - aruco_detections (aruco_opencv_msgs/ArucoDetection)
-    - /zed/detections (vision_msgs/Detection3DArray) # TODO: check this
+    - zed/detections (vision_msgs/Detection3DArray)
     Publishers:
     - nav_state (std_msgs/Int8)
     - mapviz/goal (sensor_msgs/NavSatFix)

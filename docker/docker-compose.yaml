@@ -12,8 +12,9 @@ services:
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
       - ../mars_ws:/home/${NAME}/mars_ws
-      - ../mapproxy:/home/${NAME}/mapproxy
       - ../demo_ws:/home/${NAME}/demo_ws
+      - ../mapproxy:/home/${NAME}/mapproxy
+      - ../mega_pio:/home/${NAME}/mega_pio
       - ./startup:/startup
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host

@@ -106,6 +106,8 @@ def generate_launch_description():
         }.items(),
     )
 
+    # TODO: Add ublox and LiDAR launch files to launch when not sim_mode
+
     state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'state_machine.launch.py')),

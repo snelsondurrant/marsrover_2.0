@@ -1,5 +1,10 @@
 # Created by Nelson Durrant, Oct 2024
 FROM ros:iron-ros-base
+# Why use ROS 2 Iron?
+# The simulator is build using Gazebo Classic, which is only supported in ROS 2 Iron and older.
+# The Navigation2 package's GPS navigation functions (Commander API) are only supported in ROS 2 Iron and newer.
+# So, we need to use ROS 2 Iron to run the simulator and the navigation functions at the same time.
+
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
@@ -91,11 +96,10 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
     ros-iron-nav2-bringup \
     ros-iron-turtlebot3-gazebo; \
-    # if we ever switch to the new gazebo, change this to ros-<ros2-distro>-nav2-minimal-tb*
 fi
 USER $NAME
 
-# Install the aruco_opencv package
+# Install the aruco_opencv packages
 USER root
 RUN apt update && apt install -y \
     ros-iron-aruco-opencv \
