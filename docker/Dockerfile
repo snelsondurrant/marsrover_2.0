@@ -125,6 +125,11 @@ RUN apt update && apt install -y \
     ros-iron-teleop-twist-keyboard
 USER $NAME
 
+# Install zed interface packages
+USER root
+RUN apt update && apt install -y ros-iron-vision-msgs
+USER $NAME
+
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc

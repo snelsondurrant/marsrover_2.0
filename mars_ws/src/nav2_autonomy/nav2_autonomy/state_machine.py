@@ -294,7 +294,7 @@ class StateMachine(Node):
             hex_lon = self.wps[-1].position.longitude + coord[1] * self.hex_scalar
             hex_pose = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            self.gps_nav(hex_pose, leg, hex_flag=True)
+            self.gps_nav(hex_pose, leg, True)
             found_pose = self.spin_search(leg)
             # Did the last spin search find it?
             if found_pose:
