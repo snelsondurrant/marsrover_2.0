@@ -1,5 +1,4 @@
 # Created by Nelson Durrant, Feb 2025
-
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
@@ -42,8 +41,14 @@ class ArduinoInterface(Node):
         self.wheel_radius = 0.1
         self.wheel_base = 0.5 # distance between the two wheels
 
+        # Serial connection parameters
+        self.declare_parameter('port', '/dev/ttyACM0')
+        port = self.get_parameter('port').value
+        self.declare_parameter('baudrate', 9600)
+        baudrate = self.get_parameter('baudrate').value
+
         # Start a pyserial connection to the Arduino
-        self.serial = pyserial.Serial('/dev/ttyACM0', 9600)
+        self.serial = pyserial.Serial(port, baudrate)
 
     def timer_callback(self):
         '''
@@ -58,6 +63,8 @@ class ArduinoInterface(Node):
         '''
         Convert the Twist message to diff drive motor speeds and send to the Arduino
         '''
+
+        self.last_msg_time = self.get_clock().now()
 
         # Kinematic model for differential drive robot
         left_wheel_velocity = (msg.linear.x - (msg.angular.z * self.wheel_base / 2)) / self.wheel_radius
