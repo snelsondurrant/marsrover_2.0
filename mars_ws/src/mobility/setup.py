@@ -24,7 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'mega_middleman = mobility.mega_middleman:main',
-            'state_manager = mobility.state_manager:main',
+            'state_switcher = mobility.state_switcher:main',
         ],
     },
 )
