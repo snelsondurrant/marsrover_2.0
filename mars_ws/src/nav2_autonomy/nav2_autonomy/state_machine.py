@@ -36,7 +36,11 @@ class YamlArucoWaypointParser:
         """
         Get an array of leg names from the yaml file
         """
-        return self.wps_dict["legs"]
+
+        legs = []
+        for leg in self.wps_dict["legs"]:
+            legs.append(leg["leg"])
+        return legs
 
     def get_wps(self, leg):
         """
@@ -314,18 +318,14 @@ class StateMachine(Node):
         Function to check for the object
         """
 
-        # Return fake data for the object location
-        fake_obj_lat = self.wps[-1].position.latitude + 2 * self.hex_scalar
-        fake_obj_lon = self.wps[-1].position.longitude
-        pose = latLonYaw2Geopose(fake_obj_lat, fake_obj_lon)
-
-        return pose
+        return False
 
     def exec_leg(self, leg):
         """
         Function to execute task legs
         """
-        self.navigator.waitUntilNav2Active(localizer="robot_localization")
+
+        self.get_logger().info("Executing leg: " + leg)
 
         # Iterate through the GPS legs
         if leg in self.gps_legs:
@@ -391,6 +391,8 @@ class StateMachine(Node):
         while not self.run_flag:
             time.sleep(1)
 
+        self.navigator.waitUntilNav2Active(localizer="robot_localization")
+
         for leg in self.legs:
             if not self.run_flag:
                 break
@@ -421,7 +423,8 @@ def main(args=None):
 
     try:
         nav2_sm.run_state_machine()
-    except:
+    except Exception as e:
+        nav2_sm.get_logger().error(str(e))
         nav2_sm.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
     finally:
 

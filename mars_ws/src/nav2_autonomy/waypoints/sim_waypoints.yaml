@@ -25,8 +25,8 @@ waypoints:
   orig_wp: true
 # 1st waypoint (GPS only)
 - leg: gps1
-  latitude: 38.160891
-  longitude: -122.453686
+  latitude: 38.162048
+  longitude: -122.455563
   orig_wp: true
 # 2nd waypoint (GPS only)
 - leg: gps2
@@ -35,8 +35,8 @@ waypoints:
   orig_wp: true
 # 3rd waypoint (Aruco)
 - leg: aruco1
-  latitude: 38.161268
-  longitude: -122.453233
+  latitude: 38.162203
+  longitude: -122.456768
   orig_wp: true
 # 4th waypoint (Aruco)
 - leg: aruco2
@@ -50,8 +50,8 @@ waypoints:
   orig_wp: true
 # 6th waypoint (Mallet)
 - leg: mallet
-  latitude: 38.162333
-  longitude: -122.455990
+  latitude: 38.162729
+  longitude: -122.456755
   orig_wp: true
 # 7th waypoint (Bottle)
 - leg: bottle
