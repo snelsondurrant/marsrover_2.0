@@ -51,6 +51,24 @@ RUN apt update && apt install -y \
     xauth 
 USER $NAME
 
+# Install PlatformIO
+USER root
+RUN apt install -y python3-venv
+USER $NAME
+
+RUN curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
+RUN python3 get-platformio.py
+RUN rm get-platformio.py
+
+# Set up PlatformIO shell commands
+RUN mkdir -p /usr/local/bin
+
+USER root
+RUN ln -s /home/$NAME/.platformio/penv/bin/platformio /usr/local/bin/platformio
+RUN ln -s /home/$NAME/.platformio/penv/bin/pio /usr/local/bin/pio
+RUN ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
+USER $NAME
+
 # Install the navigation2 and robot_localization packages
 USER root
 RUN apt update && apt install -y \

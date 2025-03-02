@@ -16,6 +16,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             declare_use_sim_time_cmd,
+            # TODO: Add the usb webcam node
             launch_ros.actions.Node(
                 # https://github.com/fictionlab/ros_aruco_opencv
                 package="aruco_opencv",
