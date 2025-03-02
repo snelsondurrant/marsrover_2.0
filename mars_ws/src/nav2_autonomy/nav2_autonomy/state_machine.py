@@ -206,15 +206,18 @@ class StateMachine(Node):
         elif result == TaskResult.FAILED:
             self.get_logger().error(leg + " Pose navigation failed")
 
-    def gps_nav(self, leg, hex_flag=False):
+    def gps_nav(self, leg, hex_flag=False, only_last=False):
         """
         Function to navigate through GPS waypoints
         """
 
         self.get_logger().info(leg + " Starting GPS navigation")
 
-        # Store relevant tags and waypoints
-        self.tags, self.wps = self.wp_parser.get_wps(leg)
+        if only_last:
+            self.wps = self.wps[-1]
+        else:
+            # Store relevant tags and waypoints
+            self.tags, self.wps = self.wp_parser.get_wps(leg)
 
         for wp in self.wps:
             # Publish the GPS positions to mapviz
@@ -363,6 +366,9 @@ class StateMachine(Node):
                 time.sleep(5)
                 self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
 
+            # Go back to the last GPS point
+            self.gps_nav(leg, False, True)
+
         # Iterate through the object legs
         elif leg in self.obj_legs:
 
@@ -383,6 +389,9 @@ class StateMachine(Node):
                 self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
                 time.sleep(5)
                 self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
+
+            # Go back to the last GPS point
+            self.gps_nav(leg, False, True)
 
     def run_state_machine(self):
         """
