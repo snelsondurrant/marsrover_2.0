@@ -17,7 +17,7 @@ class MegaMiddleman(Node):
         super().__init__('mega_middleman')
 
         # SUBSCRIBERS
-        self.create_subscription(Twist, 'cmd_vel', self.send_wheel, 1) # only keep the last message
+        self.create_subscription(Twist, 'state/cmd_vel', self.send_wheel, 1) # only keep the last message
         # self.create_subscription(Elevator, '/elevator', self.send_elevator, 1)
         # self.create_subscription(Bool, '/arm_clicker', self.send_clicker, 1)
         # self.create_subscription(Bool, '/arm_laser', self.send_laser, 1)

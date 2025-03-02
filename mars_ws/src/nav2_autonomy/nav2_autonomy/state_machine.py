@@ -137,6 +137,7 @@ class StateMachine(Node):
             callback_group=enable_callback_group,
         )
 
+        self.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
         self.get_logger().info("State machine node initialized")
 
     def enable_callback(self, request, response):
