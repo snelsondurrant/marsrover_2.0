@@ -97,7 +97,9 @@ USER $NAME
 
 # Install the aruco_opencv package
 USER root
-RUN apt update && apt install -y ros-iron-aruco-opencv
+RUN apt update && apt install -y \
+    ros-iron-aruco-opencv \
+    ros-iron-usb-cam
 USER $NAME
 
 # Install mapviz packages
