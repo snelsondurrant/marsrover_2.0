@@ -61,7 +61,7 @@ RUN python3 get-platformio.py
 RUN rm get-platformio.py
 
 # Set up PlatformIO shell commands
-RUN mkdir -p /usr/local/bin
+RUN mkdir -p /usr/local/bin 
 
 USER root
 RUN ln -s /home/$NAME/.platformio/penv/bin/platformio /usr/local/bin/platformio
