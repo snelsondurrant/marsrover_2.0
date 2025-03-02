@@ -92,7 +92,10 @@ def generate_launch_description():
     mapviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'mapviz.launch.py')),
-        condition=IfCondition(use_mapviz)
+        condition=IfCondition(use_mapviz),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+        }.items(),
     )
 
     aruco_opencv_cmd = IncludeLaunchDescription(
