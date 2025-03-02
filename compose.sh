@@ -40,7 +40,7 @@ case $1 in
 				printWarning "Creating a new tmux session..."
 				docker exec -it marsrover-ct tmux new-session -d -s rover_dev
 				docker exec -it marsrover-ct tmux select-pane -t 0 -T rover_dev
-				docker exec -it marsrover-ct tmux send-keys "clear && cat ~/scripts/introduction.txt" Enter
+				docker exec -it marsrover-ct tmux send-keys "clear && cat /startup/introduction.txt" Enter
 
 				# Full color and mouse options
 				docker exec -it marsrover-ct tmux set-option -g default-terminal "screen-256color"
@@ -51,13 +51,6 @@ case $1 in
 		else
 
 			sleep 1 # IMPORTANT! Give the Docker container a chance to start up
-			# Check if a 'rover_runtime' tmux session already exists
-			if [ "$(docker exec -it marsrover-ct tmux list-sessions | grep rover_runtime)" == "" ]; then
-
-				# If not, create a new 'rover_dev' tmux session
-				printWarning "Running entrypoint.sh again..."
-				docker exec -it marsrover-ct bash /home/marsrover-docker/scripts/entrypoint.sh
-			fi
 
 			# Enter the 'rover_runtime' tmux session on the rover
 			docker exec -it marsrover-ct tmux attach -t rover_runtime
