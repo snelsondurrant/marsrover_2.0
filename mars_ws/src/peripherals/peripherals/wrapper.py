@@ -1,5 +1,5 @@
 # Copied over by Nelson Durrant, Feb 2025
-# Modified to listen to the nav_state String message instead
+# Modified to listen to the nav_state Int8 message instead
 # TODO: I think this could be simplified a lot?
 
 """
@@ -9,7 +9,7 @@ This wrapper allows us to merge 2 arduinos into one to allow for more USB ports
 import rclpy
 from rclpy.node import Node
 import serial
-from std_msgs.msg import String
+from std_msgs.msg import Int8
 # from rover_msgs.msg import NavState, Battery, Gripper, RawBattery, Laser, Clicker
 import time
 import threading
@@ -30,7 +30,7 @@ class RoverStatusNode(Node):
         # self.battery_pub = self.create_publisher(RawBattery, '/raw_battery_info', 10)
         
         # Subscribers
-        self.create_subscription(String, 'nav_state', self.led_callback, 10)
+        self.create_subscription(Int8, 'nav_state', self.led_callback, 10)
         # self.create_subscription(Gripper, '/gripper', self.gripper_callback, 10)
         # self.create_subscription(Laser, '/laser_state', self.laser_callback, 10)
         # self.create_subscription(Clicker, '/click', self.click_callback, 10)
@@ -53,7 +53,7 @@ class RoverStatusNode(Node):
 
     def led_callback(self, data):
         # Update LED based on the rover state
-        data_array = f"L{data.navigation_state};"
+        data_array = f"L{data.data};"
         q.put(data_array)
 
     # def gripper_callback(self, data):
