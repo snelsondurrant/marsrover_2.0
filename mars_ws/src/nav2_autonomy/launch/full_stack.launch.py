@@ -38,6 +38,7 @@ def generate_launch_description():
 
     use_rviz = LaunchConfiguration('use_rviz')
     use_mapviz = LaunchConfiguration('use_mapviz')
+    sim_mode = LaunchConfiguration('sim_mode')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
         'use_rviz',
@@ -48,15 +49,24 @@ def generate_launch_description():
         'use_mapviz',
         default_value='False',
         description='Whether to start mapviz')
+    
+    declare_sim_mode_cmd = DeclareLaunchArgument(
+        'sim_mode',
+        default_value='false',
+        description='Whether to start in simulation mode')
 
     gazebo_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(launch_dir, 'gazebo_gps_world.launch.py'))
+            os.path.join(launch_dir, 'gazebo_gps_world.launch.py')),
+        condition=IfCondition(sim_mode),
     )
 
     robot_localization_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(launch_dir, 'dual_ekf_navsat.launch.py'))
+            os.path.join(launch_dir, 'dual_ekf_navsat.launch.py')),
+        launch_arguments={
+            "use_sim_time": "True",
+        }.items(),
     )
 
     navigation2_cmd = IncludeLaunchDescription(
@@ -64,7 +74,7 @@ def generate_launch_description():
             os.path.join(bringup_dir, "launch", "navigation_launch.py")
         ),
         launch_arguments={
-            "use_sim_time": "True",
+            "use_sim_time": sim_mode,
             "params_file": configured_params,
             "autostart": "True",
         }.items(),
@@ -75,7 +85,7 @@ def generate_launch_description():
             os.path.join(bringup_dir, "launch", 'rviz_launch.py')),
         condition=IfCondition(use_rviz),
         launch_arguments={
-            "use_sim_time": "True", # Fix for pose timing - Nelson Durrant, Feb 2025
+            "use_sim_time": sim_mode,
         }.items(),
     )
 
@@ -88,15 +98,22 @@ def generate_launch_description():
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'aruco_opencv.launch.py')),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+        }.items(),
     )
 
     state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'state_machine.launch.py')),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+        }.items(),
     )
 
     # Create the launch description and populate
     ld = LaunchDescription()
+    ld.add_action(declare_sim_mode_cmd)
 
     # simulator launch
     ld.add_action(gazebo_cmd)

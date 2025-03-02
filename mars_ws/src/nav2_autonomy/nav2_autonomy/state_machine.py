@@ -71,7 +71,7 @@ class StateMachine(Node):
 
     Subscribers:
         - /aruco_detections (aruco_opencv_msgs/ArucoDetection)
-        - /zed/detections
+        - /zed/detections (vision_msgs/Detection3DArray) # TODO: check this
     Publishers:
         - /mapviz/goal (sensor_msgs/NavSatFix)
         - /mapviz/inter (sensor_msgs/NavSatFix)
@@ -165,14 +165,13 @@ class StateMachine(Node):
         Callback function for the aruco pose subscriber
         """
 
-        # Message structure:
-        #   ArucoDetections:
-        #       std_msgs/Header header
-        #       aruco_opencv_msgs/MarkerPose[] markers
-        #       aruco_opencv_msgs/BoardPose[] boards
-        #   MarkerPose:
-        #       uint16 marker_id
-        #       geometry_msgs/Pose pose
+        # ArucoDetections:
+        #   std_msgs/Header header
+        #   aruco_opencv_msgs/MarkerPose[] markers
+        #   aruco_opencv_msgs/BoardPose[] boards
+        # MarkerPose:
+        #   uint16 marker_id
+        #   geometry_msgs/Pose pose
 
         for marker in msg.markers:
             if marker.marker_id in self.tags:
@@ -180,9 +179,28 @@ class StateMachine(Node):
                     "Found aruco tag: " + marker.marker_id, throttle_duration_sec=1
                 )
                 self.found_flag = True
-                self.found_pose = marker.pose  # TODO: Convert to GeoPose ?
+                self.found_pose = marker.pose
 
-    def gps_nav(self, leg):
+    def pose_nav(self, pose, leg_id):
+        """
+        Function to navigate to a pose
+        """
+
+        self.get_logger().info(leg_id + " Starting pose navigation")
+
+        self.navigator.goToPose(pose)
+        while (not self.navigator.isTaskComplete()):
+            time.sleep(0.1)
+
+        result = self.navigator.getResult()
+        if result == TaskResult.SUCCEEDED:
+            self.get_logger().info(leg_id + " Pose navigation completed")
+        elif result == TaskResult.CANCELED:
+            self.get_logger().warn(leg_id + " Pose navigation canceled")
+        elif result == TaskResult.FAILED:
+            self.get_logger().error(leg_id + " Pose navigation failed")
+
+    def gps_nav(self, leg, hex_flag=False):
         """
         Function to navigate through GPS waypoints
         """
@@ -193,21 +211,20 @@ class StateMachine(Node):
         self.tags, self.wps = self.wp_parser.get_wps(leg)
 
         for wp in self.wps:
-            # Publish the GPS position in leg to mapviz
+            # Publish the GPS positions to mapviz
             navsat_fix = NavSatFix()
             navsat_fix.header.frame_id = "map"
             navsat_fix.header.stamp = self.navigator.get_clock().now().to_msg()
             navsat_fix.latitude = wp.position.latitude
             navsat_fix.longitude = wp.position.longitude
-            self.mapviz_inter_publisher.publish(navsat_fix)
 
-        # Publish the last GPS position in leg (our goal) to mapviz
-        navsat_fix = NavSatFix()
-        navsat_fix.header.frame_id = "map"
-        navsat_fix.header.stamp = self.navigator.get_clock().now().to_msg()
-        navsat_fix.latitude = self.wps[-1].position.latitude
-        navsat_fix.longitude = self.wps[-1].position.longitude
-        self.mapviz_goal_publisher.publish(navsat_fix)
+            # Publish to different topics based on type
+            if hex_flag:
+                self.mapviz_hex_publisher.publish(navsat_fix)
+            elif wp != self.wps[-1]:
+                self.mapviz_goal_publisher.publish(navsat_fix)
+            else:
+                self.mapviz_inter_publisher.publish(navsat_fix)
 
         self.navigator.followGpsWaypoints(self.wps)
         while not self.navigator.isTaskComplete():
@@ -271,7 +288,7 @@ class StateMachine(Node):
             hex_lon = self.wps[-1].position.longitude + coord[1] * self.hex_scalar
             hex_pose = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            self.gps_nav(hex_pose, leg)
+            self.gps_nav(hex_pose, leg, hex_flag=True)
             found_pose = self.spin_search(leg)
             # Did the last spin search find it?
             if found_pose:
@@ -335,7 +352,7 @@ class StateMachine(Node):
                 self.get_logger().error(leg + " Could not find the aruco tag")
             else:
                 self.get_logger().info(leg + " Found the aruco tag at:", aruco_loc)
-                self.gps_nav(aruco_loc, leg)
+                self.pose_nav(aruco_loc, leg)
 
                 # TODO: Wait and flash LED
                 time.sleep(5)
@@ -354,7 +371,7 @@ class StateMachine(Node):
                 self.get_logger().error(leg + " Could not find the object")
             else:
                 self.get_logger().info(leg + " Found the object at:", obj_loc)
-                self.gps_nav(obj_loc, leg)
+                self.pose_nav(obj_loc, leg)
 
                 # TODO: Wait and flash LED
                 time.sleep(5)
