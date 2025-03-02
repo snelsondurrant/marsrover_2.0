@@ -32,19 +32,17 @@ then
 fi
 
 # Check if tmux is running on the rover
-if ! ssh marsrover@$ROVER_IP_ADDRESS "tmux has-session -t foxy_runtime" &> /dev/null
-then
-    printInfo "Setting up the ZED tmux session..."
-    # Send tmux commands to the rover over SSH
-    ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s foxy_runtime; \
-        tmux set-option -g default-terminal "screen-256color"; \
-        tmux set -g mouse on; \
-        tmux send-keys -t foxy_runtime.0 'clear' Enter; \
-        tmux send-keys -t foxy_runtime.0 'source /opt/ros/foxy/setup.bash' Enter; \
-        tmux send-keys -t foxy_runtime.0 'cd ~/foxy_ws && source install/setup.bash' Enter; \
-        tmux send-keys -t foxy_runtime.0 'ros2 launch object_detection object_detection_launch.py'" # NO ENTER
-else
-    printWarning "ZED tmux session already running, simply entering it..."
-fi
+printInfo "Setting up the ZED tmux session..."
+ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s foxy_runtime; \
+    tmux set-option -g default-terminal "screen-256color"; \
+    tmux set -g mouse on; \
+    tmux send-keys -t foxy_runtime.0 'clear' Enter; \
+    tmux send-keys -t foxy_runtime.0 'export ROS_DISCOVERY_SERVER=127.0.0.1:11811' Enter; \
+    tmux send-keys -t foxy_runtime.0 'source /opt/ros/foxy/setup.bash' Enter; \
+    tmux send-keys -t foxy_runtime.0 'cd ~/foxy_ws && source install/setup.bash' Enter; \
+    tmux send-keys -t foxy_runtime.0 'ros2 launch object_detection object_detection_launch.py'" # NO ENTER
 
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t foxy_runtime"
+
+# Kill the tmux session on exit
+ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t foxy_runtime"
