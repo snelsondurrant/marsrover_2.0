@@ -64,13 +64,14 @@ class StateMachine(Node):
     :date: Feb 2025
 
     Subscribers:
-        - /aruco_detections (aruco_opencv_msgs/ArucoDetection)
-        - /zed/detections (vision_msgs/Detection3DArray) # TODO: check this
+    - aruco_detections (aruco_opencv_msgs/ArucoDetection)
+    - /zed/detections (vision_msgs/Detection3DArray) # TODO: check this
     Publishers:
-        - /mapviz/goal (sensor_msgs/NavSatFix)
-        - /mapviz/inter (sensor_msgs/NavSatFix)
+    - mapviz/goal (sensor_msgs/NavSatFix)
+    - mapviz/inter (sensor_msgs/NavSatFix)
+    - mapviz/hex (sensor_msgs/NavSatFix)
     Services:
-        - /nav2_sm/enable (std_srvs/SetBool)
+    - nav2_sm/enable (std_srvs/SetBool)
     """
 
     def __init__(self):

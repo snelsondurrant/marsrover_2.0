@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'arduino_interface = mobility.arduino_interface:main',
+            'mega_middleman = mobility.mega_middleman:main',
         ],
     },
 )

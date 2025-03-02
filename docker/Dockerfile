@@ -98,7 +98,7 @@ USER root
 RUN apt update && apt install -y \
     ros-iron-joy \
     ros-iron-teleop-twist-joy \
-    ros-iron-teleop-twist-keyboard \
+    ros-iron-teleop-twist-keyboard
 USER $NAME
 
 # Set up automatic ROS 2 sourcing and colorized output

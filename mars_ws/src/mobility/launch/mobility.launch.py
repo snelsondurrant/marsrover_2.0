@@ -1,10 +1,10 @@
+# Created by Nelson Durrant, Feb 2025
 import launch
 import launch_ros.actions
 import launch_ros.descriptions
 
 
 def generate_launch_description():
-    
     
     return launch.LaunchDescription([
         launch_ros.actions.Node(
@@ -21,8 +21,7 @@ def generate_launch_description():
         ),
         launch_ros.actions.Node(
             package="mobility",
-            executable="mobility",
+            executable="mega_middleman",
             output="screen",
-            parameters=[{"port": "/dev/ttyACM0", "baudrate": 9600}],
         ),
     ])
