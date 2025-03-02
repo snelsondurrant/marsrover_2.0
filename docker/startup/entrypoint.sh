@@ -9,12 +9,11 @@
 set -e
 source "/opt/ros/$ROS_DISTRO/setup.bash" # source ROS distro
 
-# Set up the Fast DDS discovery server to run in the background
-fastdds discovery --server-id 0 & # start on port 11811
-echo "export ROS_DISCOVERY_SERVER=127.0.0.1:11811" >> ~/.bashrc
-
 # Are we running on Jetson Orin architecture (the rover)?
 if [ "$(uname -m)" == "aarch64" ]; then
+
+    # Set up the Fast DDS discovery server to run in the background
+    fastdds discovery --server-id 0 & # start on port 11811
 
     # Start a new 'rover_runtime' tmux session
     tmux new-session -d -s rover_runtime
@@ -22,6 +21,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
     
     # Launch ROS 2 nodes on system startup
     tmux send-keys -t rover_runtime.0 "source ~/mars_ws/install/setup.bash" Enter
+    tmux send-keys -t rover_runtime.0 "export ROS_DISCOVERY_SERVER=127.0.0.1:11811" Enter
     tmux send-keys -t rover_runtime.0 "ros2 launch mobility startup.launch.py" Enter
 
     # Full color and mouse options
