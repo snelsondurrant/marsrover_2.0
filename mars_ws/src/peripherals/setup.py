@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'mobility'
+package_name = 'peripherals'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'wrapper = peripherals.wrapper:main',
+            'rover_status_listener = mobility.wrapper:main',
         ],
     },
 )

@@ -8,8 +8,8 @@ def generate_launch_description():
     
     return launch.LaunchDescription([
         launch_ros.actions.Node(
-            package="mobility",
-            executable="mega_middleman",
+            package="peripherals",
+            executable="rover_status_listener",
             output="screen",
         ),
     ])
