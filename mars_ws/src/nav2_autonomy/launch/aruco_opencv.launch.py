@@ -29,7 +29,6 @@ def generate_launch_description():
                     ('/image_raw', '/aruco_cam/image_raw') # TODO: Check these mappings to match simulation
                 ]
             ),
-            # TODO: Add the usb webcam node
             launch_ros.actions.Node(
                 # https://github.com/fictionlab/ros_aruco_opencv
                 package="aruco_opencv",
