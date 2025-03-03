@@ -212,7 +212,7 @@ class StateMachine(Node):
                 self.found_flag = True
                 self.found_pose = marker.pose
 
-    def pose_nav(self, pose, leg):
+    def pose_nav(self, leg, pose):
         """
         Function to navigate to a pose
         """
@@ -231,18 +231,43 @@ class StateMachine(Node):
         elif result == TaskResult.FAILED:
             self.get_logger().error(leg + " Pose navigation failed")
 
-    def gps_nav(self, leg, hex_flag=False, only_last=False):
+    def gps_point_nav(self, leg, wp):
+        """
+        Function to navigate to a GPS point
+        """
+
+        self.get_logger().info(leg + " Starting GPS point navigation")
+
+        # Publish the GPS position to mapviz
+        navsat_fix = NavSatFix()
+        navsat_fix.header.frame_id = "map"
+        navsat_fix.header.stamp = self.navigator.get_clock().now().to_msg()
+        navsat_fix.latitude = wp.position.latitude
+        navsat_fix.longitude = wp.position.longitude
+        self.mapviz_hex_publisher.publish(navsat_fix)
+
+        self.navigator.followGpsWaypoints(wp)
+        while not self.navigator.isTaskComplete():
+            time.sleep(0.1)
+
+        result = self.navigator.getResult()
+        if result == TaskResult.SUCCEEDED:
+            self.get_logger().info(leg + " GPS point navigation completed")
+        elif result == TaskResult.CANCELED:
+            self.get_logger().warn(leg + " GPS point navigation canceled")
+        elif result == TaskResult.FAILED:
+            self.get_logger().error(leg + " GPS point navigation failed")
+
+    def gps_path_nav(self, leg):
         """
         Function to navigate through GPS waypoints
         """
 
-        self.get_logger().info(leg + " Starting GPS navigation")
+        self.get_logger().info(leg + " Starting GPS path navigation")
 
-        if only_last:
-            self.wps = self.wps[-1]
-        else:
-            # Store relevant tags and waypoints
-            self.tags, self.wps = self.wp_parser.get_wps(leg)
+        
+        # Store relevant tags and waypoints
+        self.tags, self.wps = self.wp_parser.get_wps(leg)
 
         for wp in self.wps:
             # Publish the GPS positions to mapviz
@@ -253,9 +278,7 @@ class StateMachine(Node):
             navsat_fix.longitude = wp.position.longitude
 
             # Publish to different topics based on type
-            if hex_flag:
-                self.mapviz_hex_publisher.publish(navsat_fix)
-            elif wp != self.wps[-1]:
+            if wp != self.wps[-1]:
                 self.mapviz_inter_publisher.publish(navsat_fix)
             else:
                 self.mapviz_goal_publisher.publish(navsat_fix)
@@ -266,11 +289,11 @@ class StateMachine(Node):
 
         result = self.navigator.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.get_logger().info(leg + " GPS navigation completed")
+            self.get_logger().info(leg + " GPS path navigation completed")
         elif result == TaskResult.CANCELED:
-            self.get_logger().warn(leg + " GPS navigation canceled")
+            self.get_logger().warn(leg + " GPS path navigation canceled")
         elif result == TaskResult.FAILED:
-            self.get_logger().error(leg + " GPS navigation failed")
+            self.get_logger().error(leg + " GPS path navigation failed")
 
     def spin_search(self, leg):
         """
@@ -322,7 +345,7 @@ class StateMachine(Node):
             hex_lon = self.wps[-1].position.longitude + coord[1] * self.hex_scalar
             hex_pose = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            self.gps_nav(hex_pose, leg, True)
+            self.gps_point_nav(leg, hex_pose)
             found_pose = self.spin_search(leg)
             # Did the last spin search find it?
             if found_pose:
@@ -359,7 +382,7 @@ class StateMachine(Node):
         if leg in self.gps_legs:
 
             self.get_logger().info(leg + " Starting GPS leg")
-            self.gps_nav(leg)
+            self.gps_path_nav(leg)
 
             # Don't wait or flash the LED for the start leg
             if leg == "start":
@@ -379,7 +402,7 @@ class StateMachine(Node):
         elif leg in self.aruco_legs:
 
             self.get_logger().info(leg + " Starting aruco leg")
-            self.gps_nav(leg)
+            self.gps_path_nav(leg)
 
             # Look for the aruco tag
             aruco_loc = self.spin_search(leg)  # Do a spin search
@@ -389,7 +412,7 @@ class StateMachine(Node):
                 self.get_logger().error(leg + " Could not find the aruco tag")
             else:
                 self.get_logger().info(leg + " Found the aruco tag at:", aruco_loc)
-                self.pose_nav(aruco_loc, leg)
+                self.pose_nav(leg, aruco_loc)
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
@@ -402,13 +425,13 @@ class StateMachine(Node):
                 rclpy.spin_until_future_complete(self, future)
 
             # Go back to the last GPS point
-            self.gps_nav(leg, False, True)
+            self.gps_point_nav(leg, self.wps[-1])
 
         # Iterate through the object legs
         elif leg in self.obj_legs:
 
             self.get_logger().info(leg + " Starting object leg")
-            self.gps_nav(leg)
+            self.gps_path_nav(leg)
 
             # Look for the object
             obj_loc = self.spin_search(leg)  # Do a spin search
@@ -418,7 +441,7 @@ class StateMachine(Node):
                 self.get_logger().error(leg + " Could not find the object")
             else:
                 self.get_logger().info(leg + " Found the object at:", obj_loc)
-                self.pose_nav(obj_loc, leg)
+                self.pose_nav(leg, obj_loc)
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
@@ -431,7 +454,7 @@ class StateMachine(Node):
                 rclpy.spin_until_future_complete(self, future)
 
             # Go back to the last GPS point
-            self.gps_nav(leg, False, True)
+            self.gps_point_nav(leg, self.wps[-1])
 
     def run_state_machine(self):
         """
