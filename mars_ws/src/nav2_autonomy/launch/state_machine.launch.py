@@ -36,6 +36,7 @@ def generate_launch_description():
                 package = "mobility",
                 executable = "drive_switch",
                 output = "screen",
+                condition = IfCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 package = "nav2_autonomy",

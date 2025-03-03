@@ -1,10 +1,9 @@
 # Created by Nelson Durrant, Feb 2025
 import math
-from geographic_msgs.msg import GeoPose
-from nav2_autonomy.utils.gps_utils import latLonYawToGeopose
+from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
 
 
-def basicPathPlanner(self, geopose1, geopose2):
+def basicPathPlanner(geopose1, geopose2):
         """
         Generate intermediary waypoints in a straight line between two GPS coordinates
 
@@ -27,6 +26,8 @@ def basicPathPlanner(self, geopose1, geopose2):
 
         # Calculate the desire yaw angle for movement
         yaw = math.atan((end_lat - start_lat) / (end_lon - start_lon))
+        if end_lon < start_lon:
+            yaw += math.pi
 
         # Calculate the distance between the two points
         distance = ((end_lat - start_lat)**2 + (end_lon - start_lon)**2)**0.5
@@ -46,11 +47,12 @@ def basicPathPlanner(self, geopose1, geopose2):
             lat = start_lat + i * step_lat
             lon = start_lon + i * step_lon
             
-            geopose = latLonYawToGeopose(lat, lon, yaw)
+            geopose = latLonYaw2Geopose(lat, lon, yaw)
 
             new_wps.append(geopose)
 
         # Add the original waypoint
+        geopose2.orientation.yaw = quaternion_from_euler(0.0, 0.0, yaw)
         new_wps.append(geopose2)
 
         return new_wps

@@ -248,12 +248,12 @@ class StateMachine(Node):
         self.get_logger().info(self.leg + " Starting GPS path navigation")
 
         # If no waypoint is provided, navigate to the current leg's GPS waypoint
-        if not dest_wp:
+        if dest_wp is None:
             for wp in self.wps:
                 if wp["leg"] == self.leg:
                     dest_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
         
-        if not dest_wp:
+        if dest_wp is None:
             self.get_logger().fatal(self.leg + " No GPS waypoint defined for leg")
             return
         
@@ -386,7 +386,7 @@ class StateMachine(Node):
         if self.leg in self.gps_legs:
 
             self.get_logger().info(self.leg + " Starting GPS leg")
-            self.gps_path_nav()
+            self.gps_nav()
 
             # Trigger the arrival state
             future = self.arrival_client.call_async(self.arrival_request)
@@ -402,7 +402,7 @@ class StateMachine(Node):
         elif self.leg in self.aruco_legs:
 
             self.get_logger().info(self.leg + " Starting aruco leg")
-            self.gps_path_nav()
+            self.gps_nav()
 
             # Look for the aruco tag
             aruco_loc = self.spin_search()  # Do a spin search
@@ -428,7 +428,7 @@ class StateMachine(Node):
         elif leg in self.obj_legs:
 
             self.get_logger().info(leg + " Starting object leg")
-            self.gps_path_nav(leg)
+            self.gps_nav(leg)
 
             # Look for the object
             obj_loc = self.spin_search(leg)  # Do a spin search
