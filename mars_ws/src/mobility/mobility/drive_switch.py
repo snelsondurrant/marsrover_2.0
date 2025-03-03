@@ -16,7 +16,7 @@ class DriveSwitch(Node):
 
     States:
     - Teleop (cmd_vel_teleop, blue LED)
-    - Autonomous (cmd_vel_nav, flashing green LED)
+    - Auto (cmd_vel_nav, flashing green LED)
     - Arrival (cmd_vel_nav, red LED)
 
     Subscribers:
@@ -27,7 +27,7 @@ class DriveSwitch(Node):
     - cmd_led (std_msgs/Int8)
     Services:
     - trigger_teleop (std_srvs/Trigger)
-    - trigger_autonomous (std_srvs/Trigger)
+    - trigger_auto (std_srvs/Trigger)
     - trigger_arrival (std_srvs/Trigger)
     """
 
@@ -59,7 +59,7 @@ class DriveSwitch(Node):
         # Service to trigger autonomy state
         self.nav_service = self.create_service(
             Trigger,
-            'trigger_autonomous',
+            'trigger_auto',
             self.nav_service_callback)
         
         # Service to trigger arrival state
@@ -92,10 +92,10 @@ class DriveSwitch(Node):
         Callback for cmd_vel_nav subscription
         """
 
-        if self.state == 'autonomous':
+        if self.state == 'auto':
             self.cmd_vel_switch_pub.publish(msg)
         else:
-            self.get_logger().warn("Received cmd_vel_nav while not in autonomous state")
+            self.get_logger().warn("Received cmd_vel_nav while not in auto state")
 
     def teleop_callback(self, msg):
         """
@@ -118,11 +118,11 @@ class DriveSwitch(Node):
     
     def nav_service_callback(self, request, response):
         """
-        Callback for trigger_autonomous service
+        Callback for trigger_auto service
         """
 
-        self.state = 'autonomous'
-        self.get_logger().info("Switched to autonomous state")
+        self.state = 'auto'
+        self.get_logger().info("Switched to auto state")
         return response
     
     def arrival_service_callback(self, request, response):
@@ -146,7 +146,7 @@ class DriveSwitch(Node):
 
         if self.state == 'teleop':
             led_state = 1
-        elif self.state == 'autonomous':
+        elif self.state == 'auto':
             led_state = 0
         elif self.state == 'arrival':
             led_state = 2

@@ -69,7 +69,7 @@ class StateMachine(Node):
     - mapviz/hex (sensor_msgs/NavSatFix)
     Clients:
     - trigger_teleop (std_srvs/Trigger)
-    - trigger_autonomous (std_srvs/Trigger)
+    - trigger_auto (std_srvs/Trigger)
     - trigger_arrival (std_srvs/Trigger)
     Services:
     - nav2_sm/enable (std_srvs/SetBool)
@@ -133,7 +133,7 @@ class StateMachine(Node):
         self.teleop_request = Trigger.Request()
 
         # Client to trigger autonomy state
-        self.nav_client = self.create_client(Trigger, "trigger_autonomous")
+        self.nav_client = self.create_client(Trigger, "trigger_auto")
         while not self.nav_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("Autonomy trigger service not available, waiting again...")
         self.nav_request = Trigger.Request()

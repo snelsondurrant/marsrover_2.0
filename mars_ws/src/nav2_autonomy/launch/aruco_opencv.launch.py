@@ -26,7 +26,7 @@ def generate_launch_description():
                 parameters=[cam_config_path],
                 condition=UnlessCondition(use_sim_time),
                 remappings=[
-                    ('/image_raw', '/aruco_cam/image_raw') # TODO: Check these mappings to match simulation
+                    ('/image_raw', '/aruco_cam/image_raw') # TODO: Remap the gazebo cam to match this
                 ]
             ),
             launch_ros.actions.Node(
