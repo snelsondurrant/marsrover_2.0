@@ -44,12 +44,4 @@ def generate_launch_description():
             arguments=["0", "0", "0", "0", "0", "0", "map", "origin"],
             parameters=[{"use_sim_time": use_sim_time}],
         ),
-        # Launch rqt_console too, bc why not
-        launch_ros.actions.Node(
-            package="rqt_console",
-            executable="rqt_console",
-            name="rqt_console",
-            output="screen",
-            parameters=[{"use_sim_time": use_sim_time}],
-        ),
     ])

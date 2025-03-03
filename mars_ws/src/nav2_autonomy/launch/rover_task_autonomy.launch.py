@@ -38,6 +38,7 @@ def generate_launch_description():
 
     use_rviz = LaunchConfiguration('use_rviz')
     use_mapviz = LaunchConfiguration('use_mapviz')
+    use_console = LaunchConfiguration('use_console')
     sim_mode = LaunchConfiguration('sim_mode')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
@@ -49,6 +50,11 @@ def generate_launch_description():
         'use_mapviz',
         default_value='False',
         description='Whether to start mapviz')
+    
+    declare_use_console_cmd = DeclareLaunchArgument(
+        'use_console',
+        default_value='False',
+        description='Whether to start rqt_console')
     
     declare_sim_mode_cmd = DeclareLaunchArgument(
         'sim_mode',
@@ -98,6 +104,14 @@ def generate_launch_description():
         }.items(),
     )
 
+    rqt_console_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_dir, 'console.launch.py')),
+        condition=IfCondition(use_console),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+        }.items
+
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'aruco_opencv.launch.py')),
@@ -134,6 +148,8 @@ def generate_launch_description():
     ld.add_action(rviz_cmd)
     ld.add_action(declare_use_mapviz_cmd)
     ld.add_action(mapviz_cmd)
+    ld.add_action(declare_use_console_cmd)
+    ld.add_action(rqt_console_cmd)
 
     # custom launch
     ld.add_action(aruco_opencv_cmd)
