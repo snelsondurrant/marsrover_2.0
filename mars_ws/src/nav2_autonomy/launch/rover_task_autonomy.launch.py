@@ -110,7 +110,7 @@ def generate_launch_description():
         condition=IfCondition(use_console),
         launch_arguments={
             "use_sim_time": sim_mode,
-        }.items
+        }.items(),
     )
 
     aruco_opencv_cmd = IncludeLaunchDescription(
