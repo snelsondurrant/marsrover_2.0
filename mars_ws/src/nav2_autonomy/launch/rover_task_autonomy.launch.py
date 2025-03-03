@@ -111,6 +111,7 @@ def generate_launch_description():
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items
+    )
 
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
