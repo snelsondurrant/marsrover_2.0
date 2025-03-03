@@ -63,7 +63,7 @@ displays:
       visible: true
       collapsed: false
       topic: /mapviz/goal
-      color: "#ffaa00"
+      color: "#ff00ff"
       draw_style: points
       position_tolerance: 0
       buffer_size: 20
@@ -73,7 +73,7 @@ displays:
       visible: true
       collapsed: false
       topic: /mapviz/inter
-      color: "#ff00ff"
+      color: "#ffaa00"
       draw_style: points
       position_tolerance: 0
       buffer_size: 200

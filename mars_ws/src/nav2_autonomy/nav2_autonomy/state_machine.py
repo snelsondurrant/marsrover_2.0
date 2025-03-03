@@ -256,9 +256,9 @@ class StateMachine(Node):
             if hex_flag:
                 self.mapviz_hex_publisher.publish(navsat_fix)
             elif wp != self.wps[-1]:
-                self.mapviz_goal_publisher.publish(navsat_fix)
-            else:
                 self.mapviz_inter_publisher.publish(navsat_fix)
+            else:
+                self.mapviz_goal_publisher.publish(navsat_fix)
 
         self.navigator.followGpsWaypoints(self.wps)
         while not self.navigator.isTaskComplete():
