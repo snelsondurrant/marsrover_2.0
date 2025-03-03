@@ -54,7 +54,7 @@
 
     <include>
       <uri>model://turtlebot_waffle_gps</uri>
-      <pose>2 -2.5 0.3 0 0 0</pose>
+      <pose>-54.5 128.3 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
     </include>
 
   </world>

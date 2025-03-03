@@ -11,115 +11,59 @@ legs:
 - leg: aruco1
 - leg: mallet
 waypoints:
-- latitude: 38.161479
+- latitude: 38.162603
   leg: start
-  longitude: -122.45463
+  longitude: -122.455219
   orig_wp: true
-- latitude: 38.1615359
+- latitude: 38.162709666666665
   leg: gps1
-  longitude: -122.4547233
+  longitude: -122.45514166666666
   orig_wp: false
-- latitude: 38.1615928
+- latitude: 38.16281633333333
   leg: gps1
-  longitude: -122.4548166
+  longitude: -122.45506433333334
   orig_wp: false
-- latitude: 38.1616497
+- latitude: 38.162923
   leg: gps1
-  longitude: -122.45490989999999
-  orig_wp: false
-- latitude: 38.1617066
-  leg: gps1
-  longitude: -122.4550032
-  orig_wp: false
-- latitude: 38.1617635
-  leg: gps1
-  longitude: -122.4550965
-  orig_wp: false
-- latitude: 38.161820399999996
-  leg: gps1
-  longitude: -122.4551898
-  orig_wp: false
-- latitude: 38.1618773
-  leg: gps1
-  longitude: -122.4552831
-  orig_wp: false
-- latitude: 38.1619342
-  leg: gps1
-  longitude: -122.45537639999999
-  orig_wp: false
-- latitude: 38.1619911
-  leg: gps1
-  longitude: -122.4554697
-  orig_wp: false
-- latitude: 38.162048
-  leg: gps1
-  longitude: -122.455563
+  longitude: -122.454987
   orig_wp: true
-- latitude: 38.16206091666667
+- latitude: 38.16293175
   leg: aruco1
-  longitude: -122.45566341666667
+  longitude: -122.45509325
   orig_wp: false
-- latitude: 38.16207383333333
+- latitude: 38.162940500000005
   leg: aruco1
-  longitude: -122.45576383333334
+  longitude: -122.45519949999999
   orig_wp: false
-- latitude: 38.16208675
+- latitude: 38.162949250000004
   leg: aruco1
-  longitude: -122.45586424999999
+  longitude: -122.45530575
   orig_wp: false
-- latitude: 38.16209966666666
+- latitude: 38.162958
   leg: aruco1
-  longitude: -122.45596466666666
-  orig_wp: false
-- latitude: 38.16211258333333
-  leg: aruco1
-  longitude: -122.45606508333333
-  orig_wp: false
-- latitude: 38.1621255
-  leg: aruco1
-  longitude: -122.4561655
-  orig_wp: false
-- latitude: 38.162138416666664
-  leg: aruco1
-  longitude: -122.45626591666667
-  orig_wp: false
-- latitude: 38.162151333333334
-  leg: aruco1
-  longitude: -122.45636633333334
-  orig_wp: false
-- latitude: 38.16216425
-  leg: aruco1
-  longitude: -122.45646675
-  orig_wp: false
-- latitude: 38.162177166666666
-  leg: aruco1
-  longitude: -122.45656716666666
-  orig_wp: false
-- latitude: 38.16219008333333
-  leg: aruco1
-  longitude: -122.45666758333333
-  orig_wp: false
-- latitude: 38.162203
-  leg: aruco1
-  longitude: -122.456768
+  longitude: -122.455412
   orig_wp: true
-- latitude: 38.1623082
+- latitude: 38.16290383333334
   leg: mallet
-  longitude: -122.4567654
+  longitude: -122.45531966666667
   orig_wp: false
-- latitude: 38.1624134
+- latitude: 38.162849666666666
   leg: mallet
-  longitude: -122.45676279999999
+  longitude: -122.45522733333333
   orig_wp: false
-- latitude: 38.1625186
+- latitude: 38.1627955
   leg: mallet
-  longitude: -122.4567602
+  longitude: -122.455135
   orig_wp: false
-- latitude: 38.1626238
+- latitude: 38.16274133333334
   leg: mallet
-  longitude: -122.4567576
+  longitude: -122.45504266666667
   orig_wp: false
-- latitude: 38.162729
+- latitude: 38.162687166666664
   leg: mallet
-  longitude: -122.456755
+  longitude: -122.45495033333333
+  orig_wp: false
+- latitude: 38.162633
+  leg: mallet
+  longitude: -122.454858
   orig_wp: true
