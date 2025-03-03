@@ -123,25 +123,33 @@ class StateMachine(Node):
 
         # Mapviz publishers (to show the goals in mapviz)
         self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
-        self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "mapviz/inter", 10)
+        self.mapviz_inter_publisher = self.create_publisher(
+            NavSatFix, "mapviz/inter", 10
+        )
         self.mapviz_hex_publisher = self.create_publisher(NavSatFix, "mapviz/hex", 10)
 
         # Client to trigger teleop state
         self.teleop_client = self.create_client(Trigger, "trigger_teleop")
         while not self.teleop_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Teleop trigger service not available, waiting again...")
+            self.get_logger().info(
+                "Teleop trigger service not available, waiting again..."
+            )
         self.teleop_request = Trigger.Request()
 
         # Client to trigger autonomy state
         self.nav_client = self.create_client(Trigger, "trigger_auto")
         while not self.nav_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Autonomy trigger service not available, waiting again...")
+            self.get_logger().info(
+                "Autonomy trigger service not available, waiting again..."
+            )
         self.nav_request = Trigger.Request()
 
         # Client to trigger arrival state
         self.arrival_client = self.create_client(Trigger, "trigger_arrival")
         while not self.arrival_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Arrival trigger service not available, waiting again...")
+            self.get_logger().info(
+                "Arrival trigger service not available, waiting again..."
+            )
         self.arrival_request = Trigger.Request()
 
         # Enable service
@@ -171,7 +179,7 @@ class StateMachine(Node):
         else:
             self.run_flag = False
             self.get_logger().info("State machine disabled")
-            
+
             # Trigger the teleop state
             future = self.teleop_client.call_async(self.teleop_request)
             rclpy.spin_until_future_complete(self, future)
@@ -212,7 +220,7 @@ class StateMachine(Node):
         self.get_logger().info(leg + " Starting pose navigation")
 
         self.navigator.goToPose(pose)
-        while (not self.navigator.isTaskComplete()):
+        while not self.navigator.isTaskComplete():
             time.sleep(0.1)
 
         result = self.navigator.getResult()
@@ -388,7 +396,7 @@ class StateMachine(Node):
                 rclpy.spin_until_future_complete(self, future)
 
                 time.sleep(5)
-                
+
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
                 rclpy.spin_until_future_complete(self, future)
@@ -417,7 +425,7 @@ class StateMachine(Node):
                 rclpy.spin_until_future_complete(self, future)
 
                 time.sleep(5)
-                
+
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
                 rclpy.spin_until_future_complete(self, future)
@@ -470,7 +478,7 @@ def main(args=None):
         nav2_sm.run_state_machine()
     except Exception as e:
         nav2_sm.get_logger().error(str(e))
-        
+
         # Trigger the teleop state
         future = nav2_sm.teleop_client.call_async(nav2_sm.teleop_request)
         rclpy.spin_until_future_complete(nav2_sm, future)
