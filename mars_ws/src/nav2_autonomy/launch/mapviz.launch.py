@@ -50,5 +50,6 @@ def generate_launch_description():
             executable="rqt_console",
             name="rqt_console",
             output="screen",
+            parameters=[{"use_sim_time": use_sim_time}],
         ),
     ])
