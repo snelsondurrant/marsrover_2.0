@@ -141,7 +141,8 @@ class DriveSwitch(Node):
             self.get_logger().error("Invalid state: " + self.state)
             return
 
-        self.cmd_led_pub.publish(led_state)
+        led_msg = Int8(data=led_state)
+        self.cmd_led_pub.publish(led_msg)
 
 
 def main(args=None):

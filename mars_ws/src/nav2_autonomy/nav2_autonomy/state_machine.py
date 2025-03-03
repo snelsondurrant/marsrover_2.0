@@ -128,8 +128,10 @@ class StateMachine(Node):
         )
         self.mapviz_hex_publisher = self.create_publisher(NavSatFix, "mapviz/hex", 10)
 
+        trigger_callback_group = MutuallyExclusiveCallbackGroup()
+
         # Client to trigger teleop state
-        self.teleop_client = self.create_client(Trigger, "trigger_teleop")
+        self.teleop_client = self.create_client(Trigger, "trigger_teleop", callback_group=trigger_callback_group)
         while not self.teleop_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Teleop trigger service not available, waiting again..."
@@ -137,7 +139,7 @@ class StateMachine(Node):
         self.teleop_request = Trigger.Request()
 
         # Client to trigger autonomy state
-        self.nav_client = self.create_client(Trigger, "trigger_auto")
+        self.nav_client = self.create_client(Trigger, "trigger_auto", callback_group=trigger_callback_group)
         while not self.nav_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Autonomy trigger service not available, waiting again..."
@@ -145,7 +147,7 @@ class StateMachine(Node):
         self.nav_request = Trigger.Request()
 
         # Client to trigger arrival state
-        self.arrival_client = self.create_client(Trigger, "trigger_arrival")
+        self.arrival_client = self.create_client(Trigger, "trigger_arrival", callback_group=trigger_callback_group)
         while not self.arrival_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Arrival trigger service not available, waiting again..."
