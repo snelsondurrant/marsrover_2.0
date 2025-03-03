@@ -130,6 +130,15 @@ USER root
 RUN apt update && apt install -y ros-iron-vision-msgs
 USER $NAME
 
+# Install turtlesim tf2 packages for tutorials
+USER root
+RUN apt update && apt install -y \
+    ros-iron-turtle-tf2-py \
+    ros-iron-tf2-ros \
+    ros-iron-tf2-tools \
+    ros-iron-turtlesim
+USER $NAME
+
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
