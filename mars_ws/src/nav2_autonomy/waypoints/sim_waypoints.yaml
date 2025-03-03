@@ -2,7 +2,6 @@
 
 # Legs to perform in order
 legs:
-- leg: start # ALWAYS INCLUDE THIS
 - leg: gps1
 - leg: aruco1
 - leg: mallet
@@ -18,12 +17,6 @@ aruco_tags:
 
 # Waypoints for the rover to follow
 waypoints:
-# Start waypoint
-- leg: start
-  latitude: 38.162603 # Starting lat set in Gazebo world
-  longitude: -122.455219 # Starting long set in Gazebo world
-  yaw: 0.0 # Kind of arbitrary
-  orig_wp: true
 # 1st waypoint (GPS only)
 - leg: gps1
   latitude: 38.162923

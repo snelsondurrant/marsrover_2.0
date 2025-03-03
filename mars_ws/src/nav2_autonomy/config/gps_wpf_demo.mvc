@@ -66,7 +66,7 @@ displays:
       color: "#ff00ff"
       draw_style: points
       position_tolerance: 0
-      buffer_size: 20
+      buffer_size: 100
   - type: mapviz_plugins/navsat # GPS intermediate waypoint display
     name: new display
     config:
@@ -76,14 +76,4 @@ displays:
       color: "#ffaa00"
       draw_style: points
       position_tolerance: 0
-      buffer_size: 200
-  - type: mapviz_plugins/navsat # GPS hex waypoint display
-    name: new display
-    config:
-      visible: true
-      collapsed: false
-      topic: /mapviz/hex
-      color: "#00ff00"
-      draw_style: points
-      position_tolerance: 0
-      buffer_size: 80
+      buffer_size: 500
