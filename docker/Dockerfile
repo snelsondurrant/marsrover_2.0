@@ -41,7 +41,10 @@ USER $NAME
 USER root
 RUN apt update && apt install -y \
     curl \
+    wget \
+    git \
     vim \
+    nano \
     tmux \
     docker.io \
     python3-pip
@@ -74,71 +77,6 @@ RUN ln -s /home/$NAME/.platformio/penv/bin/pio /usr/local/bin/pio
 RUN ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
 USER $NAME
 
-# Install the navigation2 and robot_localization packages
-USER root
-RUN apt update && apt install -y \
-    ros-iron-navigation2 \
-    ros-iron-robot-localization
-USER $NAME
-
-# Install graphical interface packages
-USER root
-RUN apt update && apt install -y \
-    ros-iron-rviz2 \
-    ros-iron-rqt* \
-    python3-tk
-USER $NAME
-
-# Install gazebo and turtlebot3 packages
-# For some reason, these packages are not available for arm64
-USER root
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    apt update && apt install -y \
-    ros-iron-nav2-bringup \
-    ros-iron-turtlebot3-gazebo; \
-fi
-USER $NAME
-
-# Install the aruco_opencv packages
-USER root
-RUN apt update && apt install -y \
-    ros-iron-aruco-opencv \
-    ros-iron-usb-cam
-USER $NAME
-
-# Install mapviz packages
-# For some reason, these packages are not available for arm64
-USER root
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    apt update && apt install -y \
-    ros-iron-mapviz \
-    ros-iron-mapviz-plugins \
-    ros-iron-tile-map; \
-fi
-USER $NAME
-
-# Install mobility packages
-USER root
-RUN apt update && apt install -y \
-    ros-iron-joy \
-    ros-iron-teleop-twist-joy \
-    ros-iron-teleop-twist-keyboard
-USER $NAME
-
-# Install zed interface packages
-USER root
-RUN apt update && apt install -y ros-iron-vision-msgs
-USER $NAME
-
-# Install turtlesim tf2 packages for tutorials
-USER root
-RUN apt update && apt install -y \
-    ros-iron-turtle-tf2-py \
-    ros-iron-tf2-ros \
-    ros-iron-tf2-tools \
-    ros-iron-turtlesim
-USER $NAME
-
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
@@ -154,7 +92,80 @@ RUN touch ~/.hushlogin
 #
 ###############################################################
 
-# Install matplotlib - Nelson Durrant, Oct 2024
+# Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2024
+# Pre-built full navigation stack for GPS navigation and localization
+USER root
+RUN apt update && apt install -y \
+    ros-iron-navigation2 \
+    ros-iron-robot-localization
+USER $NAME
+
+# Install graphical interface packages - Nelson Durrant, Feb 2024
+# We use RViz2, RQT, and Python3-tk for GUIs
+USER root
+RUN apt update && apt install -y \
+    ros-iron-rviz2 \
+    ros-iron-rqt* \
+    python3-tk
+USER $NAME
+
+# Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2024
+# We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
+# For some reason, these packages are not available for arm64
+USER root
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+    apt update && apt install -y \
+    ros-iron-nav2-bringup \
+    ros-iron-turtlebot3-gazebo; \
+fi
+USER $NAME
+
+# Install the aruco_opencv packages - Nelson Durrant, Feb 2024
+# Used for detecting ArUco markers in the simulation and real world
+USER root
+RUN apt update && apt install -y \
+    ros-iron-aruco-opencv \
+    ros-iron-usb-cam
+USER $NAME
+
+# Install mapviz packages - Nelson Durrant, Feb 2024
+# Used for visualizing the robot's path and gps location
+# For some reason, these packages are not available for arm64
+USER root
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+    apt update && apt install -y \
+    ros-iron-mapviz \
+    ros-iron-mapviz-plugins \
+    ros-iron-tile-map; \
+fi
+USER $NAME
+
+# Install mobility packages - Nelson Durrant, Feb 2024
+# Used for controlling the robot's movement through a joystick or keyboard
+USER root
+RUN apt update && apt install -y \
+    ros-iron-joy \
+    ros-iron-teleop-twist-joy \
+    ros-iron-teleop-twist-keyboard
+USER $NAME
+
+# Install zed interface packages - Nelson Durrant, Feb 2024
+# Necessary message package to listen to topics from the ZED camera
+USER root
+RUN apt update && apt install -y ros-iron-vision-msgs
+USER $NAME
+
+# Install turtlesim tf2 packages - Nelson Durrant, Feb 2024
+# Used in the ROS 2 and tf2 tutorials
+USER root
+RUN apt update && apt install -y \
+    ros-iron-turtle-tf2-py \
+    ros-iron-tf2-ros \
+    ros-iron-tf2-tools \
+    ros-iron-turtlesim
+USER $NAME
+
+# Install matplotlib - Nelson Durrant, Feb 2024
 # Used for plotting the path planning script results
 USER root
 RUN apt update && apt install -y python3-matplotlib
