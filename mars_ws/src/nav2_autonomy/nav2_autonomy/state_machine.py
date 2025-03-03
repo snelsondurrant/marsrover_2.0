@@ -45,11 +45,12 @@ class YamlArucoWaypointParser:
         gepose_wps = []
         for wp in self.wps_dict["waypoints"]:
             if wp["leg"] == leg:
-                latitude, longitude = (
+                latitude, longitude, yaw = (
                     wp["latitude"],
                     wp["longitude"],
+                    wp["yaw"],
                 )  # Need to generate intermittent values somehow
-                gepose_wps.append(latLonYaw2Geopose(latitude, longitude))
+                gepose_wps.append(latLonYaw2Geopose(latitude, longitude, yaw))
         return aruco_tags, gepose_wps
 
 
@@ -248,7 +249,9 @@ class StateMachine(Node):
         navsat_fix.longitude = wp.position.longitude
         self.mapviz_hex_publisher.publish(navsat_fix)
 
-        self.navigator.followGpsWaypoints(wp)
+        single_wp = [wp] # Fix for the navigator
+
+        self.navigator.followGpsWaypoints(single_wp)
         while not self.navigator.isTaskComplete():
             time.sleep(0.1)
 

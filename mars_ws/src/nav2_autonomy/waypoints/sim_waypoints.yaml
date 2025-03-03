@@ -22,39 +22,47 @@ waypoints:
 - leg: start
   latitude: 38.162603 # Starting lat set in Gazebo world
   longitude: -122.455219 # Starting long set in Gazebo world
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 1st waypoint (GPS only)
 - leg: gps1
   latitude: 38.162923
   longitude: -122.454987
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 2nd waypoint (GPS only)
 - leg: gps2
   latitude: 0.0
   longitude: 0.0
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 3rd waypoint (Aruco)
 - leg: aruco1
   latitude: 38.162958
   longitude: -122.455412
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 4th waypoint (Aruco)
 - leg: aruco2
   latitude: 0.0
   longitude: 0.0
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 5th waypoint (Aruco)
 - leg: aruco3
   latitude: 0.0
   longitude: 0.0
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 6th waypoint (Mallet)
 - leg: mallet
   latitude: 38.162633
   longitude: -122.454858
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true
 # 7th waypoint (Bottle)
 - leg: bottle
   latitude: 0.0
   longitude: 0.0
+  yaw: 0.0 # Kind of arbitrary
   orig_wp: true

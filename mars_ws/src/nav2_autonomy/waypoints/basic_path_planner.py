@@ -5,6 +5,7 @@
 
 import sys
 import yaml
+import math
 import matplotlib.pyplot as plt
 
 # Distance between intermediary waypoints (in lat/lon degrees)
@@ -66,6 +67,9 @@ for leg in orig_wps_data["legs"]:
         # Calculate the distance between the two points
         distance = ((end_lat - start_lat)**2 + (end_lon - start_lon)**2)**0.5
 
+        # Calculate the desire yaw angle for movement
+        yaw = math.atan((end_lat - start_lat) / (end_lon - start_lon))
+
         # Calculate the number of intermediary waypoints
         num_waypoints = int(distance / STEP_SIZE)
 
@@ -86,6 +90,7 @@ for leg in orig_wps_data["legs"]:
                 "leg": leg["leg"],
                 "latitude": lat,
                 "longitude": lon,
+                "yaw": yaw,
                 "orig_wp": False
             }
             new_wps_data["waypoints"].append(data)
@@ -96,6 +101,9 @@ for leg in orig_wps_data["legs"]:
                 new_wps_data["waypoints"].append(wp)
                 last_gps_position["latitude"] = wp["latitude"]
                 last_gps_position["longitude"] = wp["longitude"]
+
+print("New waypoints generated")
+print("Calculated yaw:", yaw)
 
 # Plot the new waypoints in matplotlib
 plt.figure()
