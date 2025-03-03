@@ -21,7 +21,7 @@ def generate_launch_description():
         ),
         launch_ros.actions.Node(
             package="mobility",
-            executable="state_switcher",
+            executable="drive_switch",
             output="screen",
         ),
         launch_ros.actions.Node(

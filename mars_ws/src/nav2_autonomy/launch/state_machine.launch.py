@@ -5,6 +5,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 import launch_ros.actions
 import os
 import launch.actions
@@ -30,6 +31,13 @@ def generate_launch_description():
     return LaunchDescription(
         [
             declare_use_sim_time_cmd,
+            launch_ros.actions.Node(
+                # Easier to include this in the sim bg than refactor services
+                package = "mobility",
+                executable = "drive_switch",
+                output = "screen",
+                condition = IfCondition(use_sim_time),
+            ),
             launch_ros.actions.Node(
                 package = "nav2_autonomy",
                 executable = "state_machine",

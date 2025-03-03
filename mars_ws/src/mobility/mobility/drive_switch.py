@@ -7,7 +7,7 @@ from std_srvs.srv import Trigger
 from geometry_msgs.msg import Twist
 
 
-class StateSwitcher(Node):
+class DriveSwitch(Node):
     """
     Class for switching between drive states
 
@@ -139,28 +139,35 @@ class StateSwitcher(Node):
         Publish to cmd_led based on current state
         """
 
+        # From Arduino code:
+        # AUTONOMOUS_STATE = 0
+        # TELEOPERATION_STATE = 1
+        # ARRIVAL_STATE = 2
+
         if self.state == 'teleop':
             led_state = 1
         elif self.state == 'autonomous':
-            led_state = 2
-        elif self.state == 'arrival':
-            led_state = 3
-        else:
             led_state = 0
+        elif self.state == 'arrival':
+            led_state = 2
+        else:
+            self.get_logger().error("Invalid state: " + self.state)
+            return
+        
         self.cmd_led_pub.publish(led_state)
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    state_switcher = StateSwitcher()
+    drive_switch = DriveSwitch()
 
-    rclpy.spin(state_switcher)
+    rclpy.spin(drive_switch)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    state_switcher.destroy_node()
+    drive_switch.destroy_node()
     rclpy.shutdown()
 
 

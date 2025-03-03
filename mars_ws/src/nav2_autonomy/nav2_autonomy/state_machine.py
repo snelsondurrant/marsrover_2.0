@@ -2,8 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
-from std_msgs.msg import Int8
-from std_srvs.srv import SetBool
+from std_srvs.srv import SetBool, Trigger
 from aruco_opencv_msgs.msg import ArucoDetection, MarkerPose
 from vision_msgs.msg import Detection3DArray, ObjectHypothesisWithPose
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
@@ -14,13 +13,6 @@ import time
 import threading
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
-
-# Globals (interface between ROS node and state machine)
-wps_file_path = ""
-run_flag = False
-found_flag = False
-tags = []
-wps = []
 
 
 class YamlArucoWaypointParser:
@@ -72,10 +64,13 @@ class StateMachine(Node):
     - aruco_detections (aruco_opencv_msgs/ArucoDetection)
     - zed/detections (vision_msgs/Detection3DArray)
     Publishers:
-    - nav_state (std_msgs/Int8)
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
     - mapviz/hex (sensor_msgs/NavSatFix)
+    Clients:
+    - trigger_teleop (std_srvs/Trigger)
+    - trigger_autonomous (std_srvs/Trigger)
+    - trigger_arrival (std_srvs/Trigger)
     Services:
     - nav2_sm/enable (std_srvs/SetBool)
     """
@@ -130,7 +125,24 @@ class StateMachine(Node):
         self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
         self.mapviz_inter_publisher = self.create_publisher(NavSatFix, "mapviz/inter", 10)
         self.mapviz_hex_publisher = self.create_publisher(NavSatFix, "mapviz/hex", 10)
-        self.nav_state_publisher = self.create_publisher(Int8, "nav_state", 10)
+
+        # Client to trigger teleop state
+        self.teleop_client = self.create_client(Trigger, "trigger_teleop")
+        while not self.teleop_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Teleop trigger service not available, waiting again...")
+        self.teleop_request = Trigger.Request()
+
+        # Client to trigger autonomy state
+        self.nav_client = self.create_client(Trigger, "trigger_autonomous")
+        while not self.nav_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Autonomy trigger service not available, waiting again...")
+        self.nav_request = Trigger.Request()
+
+        # Client to trigger arrival state
+        self.arrival_client = self.create_client(Trigger, "trigger_arrival")
+        while not self.arrival_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Arrival trigger service not available, waiting again...")
+        self.arrival_request = Trigger.Request()
 
         # Enable service
         enable_callback_group = MutuallyExclusiveCallbackGroup()
@@ -141,7 +153,6 @@ class StateMachine(Node):
             callback_group=enable_callback_group,
         )
 
-        self.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
         self.get_logger().info("State machine node initialized")
 
     def enable_callback(self, request, response):
@@ -153,11 +164,17 @@ class StateMachine(Node):
         if request.data:
             self.run_flag = True
             self.get_logger().info("State machine enabled")
-            self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
+
+            # Trigger the autonomy state
+            future = self.nav_client.call_async(self.nav_request)
+            rclpy.spin_until_future_complete(self, future)
         else:
             self.run_flag = False
             self.get_logger().info("State machine disabled")
-            self.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
+            
+            # Trigger the teleop state
+            future = self.teleop_client.call_async(self.teleop_request)
+            rclpy.spin_until_future_complete(self, future)
 
         response.success = True
         response.message = (
@@ -340,10 +357,15 @@ class StateMachine(Node):
             if leg == "start":
                 return
 
-            # Wait and flash the LED to indicate arrival
-            self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
+            # Trigger the arrival state
+            future = self.arrival_client.call_async(self.arrival_request)
+            rclpy.spin_until_future_complete(self, future)
+
             time.sleep(5)
-            self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
+
+            # Trigger the autonomy state
+            future = self.nav_client.call_async(self.nav_request)
+            rclpy.spin_until_future_complete(self, future)
 
         # Iterate through the aruco legs
         elif leg in self.aruco_legs:
@@ -361,10 +383,15 @@ class StateMachine(Node):
                 self.get_logger().info(leg + " Found the aruco tag at:", aruco_loc)
                 self.pose_nav(aruco_loc, leg)
 
-                # Wait and flash the LED to indicate arrival
-                self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
+                # Trigger the arrival state
+                future = self.arrival_client.call_async(self.arrival_request)
+                rclpy.spin_until_future_complete(self, future)
+
                 time.sleep(5)
-                self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
+                
+                # Trigger the autonomy state
+                future = self.nav_client.call_async(self.nav_request)
+                rclpy.spin_until_future_complete(self, future)
 
             # Go back to the last GPS point
             self.gps_nav(leg, False, True)
@@ -385,10 +412,15 @@ class StateMachine(Node):
                 self.get_logger().info(leg + " Found the object at:", obj_loc)
                 self.pose_nav(obj_loc, leg)
 
-                # Wait and flash the LED to indicate arrival
-                self.nav_state_publisher.publish(Int8(data=2)) # ARRIVAL_STATE = 2
+                # Trigger the arrival state
+                future = self.arrival_client.call_async(self.arrival_request)
+                rclpy.spin_until_future_complete(self, future)
+
                 time.sleep(5)
-                self.nav_state_publisher.publish(Int8(data=0)) # AUTONOMOUS_STATE = 0
+                
+                # Trigger the autonomy state
+                future = self.nav_client.call_async(self.nav_request)
+                rclpy.spin_until_future_complete(self, future)
 
             # Go back to the last GPS point
             self.gps_nav(leg, False, True)
@@ -408,7 +440,11 @@ class StateMachine(Node):
             self.exec_leg(leg)
 
         self.get_logger().info("State machine completed")
-        self.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
+
+        # Trigger the teleop state
+        future = self.teleop_client.call_async(self.teleop_request)
+        rclpy.spin_until_future_complete(self, future)
+        self.get_logger().info("State machine node initialized")
 
 
 def spin_in_thread(exec):
@@ -434,7 +470,10 @@ def main(args=None):
         nav2_sm.run_state_machine()
     except Exception as e:
         nav2_sm.get_logger().error(str(e))
-        nav2_sm.nav_state_publisher.publish(Int8(data=1)) # TELEOPERATION_STATE = 1
+        
+        # Trigger the teleop state
+        future = nav2_sm.teleop_client.call_async(nav2_sm.teleop_request)
+        rclpy.spin_until_future_complete(nav2_sm, future)
     finally:
 
         # Destroy the node explicitly
