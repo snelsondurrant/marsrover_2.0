@@ -579,13 +579,13 @@ class BehaviorTree(Node):
 
             self.gps_nav(leg_wp)
 
-            # TODO: Add a large and obvious signal
+            self.bt_info("### SUCCESS! Navigated to GPS waypoint ###")
 
             # Trigger the arrival state
             future = self.arrival_client.call_async(self.arrival_request)
             rclpy.spin_until_future_complete(self, future)
 
-            time.sleep(5)
+            time.sleep(15)
 
             # Trigger the autonomy state
             future = self.nav_client.call_async(self.nav_request)
@@ -619,13 +619,13 @@ class BehaviorTree(Node):
                 self.bt_info("Found the aruco tag at: " + aruco_loc)
                 self.gps_nav(aruco_loc)
 
-                # TODO: Add a large and obvious signal
+                self.bt_info("### SUCCESS! Found and navigated to aruco tag ###")
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
 
-                time.sleep(5)
+                time.sleep(15)
 
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
@@ -659,13 +659,13 @@ class BehaviorTree(Node):
                 self.bt_info("Found the object at: " + obj_loc)
                 self.gps_nav(obj_loc)
 
-                # TODO: Add a large and obvious signal
+                self.bt_info("### SUCCESS! Found and navigated to object ###")
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
 
-                time.sleep(5)
+                time.sleep(15)
 
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
