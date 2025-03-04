@@ -1,1 +1,1 @@
-TODO: Add other microcontroller code here as a pio project
+TODO: Add other code for the other microcontrollers here as a pio project

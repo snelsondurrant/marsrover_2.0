@@ -18,7 +18,11 @@ import yaml
 import time
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
-from nav2_autonomy.utils.plan_utils import basicPathPlanner, bruteOrderPlanner, greedyOrderPlanner
+from nav2_autonomy.utils.plan_utils import (
+    basicPathPlanner,
+    bruteOrderPlanner,
+    greedyOrderPlanner,
+)
 
 
 class YamlParser:
@@ -96,8 +100,8 @@ class BehaviorTree(Node):
         self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
 
         # Initialize variables
+        self.legs = []
         self.leg = "start"
-        self.legs = None
         self.filtered_gps = None
 
         # Hex pattern for searching
@@ -426,6 +430,7 @@ class BehaviorTree(Node):
 
         self.sm_goal_handle.succeed()
         result = RunBT.Result()
+        result.congrats = "Looks like we made it!"
         return result
 
     def gps_callback(self, msg):
