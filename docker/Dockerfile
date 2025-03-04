@@ -1,4 +1,4 @@
-# Created by Nelson Durrant, Oct 2024
+# Created by Nelson Durrant, Oct 2024 
 FROM ros:iron-ros-base
 # Why use ROS 2 Iron?
 # The simulator is build using Gazebo Classic, which is only supported in ROS 2 Iron and older.
