@@ -9,8 +9,8 @@ from rover_interfaces.action import RunBT
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
 from lifecycle_msgs.srv import GetState
-from aruco_opencv_msgs.msg import ArucoDetection, MarkerPose
-from vision_msgs.msg import Detection3DArray, ObjectHypothesisWithPose
+from aruco_opencv_msgs.msg import ArucoDetection
+from vision_msgs.msg import Detection3DArray
 from nav2_simple_commander.robot_navigator import TaskResult
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -39,7 +39,7 @@ class YamlParser:
         for leg in self.wps_dict["legs"]:
             legs.append(leg["leg"])
         return legs
-    
+
     def get_tags(self):
         """
         Get an array of aruco tag yaml objects from the yaml file
@@ -63,7 +63,7 @@ class BehaviorTree(Node):
     """
     Class for running the autonomy task behavior tree using Nav2
 
-    Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator 
+    Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator
     class and our own custom behavior tree with a lot of multi-threading. It's easiest to think of
     as three sections with their own seperate threads: the behavior tree, the Nav2 BasicNavigator,
     and the ROS 2 callbacks.
@@ -107,9 +107,9 @@ class BehaviorTree(Node):
         wps_file_path = self.get_parameter("wps_file_path").value
         self.wp_parser = YamlParser(wps_file_path)
 
-        self.legs = self.wp_parser.get_legs() # array of strings
-        self.tags = self.wp_parser.get_tags() # array of yaml
-        self.wps = self.wp_parser.get_wps() # array of yaml
+        self.legs = self.wp_parser.get_legs()  # array of strings
+        self.tags = self.wp_parser.get_tags()  # array of yaml
+        self.wps = self.wp_parser.get_wps()  # array of yaml
 
         # Define the acceptable legs
         self.gps_legs = ["gps1", "gps2"]
@@ -176,7 +176,9 @@ class BehaviorTree(Node):
         )
 
         # Client to trigger teleop state
-        self.teleop_client = self.create_client(Trigger, "trigger_teleop", callback_group=bg_callback_group)
+        self.teleop_client = self.create_client(
+            Trigger, "trigger_teleop", callback_group=bg_callback_group
+        )
         while not self.teleop_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Teleop trigger service not available, waiting again..."
@@ -184,7 +186,9 @@ class BehaviorTree(Node):
         self.teleop_request = Trigger.Request()
 
         # Client to trigger autonomy state
-        self.nav_client = self.create_client(Trigger, "trigger_auto", callback_group=bg_callback_group)
+        self.nav_client = self.create_client(
+            Trigger, "trigger_auto", callback_group=bg_callback_group
+        )
         while not self.nav_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Autonomy trigger service not available, waiting again..."
@@ -192,7 +196,9 @@ class BehaviorTree(Node):
         self.nav_request = Trigger.Request()
 
         # Client to trigger arrival state
-        self.arrival_client = self.create_client(Trigger, "trigger_arrival", callback_group=bg_callback_group)
+        self.arrival_client = self.create_client(
+            Trigger, "trigger_arrival", callback_group=bg_callback_group
+        )
         while not self.arrival_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Arrival trigger service not available, waiting again..."
@@ -205,7 +211,7 @@ class BehaviorTree(Node):
             RunBT,
             "run_bt",
             self.action_server_callback,
-            callback_group=fg_callback_group
+            callback_group=fg_callback_group,
         )
 
         ####################################
@@ -223,10 +229,15 @@ class BehaviorTree(Node):
 
         self.cmd_callback_group = MutuallyExclusiveCallbackGroup()
         self.follow_gps_waypoints_client = ActionClient(
-            self, FollowGPSWaypoints, 'follow_gps_waypoints', callback_group=self.cmd_callback_group
+            self,
+            FollowGPSWaypoints,
+            "follow_gps_waypoints",
+            callback_group=self.cmd_callback_group,
         )
-        self.spin_client = ActionClient(self, Spin, 'spin', callback_group=self.cmd_callback_group)
-        
+        self.spin_client = ActionClient(
+            self, Spin, "spin", callback_group=self.cmd_callback_group
+        )
+
         ###########################################
         ### END NAV2 BASIC NAVIGATOR BASED CODE ###
         ###########################################
@@ -249,7 +260,7 @@ class BehaviorTree(Node):
         goal_msg = FollowGPSWaypoints.Goal()
         goal_msg.gps_poses = gps_poses
 
-        self.info(f'Following {len(goal_msg.gps_poses)} gps goals....')
+        self.info(f"Following {len(goal_msg.gps_poses)} gps goals....")
         send_goal_future = self.follow_gps_waypoints_client.send_goal_async(
             goal_msg, self._feedbackCallback
         )
@@ -261,7 +272,7 @@ class BehaviorTree(Node):
 
         self.result_future = self.goal_handle.get_result_async()
         return True
-    
+
     def spin(self, spin_dist=1.57, time_allowance=10, disable_collision_checks=False):
         """
         Function to spin in place, based on the nav2_simple_commander code
@@ -275,7 +286,7 @@ class BehaviorTree(Node):
         goal_msg.time_allowance = Duration(sec=time_allowance)
         # goal_msg.disable_collision_checks = disable_collision_checks
 
-        self.info(f'Spinning to angle {goal_msg.target_yaw}....')
+        self.info(f"Spinning to angle {goal_msg.target_yaw}....")
         send_goal_future = self.spin_client.send_goal_async(
             goal_msg, self._feedbackCallback
         )
@@ -283,23 +294,23 @@ class BehaviorTree(Node):
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
-            self.error('Spin request was rejected!')
+            self.error("Spin request was rejected!")
             return False
 
         self.result_future = self.goal_handle.get_result_async()
         return True
-    
+
     def cancelTask(self):
         """
         Cancel pending task request of any type, based on the nav2_simple_commander code
         """
 
-        self.info('Canceling current task.')
+        self.info("Canceling current task.")
         if self.result_future:
             future = self.goal_handle.cancel_goal_async()
             rclpy.spin_until_future_complete(self, future)
         return
-    
+
     def isTaskComplete(self):
         """
         Check if the task request of any type is complete yet, based on the nav2_simple_commander code
@@ -312,15 +323,15 @@ class BehaviorTree(Node):
         if self.result_future.result():
             self.status = self.result_future.result().status
             if self.status != GoalStatus.STATUS_SUCCEEDED:
-                self.debug(f'Task with failed with status code: {self.status}')
+                self.debug(f"Task with failed with status code: {self.status}")
                 return True
         else:
             # Timed out, still processing, not complete yet
             return False
 
-        self.debug('Task succeeded!')
+        self.debug("Task succeeded!")
         return True
-    
+
     def getFeedback(self):
         """
         Get the pending action feedback message, based on the nav2_simple_commander code
@@ -342,47 +353,49 @@ class BehaviorTree(Node):
         else:
             return TaskResult.UNKNOWN
 
-    def waitUntilNav2Active(self, navigator='bt_navigator', localizer='amcl'):
+    def waitUntilNav2Active(self, navigator="bt_navigator", localizer="amcl"):
         """
         Block until the full navigation system is up and running, based on the nav2_simple_commander code
         """
 
-        if localizer != 'robot_localization':  # non-lifecycle node
+        if localizer != "robot_localization":  # non-lifecycle node
             self._waitForNodeToActivate(localizer)
         # if localizer == 'amcl':
         #     self._waitForInitialPose()
         self._waitForNodeToActivate(navigator)
-        self.info('Nav2 is ready for use!')
+        self.info("Nav2 is ready for use!")
         return
-    
+
     def _waitForNodeToActivate(self, node_name):
         """
         Waits for the node within the tester namespace to become active, based on the nav2_simple_commander code
         """
-        
-        self.debug(f'Waiting for {node_name} to become active..')
-        node_service = f'{node_name}/get_state'
-        state_client = self.create_client(GetState, node_service, callback_group=self.cmd_callback_group)
+
+        self.debug(f"Waiting for {node_name} to become active..")
+        node_service = f"{node_name}/get_state"
+        state_client = self.create_client(
+            GetState, node_service, callback_group=self.cmd_callback_group
+        )
         while not state_client.wait_for_service(timeout_sec=1.0):
-            self.info(f'{node_service} service not available, waiting...')
+            self.info(f"{node_service} service not available, waiting...")
 
         req = GetState.Request()
-        state = 'unknown'
-        while state != 'active':
-            self.debug(f'Getting {node_name} state...')
+        state = "unknown"
+        while state != "active":
+            self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
             rclpy.spin_until_future_complete(self, future)
             if future.result() is not None:
                 state = future.result().current_state.label
-                self.debug(f'Result of get_state: {state}')
+                self.debug(f"Result of get_state: {state}")
             time.sleep(2)
         return
-    
+
     def _feedbackCallback(self, msg):
-        self.debug('Received action feedback message')
+        self.debug("Received action feedback message")
         self.feedback = msg.feedback
         return
-    
+
     def info(self, msg):
         self.get_logger().info(msg)
         return
@@ -398,7 +411,7 @@ class BehaviorTree(Node):
     def debug(self, msg):
         self.get_logger().debug(msg)
         return
-    
+
     ###########################################
     ### END NAV2 BASIC NAVIGATOR BASED CODE ###
     ###########################################
@@ -427,7 +440,7 @@ class BehaviorTree(Node):
         self.sm_goal_handle.succeed()
         result = RunBT.Result()
         return result
-    
+
     def gps_callback(self, msg):
         """
         Callback function for the GPS subscriber
@@ -559,7 +572,7 @@ class BehaviorTree(Node):
             if not leg_wp:
                 self.bt_fatal("No GPS waypoint defined for leg")
                 return False
-            
+
             self.gps_nav(leg_wp)
 
             # Trigger the arrival state
@@ -576,7 +589,7 @@ class BehaviorTree(Node):
         elif self.leg in self.aruco_legs:
 
             self.bt_info("Starting aruco leg")
-            
+
             # Get this leg's GPS waypoint
             leg_wp = None
             for wp in self.wps:
@@ -586,7 +599,7 @@ class BehaviorTree(Node):
             if not leg_wp:
                 self.bt_fatal("No GPS waypoint defined for leg")
                 return False
-            
+
             # Navigate to the GPS waypoint
             self.gps_nav(leg_wp)
 
@@ -614,7 +627,7 @@ class BehaviorTree(Node):
         elif leg in self.obj_legs:
 
             self.bt_info("Starting object leg")
-            
+
             # Get this leg's GPS waypoint
             leg_wp = None
             for wp in self.wps:
@@ -624,7 +637,7 @@ class BehaviorTree(Node):
             if not leg_wp:
                 self.bt_fatal("No GPS waypoint defined for leg")
                 return False
-        
+
             # Navigate to the GPS waypoint
             self.gps_nav(leg_wp)
 
@@ -654,7 +667,7 @@ class BehaviorTree(Node):
         """
 
         self.bt_info("Starting GPS navigation")
-        
+
         # Generate a path from the current GPS location to the end GPS location
         path = basicPathPlanner(self.filtered_gps, dest_wp)
 
@@ -739,7 +752,7 @@ class BehaviorTree(Node):
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
             self.gps_nav(hex_wp)
-            pose = self.spin_search() # Do a spin search
+            pose = self.spin_search()  # Do a spin search
             # Did the last spin search find it?
             if pose:
                 return pose
