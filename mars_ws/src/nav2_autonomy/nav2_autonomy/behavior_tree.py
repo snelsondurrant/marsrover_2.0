@@ -18,7 +18,7 @@ import yaml
 import time
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
-from nav2_autonomy.utils.plan_utils import basicPathPlanner
+from nav2_autonomy.utils.plan_utils import basicPathPlanner, bruteOrderPlanner, greedyOrderPlanner
 
 
 class YamlParser:
@@ -29,25 +29,6 @@ class YamlParser:
     def __init__(self, wps_file_path: str) -> None:
         with open(wps_file_path, "r") as wps_file:
             self.wps_dict = yaml.safe_load(wps_file)
-
-    def get_legs(self):
-        """
-        Get an array of leg strings from the yaml file
-        """
-
-        legs = []
-        for leg in self.wps_dict["legs"]:
-            legs.append(leg["leg"])
-        return legs
-
-    def get_tags(self):
-        """
-        Get an array of aruco tag yaml objects from the yaml file
-        """
-        aruco_tags = []
-        for tag in self.wps_dict["aruco_tags"]:
-            aruco_tags.append(tag)
-        return aruco_tags
 
     def get_wps(self):
         """
@@ -106,18 +87,17 @@ class BehaviorTree(Node):
 
         wps_file_path = self.get_parameter("wps_file_path").value
         self.wp_parser = YamlParser(wps_file_path)
+        self.wps = self.wp_parser.get_wps()
 
-        self.legs = self.wp_parser.get_legs()  # array of strings
-        self.tags = self.wp_parser.get_tags()  # array of yaml
-        self.wps = self.wp_parser.get_wps()  # array of yaml
-
-        # Define the acceptable legs
+        # Task constants
         self.gps_legs = ["gps1", "gps2"]
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
         self.obj_legs = ["mallet", "bottle"]
+        self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
 
         # Initialize variables
         self.leg = "start"
+        self.legs = None
         self.filtered_gps = None
 
         # Hex pattern for searching
@@ -427,6 +407,13 @@ class BehaviorTree(Node):
 
         self.sm_goal_handle = goal_handle
 
+        # Get the task legs from the goal
+        self.legs = goal_handle.request.legs
+        if not self.legs:
+            self.bt_fatal("No task legs provided")
+            self.sm_goal_handle.abort()
+            return
+
         # Trigger the autonomy state
         future = self.nav_client.call_async(self.nav_request)
         rclpy.spin_until_future_complete(self, future)
@@ -541,6 +528,10 @@ class BehaviorTree(Node):
         """
 
         self.bt_info("Behavior tree started")
+
+        # TODO: Test these
+        self.legs = greedyOrderPlanner(self.filtered_gps, self.legs, self.wps)
+        # self.legs = bruteOrderPlanner(self.filtered_gps, self.legs, self.wps)
 
         self.waitUntilNav2Active(localizer="robot_localization")
 

@@ -1,21 +1,4 @@
 # Created by Nelson Durrant, Feb 2025
-
-# Legs to perform in order
-legs:
-- leg: aruco1
-- leg: gps1
-- leg: mallet
-
-# Aruco tags for the rover to detect
-aruco_tags:
-- leg: aruco1
-  id: 0
-- leg: aruco2
-  id: 0
-- leg: aruco3
-  id: 0
-
-# Waypoints for the rover to follow
 waypoints:
 # 1st waypoint (GPS only)
 - leg: gps1

@@ -1,7 +1,7 @@
 # RunStateMachine.action - Nelson Durrant, Feb 2025
 
-# None
+string[] legs
 ---
-# None
+string congrats
 ---
 string status
