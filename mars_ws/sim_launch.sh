@@ -3,7 +3,9 @@
 #
 # Launches the full simulation autonomy stack
 
-docker run -p 8080:8080 -d -t -v ~/mars_ws/src/nav2_autonomy/mapproxy:/mapproxy danielsnider/mapproxy
+if [ ! "$(docker ps -q -f name=mapproxy)" ]; then
+    docker run -p 8080:8080 -d -t -v ~/mars_ws/src/nav2_autonomy/mapproxy:/mapproxy danielsnider/mapproxy
+fi
 
 source ~/mars_ws/install/setup.bash
 ros2 launch nav2_autonomy rover_task_autonomy.launch.py use_rviz:=True use_mapviz:=True sim_mode:=True
