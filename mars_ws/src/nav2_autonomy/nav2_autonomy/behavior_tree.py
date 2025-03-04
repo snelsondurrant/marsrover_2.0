@@ -566,6 +566,8 @@ class BehaviorTree(Node):
 
             self.gps_nav(leg_wp)
 
+            # TODO: Add a large and obvious signal
+
             # Trigger the arrival state
             future = self.arrival_client.call_async(self.arrival_request)
             rclpy.spin_until_future_complete(self, future)
@@ -604,6 +606,8 @@ class BehaviorTree(Node):
                 self.bt_info("Found the aruco tag at: " + aruco_loc)
                 self.gps_nav(aruco_loc)
 
+                # TODO: Add a large and obvious signal
+
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
@@ -641,6 +645,8 @@ class BehaviorTree(Node):
             else:
                 self.bt_info("Found the object at: " + obj_loc)
                 self.gps_nav(obj_loc)
+
+                # TODO: Add a large and obvious signal
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
@@ -755,7 +761,7 @@ class BehaviorTree(Node):
         Function to check for the aruco tag
         """
 
-        # TODO: Implement this function
+        # TODO: Implement this function, needs to return a GeoPose obj on success
 
         return False
 
@@ -764,7 +770,7 @@ class BehaviorTree(Node):
         Function to check for the object
         """
 
-        # TODO: Implement this function
+        # TODO: Implement this function, needs to return a GeoPose obj on success
 
         return False
 
