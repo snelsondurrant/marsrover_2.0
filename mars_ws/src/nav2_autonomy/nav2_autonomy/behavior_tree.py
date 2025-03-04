@@ -23,6 +23,10 @@ from nav2_autonomy.utils.plan_utils import (
     bruteOrderPlanner,
     greedyOrderPlanner,
 )
+from nav2_autonomy.utils.terrain_utils import (
+    terrainPathPlanner,
+    terrainOrderPlanner,
+)
 
 
 class YamlParser:
@@ -535,8 +539,13 @@ class BehaviorTree(Node):
         self.bt_info("Behavior tree started")
 
         # TODO: Test these
+
+        ### UNCOMMENT THE ORDER PLANNER YOU WANT TO USE (or use a manual order) ###
         self.legs = greedyOrderPlanner(self.filtered_gps, self.legs, self.wps)
         # self.legs = bruteOrderPlanner(self.filtered_gps, self.legs, self.wps)
+        # self.legs = terrainOrderPlanner(self.filtered_gps, self.legs, self.wps)
+
+        self.bt_info("Determined best leg order: " + str(self.legs))
 
         self.waitUntilNav2Active(localizer="robot_localization")
 
@@ -552,7 +561,6 @@ class BehaviorTree(Node):
         """
 
         self.leg = leg
-        self.bt_info("Executing leg")
 
         # Is it a GPS leg?
         if self.leg in self.gps_legs:
@@ -663,6 +671,10 @@ class BehaviorTree(Node):
                 future = self.nav_client.call_async(self.nav_request)
                 rclpy.spin_until_future_complete(self, future)
 
+        else:
+            self.bt_fatal("Invalid leg type provided")
+            return False
+
     def gps_nav(self, dest_wp):
         """
         Function to navigate through GPS waypoints
@@ -670,8 +682,9 @@ class BehaviorTree(Node):
 
         self.bt_info("Starting GPS navigation")
 
-        # Generate a path from the current GPS location to the end GPS location
+        ### UNCOMMENT THE PATH PLANNER YOU WANT TO USE ###
         path = basicPathPlanner(self.filtered_gps, dest_wp)
+        # path = terrainPathPlanner(self.filtered_gps, dest_wp)
 
         # Publish the GPS positions to mapviz
         for wp in path:
@@ -759,6 +772,7 @@ class BehaviorTree(Node):
             if pose:
                 return pose
 
+        self.bt_info("Hex search completed")
         return False
 
     def aruco_check(self):
