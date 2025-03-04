@@ -94,8 +94,9 @@ class BehaviorTree(Node):
 
         super().__init__("behavior_tree")
         # self.navigator = BasicNavigator() # Don't uncomment this line
-        # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues
-        # We've hacked the relevant functions from the BasicNavigator class into this class as a fix
+        # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues.
+        # We've hacked the relevant functions from the BasicNavigator class into this class as a fix.
+        # https://github.com/ros-navigation/navigation2/tree/main/nav2_simple_commander
 
         # Parse the waypoint file
         self.declare_parameter("wps_file_path", "")

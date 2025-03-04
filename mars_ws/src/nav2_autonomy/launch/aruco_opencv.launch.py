@@ -26,7 +26,8 @@ def generate_launch_description():
                 parameters=[cam_config_path],
                 condition=UnlessCondition(use_sim_time),
                 remappings=[
-                    ('/image_raw', '/aruco_cam/image_raw') # TODO: Remap the gazebo cam to match this
+                    ('/image_raw', '/aruco_cam/image_raw'),
+                    ('/camera_info', '/aruco_cam/camera_info')
                 ]
             ),
             launch_ros.actions.Node(
@@ -35,7 +36,11 @@ def generate_launch_description():
                 executable="aruco_tracker_autostart",
                 name="aruco_tracker_autostart",
                 output="screen",
-                parameters=[{"cam_base_topic": "aruco_cam/image_raw", "marker_size": 0.15, "use_sim_time": use_sim_time}],
+                parameters=[{"cam_base_topic": "aruco_cam/image_raw", "marker_size": 0.2, "use_sim_time": use_sim_time}],
+                remappings=[
+                    ('/intel_realsense_r200_depth/image_raw, /aruco_cam/image_raw'),
+                    ('/intel_realsense_r200_depth/camera_info, /aruco_cam/camera_info')
+                ],
             ),
         ]
     )
