@@ -23,10 +23,10 @@ def generate_launch_description():
         "nav2_autonomy")
     if use_sim_time:
         wps_file = os.path.join(
-            gps_wpf_dir, "waypoints/output", "sim_basic_waypoints.yaml")
+            gps_wpf_dir, "config", "sim_waypoints.yaml")
     else:
         wps_file = os.path.join(
-            gps_wpf_dir, "waypoints/output", "basic_waypoints.yaml")
+            gps_wpf_dir, "config", "waypoints.yaml")
 
     return LaunchDescription(
         [
@@ -40,7 +40,7 @@ def generate_launch_description():
             ),
             launch_ros.actions.Node(
                 package = "nav2_autonomy",
-                executable = "state_machine",
+                executable = "autonomy_bt",
                 output = "screen",
                 parameters = [{"use_sim_time": use_sim_time, "wps_file_path": wps_file}],
             ),

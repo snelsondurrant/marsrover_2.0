@@ -4,4 +4,4 @@
 # Enables the simulation state machine
 
 source ~/mars_ws/install/setup.bash
-ros2 service call /nav2_sm/enable std_srvs/srv/SetBool "{data: true}"
+ros2 action send_goal --feedback run_sm rover_interfaces/action/RunSM "{}"

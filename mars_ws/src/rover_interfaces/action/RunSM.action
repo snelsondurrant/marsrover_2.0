@@ -1,0 +1,5 @@
+# RunStateMachine.action - Nelson Durrant, Feb 2025
+# Empty action to trigger running the state machine w string feedback
+---
+---
+string report

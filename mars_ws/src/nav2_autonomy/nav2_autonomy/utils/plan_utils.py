@@ -52,7 +52,7 @@ def basicPathPlanner(geopose1, geopose2):
             new_wps.append(geopose)
 
         # Add the original waypoint
-        geopose2.orientation.yaw = quaternion_from_euler(0.0, 0.0, yaw)
+        geopose2.orientation = quaternion_from_euler(0.0, 0.0, yaw)
         new_wps.append(geopose2)
 
         return new_wps

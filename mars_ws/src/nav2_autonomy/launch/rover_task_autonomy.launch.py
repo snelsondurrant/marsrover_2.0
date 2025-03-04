@@ -125,7 +125,7 @@ def generate_launch_description():
 
     state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(launch_dir, 'state_machine.launch.py')),
+            os.path.join(launch_dir, 'autonomy_bt.launch.py')),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),

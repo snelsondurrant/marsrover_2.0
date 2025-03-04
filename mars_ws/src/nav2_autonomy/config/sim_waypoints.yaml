@@ -2,8 +2,8 @@
 
 # Legs to perform in order
 legs:
-- leg: gps1
 - leg: aruco1
+- leg: gps1
 - leg: mallet
 
 # Aruco tags for the rover to detect
