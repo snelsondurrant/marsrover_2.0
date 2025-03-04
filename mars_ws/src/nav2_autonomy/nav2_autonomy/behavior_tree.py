@@ -168,8 +168,6 @@ class BehaviorTree(Node):
         )
         self.obj_subscriber  # prevent unused variable warning
 
-        # TODO: Add object detection subscriber
-
         # Mapviz publishers (to show the goals in mapviz)
         self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
         self.mapviz_inter_publisher = self.create_publisher(
@@ -404,7 +402,7 @@ class BehaviorTree(Node):
     ### END NAV2 BASIC NAVIGATOR BASED CODE ###
     ###########################################
 
-     #######################
+    #######################
     ### ROS 2 CALLBACKS ###
     #######################
 
