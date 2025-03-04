@@ -69,7 +69,7 @@ class BehaviorTree(Node):
     and the ROS 2 callbacks.
 
     :author: Nelson Durrant
-    :date: Feb 2025
+    :date: Mar 2025
 
     Subscribers:
     - gps/filtered (sensor_msgs/NavSatFix)
@@ -121,14 +121,14 @@ class BehaviorTree(Node):
 
         # Hex pattern for searching
         self.hex_coord = [
-            (2.0, 0.0),
-            (1.0, 1.73),
-            (-1.0, 1.73),
-            (-2.0, 0.0),
-            (-1.0, -1.73),
-            (1.0, -1.73),
+            (1.0, 0.0),
+            (0.5, 0.866),
+            (-0.5, 0.866),
+            (-1.0, 0.0),
+            (-0.5, -0.866),
+            (0.5, -0.866),
         ]
-        self.hex_scalar = 0.00005
+        self.hex_scalar = 0.0001
 
         ################################
         ### ROS 2 OBJECT DEFINITIONS ###
@@ -480,7 +480,7 @@ class BehaviorTree(Node):
 
         self.get_logger().info("[" + self.leg + "] " + string)
         sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[INFO] [" + self.leg + "] " + string
+        sm_feedback.status = "[INFO] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
     def bt_warn(self, string):
@@ -490,7 +490,7 @@ class BehaviorTree(Node):
 
         self.get_logger().warn("[" + self.leg + "] " + string)
         sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[WARN] [" + self.leg + "] " + string
+        sm_feedback.status = "[WARN] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
     def bt_error(self, string):
@@ -500,7 +500,7 @@ class BehaviorTree(Node):
 
         self.get_logger().error("[" + self.leg + "] " + string)
         sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[ERROR] [" + self.leg + "] " + string
+        sm_feedback.status = "[ERROR] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
     def bt_fatal(self, string):
@@ -510,7 +510,7 @@ class BehaviorTree(Node):
 
         self.get_logger().fatal("[" + self.leg + "] " + string)
         sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[FATAL] [" + self.leg + "] " + string
+        sm_feedback.status = "[FATAL] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
     ########################################
@@ -628,9 +628,9 @@ class BehaviorTree(Node):
             self.gps_nav(leg_wp)
 
             # Look for the object
-            obj_loc = self.spin_search(leg)  # Do a spin search
+            obj_loc = self.spin_search()  # Do a spin search
             if not obj_loc:
-                obj_loc = self.hex_search(leg)  # Do a hex search
+                obj_loc = self.hex_search()  # Do a hex search
             if not obj_loc:
                 self.bt_error("Could not find the object")
             else:
@@ -655,7 +655,10 @@ class BehaviorTree(Node):
         self.bt_info("Starting GPS navigation")
         
         # Generate a path from the current GPS location to the end GPS location
+        self.bt_info(str(dest_wp))
+        self.bt_info(str(self.filtered_gps))
         path = basicPathPlanner(self.filtered_gps, dest_wp)
+        self.bt_info(str(path))
 
         # Publish the GPS positions to mapviz
         for wp in path:

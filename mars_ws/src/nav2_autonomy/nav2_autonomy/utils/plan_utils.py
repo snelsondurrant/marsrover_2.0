@@ -35,21 +35,20 @@ def basicPathPlanner(geopose1, geopose2):
         # Calculate the number of intermediary waypoints
         num_waypoints = int(distance / STEP_SIZE)
 
-        if num_waypoints == 0:
-            return
-
-        # Calculate the step size for each intermediary waypoint
-        step_lat = (end_lat - start_lat) / num_waypoints
-        step_lon = (end_lon - start_lon) / num_waypoints
-
-        # Generate intermediary waypoints
-        for i in range(1, num_waypoints):
-            lat = start_lat + i * step_lat
-            lon = start_lon + i * step_lon
+        if num_waypoints != 0:
             
-            geopose = latLonYaw2Geopose(lat, lon, yaw)
+            # Calculate the step size for each intermediary waypoint
+            step_lat = (end_lat - start_lat) / num_waypoints
+            step_lon = (end_lon - start_lon) / num_waypoints
 
-            new_wps.append(geopose)
+            # Generate intermediary waypoints
+            for i in range(1, num_waypoints):
+                lat = start_lat + i * step_lat
+                lon = start_lon + i * step_lon
+                
+                geopose = latLonYaw2Geopose(lat, lon, yaw)
+
+                new_wps.append(geopose)
 
         # Add the original waypoint
         geopose2.orientation = quaternion_from_euler(0.0, 0.0, yaw)
