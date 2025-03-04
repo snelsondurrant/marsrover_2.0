@@ -63,8 +63,10 @@ class BehaviorTree(Node):
     """
     Class for running the autonomy task behavior tree using Nav2
 
-    Note: This is a pretty complex node. It's a hacked-together combination of the
-    BasicNavigator class and our own custom behavior tree with a lot of multi-threading.
+    Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator 
+    class and our own custom behavior tree with a lot of multi-threading. It's easiest to think of
+    as three sections with their own seperate threads: the behavior tree, the Nav2 BasicNavigator,
+    and the ROS 2 callbacks.
 
     :author: Nelson Durrant
     :date: Feb 2025
@@ -80,17 +82,20 @@ class BehaviorTree(Node):
     - trigger_teleop (std_srvs/Trigger)
     - trigger_auto (std_srvs/Trigger)
     - trigger_arrival (std_srvs/Trigger)
+    Action Clients:
+    - follow_gps_waypoints (nav2_msgs/FollowGPSWaypoints)
+    - spin (nav2_msgs/Spin)
+    - {node_name}/get_state (lifecycle_msgs/GetState) (temporary)
     Action Servers:
     - run_bt (rover_interfaces/RunBT)
-    *** And other simple-commander-specific Action Clients *** TODO: Add these
     """
 
     def __init__(self):
 
-        super().__init__("autonomy_bt")
+        super().__init__("behavior_tree")
+        # self.navigator = BasicNavigator() # Don't uncomment this line
         # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues
         # We've hacked the relevant functions from the BasicNavigator class into this class as a fix
-        # self.navigator = BasicNavigator() # Don't uncomment this line
 
         # Parse the waypoint file
         self.declare_parameter("wps_file_path", "")
@@ -111,10 +116,8 @@ class BehaviorTree(Node):
         self.obj_legs = ["mallet", "bottle"]
 
         # Initialize variables
-        self.leg = "n/a"
+        self.leg = "start"
         self.filtered_gps = None
-        self.found_flag = False
-        self.found_pose = None
 
         # Hex pattern for searching
         self.hex_coord = [
@@ -154,6 +157,16 @@ class BehaviorTree(Node):
             callback_group=bg_callback_group,
         )
         self.aruco_subscriber  # prevent unused variable warning
+
+        # Object pose subscriber
+        self.obj_subscriber = self.create_subscription(
+            Detection3DArray,
+            "zed/detections",
+            self.obj_callback,
+            10,
+            callback_group=bg_callback_group,
+        )
+        self.obj_subscriber  # prevent unused variable warning
 
         # TODO: Add object detection subscriber
 
@@ -200,9 +213,9 @@ class BehaviorTree(Node):
         ### END ROS 2 OBJECT DEFINITIONS ###
         ####################################
 
-        ########################################
-        ### NAV2 SIMPLE COMMANDER BASED CODE ###
-        ########################################
+        #######################################
+        ### NAV2 BASIC NAVIGATOR BASED CODE ###
+        #######################################
 
         self.goal_handle = None
         self.result_future = None
@@ -215,15 +228,15 @@ class BehaviorTree(Node):
         )
         self.spin_client = ActionClient(self, Spin, 'spin', callback_group=self.cmd_callback_group)
         
-        ############################################
-        ### END NAV2 SIMPLE COMMANDER BASED CODE ###
-        ############################################
+        ###########################################
+        ### END NAV2 BASIC NAVIGATOR BASED CODE ###
+        ###########################################
 
         self.get_logger().info("State machine node initialized")
 
-    ########################################
-    ### NAV2 SIMPLE COMMANDER BASED CODE ###
-    ########################################
+    #######################################
+    ### NAV2 BASIC NAVIGATOR BASED CODE ###
+    #######################################
 
     def followGpsWaypoints(self, gps_poses):
         """
@@ -387,61 +400,13 @@ class BehaviorTree(Node):
         self.get_logger().debug(msg)
         return
     
-    ############################################
-    ### END NAV2 SIMPLE COMMANDER BASED CODE ###
-    ############################################
+    ###########################################
+    ### END NAV2 BASIC NAVIGATOR BASED CODE ###
+    ###########################################
 
-    ####################################
-    ### BT ACTION FEEDBACK FUNCTIONS ###
-    ####################################
-
-    def bt_info(self, string):
-        """
-        Function to write info back to the RunBT action client
-        """
-
-        self.get_logger().info(self.leg + " " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[INFO] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
-
-    def bt_warn(self, string):
-        """
-        Function to write warnings back to the RunBT action client
-        """
-
-        self.get_logger().warn("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[WARN] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
-
-    def bt_error(self, string):
-        """
-        Function to write errors back to the RunBT action client
-        """
-
-        self.get_logger().error("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[ERROR] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
-
-    def bt_fatal(self, string):
-        """
-        Function to write fatal errors back to the RunBT action client
-        """
-
-        self.get_logger().fatal("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.feedback = "[FATAL] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
-
-    ########################################
-    ### END BT ACTION FEEDBACK FUNCTIONS ###
-    ########################################
-
-    ################################
-    ### ROS 2 CALLBACK FUNCTIONS ###
-    ################################
+     #######################
+    ### ROS 2 CALLBACKS ###
+    #######################
 
     def action_server_callback(self, goal_handle):
         """
@@ -483,21 +448,80 @@ class BehaviorTree(Node):
         #   uint16 marker_id
         #   geometry_msgs/Pose pose
 
-        for marker in msg.markers:
-            if marker.marker_id in self.tags:
-                self.get_logger().info(
-                    "Found aruco tag: " + marker.marker_id, throttle_duration_sec=1
-                )
-                self.found_flag = True
-                self.found_pose = marker.pose # TODO: Convert to GeoPose
+        # TODO: Implement this function
+
+    def obj_callback(self, msg):
+        """
+        Callback function for the object detection subscriber
+        """
+
+        # Detection3DArray:
+        #   std_msgs/Header header
+        #   vision_msgs/Detection3D[] detections
+        # Detection3D:
+        #   vision_msgs/BoundingBox3D bounding_box
+        #   vision_msgs/ObjectHypothesisWithPose[] results
+        # ObjectHypothesisWithPose:
+        #   vision_msgs/ObjectHypothesis hypothesis
+        #   geometry_msgs/PoseStamped pose
+
+        # TODO: Implement this function
+
+    ###########################
+    ### END ROS 2 CALLBACKS ###
+    ###########################
 
     ####################################
-    ### END ROS 2 CALLBACK FUNCTIONS ###
+    ### BT ACTION FEEDBACK FUNCTIONS ###
     ####################################
 
-    ###############################
-    ### BEHAVIOR TREE FUNCTIONS ###
-    ###############################
+    def bt_info(self, string):
+        """
+        Function to write info back to the RunBT action client
+        """
+
+        self.get_logger().info("[" + self.leg + "] " + string)
+        sm_feedback = RunBT.Feedback()
+        sm_feedback.feedback = "[INFO] [" + self.leg + "] " + string
+        self.sm_goal_handle.publish_feedback(sm_feedback)
+
+    def bt_warn(self, string):
+        """
+        Function to write warnings back to the RunBT action client
+        """
+
+        self.get_logger().warn("[" + self.leg + "] " + string)
+        sm_feedback = RunBT.Feedback()
+        sm_feedback.feedback = "[WARN] [" + self.leg + "] " + string
+        self.sm_goal_handle.publish_feedback(sm_feedback)
+
+    def bt_error(self, string):
+        """
+        Function to write errors back to the RunBT action client
+        """
+
+        self.get_logger().error("[" + self.leg + "] " + string)
+        sm_feedback = RunBT.Feedback()
+        sm_feedback.feedback = "[ERROR] [" + self.leg + "] " + string
+        self.sm_goal_handle.publish_feedback(sm_feedback)
+
+    def bt_fatal(self, string):
+        """
+        Function to write fatal errors back to the RunBT action client
+        """
+
+        self.get_logger().fatal("[" + self.leg + "] " + string)
+        sm_feedback = RunBT.Feedback()
+        sm_feedback.feedback = "[FATAL] [" + self.leg + "] " + string
+        self.sm_goal_handle.publish_feedback(sm_feedback)
+
+    ########################################
+    ### END BT ACTION FEEDBACK FUNCTIONS ###
+    ########################################
+
+    #####################
+    ### BEHAVIOR TREE ###
+    #####################
 
     def run_behavior_tree(self):
         """
@@ -511,6 +535,7 @@ class BehaviorTree(Node):
         for leg in self.legs:
             self.exec_leg(leg)
 
+        self.leg = "end"
         self.bt_info("Behavior tree completed")
 
     def exec_leg(self, leg):
@@ -727,12 +752,16 @@ class BehaviorTree(Node):
         Function to check for the aruco tag
         """
 
+        # TODO: Implement this function
+
         return False
 
     def obj_check(self):
         """
         Function to check for the object
         """
+
+        # TODO: Implement this function
 
         return False
 
@@ -744,10 +773,10 @@ class BehaviorTree(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    nav2_bt = BehaviorTree()
+    behavior_tree = BehaviorTree()
     # Create a multi-threaded executor for Nav2 locking issues
     executor = MultiThreadedExecutor()
-    executor.add_node(nav2_bt)
+    executor.add_node(behavior_tree)
 
     executor.spin()
 

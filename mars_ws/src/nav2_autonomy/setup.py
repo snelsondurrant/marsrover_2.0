@@ -28,7 +28,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'autonomy_bt = nav2_autonomy.autonomy_bt:main',
+            'behavior_tree = nav2_autonomy.behavior_tree:main',
         ],
     },
 )
