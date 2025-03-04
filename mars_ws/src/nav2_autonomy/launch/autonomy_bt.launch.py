@@ -32,7 +32,7 @@ def generate_launch_description():
         [
             declare_use_sim_time_cmd,
             launch_ros.actions.Node(
-                # Easier to include this in the sim bg than refactor services
+                # Easier to include this in the sim than refactor services
                 package = "mobility",
                 executable = "drive_switch",
                 output = "screen",
