@@ -1,7 +1,7 @@
 # Created by Nelson Durrant, Oct 2024
 services:
-  byu-marsrover:
-    image: byuawesomerover/byu-marsrover:latest
+  marsrover:
+    image: byuawesomerover/marsrover:latest
     container_name: marsrover-ct
     build: .
     user: ${NAME}

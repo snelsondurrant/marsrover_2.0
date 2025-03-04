@@ -4,7 +4,7 @@
 
 - Install Docker Desktop on your Windows machine by following the instructions [here](https://docs.docker.com/desktop/), and enable the WSL 2 backend by following the instructions [here](https://docs.docker.com/desktop/windows/wsl/).
 
-- Open a WSL terminal and clone the byu-marsrover repo into your Linux environment using `git clone https://github.com/BYUMarsRover/byu-marsrover.git`.
+- Open a WSL terminal and clone the marsrover repo into your Linux environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
 
 - Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
