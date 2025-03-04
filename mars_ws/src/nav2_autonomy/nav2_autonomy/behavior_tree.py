@@ -655,10 +655,7 @@ class BehaviorTree(Node):
         self.bt_info("Starting GPS navigation")
         
         # Generate a path from the current GPS location to the end GPS location
-        self.bt_info(str(dest_wp))
-        self.bt_info(str(self.filtered_gps))
         path = basicPathPlanner(self.filtered_gps, dest_wp)
-        self.bt_info(str(path))
 
         # Publish the GPS positions to mapviz
         for wp in path:
