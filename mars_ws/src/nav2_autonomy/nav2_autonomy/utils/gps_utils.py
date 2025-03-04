@@ -52,4 +52,3 @@ def latLonYaw2Geopose(latitude: float, longitude: float, yaw: float = 0.0) -> Ge
     geopose.position.longitude = longitude
     geopose.orientation = quaternion_from_euler(0.0, 0.0, yaw)
     return geopose
-    

@@ -61,7 +61,10 @@ class YamlParser:
 
 class BehaviorTree(Node):
     """
-    Class for running the autonomy competition task using nav2
+    Class for running the autonomy task behavior tree using Nav2
+
+    Note: This is a pretty complex node. It's a hacked-together combination of the
+    BasicNavigator class and our own custom behavior tree with a lot of multi-threading.
 
     :author: Nelson Durrant
     :date: Feb 2025
@@ -79,7 +82,7 @@ class BehaviorTree(Node):
     - trigger_arrival (std_srvs/Trigger)
     Action Servers:
     - run_bt (rover_interfaces/RunBT)
-    *** And other simple-commander-specific Action Clients ***
+    *** And other simple-commander-specific Action Clients *** TODO: Add these
     """
 
     def __init__(self):
