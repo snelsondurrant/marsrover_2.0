@@ -426,7 +426,12 @@ class BehaviorTree(Node):
         future = self.nav_client.call_async(self.nav_request)
         rclpy.spin_until_future_complete(self, future)
 
-        self.run_behavior_tree()
+        try:
+            self.run_behavior_tree()
+        except Exception as e:
+            self.bt_fatal("Something went wrong: " + str(e))
+            self.sm_goal_handle.abort()
+            return
 
         # Trigger the teleop state
         future = self.teleop_client.call_async(self.teleop_request)
@@ -541,9 +546,9 @@ class BehaviorTree(Node):
         # TODO: Test these
 
         ### UNCOMMENT THE ORDER PLANNER YOU WANT TO USE (or use a manual order) ###
-        self.legs = greedyOrderPlanner(self.filtered_gps, self.legs, self.wps)
-        # self.legs = bruteOrderPlanner(self.filtered_gps, self.legs, self.wps)
-        # self.legs = terrainOrderPlanner(self.filtered_gps, self.legs, self.wps)
+        self.legs = greedyOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        # self.legs = bruteOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        # self.legs = terrainOrderPlanner(self.legs, self.wps, self.filtered_gps)
 
         self.bt_info("Determined best leg order: " + str(self.legs))
 
@@ -617,7 +622,7 @@ class BehaviorTree(Node):
                 self.bt_error("Could not find the aruco tag")
             else:
                 self.bt_info("Found the aruco tag at: " + aruco_loc)
-                self.gps_nav(aruco_loc)
+                self.gps_nav(aruco_loc, " (aruco tag)")
 
                 self.bt_info("### SUCCESS! Found and navigated to aruco tag ###")
 
@@ -657,7 +662,7 @@ class BehaviorTree(Node):
                 self.bt_error("Could not find the object")
             else:
                 self.bt_info("Found the object at: " + obj_loc)
-                self.gps_nav(obj_loc)
+                self.gps_nav(obj_loc, " (object)")
 
                 self.bt_info("### SUCCESS! Found and navigated to object ###")
 
@@ -675,12 +680,12 @@ class BehaviorTree(Node):
             self.bt_fatal("Invalid leg type provided")
             return False
 
-    def gps_nav(self, dest_wp):
+    def gps_nav(self, dest_wp, src_string=""):
         """
         Function to navigate through GPS waypoints
         """
 
-        self.bt_info("Starting GPS navigation")
+        self.bt_info("Starting GPS navigation" + src_string)
 
         ### UNCOMMENT THE PATH PLANNER YOU WANT TO USE ###
         path = basicPathPlanner(self.filtered_gps, dest_wp)
@@ -706,18 +711,18 @@ class BehaviorTree(Node):
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.bt_info("GPS navigation completed")
+            self.bt_info("GPS navigation completed" + src_string)
         elif result == TaskResult.CANCELED:
-            self.bt_warn("GPS navigation canceled")
+            self.bt_warn("GPS navigation canceled" + src_string)
         elif result == TaskResult.FAILED:
-            self.bt_error("GPS navigation failed")
+            self.bt_error("GPS navigation failed" + src_string)
 
-    def spin_search(self):
+    def spin_search(self, src_string=""):
         """
         Function to perform a spin search
         """
 
-        self.bt_info("Starting spin search")
+        self.bt_info("Starting spin search" + src_string)
 
         self.spin(spin_dist=3.14)
         while not self.isTaskComplete():
@@ -740,11 +745,11 @@ class BehaviorTree(Node):
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.bt_info("Spin search completed")
+            self.bt_info("Spin search completed" + src_string)
         elif result == TaskResult.CANCELED:
-            self.bt_warn("Spin search canceled")
+            self.bt_warn("Spin search canceled" + src_string)
         elif result == TaskResult.FAILED:
-            self.bt_error("Spin search failed")
+            self.bt_error("Spin search failed" + src_string)
 
         return False
 
@@ -761,13 +766,13 @@ class BehaviorTree(Node):
                 base_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
 
         # Generate a hex pattern from the base waypoint
-        for coord in self.hex_coord:
+        for i, coord in enumerate(self.hex_coord):
             hex_lat = base_wp.position.latitude + coord[0] * self.hex_scalar
             hex_lon = base_wp.position.longitude + coord[1] * self.hex_scalar
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            self.gps_nav(hex_wp)
-            pose = self.spin_search()  # Do a spin search
+            self.gps_nav(hex_wp, " (hex point " + str(i) + ")")
+            pose = self.spin_search(" (hex point " + str(i) + ")") # Do a spin search
             # Did the last spin search find it?
             if pose:
                 return pose

@@ -126,12 +126,12 @@ def costFunction(leg1, leg2, waypoints):
     """
 
     for wp in waypoints:
-        if wp.leg == leg1:
+        if wp["leg"] == leg1:
             start = wp
-        elif wp.leg == leg2:
+        elif wp["leg"] == leg2:
             end = wp
 
-    distance = ((end.lat - start.lat) ** 2 + (end.lon - start.lon) ** 2) ** 0.5
+    distance = ((end["latitude"] - start["latitude"]) ** 2 + (end["longitude"] - start["longitude"]) ** 2) ** 0.5
 
     return distance
 
@@ -142,11 +142,11 @@ def costFunctionStart(fix, leg1, waypoints):
     """
 
     for wp in waypoints:
-        if wp.leg == leg1:
+        if wp["leg"] == leg1:
             end = wp
 
     distance = (
-        (end.lat - fix.position.latitude) ** 2 + (end.lon - fix.position.longitude) ** 2
+        (end["latitude"] - fix.position.latitude) ** 2 + (end["longitude"] - fix.position.longitude) ** 2
     ) ** 0.5
 
     return distance
