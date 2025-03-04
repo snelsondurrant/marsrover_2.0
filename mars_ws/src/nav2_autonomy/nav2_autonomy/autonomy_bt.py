@@ -124,6 +124,10 @@ class BehaviorTree(Node):
         ]
         self.hex_scalar = 0.00005
 
+        ################################
+        ### ROS 2 OBJECT DEFINITIONS ###
+        ################################
+
         # Callback groups (for threading)
         bg_callback_group = MutuallyExclusiveCallbackGroup()
         fg_callback_group = MutuallyExclusiveCallbackGroup()
@@ -188,6 +192,10 @@ class BehaviorTree(Node):
             self.action_server_callback,
             callback_group=fg_callback_group
         )
+
+        ####################################
+        ### END ROS 2 OBJECT DEFINITIONS ###
+        ####################################
 
         ########################################
         ### NAV2 SIMPLE COMMANDER BASED CODE ###
@@ -381,7 +389,7 @@ class BehaviorTree(Node):
     ############################################
 
     ####################################
-    ### SM ACTION FEEDBACK FUNCTIONS ###
+    ### BT ACTION FEEDBACK FUNCTIONS ###
     ####################################
 
     def bt_info(self, string):
@@ -425,7 +433,7 @@ class BehaviorTree(Node):
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
     ########################################
-    ### END SM ACTION FEEDBACK FUNCTIONS ###
+    ### END BT ACTION FEEDBACK FUNCTIONS ###
     ########################################
 
     ################################
@@ -722,6 +730,10 @@ class BehaviorTree(Node):
         """
 
         return False
+
+    ###################################
+    ### END BEHAVIOR TREE FUNCTIONS ###
+    ###################################
 
 
 def main(args=None):
