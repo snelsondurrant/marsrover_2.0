@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 # 
-# Enables the simulation state machine
+# Enables the simulation behavior tree
 
 source ~/mars_ws/install/setup.bash
-ros2 action send_goal --feedback run_bt rover_interfaces/action/RunBT "{}"
+ros2 action send_goal --feedback run_bt rover_interfaces/action/RunBT "{['gps1', 'aruco1', 'mallet']}"
