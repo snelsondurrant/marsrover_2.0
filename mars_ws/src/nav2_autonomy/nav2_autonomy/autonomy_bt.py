@@ -5,7 +5,7 @@ from rclpy.action import ActionServer, ActionClient
 from action_msgs.msg import GoalStatus
 from builtin_interfaces.msg import Duration
 from nav2_msgs.action import FollowGPSWaypoints, Spin
-from rover_interfaces.action import RunSM
+from rover_interfaces.action import RunBT
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
 from lifecycle_msgs.srv import GetState
@@ -187,8 +187,8 @@ class BehaviorTree(Node):
         # Action server to run the behavior tree
         self.action_server = ActionServer(
             self,
-            RunSM,
-            "run_sm",
+            RunBT,
+            "run_bt",
             self.action_server_callback,
             callback_group=fg_callback_group
         )
@@ -398,7 +398,7 @@ class BehaviorTree(Node):
         """
 
         self.get_logger().info(self.leg + " " + string)
-        sm_feedback = RunSM.Feedback()
+        sm_feedback = RunBT.Feedback()
         sm_feedback.feedback = "[INFO] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
@@ -408,7 +408,7 @@ class BehaviorTree(Node):
         """
 
         self.get_logger().warn("[" + self.leg + "] " + string)
-        sm_feedback = RunSM.Feedback()
+        sm_feedback = RunBT.Feedback()
         sm_feedback.feedback = "[WARN] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
@@ -418,7 +418,7 @@ class BehaviorTree(Node):
         """
 
         self.get_logger().error("[" + self.leg + "] " + string)
-        sm_feedback = RunSM.Feedback()
+        sm_feedback = RunBT.Feedback()
         sm_feedback.feedback = "[ERROR] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
@@ -428,7 +428,7 @@ class BehaviorTree(Node):
         """
 
         self.get_logger().fatal("[" + self.leg + "] " + string)
-        sm_feedback = RunSM.Feedback()
+        sm_feedback = RunBT.Feedback()
         sm_feedback.feedback = "[FATAL] [" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
@@ -457,7 +457,9 @@ class BehaviorTree(Node):
         future = self.teleop_client.call_async(self.teleop_request)
         rclpy.spin_until_future_complete(self, future)
 
-        # TODO: finish the action server callback
+        self.sm_goal_handle.succeed()
+        result = RunBT.Result()
+        return result
     
     def gps_callback(self, msg):
         """

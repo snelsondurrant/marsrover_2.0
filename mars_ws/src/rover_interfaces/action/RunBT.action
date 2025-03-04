@@ -2,4 +2,4 @@
 # Empty action to trigger running the state machine w string feedback
 ---
 ---
-string report
+string feedback

@@ -4,4 +4,4 @@
 # Enables the simulation state machine
 
 source ~/mars_ws/install/setup.bash
-ros2 action send_goal --feedback run_sm rover_interfaces/action/RunSM "{}"
+ros2 action send_goal --feedback run_bt rover_interfaces/action/RunBT "{}"
