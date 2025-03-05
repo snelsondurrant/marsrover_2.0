@@ -80,7 +80,7 @@ class BehaviorTree(Node):
     - {node_name}/get_state (lifecycle_msgs/GetState) (temporary)
     Action Servers:
     - run_bt (rover_interfaces/RunBT)
-    *And a TfBuffer
+    *And a tf2 buffer and listener for pose to GPS transforms
     """
 
     def __init__(self):
