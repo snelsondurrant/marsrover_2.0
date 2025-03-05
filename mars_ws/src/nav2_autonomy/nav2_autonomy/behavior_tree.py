@@ -43,7 +43,7 @@ globals()["__order_planner__"] = greedyOrderPlanner
 
 class YamlParser:
     """
-    Parse a set of legs, aruco tags, and GPS waypoints from a yaml file
+    Parse a set of GPS waypoints from a yaml file
     """
 
     def __init__(self, wps_file_path: str) -> None:
