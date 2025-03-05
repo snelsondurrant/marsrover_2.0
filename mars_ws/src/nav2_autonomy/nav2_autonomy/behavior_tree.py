@@ -478,14 +478,14 @@ class BehaviorTree(Node):
             # Are we looking for this marker?
             if marker.marker_id in self.tags.values():
 
-                # Use the tf buffer to transform the pose to UTM
+                # Look up and use the transform to convert the pose to UTM
                 try:
                     tf = self.tf_buffer.lookup_transform(
                         "utm", msg.header.frame_id, msg.header.stamp
                     )
                     utm_pose = tf2_geometry_msgs.do_transform_pose(marker.pose, tf)
                 except Exception as e:
-                    self.get_logger().error(f"Could not transform aruco pose: {e}")
+                    self.get_logger().warn(f"Could not transform aruco pose: {e}")
                     return
 
                 # Check to make sure we've had at least one GPS fix
