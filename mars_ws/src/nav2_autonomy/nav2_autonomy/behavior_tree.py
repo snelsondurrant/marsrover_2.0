@@ -333,16 +333,23 @@ class BehaviorTree(Node):
             await future  # fix for iron threading bug
         return
 
-    def isTaskComplete(self):
+    async def isTaskComplete(self):
         """
         Check if the task request of any type is complete yet, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
         """
 
         if not self.result_future:
             # task was cancelled or completed
             return True
-        # The 'await' fix doesn't work below, but we can comment out the line and it still works
-        # rclpy.spin_until_future_complete(self, self.result_future, timeout_sec=0.10)
+        
+        # Fix for iron threading bug (with timeout)
+        # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
+        try:
+            await asyncio.wait_for(self.isTaskCompleteHelper(), timeout=0.1)
+        except asyncio.TimeoutError:
+            self.debug('Task still processing, not complete yet')
+
         if self.result_future.result():
             self.status = self.result_future.result().status
             if self.status != GoalStatus.STATUS_SUCCEEDED:
@@ -354,6 +361,14 @@ class BehaviorTree(Node):
 
         self.debug("Task succeeded!")
         return True
+    
+    async def isTaskCompleteHelper(self):
+        """
+        Helper function for async 'wait_for' wrapping
+        """
+
+        await self.result_future
+
 
     def getFeedback(self):
         """
@@ -796,7 +811,7 @@ class BehaviorTree(Node):
                 self.mapviz_goal_publisher.publish(navsat_fix)
 
         asyncio.run(self.followGpsWaypoints(path))
-        while not self.isTaskComplete():
+        while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
 
             # See if we get a better pose from the aruco tag or object
@@ -836,7 +851,7 @@ class BehaviorTree(Node):
         self.bt_info("Starting spin search" + src_string)
 
         asyncio.run(self.spin(spin_dist=3.14))
-        while not self.isTaskComplete():
+        while not asyncio.run(self.isTaskComplete()):
 
             if self.leg in self.aruco_legs:
                 # Check for the aruco tag
