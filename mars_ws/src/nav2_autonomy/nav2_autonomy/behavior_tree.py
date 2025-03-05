@@ -445,7 +445,7 @@ class BehaviorTree(Node):
 
     async def async_service_call(self, client, request):
         """
-        Fix for iron threading bug (using await function)
+        Fix for iron threading bug - https://github.com/ros2/rclpy/issues/1337
         NOTE: Call this with the asyncio.run() function (and all other async functions)
         """
 
@@ -825,7 +825,7 @@ class BehaviorTree(Node):
         self.bt_info("Starting spin search" + src_string)
 
         asyncio.run(self.spin(spin_dist=3.14))
-        while not self.isTaskComplete():
+        while not asyncio.run(self.isTaskComplete()):
 
             if self.leg in self.aruco_legs:
                 # Check for the aruco tag
