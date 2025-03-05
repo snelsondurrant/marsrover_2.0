@@ -1,5 +1,6 @@
 # Created by Nelson Durrant, Feb 2025
 import math
+import utm
 from itertools import permutations
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
 
@@ -115,7 +116,8 @@ def greedyOrderPlanner(legs, waypoints, fix):
                 cost = costFunction(current, leg, waypoints)
                 if cost < min_cost:
                     min_cost = cost
-                    current = leg
+                    closest = leg
+        current = closest
 
     return order
 
@@ -131,7 +133,7 @@ def costFunction(leg1, leg2, waypoints):
         elif wp["leg"] == leg2:
             end = wp
 
-    distance = ((end["latitude"] - start["latitude"]) ** 2 + (end["longitude"] - start["longitude"]) ** 2) ** 0.5
+    distance = latLonToMeters(start["latitude"], start["longitude"], end["latitude"], end["longitude"])
 
     return distance
 
@@ -145,8 +147,21 @@ def costFunctionStart(fix, leg1, waypoints):
         if wp["leg"] == leg1:
             end = wp
 
-    distance = (
-        (end["latitude"] - fix.position.latitude) ** 2 + (end["longitude"] - fix.position.longitude) ** 2
-    ) ** 0.5
+    distance = latLonToMeters(fix.position.latitude, fix.position.longitude, end["latitude"], end["longitude"])
+
+    return distance
+
+
+def latLonToMeters(lat1, lon1, lat2, lon2):
+    """
+    Convert GPS coordinates to meters using the UTM library
+    """
+
+    # Convert GPS coordinates to UTM
+    utm1 = utm.from_latlon(lat1, lon1)
+    utm2 = utm.from_latlon(lat2, lon2)
+
+    # Calculate the distance between the two points
+    distance = ((utm2[0] - utm1[0]) ** 2 + (utm2[1] - utm1[1]) ** 2) ** 0.5
 
     return distance

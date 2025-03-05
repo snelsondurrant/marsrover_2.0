@@ -14,6 +14,7 @@ from vision_msgs.msg import Detection3DArray
 from nav2_simple_commander.robot_navigator import TaskResult
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+import asyncio
 import tf2_geometry_msgs
 import tf2_ros
 import utm
@@ -23,7 +24,7 @@ import time
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
 from nav2_autonomy.utils.plan_utils import (
     basicPathPlanner,
-    bruteOrderPlanner,  # TODO: Test these
+    bruteOrderPlanner,
     greedyOrderPlanner,
 )
 from nav2_autonomy.utils.terrain_utils import (
@@ -263,9 +264,10 @@ class BehaviorTree(Node):
     ### NAV2 BASIC NAVIGATOR BASED CODE ###
     #######################################
 
-    def followGpsWaypoints(self, gps_poses):
+    async def followGpsWaypoints(self, gps_poses):
         """
         Function to follow a set of GPS waypoints, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
         """
 
         self.debug("Waiting for 'FollowWaypoints' action server")
@@ -279,7 +281,7 @@ class BehaviorTree(Node):
         send_goal_future = self.follow_gps_waypoints_client.send_goal_async(
             goal_msg, self._feedbackCallback
         )
-        rclpy.spin_until_future_complete(self, send_goal_future)
+        await send_goal_future  # fix for iron threading bug
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
@@ -288,9 +290,12 @@ class BehaviorTree(Node):
         self.result_future = self.goal_handle.get_result_async()
         return True
 
-    def spin(self, spin_dist=1.57, time_allowance=10, disable_collision_checks=False):
+    async def spin(
+        self, spin_dist=1.57, time_allowance=10, disable_collision_checks=False
+    ):
         """
         Function to spin in place, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
         """
 
         self.debug("Waiting for 'Spin' action server")
@@ -305,7 +310,7 @@ class BehaviorTree(Node):
         send_goal_future = self.spin_client.send_goal_async(
             goal_msg, self._feedbackCallback
         )
-        rclpy.spin_until_future_complete(self, send_goal_future)
+        await send_goal_future  # fix for iron threading bug
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
@@ -315,26 +320,28 @@ class BehaviorTree(Node):
         self.result_future = self.goal_handle.get_result_async()
         return True
 
-    def cancelTask(self):
+    async def cancelTask(self):
         """
         Cancel pending task request of any type, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
         """
 
         self.info("Canceling current task.")
         if self.result_future:
             future = self.goal_handle.cancel_goal_async()
-            rclpy.spin_until_future_complete(self, future)
+            await future  # fix for iron threading bug
         return
 
-    def isTaskComplete(self):
+    async def isTaskComplete(self):
         """
         Check if the task request of any type is complete yet, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
         """
 
         if not self.result_future:
             # task was cancelled or completed
             return True
-        rclpy.spin_until_future_complete(self, self.result_future, timeout_sec=0.10)
+        await self.result_future  # fix for iron threading bug
         if self.result_future.result():
             self.status = self.result_future.result().status
             if self.status != GoalStatus.STATUS_SUCCEEDED:
@@ -374,16 +381,17 @@ class BehaviorTree(Node):
         """
 
         if localizer != "robot_localization":  # non-lifecycle node
-            self._waitForNodeToActivate(localizer)
+            asyncio.run(self._waitForNodeToActivate(localizer))
         # if localizer == 'amcl':
         #     self._waitForInitialPose()
-        self._waitForNodeToActivate(navigator)
+        asyncio.run(self._waitForNodeToActivate(navigator))
         self.info("Nav2 is ready for use!")
         return
 
-    def _waitForNodeToActivate(self, node_name):
+    async def _waitForNodeToActivate(self, node_name):
         """
         Waits for the node within the tester namespace to become active, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
         """
 
         self.debug(f"Waiting for {node_name} to become active..")
@@ -399,7 +407,7 @@ class BehaviorTree(Node):
         while state != "active":
             self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
-            rclpy.spin_until_future_complete(self, future)
+            await future  # fix for iron threading bug
             if future.result() is not None:
                 state = future.result().current_state.label
                 self.debug(f"Result of get_state: {state}")
@@ -435,6 +443,15 @@ class BehaviorTree(Node):
     ### ROS 2 CALLBACKS ###
     #######################
 
+    async def async_service_call(self, client, request):
+        """
+        Fix for iron threading bug (using await function)
+        NOTE: Call this with the asyncio.run() function (and all other async functions)
+        """
+
+        future = client.call_async(request)
+        await future
+
     def action_server_callback(self, goal_handle):
         """
         Callback function for the action server
@@ -446,29 +463,29 @@ class BehaviorTree(Node):
         self.legs = goal_handle.request.legs
         if not self.legs:
             self.bt_fatal("No task legs provided")
-            goal_handle.abort()
-            return
+            result = RunBT.Result()
+            result.congrats = "It was the aliens, I'm telling you"
+            self.sm_goal_handle.abort()
+            return result
 
         # Trigger the autonomy state
-        future = self.nav_client.call_async(self.nav_request)
-        rclpy.spin_until_future_complete(self, future)
+        asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
         try:
             self.run_behavior_tree()
         except Exception as e:
-            self.bt_fatal("Something went wrong: " + str(e))
-            goal_handle.abort()
-            return
+            self.bt_fatal(str(e))
+            result = RunBT.Result()
+            result.congrats = "It was the aliens, I'm telling you"
+            self.sm_goal_handle.abort()
+            return result
 
         # Trigger the teleop state
-        future = self.teleop_client.call_async(self.teleop_request)
-        rclpy.spin_until_future_complete(self, future)
+        asyncio.run(self.async_service_call(self.teleop_client, self.teleop_request))
 
-        # TODO: Why does it die here?
-
-        goal_handle.succeed()
         result = RunBT.Result()
-        result.congrats = "Looks like we made it!"
+        result.congrats = "One small step for a rover, one giant leap for roverkind"
+        self.sm_goal_handle.succeed()
         return result
 
     def gps_callback(self, msg):
@@ -537,7 +554,7 @@ class BehaviorTree(Node):
 
         # TODO: Implement this function
 
-        return False
+        return
 
     ###########################
     ### END ROS 2 CALLBACKS ###
@@ -603,7 +620,9 @@ class BehaviorTree(Node):
         self.bt_info("Behavior tree started")
 
         # Determine the best order for the legs
-        self.legs = globals()["__order_planner__"](self.legs, self.wps)
+        self.legs = globals()["__order_planner__"](
+            self.legs, self.wps, self.filtered_gps
+        )
 
         self.bt_info("Determined best leg order: " + str(self.legs))
 
@@ -642,14 +661,12 @@ class BehaviorTree(Node):
             self.bt_info("SUCCESS! Navigated to GPS waypoint")
 
             # Trigger the arrival state
-            future = self.arrival_client.call_async(self.arrival_request)
-            rclpy.spin_until_future_complete(self, future)
+            asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
 
             time.sleep(self.wait_time)
 
             # Trigger the autonomy state
-            future = self.nav_client.call_async(self.nav_request)
-            rclpy.spin_until_future_complete(self, future)
+            asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
         # Is it an aruco leg?
         elif self.leg in self.aruco_legs:
@@ -688,14 +705,12 @@ class BehaviorTree(Node):
                 self.bt_info("SUCCESS! Found and navigated to aruco tag")
 
                 # Trigger the arrival state
-                future = self.arrival_client.call_async(self.arrival_request)
-                rclpy.spin_until_future_complete(self, future)
+                asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
 
                 time.sleep(self.wait_time)
 
                 # Trigger the autonomy state
-                future = self.nav_client.call_async(self.nav_request)
-                rclpy.spin_until_future_complete(self, future)
+                asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
         # Is it an object leg?
         elif leg in self.obj_legs:
@@ -734,14 +749,12 @@ class BehaviorTree(Node):
                 self.bt_info("SUCCESS! Found and navigated to object")
 
                 # Trigger the arrival state
-                future = self.arrival_client.call_async(self.arrival_request)
-                rclpy.spin_until_future_complete(self, future)
+                asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
 
                 time.sleep(self.wait_time)
 
                 # Trigger the autonomy state
-                future = self.nav_client.call_async(self.nav_request)
-                rclpy.spin_until_future_complete(self, future)
+                asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
         else:
             self.bt_fatal("Invalid leg type provided")
@@ -771,8 +784,8 @@ class BehaviorTree(Node):
             else:
                 self.mapviz_goal_publisher.publish(navsat_fix)
 
-        self.followGpsWaypoints(path)
-        while not self.isTaskComplete():
+        asyncio.run(self.followGpsWaypoints(path))
+        while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
 
             # See if we get a better pose from the aruco tag or object
@@ -791,7 +804,7 @@ class BehaviorTree(Node):
                     > self.update_threshold
                 ):
                     self.bt_info("Improved GPS location found" + src_string)
-                    self.cancelTask()
+                    asyncio.run(self.cancelTask())
                     return False
 
         result = self.getResult()
@@ -811,21 +824,21 @@ class BehaviorTree(Node):
 
         self.bt_info("Starting spin search" + src_string)
 
-        self.spin(spin_dist=3.14)
+        asyncio.run(self.spin(spin_dist=3.14))
         while not self.isTaskComplete():
 
             if self.leg in self.aruco_legs:
                 # Check for the aruco tag
                 pose = self.aruco_check()
                 if pose:
-                    self.cancelTask()
+                    asyncio.run(self.cancelTask())
                     return pose
 
             elif self.leg in self.obj_legs:
                 # Check for the object
                 pose = self.obj_check()
                 if pose:
-                    self.cancelTask()
+                    asyncio.run(self.cancelTask())
                     return pose
 
             time.sleep(0.1)
