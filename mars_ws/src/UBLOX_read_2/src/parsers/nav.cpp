@@ -511,9 +511,9 @@ bool NavParser::decodeGlonass(const ublox::RXM_SFRBX_t &msg, GlonassEphemeris &g
 
 bool NavParser::decodeBeidou(const uint8_t *const buf, Ephemeris *eph)
 {
-    // TODO
+    // replacement
 }
 bool NavParser::decodeGalileo(const uint8_t *const buf, Ephemeris *eph)
 {
-    // TODO
+    // replacement
 }

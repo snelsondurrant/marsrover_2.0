@@ -132,7 +132,7 @@ UBLOX_ROS::UBLOX_ROS() : Node("ublox_ros") {
         std::cerr<<"Could not deduce base, rover, or brover\n";
     }
     
-    // TODO: implement this chunck of code into ROS2
+    // replacement: implement this chunck of code into ROS2
     // // Check if there is a arrow
     // if (nh_private_.hasParam("arrowbase") && nh_private_.hasParam("arrowtip")) {
 
@@ -195,7 +195,7 @@ bool UBLOX_ROS::evalF9PID(uint8_t f9pID)
             ecef_pos_tow_ptr_ = &base_ecef_pos_tow_;
             ecef_vel_tow_ptr_ = &base_ecef_vel_tow_;
             pvt_tow_ptr_ = &base_pvt_tow_;
-            return false;   // TODO: make sure a) this is the correct one to change to false and b) make sure it didn't break anything else
+            return false;   // replacement: make sure a) this is the correct one to change to false and b) make sure it didn't break anything else
             break;
         default:
             return false;

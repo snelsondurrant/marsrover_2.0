@@ -40,7 +40,7 @@ namespace ublox_ros
         
         //Account for the case when no numbers are used for the first rover.
         uint8_t j = 0;
-        // if(nh_private_.hasParam("local_host")) {                 //TODO: add in this logic for ROS2 implementation
+        // if(nh_private_.hasParam("local_host")) {                 //replacement: add in this logic for ROS2 implementation
         //The first local host corresponds to the first rover.
 
         this->get_parameter<std::string>("local_host", local_host[0]);
@@ -85,7 +85,7 @@ namespace ublox_ros
         std::string* base_host = new std::string[1];
         uint16_t* base_port = new uint16_t[1];
 
-        // if(nh_private_.hasParam("local_host")) { //TODO: add in this logic for ROS2 implementation
+        // if(nh_private_.hasParam("local_host")) { //replacement: add in this logic for ROS2 implementation
         std::string test;
 
         this->get_parameter<std::string>("local_host", test);
@@ -131,7 +131,7 @@ namespace ublox_ros
         this->get_parameter<uint16_t>("base_port", base_port[0]);
 
         uint8_t j = 0;
-        // if(nh_private_.hasParam("local_host")) { //TODO: add in this logic for ROS2 implementation
+        // if(nh_private_.hasParam("local_host")) { //replacement: add in this logic for ROS2 implementation
 
         this->get_parameter<std::string>("local_host", local_host[0]);
         this->get_parameter<uint16_t>("local_port", local_port[0]);

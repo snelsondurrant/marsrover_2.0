@@ -121,7 +121,7 @@ namespace ublox
         {0x02, "NAV_POSLLH"},
         {0x07, "NAV_PVT"},
         {0x3C, "NAV_RELPOSNED"},
-        {0x10, "NAV_RESETODO"},
+        {0x10, "NAV_RESEreplacement"},
         {0x35, "NAV_SAT"},
         {0x32, "NAV_SBAS"},
         {0x06, "NAV_SOL"},

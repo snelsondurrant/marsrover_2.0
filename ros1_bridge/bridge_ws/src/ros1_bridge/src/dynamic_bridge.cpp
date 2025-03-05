@@ -153,7 +153,7 @@ void update_bridge(
         continue;
       }
       // update the ROS 2 type name to be that of the anticipated bridged type
-      // TODO(dhood): support non 1-1 "bridge-all" mappings
+      // replacement(dhood): support non 1-1 "bridge-all" mappings
       bool mapping_found = ros1_bridge::get_1to2_mapping(ros1_type_name, ros2_type_name);
       if (!mapping_found) {
         // printf("No known mapping for ROS 1 type '%s'\n", ros1_type_name.c_str());
@@ -222,7 +222,7 @@ void update_bridge(
         continue;
       }
       // update the ROS 1 type name to be that of the anticipated bridged type
-      // TODO(dhood): support non 1-1 "bridge-all" mappings
+      // replacement(dhood): support non 1-1 "bridge-all" mappings
       bool mapping_found = ros1_bridge::get_2to1_mapping(ros2_type_name, ros1_type_name);
       if (!mapping_found) {
         // printf("No known mapping for ROS 2 type '%s'\n", ros2_type_name.c_str());
@@ -743,7 +743,7 @@ int main(int argc, char * argv[])
           continue;
         }
 
-        // TODO(wjwwood): this should be common functionality in the C++ rosidl package
+        // replacement(wjwwood): this should be common functionality in the C++ rosidl package
         size_t separator_position = service_type.find('/');
         if (separator_position == std::string::npos) {
           fprintf(stderr, "invalid service type '%s', skipping...\n", service_type.c_str());

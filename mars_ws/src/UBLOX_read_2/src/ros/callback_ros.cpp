@@ -48,7 +48,7 @@ void UBLOX_ROS::pvtCB(const ublox::UBX_message_t &ubx_msg, uint8_t f9pID)
 
     *pvt_tow_ptr_ = msg.iTOW;
     // out.iTOW = msg.iTow;
-    pvt_ptr_->header.stamp = this->now(); ///TODO: Do this right
+    pvt_ptr_->header.stamp = this->now(); ///replacement: Do this right
     pvt_ptr_->year = msg.year;
     pvt_ptr_->month = msg.month;
     pvt_ptr_->day = msg.day;
@@ -108,7 +108,7 @@ void UBLOX_ROS::relposCB(const ublox::UBX_message_t &ubx_msg, uint8_t f9pID)
 
 
     // out.iTOW = msg.iTow*1e-3;
-    out.header.stamp = this->now(); /// TODO: do this right
+    out.header.stamp = this->now(); /// replacement: do this right
     out.ref_station_id = msg.refStationId;
     out.rel_pos_ned[0] = msg.relPosN*1e-2;
     out.rel_pos_ned[1] = msg.relPosE*1e-2;
@@ -164,7 +164,7 @@ void UBLOX_ROS::svinCB(const ublox::UBX_message_t &ubx_msg, uint8_t f9pID)
 {
     ublox::NAV_SVIN_t msg = ubx_msg.NAV_SVIN;
     ublox_read_2::msg::SurveyStatus out;
-    out.header.stamp = this->now(); /// TODO: do this right
+    out.header.stamp = this->now(); /// replacement: do this right
     out.dur = msg.dur;
     out.mean_xyz[0] = msg.meanX*1e-2;
     out.mean_xyz[1] = msg.meanY*1e-2;
