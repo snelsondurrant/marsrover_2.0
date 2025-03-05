@@ -348,7 +348,7 @@ class BehaviorTree(Node):
         try:
             await asyncio.wait_for(self.isTaskCompleteHelper(), timeout=0.1)
         except asyncio.TimeoutError:
-            self.debug('Task still processing, not complete yet')
+            self.debug('Timed out waiting for async future to complete')
 
         if self.result_future.result():
             self.status = self.result_future.result().status
