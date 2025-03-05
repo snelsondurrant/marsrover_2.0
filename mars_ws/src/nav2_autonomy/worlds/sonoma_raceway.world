@@ -67,7 +67,7 @@
 
     <include>
       <uri>model://urc_aruco_0</uri>
-      <pose>-54 128.3 -0.55 0 0 0</pose>
+      <pose>-54 127.3 -0.55 0 0 0</pose>
     </include>
 
     <include>
