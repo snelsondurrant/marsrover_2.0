@@ -75,5 +75,9 @@
       <pose>-70 170 0.5 0 0 0</pose>
     </include>
 
+    <include>
+      <uri>model://hammer</uri>
+      <pose>-70 110 0.5 0 0 0</pose>
+
   </world>
 </sdf>
