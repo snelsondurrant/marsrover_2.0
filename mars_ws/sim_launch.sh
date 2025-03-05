@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 #
-# Launches the full simulation autonomy stack
+# Launches the full simulation stack for the autonomy task
 
 if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
     docker run -p 8080:8080 -d -t -v ~/mars_ws/src/nav2_autonomy/mapproxy:/mapproxy danielsnider/mapproxy
