@@ -57,5 +57,23 @@
       <pose>-54.5 128.3 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
     </include>
 
+    <!-- Added these - Nelson Durrant, Feb 2025 -->
+
+    <gui>
+      <camera name="user_camera">
+        <pose>-57.5 120 0.5 0 0.1 1</pose>
+      </camera>
+    </gui>
+
+    <include>
+      <uri>model://urc_aruco_0</uri>
+      <pose>-54 128.3 0.2 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://urc_aruco_1</uri>
+      <pose>-70 170 0.5 0 0 0</pose>
+    </include>
+
   </world>
 </sdf>

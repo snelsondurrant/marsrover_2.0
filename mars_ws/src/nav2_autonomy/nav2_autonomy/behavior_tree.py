@@ -120,6 +120,10 @@ class BehaviorTree(Node):
         self.zone = None
         self.hemisphere = None
 
+        # Tunable values
+        self.wait_time = 10  # Time to wait for a task to complete
+        self.update_threshold = 0.00001  # Threshold for updating tag and item locations
+
         # Hex pattern for searching
         self.hex_coord = [
             (1.0, 0.0),
@@ -435,7 +439,7 @@ class BehaviorTree(Node):
         self.legs = goal_handle.request.legs
         if not self.legs:
             self.bt_fatal("No task legs provided")
-            self.sm_goal_handle.abort()
+            goal_handle.abort()
             return
 
         # Trigger the autonomy state
@@ -446,14 +450,16 @@ class BehaviorTree(Node):
             self.run_behavior_tree()
         except Exception as e:
             self.bt_fatal("Something went wrong: " + str(e))
-            self.sm_goal_handle.abort()
+            goal_handle.abort()
             return
 
         # Trigger the teleop state
         future = self.teleop_client.call_async(self.teleop_request)
         rclpy.spin_until_future_complete(self, future)
 
-        self.sm_goal_handle.succeed()
+        # TODO: Why does it die here?
+
+        goal_handle.succeed()
         result = RunBT.Result()
         result.congrats = "Looks like we made it!"
         return result
@@ -541,7 +547,7 @@ class BehaviorTree(Node):
 
         self.get_logger().info("[" + self.leg + "] " + string)
         sm_feedback = RunBT.Feedback()
-        sm_feedback.status = "[INFO] [" + self.leg + "] " + string
+        sm_feedback.status = "[" + self.leg + "] " + string
         self.sm_goal_handle.publish_feedback(sm_feedback)
 
     def bt_warn(self, string):
@@ -636,7 +642,7 @@ class BehaviorTree(Node):
             future = self.arrival_client.call_async(self.arrival_request)
             rclpy.spin_until_future_complete(self, future)
 
-            time.sleep(10)
+            time.sleep(self.wait_time)
 
             # Trigger the autonomy state
             future = self.nav_client.call_async(self.nav_request)
@@ -668,7 +674,13 @@ class BehaviorTree(Node):
                 self.bt_error("Could not find the aruco tag")
             else:
                 self.bt_info("Found the aruco tag!")
-                self.gps_nav(aruco_loc, " (aruco tag)")
+
+                # Loop through with an updating GPS location
+                finished = False
+                while not finished:
+                    finished = self.gps_nav(aruco_loc, " (aruco tag)", updating=True)
+                    if not finished:
+                        aruco_loc = self.aruco_check()
 
                 self.bt_info("SUCCESS! Found and navigated to aruco tag")
 
@@ -676,7 +688,7 @@ class BehaviorTree(Node):
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
 
-                time.sleep(10)
+                time.sleep(self.wait_time)
 
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
@@ -708,7 +720,13 @@ class BehaviorTree(Node):
                 self.bt_error("Could not find the object")
             else:
                 self.bt_info("Found the object!")
-                self.gps_nav(obj_loc, " (object)")
+
+                # Loop through with an updating GPS location
+                finished = False
+                while not finished:
+                    finished = self.gps_nav(obj_loc, " (object)", updating=True)
+                    if not finished:
+                        obj_loc = self.obj_check()
 
                 self.bt_info("SUCCESS! Found and navigated to object")
 
@@ -716,7 +734,7 @@ class BehaviorTree(Node):
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
 
-                time.sleep(10)
+                time.sleep(self.wait_time)
 
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
@@ -726,7 +744,7 @@ class BehaviorTree(Node):
             self.bt_fatal("Invalid leg type provided")
             return False
 
-    def gps_nav(self, dest_wp, src_string=""):
+    def gps_nav(self, dest_wp, src_string="", updating=False):
         """
         Function to navigate through GPS waypoints
         """
@@ -755,16 +773,32 @@ class BehaviorTree(Node):
         while not self.isTaskComplete():
             time.sleep(0.1)
 
+            # See if we get a better pose from the aruco tag or object
+            if updating:
+                if self.leg in self.aruco_legs:
+                    pose = self.aruco_check()
+                elif self.leg in self.obj_legs:
+                    pose = self.obj_check()
+
+                # Check if its location has changed by a significant amount
+                if (
+                    abs(pose.position.latitude - dest_wp.position.latitude) > self.update_threshold
+                ) or (
+                    abs(pose.position.longitude - dest_wp.position.longitude) > self.update_threshold
+                ):
+                    self.bt_info("Improved GPS location found" + src_string)
+                    self.cancelTask()
+                    return False
+
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
             self.bt_info("GPS navigation completed" + src_string)
         elif result == TaskResult.CANCELED:
             self.bt_warn("GPS navigation canceled" + src_string)
         elif result == TaskResult.FAILED:
-            (error_code, error_msg) = self.getTaskError()
-            self.bt_error(
-                "GPS navigation failed" + src_string + f" {error_code}:{error_msg}"
-            )
+            self.bt_error("GPS navigation failed" + src_string)
+
+        return True
 
     def spin_search(self, src_string=""):
         """
@@ -798,11 +832,7 @@ class BehaviorTree(Node):
         elif result == TaskResult.CANCELED:
             self.bt_warn("Spin search canceled" + src_string)
         elif result == TaskResult.FAILED:
-            (error_code, error_msg) = self.getTaskError()
-            self.bt_error(
-                "Spin search failed" + src_string + f" {error_code}:{error_msg}"
-            )
-
+            self.bt_error("Spin search failed" + src_string)
         return False
 
     def hex_search(self):
