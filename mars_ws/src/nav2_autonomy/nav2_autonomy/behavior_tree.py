@@ -23,13 +23,20 @@ import time
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
 from nav2_autonomy.utils.plan_utils import (
     basicPathPlanner,
-    bruteOrderPlanner,
+    bruteOrderPlanner,  # TODO: Test these
     greedyOrderPlanner,
 )
 from nav2_autonomy.utils.terrain_utils import (
     terrainPathPlanner,
     terrainOrderPlanner,
 )
+
+#####################################################
+### Select the path and leg order planners to use ###
+#####################################################
+
+globals()["__path_planner__"] = basicPathPlanner
+globals()["__order_planner__"] = greedyOrderPlanner
 
 
 class YamlParser:
@@ -595,12 +602,8 @@ class BehaviorTree(Node):
 
         self.bt_info("Behavior tree started")
 
-        # TODO: Test these
-
-        ### UNCOMMENT THE ORDER PLANNER YOU WANT TO USE (or use a manual order) ###
-        self.legs = greedyOrderPlanner(self.legs, self.wps, self.filtered_gps)
-        # self.legs = bruteOrderPlanner(self.legs, self.wps, self.filtered_gps)
-        # self.legs = terrainOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        # Determine the best order for the legs
+        self.legs = globals()["__order_planner__"](self.legs, self.wps)
 
         self.bt_info("Determined best leg order: " + str(self.legs))
 
@@ -751,9 +754,8 @@ class BehaviorTree(Node):
 
         self.bt_info("Starting GPS navigation" + src_string)
 
-        ### UNCOMMENT THE PATH PLANNER YOU WANT TO USE ###
-        path = basicPathPlanner(self.filtered_gps, dest_wp)
-        # path = terrainPathPlanner(self.filtered_gps, dest_wp)
+        # Generate a path to the destination waypoint
+        path = globals()["__path_planner__"](self.filtered_gps, dest_wp)
 
         # Publish the GPS positions to mapviz
         for wp in path:
@@ -782,9 +784,11 @@ class BehaviorTree(Node):
 
                 # Check if its location has changed by a significant amount
                 if (
-                    abs(pose.position.latitude - dest_wp.position.latitude) > self.update_threshold
+                    abs(pose.position.latitude - dest_wp.position.latitude)
+                    > self.update_threshold
                 ) or (
-                    abs(pose.position.longitude - dest_wp.position.longitude) > self.update_threshold
+                    abs(pose.position.longitude - dest_wp.position.longitude)
+                    > self.update_threshold
                 ):
                     self.bt_info("Improved GPS location found" + src_string)
                     self.cancelTask()
@@ -798,7 +802,7 @@ class BehaviorTree(Node):
         elif result == TaskResult.FAILED:
             self.bt_error("GPS navigation failed" + src_string)
 
-        return True # for updating mode logic
+        return True  # for updating mode logic
 
     def spin_search(self, src_string=""):
         """
