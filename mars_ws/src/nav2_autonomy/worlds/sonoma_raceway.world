@@ -67,7 +67,7 @@
 
     <include>
       <uri>model://urc_aruco_0</uri>
-      <pose>-54 128.3 0.2 0 0 0</pose>
+      <pose>-54 128.3 -0.55 0 0 0</pose>
     </include>
 
     <include>
@@ -77,7 +77,8 @@
 
     <include>
       <uri>model://hammer</uri>
-      <pose>-70 110 0.5 0 0 0</pose>
+      <pose>-20 129 0.2 0 0 0</pose>
+    </include>
 
   </world>
 </sdf>

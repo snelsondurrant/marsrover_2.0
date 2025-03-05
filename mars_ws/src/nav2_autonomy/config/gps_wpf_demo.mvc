@@ -28,13 +28,6 @@ displays:
         type: wmts
       bing_api_key: ""
       source: Google Maps Rover # From old code - Nelson Durrant, Feb 2025
-  - type: mapviz_plugins/point_click_publisher
-    name: new display
-    config:
-      visible: true
-      collapsed: false
-      topic: clicked_point
-      output_frame: wgs84
   - type: mapviz_plugins/tf_frame
     name: new display
     config:
