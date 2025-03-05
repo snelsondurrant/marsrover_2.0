@@ -155,6 +155,10 @@ USER root
 RUN apt update && apt install -y ros-iron-vision-msgs
 USER $NAME
 
+# Install python UTM library - Nelson Durrant, Feb 2024
+# Used for converting object and aruco poses to GPS coordinates
+RUN pip3 install utm
+
 # Install turtlesim tf2 packages - Nelson Durrant, Feb 2024
 # Used in the ROS 2 and tf2 tutorials
 USER root
@@ -163,10 +167,4 @@ RUN apt update && apt install -y \
     ros-iron-tf2-ros \
     ros-iron-tf2-tools \
     ros-iron-turtlesim
-USER $NAME
-
-# Install matplotlib - Nelson Durrant, Feb 2024
-# Used for plotting the path planning script results
-USER root
-RUN apt update && apt install -y python3-matplotlib
 USER $NAME

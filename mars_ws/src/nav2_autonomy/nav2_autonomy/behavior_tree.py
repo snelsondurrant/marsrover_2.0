@@ -14,6 +14,9 @@ from vision_msgs.msg import Detection3DArray
 from nav2_simple_commander.robot_navigator import TaskResult
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+import tf2_geometry_msgs
+import tf2_ros
+import utm
 import yaml
 import time
 
@@ -77,6 +80,7 @@ class BehaviorTree(Node):
     - {node_name}/get_state (lifecycle_msgs/GetState) (temporary)
     Action Servers:
     - run_bt (rover_interfaces/RunBT)
+    *And a TfBuffer
     """
 
     def __init__(self):
@@ -101,12 +105,20 @@ class BehaviorTree(Node):
         self.gps_legs = ["gps1", "gps2"]
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
         self.obj_legs = ["mallet", "bottle"]
-        self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
 
         # Initialize variables
         self.legs = []
         self.leg = "start"
         self.filtered_gps = None
+
+        # Pose dictionaries
+        self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
+        self.aruco_poses = {"aruco1": None, "aruco2": None, "aruco3": None}
+        self.obj_poses = {"mallet": None, "bottle": None}
+
+        # UTM zone and hemisphere
+        self.zone = None
+        self.hemisphere = None
 
         # Hex pattern for searching
         self.hex_coord = [
@@ -122,6 +134,10 @@ class BehaviorTree(Node):
         ################################
         ### ROS 2 OBJECT DEFINITIONS ###
         ################################
+
+        # Set up a Tf2 buffer for pose to GPS transforms (aruco, object)
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # Callback groups (for threading)
         bg_callback_group = MutuallyExclusiveCallbackGroup()
@@ -446,6 +462,11 @@ class BehaviorTree(Node):
         """
         Callback function for the GPS subscriber
         """
+
+        # Set zone and hemisphere for UTM conversions
+        self.zone = utm.from_latlon(msg.latitude, msg.longitude)[2]
+        self.hemisphere = "N" if msg.latitude > 0 else "S"
+
         self.filtered_gps = latLonYaw2Geopose(msg.latitude, msg.longitude)
 
     def aruco_callback(self, msg):
@@ -453,15 +474,36 @@ class BehaviorTree(Node):
         Callback function for the aruco pose subscriber
         """
 
-        # ArucoDetections:
-        #   std_msgs/Header header
-        #   aruco_opencv_msgs/MarkerPose[] markers
-        #   aruco_opencv_msgs/BoardPose[] boards
-        # MarkerPose:
-        #   uint16 marker_id
-        #   geometry_msgs/Pose pose
+        for marker in msg.markers:
+            # Are we looking for this marker?
+            if marker.marker_id in self.tags.values():
 
-        # TODO: Implement this function
+                # Use the tf buffer to transform the pose to UTM
+                try:
+                    tf = self.tf_buffer.lookup_transform(
+                        "utm", msg.header.frame_id, msg.header.stamp
+                    )
+                    utm_pose = tf2_geometry_msgs.do_transform_pose(marker.pose, tf)
+                except Exception as e:
+                    self.get_logger().error(f"Could not transform aruco pose: {e}")
+                    return
+
+                # Check to make sure we've had at least one GPS fix
+                if self.filtered_gps is None:
+                    self.get_logger().error(
+                        "No filtered GPS fix available for UTM conversion"
+                    )
+                    return
+
+                # Given UTM pose, convert to GPS
+                lat, lon = utm.to_latlon(
+                    utm_pose.position.x,
+                    utm_pose.position.y,
+                    self.zone,
+                    self.hemisphere,
+                )
+
+                self.aruco_poses[self.leg] = latLonYaw2Geopose(lat, lon)
 
     def obj_callback(self, msg):
         """
@@ -479,6 +521,8 @@ class BehaviorTree(Node):
         #   geometry_msgs/PoseStamped pose
 
         # TODO: Implement this function
+
+        return False
 
     ###########################
     ### END ROS 2 CALLBACKS ###
@@ -584,13 +628,13 @@ class BehaviorTree(Node):
 
             self.gps_nav(leg_wp)
 
-            self.bt_info("### SUCCESS! Navigated to GPS waypoint ###")
+            self.bt_info("SUCCESS! Navigated to GPS waypoint")
 
             # Trigger the arrival state
             future = self.arrival_client.call_async(self.arrival_request)
             rclpy.spin_until_future_complete(self, future)
 
-            time.sleep(15)
+            time.sleep(10)
 
             # Trigger the autonomy state
             future = self.nav_client.call_async(self.nav_request)
@@ -624,13 +668,13 @@ class BehaviorTree(Node):
                 self.bt_info("Found the aruco tag at: " + aruco_loc)
                 self.gps_nav(aruco_loc, " (aruco tag)")
 
-                self.bt_info("### SUCCESS! Found and navigated to aruco tag ###")
+                self.bt_info("SUCCESS! Found and navigated to aruco tag")
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
 
-                time.sleep(15)
+                time.sleep(10)
 
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
@@ -664,13 +708,13 @@ class BehaviorTree(Node):
                 self.bt_info("Found the object at: " + obj_loc)
                 self.gps_nav(obj_loc, " (object)")
 
-                self.bt_info("### SUCCESS! Found and navigated to object ###")
+                self.bt_info("SUCCESS! Found and navigated to object")
 
                 # Trigger the arrival state
                 future = self.arrival_client.call_async(self.arrival_request)
                 rclpy.spin_until_future_complete(self, future)
 
-                time.sleep(15)
+                time.sleep(10)
 
                 # Trigger the autonomy state
                 future = self.nav_client.call_async(self.nav_request)
@@ -715,7 +759,10 @@ class BehaviorTree(Node):
         elif result == TaskResult.CANCELED:
             self.bt_warn("GPS navigation canceled" + src_string)
         elif result == TaskResult.FAILED:
-            self.bt_error("GPS navigation failed" + src_string)
+            (error_code, error_msg) = self.getTaskError()
+            self.bt_error(
+                "GPS navigation failed" + src_string + f" {error_code}:{error_msg}"
+            )
 
     def spin_search(self, src_string=""):
         """
@@ -749,7 +796,10 @@ class BehaviorTree(Node):
         elif result == TaskResult.CANCELED:
             self.bt_warn("Spin search canceled" + src_string)
         elif result == TaskResult.FAILED:
-            self.bt_error("Spin search failed" + src_string)
+            (error_code, error_msg) = self.getTaskError()
+            self.bt_error(
+                "Spin search failed" + src_string + f" {error_code}:{error_msg}"
+            )
 
         return False
 
@@ -772,7 +822,7 @@ class BehaviorTree(Node):
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
             self.gps_nav(hex_wp, " (hex " + str(i) + ")")
-            pose = self.spin_search(" (hex " + str(i) + ")") # Do a spin search
+            pose = self.spin_search(" (hex " + str(i) + ")")  # Do a spin search
             # Did the last spin search find it?
             if pose:
                 return pose
@@ -785,7 +835,8 @@ class BehaviorTree(Node):
         Function to check for the aruco tag
         """
 
-        # TODO: Implement this function, needs to return a GeoPose obj on success
+        if self.aruco_poses[self.leg]:
+            return self.aruco_poses[self.leg]
 
         return False
 
@@ -794,7 +845,8 @@ class BehaviorTree(Node):
         Function to check for the object
         """
 
-        # TODO: Implement this function, needs to return a GeoPose obj on success
+        if self.obj_poses[self.leg]:
+            return self.obj_poses[self]
 
         return False
 
