@@ -478,6 +478,8 @@ class BehaviorTree(Node):
             # Are we looking for this marker?
             if marker.marker_id in self.tags.values():
 
+                self.get_logger().info(f"Found aruco tag {marker.marker_id}")
+
                 # Look up and use the transform to convert the pose to UTM
                 try:
                     tf = self.tf_buffer.lookup_transform(
@@ -665,7 +667,7 @@ class BehaviorTree(Node):
             if not aruco_loc:
                 self.bt_error("Could not find the aruco tag")
             else:
-                self.bt_info("Found the aruco tag at: " + aruco_loc)
+                self.bt_info("Found the aruco tag!")
                 self.gps_nav(aruco_loc, " (aruco tag)")
 
                 self.bt_info("SUCCESS! Found and navigated to aruco tag")
@@ -705,7 +707,7 @@ class BehaviorTree(Node):
             if not obj_loc:
                 self.bt_error("Could not find the object")
             else:
-                self.bt_info("Found the object at: " + obj_loc)
+                self.bt_info("Found the object!")
                 self.gps_nav(obj_loc, " (object)")
 
                 self.bt_info("SUCCESS! Found and navigated to object")
