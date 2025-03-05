@@ -878,7 +878,7 @@ class BehaviorTree(Node):
         """
 
         if self.obj_poses[self.leg]:
-            return self.obj_poses[self]
+            return self.obj_poses[self.leg]
 
         return False
 
