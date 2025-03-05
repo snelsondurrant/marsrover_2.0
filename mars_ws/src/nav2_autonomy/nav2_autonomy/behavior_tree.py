@@ -798,7 +798,7 @@ class BehaviorTree(Node):
         elif result == TaskResult.FAILED:
             self.bt_error("GPS navigation failed" + src_string)
 
-        return True
+        return True # for updating mode logic
 
     def spin_search(self, src_string=""):
         """
