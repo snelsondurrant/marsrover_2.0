@@ -23,9 +23,10 @@ import time
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
 from nav2_autonomy.utils.plan_utils import (
-    basicPathPlanner,
-    bruteOrderPlanner,
-    greedyOrderPlanner,
+    basicPathPlanner,  # plan a straight line between two GPS coordinates
+    bruteOrderPlanner,  # use brute force to find the best order of legs
+    greedyOrderPlanner,  # use a greedy algorithm to find the best order of legs
+    noOrderPlanner,  # don't reorder the legs
 )
 from nav2_autonomy.utils.terrain_utils import (
     terrainPathPlanner,
@@ -116,7 +117,7 @@ class BehaviorTree(Node):
 
         # Initialize variables
         self.legs = []
-        self.leg = "start"
+        self.leg = ""
         self.filtered_gps = None
 
         # Pose dictionaries
@@ -332,16 +333,16 @@ class BehaviorTree(Node):
             await future  # fix for iron threading bug
         return
 
-    async def isTaskComplete(self):
+    def isTaskComplete(self):
         """
         Check if the task request of any type is complete yet, based on the nav2_simple_commander code
-        NOTE: Call this with the asyncio.run() function
         """
 
         if not self.result_future:
             # task was cancelled or completed
             return True
-        await self.result_future  # fix for iron threading bug
+        # The 'await' fix doesn't work below, but we can comment out the line and it still works
+        # rclpy.spin_until_future_complete(self, self.result_future, timeout_sec=0.10)
         if self.result_future.result():
             self.status = self.result_future.result().status
             if self.status != GoalStatus.STATUS_SUCCEEDED:
@@ -472,6 +473,7 @@ class BehaviorTree(Node):
         asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
         try:
+            self.leg = "start"
             self.run_behavior_tree()
         except Exception as e:
             self.bt_fatal(str(e))
@@ -619,6 +621,9 @@ class BehaviorTree(Node):
 
         self.bt_info("Behavior tree started")
 
+        self.bt_info("Using order planner: " + globals()["__order_planner__"].__name__)
+        self.bt_info("Using path planner: " + globals()["__path_planner__"].__name__)
+
         # Determine the best order for the legs
         self.legs = globals()["__order_planner__"](
             self.legs, self.wps, self.filtered_gps
@@ -661,7 +666,9 @@ class BehaviorTree(Node):
             self.bt_info("SUCCESS! Navigated to GPS waypoint")
 
             # Trigger the arrival state
-            asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
+            asyncio.run(
+                self.async_service_call(self.arrival_client, self.arrival_request)
+            )
 
             time.sleep(self.wait_time)
 
@@ -705,7 +712,9 @@ class BehaviorTree(Node):
                 self.bt_info("SUCCESS! Found and navigated to aruco tag")
 
                 # Trigger the arrival state
-                asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
+                asyncio.run(
+                    self.async_service_call(self.arrival_client, self.arrival_request)
+                )
 
                 time.sleep(self.wait_time)
 
@@ -749,7 +758,9 @@ class BehaviorTree(Node):
                 self.bt_info("SUCCESS! Found and navigated to object")
 
                 # Trigger the arrival state
-                asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
+                asyncio.run(
+                    self.async_service_call(self.arrival_client, self.arrival_request)
+                )
 
                 time.sleep(self.wait_time)
 
@@ -785,7 +796,7 @@ class BehaviorTree(Node):
                 self.mapviz_goal_publisher.publish(navsat_fix)
 
         asyncio.run(self.followGpsWaypoints(path))
-        while not asyncio.run(self.isTaskComplete()):
+        while not self.isTaskComplete():
             time.sleep(0.1)
 
             # See if we get a better pose from the aruco tag or object
@@ -825,7 +836,7 @@ class BehaviorTree(Node):
         self.bt_info("Starting spin search" + src_string)
 
         asyncio.run(self.spin(spin_dist=3.14))
-        while not asyncio.run(self.isTaskComplete()):
+        while not self.isTaskComplete():
 
             if self.leg in self.aruco_legs:
                 # Check for the aruco tag

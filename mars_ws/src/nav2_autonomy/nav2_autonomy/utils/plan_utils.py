@@ -5,7 +5,7 @@ from itertools import permutations
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
 
 
-def basicPathPlanner(geopose1, geopose2):
+def basicPathPlanner(geopose1, geopose2): # all path planners need to match these arguments
     """
     Generate intermediary waypoints in a straight line between two GPS coordinates
 
@@ -59,7 +59,7 @@ def basicPathPlanner(geopose1, geopose2):
     return new_wps
 
 
-def bruteOrderPlanner(legs, waypoints, fix):
+def bruteOrderPlanner(legs, waypoints, fix): # all order planners need to match these arguments
     """
     Brute force the optimal order to complete the task legs (This is an NP-hard problem)
 
@@ -86,7 +86,7 @@ def bruteOrderPlanner(legs, waypoints, fix):
     return best_order
 
 
-def greedyOrderPlanner(legs, waypoints, fix):
+def greedyOrderPlanner(legs, waypoints, fix): # all order planners need to match these arguments
     """
     Determine a greedy order to complete the task legs (This is an NP-hard problem)
 
@@ -105,11 +105,11 @@ def greedyOrderPlanner(legs, waypoints, fix):
         if cost < min_cost:
             min_cost = cost
             current = leg
+    visited.append(current)
+    order.append(current)
 
     # Visit the rest of the task legs in order of closest distance
     while len(visited) < len(legs):
-        visited.append(current)
-        order.append(current)
         min_cost = float("inf")
         for leg in legs:
             if leg not in visited:
@@ -118,8 +118,21 @@ def greedyOrderPlanner(legs, waypoints, fix):
                     min_cost = cost
                     closest = leg
         current = closest
+        visited.append(current)
+        order.append(current)
 
     return order
+
+
+def noOrderPlanner(legs, waypoints, fix): # all order planners need to match these arguments
+    """
+    Just return the task legs in the order they were given
+
+    :author: Nelson Durrant
+    :date: Mar 2025
+    """
+
+    return legs
 
 
 def costFunction(leg1, leg2, waypoints):
