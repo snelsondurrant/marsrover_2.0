@@ -816,7 +816,7 @@ class BehaviorTree(Node):
                 ):
                     self.bt_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
-                    return False
+                    return False # restart gps_nav with the new location
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
