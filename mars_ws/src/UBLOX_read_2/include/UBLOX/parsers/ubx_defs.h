@@ -108,7 +108,7 @@ enum {
     NAV_POSLLH      = 0x02, // Periodic/Polled Geodetic Position Solution
     NAV_PVT         = 0x07, // Periodic/Polled Navigation Position Velocity Time Solution
     NAV_RELPOSNED   = 0x3C, // Periodic/Polled Relative Positioning Information in NED frame
-    NAV_RESEreplacement    = 0x10, // Command Reset odometer
+    NAV_RESETODO    = 0x10, // Command Reset odometer
     NAV_SAT         = 0x35, // Periodic/Polled Satellite Information
     NAV_SBAS        = 0x32, // Periodic/Polled SBAS Status Data
     NAV_SOL         = 0x06, // Periodic/Polled Navigation Solution Information
