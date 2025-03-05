@@ -305,6 +305,7 @@ class BehaviorTree(Node):
         goal_msg = Spin.Goal()
         goal_msg.target_yaw = spin_dist
         goal_msg.time_allowance = Duration(sec=time_allowance)
+        # For some reason disable_collision_checks doesn't exist in our Nav2 install?
         # goal_msg.disable_collision_checks = disable_collision_checks
 
         self.info(f"Spinning to angle {goal_msg.target_yaw}....")
