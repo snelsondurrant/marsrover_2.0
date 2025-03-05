@@ -123,7 +123,7 @@ class BehaviorTree(Node):
         self.aruco_poses = {"aruco1": None, "aruco2": None, "aruco3": None}
         self.obj_poses = {"mallet": None, "bottle": None}
 
-        # UTM zone and hemisphere
+        # UTM zone and hemisphere (will set on first gps fix)
         self.zone = None
         self.hemisphere = None
 
