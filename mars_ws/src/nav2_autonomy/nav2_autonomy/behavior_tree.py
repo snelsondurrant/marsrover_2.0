@@ -771,8 +771,8 @@ class BehaviorTree(Node):
             hex_lon = base_wp.position.longitude + coord[1] * self.hex_scalar
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            self.gps_nav(hex_wp, " (hex point " + str(i) + ")")
-            pose = self.spin_search(" (hex point " + str(i) + ")") # Do a spin search
+            self.gps_nav(hex_wp, " (hex " + str(i) + ")")
+            pose = self.spin_search(" (hex " + str(i) + ")") # Do a spin search
             # Did the last spin search find it?
             if pose:
                 return pose
