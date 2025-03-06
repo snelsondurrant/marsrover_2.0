@@ -94,7 +94,7 @@ class AutonomyTaskExecutor(Node):
 
     def __init__(self):
 
-        super().__init__("autonomy_task_executor")
+        super().__init__("task_executor")
         # self.navigator = BasicNavigator() # Don't uncomment this line
         # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues.
         # We've hacked the relevant functions from the BasicNavigator class into this class as a fix.
@@ -123,7 +123,7 @@ class AutonomyTaskExecutor(Node):
 
         # Tunable values
         self.wait_time = 10  # Time to wait after arrival
-        self.update_threshold = 0.00001  # Threshold for updating tag and item locations
+        self.update_threshold = 0.000005  # Threshold for updating tag and item locations
 
         # Hex pattern for searching
         self.hex_coord = [
@@ -278,7 +278,11 @@ class AutonomyTaskExecutor(Node):
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
+            self.error("FollowWaypoints request was rejected!")
             return False
+        
+        # Get the timestamp of when we started the goal for bug fix
+        self.last_feedback = self.get_clock().now().to_msg()
 
         self.result_future = self.goal_handle.get_result_async()
         return True
@@ -310,6 +314,9 @@ class AutonomyTaskExecutor(Node):
         if not self.goal_handle.accepted:
             self.error("Spin request was rejected!")
             return False
+        
+        # Get the timestamp of when we started the goal for bug fix
+        self.last_feedback = self.get_clock().now().to_msg()
 
         self.result_future = self.goal_handle.get_result_async()
         return True
@@ -349,8 +356,13 @@ class AutonomyTaskExecutor(Node):
                 self.debug(f"Task with failed with status code: {self.status}")
                 return True
         else:
-            # Timed out, still processing, not complete yet
-            return False
+            # Bug fix: sometimes the goal completes but we don't successfully get the result
+            # We can determine if the task is complete by looking at the last feedback timestamp
+            if self.get_clock().now().to_msg().sec - self.last_feedback.sec > 2:
+                self.bt_warn("No action result received, but assuming completion based on feedback")
+                return True
+            else:
+                return False
 
         self.debug("Task succeeded!")
         return True
@@ -424,6 +436,7 @@ class AutonomyTaskExecutor(Node):
 
     def _feedbackCallback(self, msg):
         self.debug("Received action feedback message")
+        self.last_feedback = self.get_clock().now().to_msg() # for bug fix
         self.feedback = msg.feedback
         return
 
@@ -483,7 +496,7 @@ class AutonomyTaskExecutor(Node):
         if not self.legs:
             self.task_fatal("No task legs provided")
             result = RunTask.Result()
-            result.msg = "It was the aliens, I'm telling you"
+            result.msg = "Well that was less-than-interstellar of you"
             self.task_goal_handle.abort()
             return result
 
@@ -529,12 +542,12 @@ class AutonomyTaskExecutor(Node):
             utm_pose = tf2_geometry_msgs.do_transform_pose(pose, tf)
         except Exception as e:
             self.get_logger().warn(f"Could not transform pose: {e}")
-            return
+            return False
 
         # Check to make sure we've had at least one GPS fix
         if self.filtered_gps is None:
             self.get_logger().error("No filtered GPS fix available for UTM conversion")
-            return
+            return False
 
         # Given UTM pose, convert to GPS
         lat, lon = utm.to_latlon(
@@ -557,10 +570,14 @@ class AutonomyTaskExecutor(Node):
 
                 self.get_logger().info(f"Found aruco tag {marker.marker_id}")
 
-                # Convert to a GeoPose and store it
-                self.found_poses[self.leg] = self.pose_to_geopose(
+                # Convert the pose to a GeoPose
+                pose = self.pose_to_geopose(
                     marker.pose, msg.header.frame_id, msg.header.stamp
                 )
+
+                # If it was successful, store it
+                if pose:
+                    self.found_poses[self.leg] = pose
 
     def obj_callback(self, msg):
         """
