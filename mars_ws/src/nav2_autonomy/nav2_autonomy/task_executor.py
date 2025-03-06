@@ -73,22 +73,22 @@ class AutonomyTaskExecutor(Node):
     :date: Mar 2025
 
     Subscribers:
-    - gps/filtered (sensor_msgs/NavSatFix) [bg_callback_group]
-    - aruco_detections (aruco_opencv_msgs/ArucoDetection) [bg_callback_group]
-    - zed/detections (vision_msgs/Detection3DArray) [bg_callback_group]
+    - gps/filtered (sensor_msgs/NavSatFix) [norm_callback_group]
+    - aruco_detections (aruco_opencv_msgs/ArucoDetection) [norm_callback_group]
+    - zed/detections (vision_msgs/Detection3DArray) [norm_callback_group]
     Publishers:
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
     Clients:
-    - trigger_teleop (std_srvs/Trigger) [bg_callback_group]
-    - trigger_auto (std_srvs/Trigger) [bg_callback_group]
-    - trigger_arrival (std_srvs/Trigger) [bg_callback_group]
+    - trigger_teleop (std_srvs/Trigger) [norm_callback_group]
+    - trigger_auto (std_srvs/Trigger) [norm_callback_group]
+    - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
     Action Clients:
     - follow_gps_waypoints (nav2_msgs/FollowGPSWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
     - {node_name}/get_state (lifecycle_msgs/GetState) [basic_nav_callback_group] (temporary)
     Action Servers:
-    - exec_autonomy_task (rover_interfaces/RunTask) [fg_callback_group]
+    - exec_autonomy_task (rover_interfaces/RunTask) [action_callback_group]
     *And a tf2 buffer and listener for pose to GPS transforms
     """
 
@@ -149,8 +149,8 @@ class AutonomyTaskExecutor(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # Callback groups (for threading)
-        bg_callback_group = MutuallyExclusiveCallbackGroup()
-        fg_callback_group = ReentrantCallbackGroup()  # Reentrant for action server
+        norm_callback_group = MutuallyExclusiveCallbackGroup()
+        action_callback_group = ReentrantCallbackGroup()  # needed to monitor cancel requests
 
         # Filtered GPS location subscriber
         self.gps_subscriber = self.create_subscription(
@@ -158,7 +158,7 @@ class AutonomyTaskExecutor(Node):
             "gps/filtered",
             self.gps_callback,
             10,
-            callback_group=bg_callback_group,
+            callback_group=norm_callback_group,
         )
         self.gps_subscriber  # prevent unused variable warning
 
@@ -168,7 +168,7 @@ class AutonomyTaskExecutor(Node):
             "aruco_detections",
             self.aruco_callback,
             10,
-            callback_group=bg_callback_group,
+            callback_group=norm_callback_group,
         )
         self.aruco_subscriber  # prevent unused variable warning
 
@@ -178,7 +178,7 @@ class AutonomyTaskExecutor(Node):
             "zed/detections",
             self.obj_callback,
             10,
-            callback_group=bg_callback_group,
+            callback_group=norm_callback_group,
         )
         self.obj_subscriber  # prevent unused variable warning
 
@@ -190,7 +190,7 @@ class AutonomyTaskExecutor(Node):
 
         # Client to trigger teleop state
         self.teleop_client = self.create_client(
-            Trigger, "trigger_teleop", callback_group=bg_callback_group
+            Trigger, "trigger_teleop", callback_group=norm_callback_group
         )
         while not self.teleop_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
@@ -200,7 +200,7 @@ class AutonomyTaskExecutor(Node):
 
         # Client to trigger autonomy state
         self.auto_client = self.create_client(
-            Trigger, "trigger_auto", callback_group=bg_callback_group
+            Trigger, "trigger_auto", callback_group=norm_callback_group
         )
         while not self.auto_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
@@ -210,7 +210,7 @@ class AutonomyTaskExecutor(Node):
 
         # Client to trigger arrival state
         self.arrival_client = self.create_client(
-            Trigger, "trigger_arrival", callback_group=bg_callback_group
+            Trigger, "trigger_arrival", callback_group=norm_callback_group
         )
         while not self.arrival_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
@@ -224,7 +224,7 @@ class AutonomyTaskExecutor(Node):
             RunTask,
             "exec_autonomy_task",
             self.action_server_callback,
-            callback_group=fg_callback_group,
+            callback_group=action_callback_group,
             cancel_callback=self.cancel_callback,
         )
 
