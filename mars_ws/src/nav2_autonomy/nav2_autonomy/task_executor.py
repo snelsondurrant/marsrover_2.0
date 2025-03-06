@@ -639,10 +639,10 @@ class AutonomyTaskExecutor(Node):
 
     def run_autonomy_task(self):
         """
-        Function to run the autonomy task executor
+        Function to run the autonomy task
         """
 
-        self.task_info("Autonomy task executor started")
+        self.task_info("Autonomy task execution started")
 
         self.task_info("Using order planner: " + globals()["__order_planner__"].__name__)
         self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
@@ -665,7 +665,7 @@ class AutonomyTaskExecutor(Node):
             self.exec_leg(leg)
 
         self.leg = "end"
-        self.task_info("Autonomy task executor completed")
+        self.task_info("Autonomy task execution completed")
 
     def exec_leg(self, leg):
         """
