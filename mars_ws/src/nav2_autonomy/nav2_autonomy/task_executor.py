@@ -136,9 +136,9 @@ class AutonomyTaskExecutor(Node):
         ]
         self.hex_scalar = 0.0001
 
-        ################################
-        ### ROS 2 OBJECT DEFINITIONS ###
-        ################################
+        #################################
+        ### ROS 2 OBJECT DECLARATIONS ###
+        #################################
 
         # Set up a Tf2 buffer for pose to GPS transforms (aruco, object)
         self.tf_buffer = tf2_ros.Buffer()
@@ -223,9 +223,9 @@ class AutonomyTaskExecutor(Node):
             callback_group=fg_callback_group,
         )
 
-        ####################################
-        ### END ROS 2 OBJECT DEFINITIONS ###
-        ####################################
+        #####################################
+        ### END ROS 2 OBJECT DECLARATIONS ###
+        #####################################
 
         #######################################
         ### NAV2 BASIC NAVIGATOR BASED CODE ###
