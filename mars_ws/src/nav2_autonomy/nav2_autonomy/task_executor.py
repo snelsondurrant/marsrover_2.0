@@ -1,25 +1,25 @@
 # Created by Nelson Durrant, Feb 2025
+import asyncio
 import rclpy
-from rclpy.node import Node
-from rclpy.action import ActionServer, ActionClient
+import tf2_geometry_msgs
+import tf2_ros
+import time
+import utm
+import yaml
 from action_msgs.msg import GoalStatus
+from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
+from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import FollowGPSWaypoints, Spin
+from nav2_simple_commander.robot_navigator import TaskResult
+from rclpy.action import ActionServer, ActionClient
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
 from rover_interfaces.action import RunTask
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
-from lifecycle_msgs.srv import GetState
-from aruco_opencv_msgs.msg import ArucoDetection
 from vision_msgs.msg import Detection3DArray
-from nav2_simple_commander.robot_navigator import TaskResult
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
-from rclpy.executors import MultiThreadedExecutor
-import asyncio
-import tf2_geometry_msgs
-import tf2_ros
-import utm
-import yaml
-import time
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
 from nav2_autonomy.utils.plan_utils import (
@@ -644,7 +644,9 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Autonomy task execution started")
 
-        self.task_info("Using order planner: " + globals()["__order_planner__"].__name__)
+        self.task_info(
+            "Using order planner: " + globals()["__order_planner__"].__name__
+        )
         self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
 
         # Check for the first GPS fix
