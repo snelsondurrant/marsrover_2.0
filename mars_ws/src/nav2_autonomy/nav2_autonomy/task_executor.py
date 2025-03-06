@@ -868,7 +868,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     task_executor = AutonomyTaskExecutor()
-    # Create a multi-threaded executor for callback-in-callback threading
+    # Create a multi-threaded node executor for callback-in-callback threading
     executor = MultiThreadedExecutor()
     executor.add_node(task_executor)
 
