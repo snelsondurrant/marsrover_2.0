@@ -62,7 +62,7 @@ class YamlParser:
 
 class AutonomyTaskExecutor(Node):
     """
-    Class for running the autonomy task state using Nav2
+    Class for executing the autonomy task using the Nav2 stack
 
     Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator
     class and our own custom task executor with a lot of multi-threading. It's easiest to think of
@@ -73,22 +73,22 @@ class AutonomyTaskExecutor(Node):
     :date: Mar 2025
 
     Subscribers:
-    - gps/filtered (sensor_msgs/NavSatFix)
-    - aruco_detections (aruco_opencv_msgs/ArucoDetection)
-    - zed/detections (vision_msgs/Detection3DArray)
+    - gps/filtered (sensor_msgs/NavSatFix) [bg_callback_group]
+    - aruco_detections (aruco_opencv_msgs/ArucoDetection) [bg_callback_group]
+    - zed/detections (vision_msgs/Detection3DArray) [bg_callback_group]
     Publishers:
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
     Clients:
-    - trigger_teleop (std_srvs/Trigger)
-    - trigger_auto (std_srvs/Trigger)
-    - trigger_arrival (std_srvs/Trigger)
+    - trigger_teleop (std_srvs/Trigger) [bg_callback_group]
+    - trigger_auto (std_srvs/Trigger) [bg_callback_group]
+    - trigger_arrival (std_srvs/Trigger) [bg_callback_group]
     Action Clients:
-    - follow_gps_waypoints (nav2_msgs/FollowGPSWaypoints)
-    - spin (nav2_msgs/Spin)
-    - {node_name}/get_state (lifecycle_msgs/GetState) (temporary)
+    - follow_gps_waypoints (nav2_msgs/FollowGPSWaypoints) [basic_nav_callback_group]
+    - spin (nav2_msgs/Spin) [basic_nav_callback_group]
+    - {node_name}/get_state (lifecycle_msgs/GetState) [basic_nav_callback_group] (temporary)
     Action Servers:
-    - run_bt (rover_interfaces/RunTask)
+    - exec_autonomy_task (rover_interfaces/RunTask) [fg_callback_group]
     *And a tf2 buffer and listener for pose to GPS transforms
     """
 
@@ -218,7 +218,7 @@ class AutonomyTaskExecutor(Node):
         self.action_server = ActionServer(
             self,
             RunTask,
-            "run_autonomy_task",
+            "exec_autonomy_task",
             self.action_server_callback,
             callback_group=fg_callback_group,
         )
@@ -491,7 +491,7 @@ class AutonomyTaskExecutor(Node):
         asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         try:
-            self.run_autonomy_task()
+            self.exec_autonomy_task()
         except Exception as e:
             self.task_fatal(str(e))
             result = RunTask.Result()
@@ -637,9 +637,9 @@ class AutonomyTaskExecutor(Node):
     ### TASK EXECUTOR ###
     #####################
 
-    def run_autonomy_task(self):
+    def exec_autonomy_task(self):
         """
-        Function to run the autonomy task
+        Function to execute the autonomy task
         """
 
         self.task_info("Autonomy task execution started")
