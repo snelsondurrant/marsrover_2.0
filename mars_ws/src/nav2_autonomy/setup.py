@@ -65,7 +65,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'behavior_tree = nav2_autonomy.behavior_tree:main',
+            'task_executor = task_executor.task_executor:main',
         ],
     },
 )

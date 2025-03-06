@@ -36,7 +36,7 @@ def generate_launch_description():
             ),
             launch_ros.actions.Node(
                 package="nav2_autonomy",
-                executable="behavior_tree",
+                executable="task_executor",
                 output="screen",
                 parameters=[{"use_sim_time": use_sim_time, "wps_file_path": wps_file}],
             ),

@@ -108,9 +108,9 @@ def generate_launch_description():
 
     # TODO: Add ublox and LiDAR launch files to launch when not sim_mode
 
-    state_machine_cmd = IncludeLaunchDescription(
+    task_exec_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(launch_dir, 'behavior_tree.launch.py')),
+            os.path.join(launch_dir, 'task_executor.launch.py')),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
@@ -137,6 +137,6 @@ def generate_launch_description():
 
     # custom launch
     ld.add_action(aruco_opencv_cmd)
-    ld.add_action(state_machine_cmd)
+    ld.add_action(task_exec_cmd)
 
     return ld

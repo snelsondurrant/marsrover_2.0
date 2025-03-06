@@ -5,7 +5,7 @@ from rclpy.action import ActionServer, ActionClient
 from action_msgs.msg import GoalStatus
 from builtin_interfaces.msg import Duration
 from nav2_msgs.action import FollowGPSWaypoints, Spin
-from rover_interfaces.action import RunBT
+from rover_interfaces.action import RunTask
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
 from lifecycle_msgs.srv import GetState
@@ -60,13 +60,13 @@ class YamlParser:
         return gps_wps
 
 
-class BehaviorTree(Node):
+class AutonomyTaskExecutor(Node):
     """
-    Class for running the autonomy task behavior tree using Nav2
+    Class for running the autonomy task state using Nav2
 
     Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator
-    class and our own custom behavior tree with a lot of multi-threading. It's easiest to think of
-    as three sections with their own seperate threads: the behavior tree, the Nav2 BasicNavigator,
+    class and our own custom task executor with a lot of multi-threading. It's easiest to think of
+    as three sections with their own seperate threads: the task executor, the Nav2 BasicNavigator,
     and the ROS 2 callbacks.
 
     :author: Nelson Durrant
@@ -88,13 +88,13 @@ class BehaviorTree(Node):
     - spin (nav2_msgs/Spin)
     - {node_name}/get_state (lifecycle_msgs/GetState) (temporary)
     Action Servers:
-    - run_bt (rover_interfaces/RunBT)
+    - run_bt (rover_interfaces/RunTask)
     *And a tf2 buffer and listener for pose to GPS transforms
     """
 
     def __init__(self):
 
-        super().__init__("behavior_tree")
+        super().__init__("autonomy_task_executor")
         # self.navigator = BasicNavigator() # Don't uncomment this line
         # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues.
         # We've hacked the relevant functions from the BasicNavigator class into this class as a fix.
@@ -214,11 +214,11 @@ class BehaviorTree(Node):
             )
         self.arrival_request = Trigger.Request()
 
-        # Action server to run the behavior tree
+        # Action server to run the task executor
         self.action_server = ActionServer(
             self,
-            RunBT,
-            "run_bt",
+            RunTask,
+            "run_autonomy_task",
             self.action_server_callback,
             callback_group=fg_callback_group,
         )
@@ -465,7 +465,7 @@ class BehaviorTree(Node):
         Callback function for the action server
         """
 
-        self.sm_goal_handle = goal_handle
+        self.task_goal_handle = goal_handle
 
         # Initialize variables
         self.legs = []
@@ -481,30 +481,30 @@ class BehaviorTree(Node):
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
         if not self.legs:
-            self.bt_fatal("No task legs provided")
-            result = RunBT.Result()
+            self.task_fatal("No task legs provided")
+            result = RunTask.Result()
             result.msg = "It was the aliens, I'm telling you"
-            self.sm_goal_handle.abort()
+            self.task_goal_handle.abort()
             return result
 
         # Trigger the autonomy state
         asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         try:
-            self.run_behavior_tree()
+            self.run_autonomy_task()
         except Exception as e:
-            self.bt_fatal(str(e))
-            result = RunBT.Result()
+            self.task_fatal(str(e))
+            result = RunTask.Result()
             result.msg = "It was the aliens, I'm telling you"
-            self.sm_goal_handle.abort()
+            self.task_goal_handle.abort()
             return result
 
         # Trigger the teleop state
         asyncio.run(self.async_service_call(self.teleop_client, self.teleop_request))
 
-        result = RunBT.Result()
+        result = RunTask.Result()
         result.msg = "One small step for a rover, one giant leap for roverkind"
-        self.sm_goal_handle.succeed()
+        self.task_goal_handle.succeed()
         return result
 
     def gps_callback(self, msg):
@@ -586,70 +586,70 @@ class BehaviorTree(Node):
     ###########################
 
     ####################################
-    ### BT ACTION FEEDBACK FUNCTIONS ###
+    ### TASK EXEC FEEDBACK FUNCTIONS ###
     ####################################
 
-    def bt_info(self, string):
+    def task_info(self, string):
         """
-        Function to write info back to the RunBT action client
+        Function to write info back to the RunTask action client
         """
 
         self.get_logger().info("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.status = "[" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
+        task_feedback = RunTask.Feedback()
+        task_feedback.status = "[" + self.leg + "] " + string
+        self.task_goal_handle.publish_feedback(task_feedback)
 
-    def bt_warn(self, string):
+    def task_warn(self, string):
         """
-        Function to write warnings back to the RunBT action client
+        Function to write warnings back to the RunTask action client
         """
 
         self.get_logger().warn("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.status = "[WARN] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
+        task_feedback = RunTask.Feedback()
+        task_feedback.status = "[WARN] [" + self.leg + "] " + string
+        self.task_goal_handle.publish_feedback(task_feedback)
 
-    def bt_error(self, string):
+    def task_error(self, string):
         """
-        Function to write errors back to the RunBT action client
+        Function to write errors back to the RunTask action client
         """
 
         self.get_logger().error("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.status = "[ERROR] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
+        task_feedback = RunTask.Feedback()
+        task_feedback.status = "[ERROR] [" + self.leg + "] " + string
+        self.task_goal_handle.publish_feedback(task_feedback)
 
-    def bt_fatal(self, string):
+    def task_fatal(self, string):
         """
-        Function to write fatal errors back to the RunBT action client
+        Function to write fatal errors back to the RunTask action client
         """
 
         self.get_logger().fatal("[" + self.leg + "] " + string)
-        sm_feedback = RunBT.Feedback()
-        sm_feedback.status = "[FATAL] [" + self.leg + "] " + string
-        self.sm_goal_handle.publish_feedback(sm_feedback)
+        task_feedback = RunTask.Feedback()
+        task_feedback.status = "[FATAL] [" + self.leg + "] " + string
+        self.task_goal_handle.publish_feedback(task_feedback)
 
     ########################################
-    ### END BT ACTION FEEDBACK FUNCTIONS ###
+    ### END TASK EXEC FEEDBACK FUNCTIONS ###
     ########################################
 
     #####################
-    ### BEHAVIOR TREE ###
+    ### TASK EXECUTOR ###
     #####################
 
-    def run_behavior_tree(self):
+    def run_autonomy_task(self):
         """
-        Function to run the competition behavior tree
+        Function to run the autonomy task executor
         """
 
-        self.bt_info("Behavior tree started")
+        self.task_info("Autonomy task executor started")
 
-        self.bt_info("Using order planner: " + globals()["__order_planner__"].__name__)
-        self.bt_info("Using path planner: " + globals()["__path_planner__"].__name__)
+        self.task_info("Using order planner: " + globals()["__order_planner__"].__name__)
+        self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
 
         # Check for the first GPS fix
         while self.filtered_gps is None:
-            self.bt_warn("Still waiting for GPS fix")
+            self.task_warn("Still waiting for GPS fix")
             time.sleep(1)
 
         # Determine the best order for the legs
@@ -657,7 +657,7 @@ class BehaviorTree(Node):
             self.legs, self.wps, self.filtered_gps
         )
 
-        self.bt_info("Determined best leg order: " + str(self.legs))
+        self.task_info("Determined best leg order: " + str(self.legs))
 
         self.waitUntilNav2Active(localizer="robot_localization")
 
@@ -665,7 +665,7 @@ class BehaviorTree(Node):
             self.exec_leg(leg)
 
         self.leg = "end"
-        self.bt_info("Behavior tree completed")
+        self.task_info("Autonomy task executor completed")
 
     def exec_leg(self, leg):
         """
@@ -688,7 +688,7 @@ class BehaviorTree(Node):
             elif self.leg in self.obj_legs:
                 print_string = "object"
 
-            self.bt_info("Starting " + print_string + " leg")
+            self.task_info("Starting " + print_string + " leg")
 
             # Get this leg's GPS waypoint
             leg_wp = None
@@ -697,7 +697,7 @@ class BehaviorTree(Node):
                     leg_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
 
             if not leg_wp:
-                self.bt_fatal("No GPS wp defined for leg")
+                self.task_fatal("No GPS wp defined for leg")
                 return False
 
             self.gps_nav(leg_wp)
@@ -710,10 +710,10 @@ class BehaviorTree(Node):
                 if not found_loc:
                     found_loc = self.hex_search()  # Do a hex search
                 if not found_loc:
-                    self.bt_error("Could not find the " + print_string)
+                    self.task_error("Could not find the " + print_string)
                     return
                 else:
-                    self.bt_info("Found the " + print_string + "!")
+                    self.task_info("Found the " + print_string + "!")
 
                     # Loop through with an updating GPS location
                     finished = False
@@ -724,10 +724,10 @@ class BehaviorTree(Node):
                         if not finished:
                             found_loc = self.found_check()
 
-                    self.bt_info("SUCCESS! Found and navigated to " + print_string)
+                    self.task_info("SUCCESS! Found and navigated to " + print_string)
 
             else:
-                self.bt_info("SUCCESS! Navigated to " + print_string)
+                self.task_info("SUCCESS! Navigated to " + print_string)
 
             # Trigger the arrival state
             asyncio.run(
@@ -740,14 +740,14 @@ class BehaviorTree(Node):
             asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         else:
-            self.bt_fatal("Invalid leg type provided")
+            self.task_fatal("Invalid leg type provided")
 
     def gps_nav(self, dest_wp, src_string="", updating=False):
         """
         Function to navigate through GPS waypoints
         """
 
-        self.bt_info("Starting GPS navigation" + src_string)
+        self.task_info("Starting GPS navigation" + src_string)
 
         # Generate a path to the destination waypoint
         path = globals()["__path_planner__"](self.filtered_gps, dest_wp)
@@ -782,17 +782,17 @@ class BehaviorTree(Node):
                     abs(pose.position.longitude - dest_wp.position.longitude)
                     > self.update_threshold
                 ):
-                    self.bt_info("Improved GPS location found" + src_string)
+                    self.task_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
                     return False  # restart gps_nav with the new location
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.bt_info("GPS navigation completed" + src_string)
+            self.task_info("GPS navigation completed" + src_string)
         elif result == TaskResult.CANCELED:
-            self.bt_warn("GPS navigation canceled" + src_string)
+            self.task_warn("GPS navigation canceled" + src_string)
         elif result == TaskResult.FAILED:
-            self.bt_error("GPS navigation failed" + src_string)
+            self.task_error("GPS navigation failed" + src_string)
 
         return True  # for updating mode logic
 
@@ -801,7 +801,7 @@ class BehaviorTree(Node):
         Function to perform a spin search
         """
 
-        self.bt_info("Starting spin search" + src_string)
+        self.task_info("Starting spin search" + src_string)
 
         asyncio.run(self.spin(spin_dist=3.14))
         while not asyncio.run(self.isTaskComplete()):
@@ -815,11 +815,11 @@ class BehaviorTree(Node):
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
-            self.bt_info("Spin search completed" + src_string)
+            self.task_info("Spin search completed" + src_string)
         elif result == TaskResult.CANCELED:
-            self.bt_warn("Spin search canceled" + src_string)
+            self.task_warn("Spin search canceled" + src_string)
         elif result == TaskResult.FAILED:
-            self.bt_error("Spin search failed" + src_string)
+            self.task_error("Spin search failed" + src_string)
         return False
 
     def hex_search(self):
@@ -827,7 +827,7 @@ class BehaviorTree(Node):
         Function to search in a hex pattern
         """
 
-        self.bt_info("Starting hex search")
+        self.task_info("Starting hex search")
 
         # Get the base waypoint
         for wp in self.wps:
@@ -846,7 +846,7 @@ class BehaviorTree(Node):
             if pose:
                 return pose
 
-        self.bt_info("Hex search completed")
+        self.task_info("Hex search completed")
         return False
 
     def found_check(self):
@@ -860,17 +860,17 @@ class BehaviorTree(Node):
             return False
 
     ###################################
-    ### END BEHAVIOR TREE FUNCTIONS ###
+    ### END TASK EXECUTOR FUNCTIONS ###
     ###################################
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    behavior_tree = BehaviorTree()
+    task_executor = AutonomyTaskExecutor()
     # Create a multi-threaded executor for callback-in-callback threading
     executor = MultiThreadedExecutor()
-    executor.add_node(behavior_tree)
+    executor.add_node(task_executor)
 
     executor.spin()
 

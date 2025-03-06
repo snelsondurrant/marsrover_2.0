@@ -1,8 +1,0 @@
-# RunBT.action - Nelson Durrant, Feb 2025
-# Used to trigger the autonomy task behavior tree
-
-string[] legs
----
-string msg
----
-string status
