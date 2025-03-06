@@ -123,7 +123,9 @@ class AutonomyTaskExecutor(Node):
 
         # Tunable values
         self.wait_time = 10  # Time to wait after arrival
-        self.update_threshold = 0.000005  # Threshold for updating tag and item locations
+        self.update_threshold = (
+            0.000005  # Threshold for updating tag and item locations
+        )
 
         # Hex pattern for searching
         self.hex_coord = [
@@ -280,7 +282,7 @@ class AutonomyTaskExecutor(Node):
         if not self.goal_handle.accepted:
             self.error("FollowWaypoints request was rejected!")
             return False
-        
+
         # Get the timestamp of when we started the goal for bug fix
         self.last_feedback = self.get_clock().now().to_msg()
 
@@ -314,7 +316,7 @@ class AutonomyTaskExecutor(Node):
         if not self.goal_handle.accepted:
             self.error("Spin request was rejected!")
             return False
-        
+
         # Get the timestamp of when we started the goal for bug fix
         self.last_feedback = self.get_clock().now().to_msg()
 
@@ -359,7 +361,9 @@ class AutonomyTaskExecutor(Node):
             # Bug fix: sometimes the goal completes but we don't successfully get the result
             # We can determine if the task is complete by looking at the last feedback timestamp
             if self.get_clock().now().to_msg().sec - self.last_feedback.sec > 2:
-                self.bt_warn("No action result received, but assuming completion based on feedback")
+                self.bt_warn(
+                    "No action result received, but assuming completion based on feedback"
+                )
                 return True
             else:
                 return False
@@ -436,7 +440,7 @@ class AutonomyTaskExecutor(Node):
 
     def _feedbackCallback(self, msg):
         self.debug("Received action feedback message")
-        self.last_feedback = self.get_clock().now().to_msg() # for bug fix
+        self.last_feedback = self.get_clock().now().to_msg()  # for bug fix
         self.feedback = msg.feedback
         return
 
