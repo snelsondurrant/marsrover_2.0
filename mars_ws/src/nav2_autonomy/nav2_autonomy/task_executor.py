@@ -483,6 +483,7 @@ class AutonomyTaskExecutor(Node):
         """
 
         self.task_goal_handle = goal_handle
+        result = RunTask.Result()
 
         # Initialize variables
         self.legs = []
@@ -499,7 +500,6 @@ class AutonomyTaskExecutor(Node):
         self.legs = goal_handle.request.legs
         if not self.legs:
             self.task_fatal("No task legs provided")
-            result = RunTask.Result()
             result.msg = "Well that was less-than-interstellar of you"
             self.task_goal_handle.abort()
             return result
@@ -508,20 +508,17 @@ class AutonomyTaskExecutor(Node):
         asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         try:
-            self.exec_autonomy_task()
-        except Exception as e:
+            self.exec_autonomy_task() # Execute the autonomy task
+            result.msg = "One small step for a rover, one giant leap for roverkind"
+            self.task_goal_handle.succeed()
+        except Exception as e: # Catch exceptions to make sure we return to teleop state
             self.task_fatal(str(e))
-            result = RunTask.Result()
             result.msg = "It was the aliens, I'm telling you"
             self.task_goal_handle.abort()
-            return result
 
         # Trigger the teleop state
         asyncio.run(self.async_service_call(self.teleop_client, self.teleop_request))
 
-        result = RunTask.Result()
-        result.msg = "One small step for a rover, one giant leap for roverkind"
-        self.task_goal_handle.succeed()
         return result
 
     def gps_callback(self, msg):
@@ -793,6 +790,10 @@ class AutonomyTaskExecutor(Node):
         while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
 
+            # Check if the goal has been canceled
+            if self.task_goal_handle.is_cancel_requested:
+                raise Exception("Task execution canceled by action client")
+
             # See if we get a better pose from the aruco tag or object
             if updating:
                 pose = self.found_check()
@@ -829,6 +830,10 @@ class AutonomyTaskExecutor(Node):
         asyncio.run(self.spin(spin_dist=3.14))
         while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
+
+            # Check if the goal has been canceled
+            if self.task_goal_handle.is_cancel_requested:
+                raise Exception("Task execution canceled by action client")
 
             # Check for the aruco tag or object
             pose = self.found_check()
