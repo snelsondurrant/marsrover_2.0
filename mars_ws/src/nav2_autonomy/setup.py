@@ -60,7 +60,7 @@ setup(
     zip_safe=True,
     maintainer='Nelson Durrant',
     maintainer_email='snelsondurrant@gmail.com',
-    description='Autonomy capability for the BYU Mars Rover using Nav2',
+    description='Autonomy capabilities for the BYU Mars Rover using Nav2',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

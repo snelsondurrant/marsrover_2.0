@@ -3,7 +3,7 @@
 <package format="3">
   <name>nav2_autonomy</name>
   <version>0.0.0</version>
-  <description>Autonomy capability for the BYU Mars Rover using Nav2</description>
+  <description>Autonomy capabilities for the BYU Mars Rover using Nav2</description>
   <maintainer email="snelsondurrant@gmail.com">Nelson Durrant</maintainer>
   <license>MIT</license>
 

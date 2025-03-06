@@ -18,7 +18,7 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-# Match this username to the one defined in the Dockerfile
+# IMPORTANT! Match this username to the one defined in the Dockerfile
 export NAME=marsrover-docker
 
 case $1 in
