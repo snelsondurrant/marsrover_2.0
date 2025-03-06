@@ -253,7 +253,7 @@ class AutonomyTaskExecutor(Node):
         ### END NAV2 BASIC NAVIGATOR BASED CODE ###
         ###########################################
 
-        self.get_logger().info("State machine node initialized")
+        self.get_logger().info("Autonomy task executor node initialized")
 
     #######################################
     ### NAV2 BASIC NAVIGATOR BASED CODE ###
@@ -508,10 +508,10 @@ class AutonomyTaskExecutor(Node):
         asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         try:
-            self.exec_autonomy_task() # Execute the autonomy task
+            self.exec_autonomy_task()
             result.msg = "One small step for a rover, one giant leap for roverkind"
             self.task_goal_handle.succeed()
-        except Exception as e: # Catch exceptions to make sure we return to teleop state
+        except Exception as e:  # catch exceptions to ensure we return to teleop state
             self.task_fatal(str(e))
             result.msg = "It was the aliens, I'm telling you"
             self.task_goal_handle.abort()
@@ -669,7 +669,7 @@ class AutonomyTaskExecutor(Node):
 
         # Check for the first GPS fix
         while self.filtered_gps is None:
-            self.task_warn("Still waiting for GPS fix")
+            self.task_warn("Waiting on a GPS fix...")
             time.sleep(1)
 
         # Determine the best order for the legs
