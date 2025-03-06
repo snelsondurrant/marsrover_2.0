@@ -5,7 +5,9 @@ from itertools import permutations
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
 
 
-def basicPathPlanner(geopose1, geopose2): # all path planners need to match these arguments
+def basicPathPlanner(
+    geopose1, geopose2
+):  # all path planners need to match these arguments
     """
     Generate intermediary waypoints in a straight line between two GPS coordinates
 
@@ -59,7 +61,9 @@ def basicPathPlanner(geopose1, geopose2): # all path planners need to match thes
     return new_wps
 
 
-def bruteOrderPlanner(legs, waypoints, fix): # all order planners need to match these arguments
+def bruteOrderPlanner(
+    legs, waypoints, fix
+):  # all order planners need to match these arguments
     """
     Brute force the optimal order to complete the task legs (This is an NP-hard problem)
 
@@ -86,7 +90,9 @@ def bruteOrderPlanner(legs, waypoints, fix): # all order planners need to match 
     return best_order
 
 
-def greedyOrderPlanner(legs, waypoints, fix): # all order planners need to match these arguments
+def greedyOrderPlanner(
+    legs, waypoints, fix
+):  # all order planners need to match these arguments
     """
     Determine a greedy order to complete the task legs (This is an NP-hard problem)
 
@@ -124,7 +130,9 @@ def greedyOrderPlanner(legs, waypoints, fix): # all order planners need to match
     return order
 
 
-def noOrderPlanner(legs, waypoints, fix): # all order planners need to match these arguments
+def noOrderPlanner(
+    legs, waypoints, fix
+):  # all order planners need to match these arguments
     """
     Just return the task legs in the order they were given
 
@@ -146,7 +154,9 @@ def costFunction(leg1, leg2, waypoints):
         elif wp["leg"] == leg2:
             end = wp
 
-    distance = latLonToMeters(start["latitude"], start["longitude"], end["latitude"], end["longitude"])
+    distance = latLonToMeters(
+        start["latitude"], start["longitude"], end["latitude"], end["longitude"]
+    )
 
     return distance
 
@@ -160,7 +170,9 @@ def costFunctionStart(fix, leg1, waypoints):
         if wp["leg"] == leg1:
             end = wp
 
-    distance = latLonToMeters(fix.position.latitude, fix.position.longitude, end["latitude"], end["longitude"])
+    distance = latLonToMeters(
+        fix.position.latitude, fix.position.longitude, end["latitude"], end["longitude"]
+    )
 
     return distance
 

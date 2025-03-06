@@ -122,7 +122,7 @@ class BehaviorTree(Node):
         self.filtered_gps = None
 
         # Tunable values
-        self.wait_time = 10  # Time to wait for a task to complete
+        self.wait_time = 10  # Time to wait after arrival
         self.update_threshold = 0.00001  # Threshold for updating tag and item locations
 
         # Hex pattern for searching
@@ -148,7 +148,7 @@ class BehaviorTree(Node):
         bg_callback_group = MutuallyExclusiveCallbackGroup()
         fg_callback_group = MutuallyExclusiveCallbackGroup()
 
-        # GPS location (filtered) subscriber
+        # Filtered GPS location subscriber
         self.gps_subscriber = self.create_subscription(
             NavSatFix,
             "gps/filtered",
@@ -158,7 +158,7 @@ class BehaviorTree(Node):
         )
         self.gps_subscriber  # prevent unused variable warning
 
-        # Aruco pose subscriber
+        # Aruco detection pose subscriber
         self.aruco_subscriber = self.create_subscription(
             ArucoDetection,
             "aruco_detections",
@@ -168,7 +168,7 @@ class BehaviorTree(Node):
         )
         self.aruco_subscriber  # prevent unused variable warning
 
-        # Object pose subscriber
+        # Object detection pose subscriber
         self.obj_subscriber = self.create_subscription(
             Detection3DArray,
             "zed/detections",
@@ -178,7 +178,7 @@ class BehaviorTree(Node):
         )
         self.obj_subscriber  # prevent unused variable warning
 
-        # Mapviz publishers (to show the goals in mapviz)
+        # Mapviz publishers (to show the GPS destinations in mapviz)
         self.mapviz_goal_publisher = self.create_publisher(NavSatFix, "mapviz/goal", 10)
         self.mapviz_inter_publisher = self.create_publisher(
             NavSatFix, "mapviz/inter", 10
@@ -195,14 +195,14 @@ class BehaviorTree(Node):
         self.teleop_request = Trigger.Request()
 
         # Client to trigger autonomy state
-        self.nav_client = self.create_client(
+        self.auto_client = self.create_client(
             Trigger, "trigger_auto", callback_group=bg_callback_group
         )
-        while not self.nav_client.wait_for_service(timeout_sec=1.0):
+        while not self.auto_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
                 "Autonomy trigger service not available, waiting again..."
             )
-        self.nav_request = Trigger.Request()
+        self.auto_request = Trigger.Request()
 
         # Client to trigger arrival state
         self.arrival_client = self.create_client(
@@ -236,15 +236,15 @@ class BehaviorTree(Node):
         self.feedback = None
         self.status = None
 
-        self.cmd_callback_group = MutuallyExclusiveCallbackGroup()
+        self.basic_nav_callback_group = MutuallyExclusiveCallbackGroup()
         self.follow_gps_waypoints_client = ActionClient(
             self,
             FollowGPSWaypoints,
             "follow_gps_waypoints",
-            callback_group=self.cmd_callback_group,
+            callback_group=self.basic_nav_callback_group,
         )
         self.spin_client = ActionClient(
-            self, Spin, "spin", callback_group=self.cmd_callback_group
+            self, Spin, "spin", callback_group=self.basic_nav_callback_group
         )
 
         ###########################################
@@ -297,7 +297,7 @@ class BehaviorTree(Node):
         goal_msg = Spin.Goal()
         goal_msg.target_yaw = spin_dist
         goal_msg.time_allowance = Duration(sec=time_allowance)
-        # For some reason disable_collision_checks doesn't exist in our Nav2 install?
+        # disable_collision_checks isn't in the iron release of Nav2
         # goal_msg.disable_collision_checks = disable_collision_checks
 
         self.info(f"Spinning to angle {goal_msg.target_yaw}....")
@@ -335,13 +335,13 @@ class BehaviorTree(Node):
         if not self.result_future:
             # task was cancelled or completed
             return True
-        
+
         # Fix for iron threading bug (with timeout)
         # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
         try:
             await asyncio.wait_for(self.isTaskCompleteHelper(), timeout=0.1)
         except asyncio.TimeoutError:
-            self.debug('Timed out waiting for async future to complete')
+            self.debug("Timed out waiting for async future to complete")
 
         if self.result_future.result():
             self.status = self.result_future.result().status
@@ -354,14 +354,13 @@ class BehaviorTree(Node):
 
         self.debug("Task succeeded!")
         return True
-    
+
     async def isTaskCompleteHelper(self):
         """
         Helper function for async 'wait_for' wrapping
         """
 
         await self.result_future
-
 
     def getFeedback(self):
         """
@@ -406,7 +405,7 @@ class BehaviorTree(Node):
         self.debug(f"Waiting for {node_name} to become active..")
         node_service = f"{node_name}/get_state"
         state_client = self.create_client(
-            GetState, node_service, callback_group=self.cmd_callback_group
+            GetState, node_service, callback_group=self.basic_nav_callback_group
         )
         while not state_client.wait_for_service(timeout_sec=1.0):
             self.info(f"{node_service} service not available, waiting...")
@@ -471,7 +470,13 @@ class BehaviorTree(Node):
         # Initialize variables
         self.legs = []
         self.leg = "start"
-        self.found_poses = {"aruco1": None, "aruco2": None, "aruco3": None, "mallet": None, "bottle": None}
+        self.found_poses = {
+            "aruco1": None,
+            "aruco2": None,
+            "aruco3": None,
+            "mallet": None,
+            "bottle": None,
+        }
 
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
@@ -483,7 +488,7 @@ class BehaviorTree(Node):
             return result
 
         # Trigger the autonomy state
-        asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
+        asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         try:
             self.run_behavior_tree()
@@ -513,6 +518,34 @@ class BehaviorTree(Node):
 
         self.filtered_gps = latLonYaw2Geopose(msg.latitude, msg.longitude)
 
+    def pose_to_geopose(self, pose, frame_id, stamp):
+        """
+        Convert a pose to a geopose we can navigate to
+        """
+
+        # Look up and use the transform to convert the pose to UTM
+        try:
+            tf = self.tf_buffer.lookup_transform("utm", frame_id, stamp)
+            utm_pose = tf2_geometry_msgs.do_transform_pose(pose, tf)
+        except Exception as e:
+            self.get_logger().warn(f"Could not transform pose: {e}")
+            return
+
+        # Check to make sure we've had at least one GPS fix
+        if self.filtered_gps is None:
+            self.get_logger().error("No filtered GPS fix available for UTM conversion")
+            return
+
+        # Given UTM pose, convert to GPS
+        lat, lon = utm.to_latlon(
+            utm_pose.position.x,
+            utm_pose.position.y,
+            self.zone,
+            self.hemisphere,
+        )
+
+        return latLonYaw2Geopose(lat, lon)
+
     def aruco_callback(self, msg):
         """
         Callback function for the aruco pose subscriber
@@ -524,32 +557,10 @@ class BehaviorTree(Node):
 
                 self.get_logger().info(f"Found aruco tag {marker.marker_id}")
 
-                # Look up and use the transform to convert the pose to UTM
-                try:
-                    tf = self.tf_buffer.lookup_transform(
-                        "utm", msg.header.frame_id, msg.header.stamp
-                    )
-                    utm_pose = tf2_geometry_msgs.do_transform_pose(marker.pose, tf)
-                except Exception as e:
-                    self.get_logger().warn(f"Could not transform aruco pose: {e}")
-                    return
-
-                # Check to make sure we've had at least one GPS fix
-                if self.filtered_gps is None:
-                    self.get_logger().error(
-                        "No filtered GPS fix available for UTM conversion"
-                    )
-                    return
-
-                # Given UTM pose, convert to GPS
-                lat, lon = utm.to_latlon(
-                    utm_pose.position.x,
-                    utm_pose.position.y,
-                    self.zone,
-                    self.hemisphere,
+                # Convert to a GeoPose and store it
+                self.found_poses[self.leg] = self.pose_to_geopose(
+                    marker.pose, msg.header.frame_id, msg.header.stamp
                 )
-
-                self.found_poses[self.leg] = latLonYaw2Geopose(lat, lon)
 
     def obj_callback(self, msg):
         """
@@ -663,40 +674,17 @@ class BehaviorTree(Node):
 
         self.leg = leg
 
-        # Is it a GPS leg?
-        if self.leg in self.gps_legs:
+        # Is it a valid leg type?
+        if (
+            self.leg in self.gps_legs
+            or self.leg in self.aruco_legs
+            or self.leg in self.obj_legs
+        ):
 
-            self.bt_info("Starting GPS leg")
-
-            # Get this leg's GPS waypoint
-            leg_wp = None
-            for wp in self.wps:
-                if wp["leg"] == self.leg:
-                    leg_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
-
-            if not leg_wp:
-                self.bt_fatal("No GPS waypoint defined for leg")
-                return False
-
-            self.gps_nav(leg_wp)
-
-            self.bt_info("SUCCESS! Navigated to GPS waypoint")
-
-            # Trigger the arrival state
-            asyncio.run(
-                self.async_service_call(self.arrival_client, self.arrival_request)
-            )
-
-            time.sleep(self.wait_time)
-
-            # Trigger the autonomy state
-            asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
-
-        # Is it an aruco or object leg?
-        elif self.leg in self.aruco_legs or self.leg in self.obj_legs:
-
-            if self.leg in self.aruco_legs:
-                print_string = "aruco leg"
+            if self.leg in self.gps_legs:
+                print_string = "GPS wp"
+            elif self.leg in self.aruco_legs:
+                print_string = "aruco tag"
             elif self.leg in self.obj_legs:
                 print_string = "object"
 
@@ -709,43 +697,50 @@ class BehaviorTree(Node):
                     leg_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
 
             if not leg_wp:
-                self.bt_fatal("No GPS waypoint defined for leg")
+                self.bt_fatal("No GPS wp defined for leg")
                 return False
 
-            # Navigate to the GPS waypoint
             self.gps_nav(leg_wp)
 
-            # Look for the aruco tag or object
-            found_loc = self.spin_search()  # Do a spin search
-            if not found_loc:
-                found_loc = self.hex_search()  # Do a hex search
-            if not found_loc:
-                self.bt_error("Could not find the " + print_string)
+            # Do we need to look for an aruco tag or object?
+            if self.leg in self.aruco_legs or self.leg in self.obj_legs:
+
+                # Look for the aruco tag or object
+                found_loc = self.spin_search()  # Do a spin search
+                if not found_loc:
+                    found_loc = self.hex_search()  # Do a hex search
+                if not found_loc:
+                    self.bt_error("Could not find the " + print_string)
+                    return
+                else:
+                    self.bt_info("Found the " + print_string + "!")
+
+                    # Loop through with an updating GPS location
+                    finished = False
+                    while not finished:
+                        finished = self.gps_nav(
+                            found_loc, " (" + print_string + ")", updating=True
+                        )
+                        if not finished:
+                            found_loc = self.found_check()
+
+                    self.bt_info("SUCCESS! Found and navigated to " + print_string)
+
             else:
-                self.bt_info("Found the " + print_string + "!")
+                self.bt_info("SUCCESS! Navigated to " + print_string)
 
-                # Loop through with an updating GPS location
-                finished = False
-                while not finished:
-                    finished = self.gps_nav(found_loc, " (" + print_string + ")", updating=True)
-                    if not finished:
-                        found_loc = self.found_check()
+            # Trigger the arrival state
+            asyncio.run(
+                self.async_service_call(self.arrival_client, self.arrival_request)
+            )
 
-                self.bt_info("SUCCESS! Found and navigated to " + print_string)
+            time.sleep(self.wait_time)
 
-                # Trigger the arrival state
-                asyncio.run(
-                    self.async_service_call(self.arrival_client, self.arrival_request)
-                )
-
-                time.sleep(self.wait_time)
-
-                # Trigger the autonomy state
-                asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
+            # Trigger the autonomy state
+            asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         else:
             self.bt_fatal("Invalid leg type provided")
-            return False
 
     def gps_nav(self, dest_wp, src_string="", updating=False):
         """
@@ -789,7 +784,7 @@ class BehaviorTree(Node):
                 ):
                     self.bt_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
-                    return False # restart gps_nav with the new location
+                    return False  # restart gps_nav with the new location
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
@@ -861,8 +856,8 @@ class BehaviorTree(Node):
 
         if self.found_poses[self.leg]:
             return self.found_poses[self.leg]
-
-        return False
+        else:
+            return False
 
     ###################################
     ### END BEHAVIOR TREE FUNCTIONS ###
