@@ -868,7 +868,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     behavior_tree = BehaviorTree()
-    # Create a multi-threaded executor for Nav2 locking issues
+    # Create a multi-threaded executor for callback-in-callback threading
     executor = MultiThreadedExecutor()
     executor.add_node(behavior_tree)
 
