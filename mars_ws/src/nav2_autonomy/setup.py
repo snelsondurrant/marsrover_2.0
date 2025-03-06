@@ -65,7 +65,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'task_executor = task_executor.task_executor:main',
+            'autonomy_task_executor = task_executor.task_executor:main',
         ],
     },
 )
