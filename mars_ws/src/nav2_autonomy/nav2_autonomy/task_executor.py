@@ -633,9 +633,9 @@ class AutonomyTaskExecutor(Node):
     ### END TASK EXEC FEEDBACK FUNCTIONS ###
     ########################################
 
-    #####################
-    ### TASK EXECUTOR ###
-    #####################
+    ###############################
+    ### TASK EXECUTOR FUNCTIONS ###
+    ###############################
 
     def exec_autonomy_task(self):
         """
