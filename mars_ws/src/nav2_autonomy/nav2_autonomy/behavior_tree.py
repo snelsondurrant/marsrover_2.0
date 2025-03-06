@@ -114,20 +114,12 @@ class BehaviorTree(Node):
         self.gps_legs = ["gps1", "gps2"]
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
         self.obj_legs = ["mallet", "bottle"]
-
-        # Initialize variables
-        self.legs = []
-        self.leg = ""
-        self.filtered_gps = None
-
-        # Pose dictionaries
         self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
-        self.aruco_poses = {"aruco1": None, "aruco2": None, "aruco3": None}
-        self.obj_poses = {"mallet": None, "bottle": None}
 
         # UTM zone and hemisphere (will set on first gps fix)
         self.zone = None
         self.hemisphere = None
+        self.filtered_gps = None
 
         # Tunable values
         self.wait_time = 10  # Time to wait for a task to complete
@@ -476,12 +468,17 @@ class BehaviorTree(Node):
 
         self.sm_goal_handle = goal_handle
 
+        # Initialize variables
+        self.legs = []
+        self.leg = "start"
+        self.found_poses = {"aruco1": None, "aruco2": None, "aruco3": None, "mallet": None, "bottle": None}
+
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
         if not self.legs:
             self.bt_fatal("No task legs provided")
             result = RunBT.Result()
-            result.congrats = "It was the aliens, I'm telling you"
+            result.msg = "It was the aliens, I'm telling you"
             self.sm_goal_handle.abort()
             return result
 
@@ -489,12 +486,11 @@ class BehaviorTree(Node):
         asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
         try:
-            self.leg = "start"
             self.run_behavior_tree()
         except Exception as e:
             self.bt_fatal(str(e))
             result = RunBT.Result()
-            result.congrats = "It was the aliens, I'm telling you"
+            result.msg = "It was the aliens, I'm telling you"
             self.sm_goal_handle.abort()
             return result
 
@@ -502,7 +498,7 @@ class BehaviorTree(Node):
         asyncio.run(self.async_service_call(self.teleop_client, self.teleop_request))
 
         result = RunBT.Result()
-        result.congrats = "One small step for a rover, one giant leap for roverkind"
+        result.msg = "One small step for a rover, one giant leap for roverkind"
         self.sm_goal_handle.succeed()
         return result
 
@@ -523,8 +519,8 @@ class BehaviorTree(Node):
         """
 
         for marker in msg.markers:
-            # Are we looking for this marker?
-            if marker.marker_id in self.tags.values():
+            # Are we looking for this marker right now?
+            if marker.marker_id == self.tags[self.leg]:
 
                 self.get_logger().info(f"Found aruco tag {marker.marker_id}")
 
@@ -553,7 +549,7 @@ class BehaviorTree(Node):
                     self.hemisphere,
                 )
 
-                self.aruco_poses[self.leg] = latLonYaw2Geopose(lat, lon)
+                self.found_poses[self.leg] = latLonYaw2Geopose(lat, lon)
 
     def obj_callback(self, msg):
         """
@@ -640,6 +636,11 @@ class BehaviorTree(Node):
         self.bt_info("Using order planner: " + globals()["__order_planner__"].__name__)
         self.bt_info("Using path planner: " + globals()["__path_planner__"].__name__)
 
+        # Check for the first GPS fix
+        while self.filtered_gps is None:
+            self.bt_warn("Still waiting for GPS fix")
+            time.sleep(1)
+
         # Determine the best order for the legs
         self.legs = globals()["__order_planner__"](
             self.legs, self.wps, self.filtered_gps
@@ -691,56 +692,15 @@ class BehaviorTree(Node):
             # Trigger the autonomy state
             asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
 
-        # Is it an aruco leg?
-        elif self.leg in self.aruco_legs:
+        # Is it an aruco or object leg?
+        elif self.leg in self.aruco_legs or self.leg in self.obj_legs:
 
-            self.bt_info("Starting aruco leg")
+            if self.leg in self.aruco_legs:
+                print_string = "aruco leg"
+            elif self.leg in self.obj_legs:
+                print_string = "object"
 
-            # Get this leg's GPS waypoint
-            leg_wp = None
-            for wp in self.wps:
-                if wp["leg"] == self.leg:
-                    leg_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
-
-            if not leg_wp:
-                self.bt_fatal("No GPS waypoint defined for leg")
-                return False
-
-            # Navigate to the GPS waypoint
-            self.gps_nav(leg_wp)
-
-            # Look for the aruco tag
-            aruco_loc = self.spin_search()  # Do a spin search
-            if not aruco_loc:
-                aruco_loc = self.hex_search()  # Do a hex search
-            if not aruco_loc:
-                self.bt_error("Could not find the aruco tag")
-            else:
-                self.bt_info("Found the aruco tag!")
-
-                # Loop through with an updating GPS location
-                finished = False
-                while not finished:
-                    finished = self.gps_nav(aruco_loc, " (aruco tag)", updating=True)
-                    if not finished:
-                        aruco_loc = self.aruco_check()
-
-                self.bt_info("SUCCESS! Found and navigated to aruco tag")
-
-                # Trigger the arrival state
-                asyncio.run(
-                    self.async_service_call(self.arrival_client, self.arrival_request)
-                )
-
-                time.sleep(self.wait_time)
-
-                # Trigger the autonomy state
-                asyncio.run(self.async_service_call(self.nav_client, self.nav_request))
-
-        # Is it an object leg?
-        elif leg in self.obj_legs:
-
-            self.bt_info("Starting object leg")
+            self.bt_info("Starting " + print_string + " leg")
 
             # Get this leg's GPS waypoint
             leg_wp = None
@@ -755,23 +715,23 @@ class BehaviorTree(Node):
             # Navigate to the GPS waypoint
             self.gps_nav(leg_wp)
 
-            # Look for the object
-            obj_loc = self.spin_search()  # Do a spin search
-            if not obj_loc:
-                obj_loc = self.hex_search()  # Do a hex search
-            if not obj_loc:
-                self.bt_error("Could not find the object")
+            # Look for the aruco tag or object
+            found_loc = self.spin_search()  # Do a spin search
+            if not found_loc:
+                found_loc = self.hex_search()  # Do a hex search
+            if not found_loc:
+                self.bt_error("Could not find the " + print_string)
             else:
-                self.bt_info("Found the object!")
+                self.bt_info("Found the " + print_string + "!")
 
                 # Loop through with an updating GPS location
                 finished = False
                 while not finished:
-                    finished = self.gps_nav(obj_loc, " (object)", updating=True)
+                    finished = self.gps_nav(found_loc, " (" + print_string + ")", updating=True)
                     if not finished:
-                        obj_loc = self.obj_check()
+                        found_loc = self.found_check()
 
-                self.bt_info("SUCCESS! Found and navigated to object")
+                self.bt_info("SUCCESS! Found and navigated to " + print_string)
 
                 # Trigger the arrival state
                 asyncio.run(
@@ -817,10 +777,7 @@ class BehaviorTree(Node):
 
             # See if we get a better pose from the aruco tag or object
             if updating:
-                if self.leg in self.aruco_legs:
-                    pose = self.aruco_check()
-                elif self.leg in self.obj_legs:
-                    pose = self.obj_check()
+                pose = self.found_check()
 
                 # Check if its location has changed by a significant amount
                 if (
@@ -853,22 +810,13 @@ class BehaviorTree(Node):
 
         asyncio.run(self.spin(spin_dist=3.14))
         while not asyncio.run(self.isTaskComplete()):
-
-            if self.leg in self.aruco_legs:
-                # Check for the aruco tag
-                pose = self.aruco_check()
-                if pose:
-                    asyncio.run(self.cancelTask())
-                    return pose
-
-            elif self.leg in self.obj_legs:
-                # Check for the object
-                pose = self.obj_check()
-                if pose:
-                    asyncio.run(self.cancelTask())
-                    return pose
-
             time.sleep(0.1)
+
+            # Check for the aruco tag or object
+            pose = self.found_check()
+            if pose:
+                asyncio.run(self.cancelTask())
+                return pose
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
@@ -906,23 +854,13 @@ class BehaviorTree(Node):
         self.bt_info("Hex search completed")
         return False
 
-    def aruco_check(self):
+    def found_check(self):
         """
-        Function to check for the aruco tag
-        """
-
-        if self.aruco_poses[self.leg]:
-            return self.aruco_poses[self.leg]
-
-        return False
-
-    def obj_check(self):
-        """
-        Function to check for the object
+        Function to check for aruco tags and objects
         """
 
-        if self.obj_poses[self.leg]:
-            return self.obj_poses[self.leg]
+        if self.found_poses[self.leg]:
+            return self.found_poses[self.leg]
 
         return False
 

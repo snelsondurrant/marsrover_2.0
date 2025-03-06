@@ -2,6 +2,6 @@
 
 string[] legs
 ---
-string congrats
+string msg
 ---
 string status
