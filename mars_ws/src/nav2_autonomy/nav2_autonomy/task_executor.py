@@ -792,6 +792,7 @@ class AutonomyTaskExecutor(Node):
 
             # Check if the goal has been canceled
             if self.task_goal_handle.is_cancel_requested:
+                asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
 
             # See if we get a better pose from the aruco tag or object
@@ -833,6 +834,7 @@ class AutonomyTaskExecutor(Node):
 
             # Check if the goal has been canceled
             if self.task_goal_handle.is_cancel_requested:
+                asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
 
             # Check for the aruco tag or object
