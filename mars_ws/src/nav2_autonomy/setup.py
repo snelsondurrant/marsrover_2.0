@@ -66,6 +66,7 @@ setup(
     entry_points={
         'console_scripts': [
             'autonomy_task_executor = nav2_autonomy.task_executor:main',
+            'sim_obj_detect = nav2_autonomy.sim_obj_detect:main',
         ],
     },
 )

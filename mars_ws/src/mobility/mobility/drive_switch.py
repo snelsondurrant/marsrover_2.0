@@ -72,7 +72,7 @@ class DriveSwitch(Node):
 
         self.state = "teleop"
 
-        self.get_logger().info("StateSwitcher started")
+        self.get_logger().info("DriveSwitch node started")
 
     def nav_callback(self, msg):
         """

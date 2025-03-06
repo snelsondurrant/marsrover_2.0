@@ -577,9 +577,9 @@ class AutonomyTaskExecutor(Node):
         Callback function for the aruco pose subscriber
         """
 
-        for marker in msg.markers:
-            # Are we looking for this marker right now?
-            if self.leg in self.aruco_legs:
+        if self.leg in self.aruco_legs:
+            for marker in msg.markers:
+                # Are we looking for this marker right now?
                 if marker.marker_id == self.tags[self.leg]:
 
                     self.get_logger().info(f"Found aruco tag {marker.marker_id}")
@@ -595,22 +595,25 @@ class AutonomyTaskExecutor(Node):
 
     def obj_callback(self, msg):
         """
-        Callback function for the object detection subscriber
+        Callback function for the object pose subscriber
         """
 
-        # Detection3DArray:
-        #   std_msgs/Header header
-        #   vision_msgs/Detection3D[] detections
-        # Detection3D:
-        #   vision_msgs/BoundingBox3D bounding_box
-        #   vision_msgs/ObjectHypothesisWithPose[] results
-        # ObjectHypothesisWithPose:
-        #   vision_msgs/ObjectHypothesis hypothesis
-        #   geometry_msgs/PoseStamped pose
+        if self.leg in self.obj_legs:
+            for detection in msg.detections:
+                for result in detection.results:
+                    # Are we looking for this object right now?
+                    if result.hypothesis.class_id == self.leg:
 
-        # TODO: Implement this function
+                            self.get_logger().info(f"Found object {result.hypothesis.class_id}")
 
-        return
+                            # Convert the pose to a GeoPose
+                            pose = self.pose_to_geopose(
+                                result.pose.pose, msg.header.frame_id, msg.header.stamp
+                            )
+
+                            # If it was successful, store it
+                            if pose:
+                                self.found_poses[self.leg] = pose
 
     ###########################
     ### END ROS 2 CALLBACKS ###
