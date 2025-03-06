@@ -12,8 +12,8 @@ from builtin_interfaces.msg import Duration
 from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import FollowGPSWaypoints, Spin
 from nav2_simple_commander.robot_navigator import TaskResult
-from rclpy.action import ActionServer, ActionClient
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.action import ActionServer, ActionClient, CancelResponse
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rover_interfaces.action import RunTask
@@ -142,13 +142,15 @@ class AutonomyTaskExecutor(Node):
         ### ROS 2 OBJECT DECLARATIONS ###
         #################################
 
+        self.cancel_flag = False # monitor action cancel requests
+
         # Set up a Tf2 buffer for pose to GPS transforms (aruco, object)
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # Callback groups (for threading)
         bg_callback_group = MutuallyExclusiveCallbackGroup()
-        fg_callback_group = MutuallyExclusiveCallbackGroup()
+        fg_callback_group = ReentrantCallbackGroup()  # Reentrant for action server
 
         # Filtered GPS location subscriber
         self.gps_subscriber = self.create_subscription(
@@ -223,6 +225,7 @@ class AutonomyTaskExecutor(Node):
             "exec_autonomy_task",
             self.action_server_callback,
             callback_group=fg_callback_group,
+            cancel_callback=self.cancel_callback,
         )
 
         #####################################
@@ -468,6 +471,14 @@ class AutonomyTaskExecutor(Node):
     ### ROS 2 CALLBACKS ###
     #######################
 
+    def cancel_callback(self, goal_handle):
+        """
+        Callback function for the action server cancel request
+        """
+
+        self.cancel_flag = True
+        return CancelResponse.ACCEPT
+
     async def async_service_call(self, client, request):
         """
         Fix for iron threading bug - https://github.com/ros2/rclpy/issues/1337
@@ -483,6 +494,7 @@ class AutonomyTaskExecutor(Node):
         """
 
         self.task_goal_handle = goal_handle
+        self.cancel_flag = False
         result = RunTask.Result()
 
         # Initialize variables
@@ -567,18 +579,19 @@ class AutonomyTaskExecutor(Node):
 
         for marker in msg.markers:
             # Are we looking for this marker right now?
-            if marker.marker_id == self.tags[self.leg]:
+            if self.leg in self.aruco_legs:
+                if marker.marker_id == self.tags[self.leg]:
 
-                self.get_logger().info(f"Found aruco tag {marker.marker_id}")
+                    self.get_logger().info(f"Found aruco tag {marker.marker_id}")
 
-                # Convert the pose to a GeoPose
-                pose = self.pose_to_geopose(
-                    marker.pose, msg.header.frame_id, msg.header.stamp
-                )
+                    # Convert the pose to a GeoPose
+                    pose = self.pose_to_geopose(
+                        marker.pose, msg.header.frame_id, msg.header.stamp
+                    )
 
-                # If it was successful, store it
-                if pose:
-                    self.found_poses[self.leg] = pose
+                    # If it was successful, store it
+                    if pose:
+                        self.found_poses[self.leg] = pose
 
     def obj_callback(self, msg):
         """
