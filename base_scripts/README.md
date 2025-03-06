@@ -1,0 +1,1 @@
+Add scripts that are run from outside the Docker container on the base station here
