@@ -18,6 +18,12 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
+# Launch the mapproxy container if it's not already running
+if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
+	script_dir=$(dirname "$0") # the directory of this script
+    docker run -p 8080:8080 -d -t -v $script_dir/mapproxy:/mapproxy danielsnider/mapproxy
+fi
+
 # IMPORTANT! Match this username to the one defined in the Dockerfile
 export NAME=marsrover-docker
 
