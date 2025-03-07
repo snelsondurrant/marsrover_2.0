@@ -714,6 +714,8 @@ class AutonomyTaskExecutor(Node):
     def exec_leg(self, leg):
         """
         Function to execute task legs
+
+        :param leg: The leg to execute
         """
 
         self.leg = leg
@@ -787,6 +789,12 @@ class AutonomyTaskExecutor(Node):
     def gps_nav(self, dest_wp, src_string="", updating=False):
         """
         Function to navigate through GPS waypoints
+
+        :param dest_wp: The destination waypoint
+        :param src_string: A string to append to the task info
+        :param updating: Are we already navigating to an object and should check for a better location?
+
+        :return: The improved GPS location (if updating) or a found GPS location, False otherwise
         """
 
         self.task_info("Starting GPS navigation" + src_string)
@@ -852,6 +860,10 @@ class AutonomyTaskExecutor(Node):
     def spin_search(self, src_string=""):
         """
         Function to perform a spin search
+
+        :param src_string: A string to append to the task info
+
+        :return: The found GPS location, False otherwise
         """
 
         self.task_info("Starting spin search" + src_string)
@@ -883,6 +895,8 @@ class AutonomyTaskExecutor(Node):
     def hex_search(self):
         """
         Function to search in a hex pattern
+
+        :return: The found GPS location, False otherwise
         """
 
         self.task_info("Starting hex search")
@@ -914,6 +928,8 @@ class AutonomyTaskExecutor(Node):
     def found_check(self):
         """
         Function to check for aruco tags and objects
+
+        :return: The found GPS location, False otherwise
         """
 
         if self.leg in self.aruco_legs or self.leg in self.obj_legs:
