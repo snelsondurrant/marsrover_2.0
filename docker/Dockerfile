@@ -152,7 +152,9 @@ USER $NAME
 # Install zed interface packages - Nelson Durrant, Feb 2024
 # Necessary message package to listen to topics from the ZED camera
 USER root
-RUN apt update && apt install -y ros-iron-vision-msgs
+RUN apt update && apt install -y \
+    ros-iron-vision-msgs \
+    ros-iron-vision-msgs-rviz-plugins
 USER $NAME
 
 # Install python UTM library - Nelson Durrant, Feb 2024
