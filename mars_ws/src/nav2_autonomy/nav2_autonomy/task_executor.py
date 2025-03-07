@@ -292,9 +292,6 @@ class AutonomyTaskExecutor(Node):
             self.error("FollowWaypoints request was rejected!")
             return False
 
-        # Get the timestamp of when we started the goal for bug fix
-        self.last_feedback = self.get_clock().now().to_msg()
-
         self.result_future = self.goal_handle.get_result_async()
         return True
 
@@ -325,9 +322,6 @@ class AutonomyTaskExecutor(Node):
         if not self.goal_handle.accepted:
             self.error("Spin request was rejected!")
             return False
-
-        # Get the timestamp of when we started the goal for bug fix
-        self.last_feedback = self.get_clock().now().to_msg()
 
         self.result_future = self.goal_handle.get_result_async()
         return True
@@ -367,15 +361,8 @@ class AutonomyTaskExecutor(Node):
                 self.debug(f"Task with failed with status code: {self.status}")
                 return True
         else:
-            # Bug fix: (very) rarely the goal completes but we don't successfully get the result
-            # We can determine if the task is complete by looking at the last feedback timestamp
-            if self.get_clock().now().to_msg().sec - self.last_feedback.sec > 2:
-                self.bt_warn(
-                    "No action result received, but assuming completion based on feedback"
-                )
-                return True
-            else:
-                return False
+            # Timed out, still processing, not complete yet
+            return False
 
         self.debug("Task succeeded!")
         return True
@@ -449,7 +436,6 @@ class AutonomyTaskExecutor(Node):
 
     def _feedbackCallback(self, msg):
         self.debug("Received action feedback message")
-        self.last_feedback = self.get_clock().now().to_msg()  # for bug fix
         self.feedback = msg.feedback
         return
 
@@ -768,10 +754,14 @@ class AutonomyTaskExecutor(Node):
                             found_loc, " (" + print_string + ")", updating=True
                         )
 
-                    self.task_info("SUCCESS! Found and navigated to " + print_string)
+                    # Colorize per "large and obvious" URC requirement
+                    self.task_info("\033[32mSUCCESS! Found and navigated to " + print_string + "\033[0m")
 
             else:
-                self.task_info("SUCCESS! Navigated to " + print_string)
+                # Colorize per "large and obvious" URC requirement
+                self.task_info("\033[32mSUCCESS! Navigated to " + print_string + "\033[0m")
+
+            self.task_info("Flashing LED to indicate arrival...")
 
             # Trigger the arrival state
             asyncio.run(
