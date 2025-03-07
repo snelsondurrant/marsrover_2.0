@@ -16,9 +16,12 @@ from rclpy.action import ActionServer, ActionClient, CancelResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
+from rclpy.task import Future
 from rover_interfaces.action import RunTask
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
+from threading import RLock
+from typing import Any
 from vision_msgs.msg import Detection3DArray
 
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose
@@ -58,6 +61,37 @@ class YamlParser:
         for wp in self.wps_dict["waypoints"]:
             gps_wps.append(wp)
         return gps_wps
+
+
+class PatchRclpyIssue1123(ActionClient):
+    """
+    ActionClient patch for rclpy timing issue when multi-threading
+    https://github.com/ros2/rclpy/issues/1123
+    """
+
+    _lock: RLock = None  # type: ignore
+
+    @property
+    def _cpp_client_handle_lock(self) -> RLock:
+        if self._lock is None:
+            self._lock = RLock()
+        return self._lock
+
+    async def execute(self, *args: Any, **kwargs: Any) -> None:
+        with self._cpp_client_handle_lock:
+            return await super().execute(*args, **kwargs)  # type: ignore
+
+    def send_goal_async(self, *args: Any, **kwargs: Any) -> Future:
+        with self._cpp_client_handle_lock:
+            return super().send_goal_async(*args, **kwargs)
+
+    def _cancel_goal_async(self, *args: Any, **kwargs: Any) -> Future:
+        with self._cpp_client_handle_lock:
+            return super()._cancel_goal_async(*args, **kwargs)
+
+    def _get_result_async(self, *args: Any, **kwargs: Any) -> Future:
+        with self._cpp_client_handle_lock:
+            return super()._get_result_async(*args, **kwargs)
 
 
 class AutonomyTaskExecutor(Node):
@@ -248,13 +282,13 @@ class AutonomyTaskExecutor(Node):
         self.status = None
 
         self.basic_nav_callback_group = MutuallyExclusiveCallbackGroup()
-        self.follow_gps_waypoints_client = ActionClient(
+        self.follow_gps_waypoints_client = PatchRclpyIssue1123(
             self,
             FollowGPSWaypoints,
             "follow_gps_waypoints",
             callback_group=self.basic_nav_callback_group,
         )
-        self.spin_client = ActionClient(
+        self.spin_client = PatchRclpyIssue1123(
             self, Spin, "spin", callback_group=self.basic_nav_callback_group
         )
 
@@ -754,14 +788,12 @@ class AutonomyTaskExecutor(Node):
                             found_loc, " (" + print_string + ")", updating=True
                         )
 
-                    # Colorize per "large and obvious" URC requirement
-                    self.task_info("\033[32mSUCCESS! Found and navigated to " + print_string + "\033[0m")
+                    self.task_info("SUCCESS! Found and navigated to " + print_string)
 
             else:
-                # Colorize per "large and obvious" URC requirement
-                self.task_info("\033[32mSUCCESS! Navigated to " + print_string + "\033[0m")
+                self.task_info("SUCCESS! Navigated to " + print_string)
 
-            self.task_info("Flashing LED to indicate arrival...")
+            self.task_info("Flashing LED to indicate arrival")
 
             # Trigger the arrival state
             asyncio.run(
