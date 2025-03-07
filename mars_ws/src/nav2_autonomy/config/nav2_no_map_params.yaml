@@ -20,6 +20,7 @@ bt_navigator:
     navigate_through_poses:
       plugin: "nav2_bt_navigator/NavigateThroughPosesNavigator"
       default_nav_through_poses_bt_xml: "navigate_through_poses_w_replanning_and_recovery.xml" # added this - Nelson Durrant, Mar 2025
+    # https://docs.nav2.org/behavior_trees/overview/detailed_behavior_tree_walkthrough.html#navigate-to-pose-with-replanning-and-recovery
     # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
     # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
     # nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml
