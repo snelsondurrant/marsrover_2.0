@@ -66,7 +66,7 @@ class SimObjDetect(Node):
 
         # Check to see if the mallet is in view
         if (
-            gazebo_position.state.pose.position.x < 3.5
+            gazebo_position.state.pose.position.x < 4
             and gazebo_position.state.pose.position.x > 0
             and abs(gazebo_position.state.pose.position.y)
             < gazebo_position.state.pose.position.x  # cone of vision
@@ -85,9 +85,9 @@ class SimObjDetect(Node):
             detection3d.bbox.center.position.x = gazebo_position.state.pose.position.x
             detection3d.bbox.center.position.y = gazebo_position.state.pose.position.y
             detection3d.bbox.center.position.z = gazebo_position.state.pose.position.z
-            detection3d.bbox.size.x = 0.1  # arbitrary size
-            detection3d.bbox.size.y = 0.1  # arbitrary size
-            detection3d.bbox.size.z = 0.1  # arbitrary size
+            detection3d.bbox.size.x = 0.3  # arbitrary size
+            detection3d.bbox.size.y = 0.3  # arbitrary size
+            detection3d.bbox.size.z = 0.3  # arbitrary size
             # Create a ObjectHypothesisWithPose
             obj_hyp_pose = ObjectHypothesisWithPose()
             obj_hyp_pose.hypothesis.class_id = "mallet"

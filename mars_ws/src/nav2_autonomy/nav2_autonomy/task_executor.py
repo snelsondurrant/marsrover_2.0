@@ -608,17 +608,16 @@ class AutonomyTaskExecutor(Node):
                     # Are we looking for this object right now?
                     if result.hypothesis.class_id == self.leg:
 
-                            self.get_logger().info(f"Found object {result.hypothesis.class_id}")
+                        self.get_logger().info(f"Found object {result.hypothesis.class_id}")
 
-                            # Convert the pose to a GeoPose
-                            pose = self.pose_to_geopose(
-                                result.pose.pose, msg.header.frame_id, msg.header.stamp
-                            )
+                        # Convert the pose to a GeoPose
+                        pose = self.pose_to_geopose(
+                            result.pose.pose, msg.header.frame_id, msg.header.stamp
+                        )
 
-                            # If it was successful, store it
-                            if pose:
-                                self.task_fatal("stored pose")
-                                self.found_poses[self.leg] = pose
+                        # If it was successful, store it
+                        if pose:
+                            self.found_poses[self.leg] = pose
 
     ###########################
     ### END ROS 2 CALLBACKS ###
@@ -830,6 +829,7 @@ class AutonomyTaskExecutor(Node):
                 ):
                     self.task_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
+                    time.sleep(0.5)  # give the action server time to cancel
                     return False  # restart gps_nav with the new location
 
         result = self.getResult()
@@ -859,11 +859,9 @@ class AutonomyTaskExecutor(Node):
                 raise Exception("Task execution canceled by action client")
 
             # Check for the aruco tag or object
-            self.task_warn("Searching for aruco tag or object" + src_string)
             pose = self.found_check()
             if pose:
                 asyncio.run(self.cancelTask())
-                self.task_fatal("Found aruco tag or object" + src_string)
                 return pose
 
         result = self.getResult()

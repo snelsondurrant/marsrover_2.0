@@ -61,7 +61,7 @@
 
     <include>
       <uri>model://turtlebot_waffle_gps</uri>
-      <pose>-54.5 127.3 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
+      <pose>-54.5 127.8 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
     </include>
 
     <!-- Added these objects - Nelson Durrant, Feb 2025 -->
@@ -84,15 +84,8 @@
 
     <include>
       <uri>model://hammer</uri>
-      <pose>-13 128 0.3 0 0 0</pose>
+      <pose>-16 129 0.7 0 0 0</pose>
     </include>
-
-    <include>
-      <uri>model://unit_cylinder</uri>
-      <pose>-15.8 128 0.6 0 0 0</pose>
-    </include>
-
-    <include>
 
   </world>
 </sdf>
