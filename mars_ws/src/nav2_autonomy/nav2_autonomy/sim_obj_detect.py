@@ -66,7 +66,7 @@ class SimObjDetect(Node):
 
         # Check to see if the mallet is in view
         if (
-            gazebo_position.state.pose.position.x < 4
+            gazebo_position.state.pose.position.x < 3.5
             and gazebo_position.state.pose.position.x > 0
             and abs(gazebo_position.state.pose.position.y)
             < gazebo_position.state.pose.position.x  # cone of vision
