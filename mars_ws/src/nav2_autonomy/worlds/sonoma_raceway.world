@@ -61,7 +61,7 @@
 
     <include>
       <uri>model://turtlebot_waffle_gps</uri>
-      <pose>-54.5 128.3 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
+      <pose>-54.5 127.3 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
     </include>
 
     <!-- Added these objects - Nelson Durrant, Feb 2025 -->
@@ -74,17 +74,17 @@
 
     <include>
       <uri>model://urc_aruco_0</uri>
-      <pose>-54 127.3 -0.55 0 0 0</pose>
+      <pose>-54 127.3 -0.6 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://urc_aruco_1</uri>
-      <pose>-70 170 0.5 0 0 0</pose>
+      <pose>-60 160 0.6 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://hammer</uri>
-      <pose>-15 128 0.2 0 0 0</pose>
+      <pose>-15 128 0.25 0 0 0</pose>
     </include>
 
   </world>
