@@ -84,8 +84,15 @@
 
     <include>
       <uri>model://hammer</uri>
-      <pose>-15 128 0.25 0 0 0</pose>
+      <pose>-13 128 0.3 0 0 0</pose>
     </include>
+
+    <include>
+      <uri>model://unit_cylinder</uri>
+      <pose>-15.8 128 0.6 0 0 0</pose>
+    </include>
+
+    <include>
 
   </world>
 </sdf>
