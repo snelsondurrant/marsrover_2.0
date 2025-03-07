@@ -11,7 +11,7 @@ echo "  - Use the toolbar across the top of the Gazebo window to drag and drop o
 echo "  - Click 'Add' on the left toolbar in RViz, navigate to the 'By topic' tab, and select 'arduino_tracker/debug/Image' to see the camera feed with aruco tags labeled"
 echo "  - Click 'Add' on the left toolbar in RViz, select 'Detection3DArray' in the 'By display type' tab, and rename the topic in the dropdown to 'zed/detections' to see the object detection bounding boxes"
 echo ""
-echo "###"
+echo "---"
 echo ""
 
 source ~/mars_ws/install/setup.bash
