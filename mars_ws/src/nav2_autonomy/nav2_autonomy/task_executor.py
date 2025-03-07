@@ -728,7 +728,7 @@ class AutonomyTaskExecutor(Node):
         ):
 
             if self.leg in self.gps_legs:
-                print_string = "GPS wp"
+                print_string = "GPS waypoint"
             elif self.leg in self.aruco_legs:
                 print_string = "aruco tag"
             elif self.leg in self.obj_legs:
