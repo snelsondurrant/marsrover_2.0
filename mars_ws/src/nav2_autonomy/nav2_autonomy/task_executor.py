@@ -146,7 +146,7 @@ class AutonomyTaskExecutor(Node):
         ### ROS 2 OBJECT DECLARATIONS ###
         #################################
 
-        self.cancel_flag = False # monitor action cancel requests
+        self.cancel_flag = False  # monitor action cancel requests
 
         # Set up a Tf2 buffer for pose to GPS transforms (aruco, object)
         self.tf_buffer = tf2_ros.Buffer()
@@ -154,7 +154,9 @@ class AutonomyTaskExecutor(Node):
 
         # Callback groups (for threading)
         norm_callback_group = MutuallyExclusiveCallbackGroup()
-        action_callback_group = ReentrantCallbackGroup()  # needed to monitor cancel requests
+        action_callback_group = (
+            ReentrantCallbackGroup()
+        )  # needed to monitor cancel requests
 
         # Filtered GPS location subscriber
         self.gps_subscriber = self.create_subscription(
@@ -608,7 +610,9 @@ class AutonomyTaskExecutor(Node):
                     # Are we looking for this object right now?
                     if result.hypothesis.class_id == self.leg:
 
-                        self.get_logger().info(f"Found object {result.hypothesis.class_id}")
+                        self.get_logger().info(
+                            f"Found object {result.hypothesis.class_id}"
+                        )
 
                         # Convert the pose to a GeoPose
                         pose = self.pose_to_geopose(
@@ -740,13 +744,14 @@ class AutonomyTaskExecutor(Node):
                 self.task_fatal("No GPS wp defined for leg")
                 return False
 
-            self.gps_nav(leg_wp)
+            found_loc = self.gps_nav(leg_wp)  # look along the way
 
             # Do we need to look for an aruco tag or object?
             if self.leg in self.aruco_legs or self.leg in self.obj_legs:
 
-                # Look for the aruco tag or object
-                found_loc = self.spin_search()  # Do a spin search
+                # Check for the aruco tag or object until found
+                if not found_loc:
+                    found_loc = self.spin_search()  # Do a spin search
                 if not found_loc:
                     found_loc = self.hex_search()  # Do a hex search
                 if not found_loc:
@@ -755,14 +760,11 @@ class AutonomyTaskExecutor(Node):
                 else:
                     self.task_info("Found the " + print_string + "!")
 
-                    # Loop through with an updating GPS location
-                    finished = False
-                    while not finished:
-                        finished = self.gps_nav(
+                    # Change found GPS location if we get a better one as we move closer
+                    while found_loc:
+                        found_loc = self.gps_nav(
                             found_loc, " (" + print_string + ")", updating=True
                         )
-                        if not finished:
-                            found_loc = self.found_check()
 
                     self.task_info("SUCCESS! Found and navigated to " + print_string)
 
@@ -830,7 +832,13 @@ class AutonomyTaskExecutor(Node):
                     self.task_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
                     time.sleep(0.5)  # give the action server time to cancel
-                    return False  # restart gps_nav with the new location
+                    return pose  # restart gps_nav with the new location
+            else:
+                # Check for the aruco tag or object while navigating
+                pose = self.found_check()
+                if pose:
+                    asyncio.run(self.cancelTask())
+                    return pose
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
@@ -839,8 +847,7 @@ class AutonomyTaskExecutor(Node):
             self.task_warn("GPS navigation canceled" + src_string)
         elif result == TaskResult.FAILED:
             self.task_error("GPS navigation failed" + src_string)
-
-        return True  # for updating mode logic
+        return False
 
     def spin_search(self, src_string=""):
         """
@@ -891,9 +898,13 @@ class AutonomyTaskExecutor(Node):
             hex_lon = base_wp.position.longitude + coord[1] * self.hex_scalar
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            self.gps_nav(hex_wp, " (hex " + str(i) + ")")
+            pose = self.gps_nav(hex_wp, " (hex " + str(i) + ")")
+            # Did the last gps_nav find it?
+            if pose:
+                return pose
+
             pose = self.spin_search(" (hex " + str(i) + ")")  # Do a spin search
-            # Did the last spin search find it?
+            # Did the last spin_search find it?
             if pose:
                 return pose
 
@@ -905,10 +916,10 @@ class AutonomyTaskExecutor(Node):
         Function to check for aruco tags and objects
         """
 
-        if self.found_poses[self.leg]:
-            return self.found_poses[self.leg]
-        else:
-            return False
+        if self.leg in self.aruco_legs or self.leg in self.obj_legs:
+            if self.found_poses[self.leg]:
+                return self.found_poses[self.leg]
+        return False
 
     ###################################
     ### END TASK EXECUTOR FUNCTIONS ###
