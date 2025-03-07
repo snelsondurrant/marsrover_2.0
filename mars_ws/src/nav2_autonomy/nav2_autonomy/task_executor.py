@@ -365,7 +365,7 @@ class AutonomyTaskExecutor(Node):
                 self.debug(f"Task with failed with status code: {self.status}")
                 return True
         else:
-            # Bug fix: sometimes the goal completes but we don't successfully get the result
+            # Bug fix: (very) rarely the goal completes but we don't successfully get the result
             # We can determine if the task is complete by looking at the last feedback timestamp
             if self.get_clock().now().to_msg().sec - self.last_feedback.sec > 2:
                 self.bt_warn(

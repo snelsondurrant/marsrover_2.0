@@ -114,7 +114,7 @@ class SimObjDetect(Node):
             zed_msg.detections.append(detection3d)
 
             # Publish the Detection3DArray
-            time.sleep(0.1)  # we're getting data faster than in real life
+            time.sleep(1)  # we're getting data faster than in real life
             self.zed_pub.publish(zed_msg)
 
         else:

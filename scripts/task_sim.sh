@@ -4,7 +4,7 @@
 # Runs the autonomy task in the simulation environment
 
 echo ""
-echo "QUICK SIMULATION TIPS"
+echo "QUICK SIMULATION TIPS:"
 echo "  - Left click on the turtlebot model ('World' tab, 'Models' dropdown) in Gazebo and click 'Follow' to keep the camera on the robot"
 echo "  - Click 'Fixed Frame' in the RViz toolbar and select 'base_link' to keep the visualizer centered on the robot"
 echo "  - Use the toolbar across the top of the Gazebo window to drag and drop obstacles into the robot's path"
