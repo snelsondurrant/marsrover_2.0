@@ -1,5 +1,6 @@
 # Created by Nelson Durrant, Mar 2025
 import rclpy
+import time
 from rclpy.node import Node
 from gazebo_msgs.srv import GetEntityState
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
@@ -49,7 +50,7 @@ class SimObjDetect(Node):
         # Request to get the state of the mallet
         self.mallet_request = GetEntityState.Request()
         self.mallet_request.name = "hammer"
-        self.mallet_request.reference_frame = "camera_link"
+        self.mallet_request.reference_frame = "base_link"
 
         # Publisher for the ZED detections
         self.zed_pub = self.create_publisher(Detection3DArray, "zed/detections", 10)
@@ -74,11 +75,11 @@ class SimObjDetect(Node):
             # Create a Detection3Darray
             zed_msg = Detection3DArray()
             zed_msg.header.stamp = self.get_clock().now().to_msg()
-            zed_msg.header.frame_id = "camera_link"
+            zed_msg.header.frame_id = "base_link"
             # Create a Detection3D
             detection3d = Detection3D()
             detection3d.header.stamp = self.get_clock().now().to_msg()
-            detection3d.header.frame_id = "camera_link"
+            detection3d.header.frame_id = "base_link"
             detection3d.id = "mallet"
             # Add a BoundingBox3D to the Detection3D
             detection3d.bbox.center.position.x = gazebo_position.state.pose.position.x
@@ -113,6 +114,15 @@ class SimObjDetect(Node):
             zed_msg.detections.append(detection3d)
 
             # Publish the Detection3DArray
+            time.sleep(0.1)  # we're getting data faster than in real life
+            self.zed_pub.publish(zed_msg)
+
+        else:
+            # Publish an empty Detection3DArray
+            zed_msg = Detection3DArray()
+            zed_msg.header.stamp = self.get_clock().now().to_msg()
+            zed_msg.header.frame_id = "base_link"
+            time.sleep(0.1)  # we're getting data faster than in real life
             self.zed_pub.publish(zed_msg)
 
 

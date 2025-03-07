@@ -110,6 +110,10 @@ class AutonomyTaskExecutor(Node):
         self.wp_parser = YamlParser(wps_file_path)
         self.wps = self.wp_parser.get_wps()
 
+        # Initialize variables
+        self.leg = None
+        self.cancel_flag = False
+
         # Task constants
         self.gps_legs = ["gps1", "gps2"]
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
@@ -613,6 +617,7 @@ class AutonomyTaskExecutor(Node):
 
                             # If it was successful, store it
                             if pose:
+                                self.task_fatal("stored pose")
                                 self.found_poses[self.leg] = pose
 
     ###########################
@@ -854,9 +859,11 @@ class AutonomyTaskExecutor(Node):
                 raise Exception("Task execution canceled by action client")
 
             # Check for the aruco tag or object
+            self.task_warn("Searching for aruco tag or object" + src_string)
             pose = self.found_check()
             if pose:
                 asyncio.run(self.cancelTask())
+                self.task_fatal("Found aruco tag or object" + src_string)
                 return pose
 
         result = self.getResult()

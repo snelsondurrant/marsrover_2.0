@@ -33,6 +33,14 @@ def generate_launch_description():
                 executable="drive_switch",
                 output="screen",
                 condition=IfCondition(use_sim_time),
+                parameters=[{"use_sim_time": use_sim_time}],
+            ),
+            launch_ros.actions.Node(
+                package="nav2_autonomy",
+                executable="sim_obj_detect",
+                output="screen",
+                condition=IfCondition(use_sim_time),
+                parameters=[{"use_sim_time": use_sim_time}],
             ),
             launch_ros.actions.Node(
                 package="nav2_autonomy",

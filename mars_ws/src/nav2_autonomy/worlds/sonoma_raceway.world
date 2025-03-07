@@ -84,7 +84,7 @@
 
     <include>
       <uri>model://hammer</uri>
-      <pose>-20 129 0.2 0 0 0</pose>
+      <pose>-15 128 0.2 0 0 0</pose>
     </include>
 
   </world>
