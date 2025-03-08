@@ -768,8 +768,8 @@ class AutonomyTaskExecutor(Node):
                     leg_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
 
             if not leg_wp:
-                self.task_fatal("No GPS wp defined for leg")
-                return False
+                self.task_error("No GPS waypoint found for leg")
+                return
 
             found_loc = self.gps_nav(leg_wp)  # look along the way
 
@@ -811,7 +811,7 @@ class AutonomyTaskExecutor(Node):
             asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         else:
-            self.task_fatal("Invalid leg type provided")
+            self.task_error("Invalid leg type provided:" + self.leg)
 
     def gps_nav(self, dest_wp, src_string="", updating=False):
         """
