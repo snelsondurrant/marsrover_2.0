@@ -6,7 +6,9 @@
 **/devel_isolated
 **/.pio
 **/__pycache__
-mapproxy/cache_data/*
+**/mapproxy/cache_data/*
+**/mars_ws/src/nav2_autonomy/bags
 
 .vscode
 .DS_Store
+core
