@@ -1,5 +1,5 @@
 #!/bin/bash
-# Created by Nelson Durrant, Feb 2025
+# Created by Nelson Durrant, Mar 2025
 # 
 # Records an autonomy task simulation run to a bag file
 

@@ -1,5 +1,7 @@
-# Created by Nelson Durrant, Feb 2025
+# Waypoints for the SIMULATION environment
 waypoints:
+
+# GPS waypoints
 # 1st waypoint (GPS only)
 - leg: gps1
   latitude: 38.162923
@@ -8,18 +10,22 @@ waypoints:
 - leg: gps2
   latitude: 0.0
   longitude: 0.0
-# 3rd waypoint (Aruco)
+
+# Aruco tag waypoints
+# 3rd waypoint (Aruco tag)
 - leg: aruco1
   latitude: 38.162958
   longitude: -122.455412
-# 4th waypoint (Aruco)
+# 4th waypoint (Aruco tag)
 - leg: aruco2
   latitude: 0.0
   longitude: 0.0
-# 5th waypoint (Aruco)
+# 5th waypoint (Aruco tag)
 - leg: aruco3
   latitude: 0.0
   longitude: 0.0
+
+# Object waypoints
 # 6th waypoint (Mallet)
 - leg: mallet
   latitude: 38.162633
