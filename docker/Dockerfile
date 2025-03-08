@@ -109,6 +109,12 @@ RUN apt update && apt install -y \
     python3-tk
 USER $NAME
 
+# Install plotjuggler - Nelson Durrant, Feb 2024
+# Useful for plotting and visualizing data from ROS 2 bags
+USER root
+RUN apt update && apt install -y ros-iron-plotjuggler-ros
+USER $NAME
+
 # Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2024
 # We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
 # For some reason, these packages are not available for arm64
