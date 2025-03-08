@@ -713,8 +713,13 @@ class AutonomyTaskExecutor(Node):
 
         # Check for the first GPS fix
         while self.filtered_gps is None:
-            self.task_warn("Waiting on a GPS fix...")
             time.sleep(1)
+            self.task_warn("Waiting on a GPS fix...")
+
+            # Check if the goal has been canceled
+            if self.task_goal_handle.is_cancel_requested:
+                asyncio.run(self.cancelTask())
+                raise Exception("Task execution canceled by action client")
 
         # Determine the best order for the legs
         self.legs = globals()["__order_planner__"](

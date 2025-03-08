@@ -5,7 +5,8 @@
 **/install_isolated
 **/devel_isolated
 **/.pio
-**__pycache__
+**/__pycache__
+mapproxy/cache_data/*
 
 .vscode
 .DS_Store
