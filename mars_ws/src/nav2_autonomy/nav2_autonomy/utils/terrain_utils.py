@@ -10,7 +10,7 @@ def terrainPathPlanner(geopose1, geopose2):
     :date:
     """
 
-    # TODO: Implement terrainPathPlanner
+    # TODO: Implement terrainPathPlanner - Daniel
 
     return
 
@@ -23,6 +23,6 @@ def terrainOrderPlanner(legs, waypoints, fix):
     :date:
     """
 
-    # TODO: Implement terrainOrderPlanner
+    # TODO: Implement terrainOrderPlanner - Daniel
 
     return

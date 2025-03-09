@@ -46,7 +46,7 @@ case $1 in
 				printWarning "Creating a new tmux session..."
 				docker exec -it marsrover-ct tmux new-session -d -s rover_dev
 				docker exec -it marsrover-ct tmux select-pane -t 0 -T rover_dev
-				docker exec -it marsrover-ct tmux send-keys "clear && cat /startup/introduction.txt" Enter
+				docker exec -it marsrover-ct tmux send-keys "python3 /startup/display.py && clear && cat /startup/introduction.txt" Enter
 
 				# Full color and mouse options
 				docker exec -it marsrover-ct tmux set-option -g default-terminal "screen-256color"

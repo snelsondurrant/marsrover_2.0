@@ -18,6 +18,9 @@ def generate_launch_description():
             package="teleop_twist_joy",
             executable="teleop_node",
             output="screen",
+            remappings=[
+                ("cmd_vel", "cmd_vel_teleop"),
+            ],
         ),
         launch_ros.actions.Node(
             package="mobility",
