@@ -176,3 +176,7 @@ RUN apt update && apt install -y \
     ros-iron-tf2-tools \
     ros-iron-turtlesim
 USER $NAME
+
+# Install ascii art packages - Nelson Durrant, Mar 2024
+# Used for the Mars Rover ASCII art display on startup
+RUN pip3 install --upgrade pillow asciimatics
