@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>Autonomy capabilities (using Nav2) for the Mars Rover</description>
   <maintainer email="snelsondurrant@gmail.com">Nelson Durrant</maintainer>
-  <license>MIT</license>
+  <license>Apache-2.0</license>
 
   <depend>navigation2</depend>
   <depend>robot_localization</depend>
