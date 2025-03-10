@@ -10,7 +10,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the launch directory
     description_dir = get_package_share_directory(
-        "rover_gazebo")
+        "rover_description")
     urdf = os.path.join(description_dir, 'urdf', 'turtlebot3_waffle_gps.urdf')
     with open(urdf, 'r') as infp:
         robot_description = infp.read()
