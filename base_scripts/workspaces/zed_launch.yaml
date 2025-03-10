@@ -15,3 +15,5 @@ windows:
           - source ~/foxy_ws/install/setup.bash
           - cmd: ros2 launch object_detection object_detection_launch.py
             enter: false
+
+# TODO: This is only going to work if the ZED is running in a container with tmuxp installed

@@ -35,7 +35,6 @@ then
 fi
 
 # Send tmux commands to the rover over SSH
-# NOTE: I haven't used tmuxp load bc of the dynamic $current_branch variable
 printInfo "Setting up the sync_git tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_git; \
     tmux set-option -g default-terminal "screen-256color"; \

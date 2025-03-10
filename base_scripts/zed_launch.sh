@@ -20,7 +20,6 @@ function printError {
 
 LOOPBACK_IP_ADDRESS=127.0.0.1
 ROVER_IP_ADDRESS=192.168.1.120
-FAST_DDS_PORT=11811
 
 # Check for an SSH connection to the rover
 if ! ssh marsrover@$ROVER_IP_ADDRESS "echo" &> /dev/null
@@ -43,4 +42,4 @@ ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t zed_launch"
 
-# TODO: Get the ZED running in a Docker container too, add the code to this repo
+# TODO: Get the ZED running in a Docker container, add the code to this repo
