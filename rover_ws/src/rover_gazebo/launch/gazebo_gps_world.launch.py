@@ -40,7 +40,16 @@ def generate_launch_description():
         cwd=[launch_dir], output='both')
 
     # Create the launch description and populate
-    ld = LaunchDescription()
+    ld = LaunchDescription(
+        [
+            Node(
+                package='rover_gazebo',
+                executable='sim_obj_detect',
+                output='screen',
+                parameters=[{'use_sim_time': True}]
+            )
+        ]
+    )
 
     # Set gazebo up to find models properly
     ld.add_action(set_gazebo_model_path_cmd)
