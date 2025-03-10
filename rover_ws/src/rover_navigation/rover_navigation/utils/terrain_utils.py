@@ -11,7 +11,7 @@ def terrainPathPlanner(
     :date:
     """
 
-    # TODO: Implement terrainPathPlanner - Daniel
+    # TODO: Implement terrainPathPlanner
 
     return
 
@@ -26,6 +26,6 @@ def terrainOrderPlanner(
     :date:
     """
 
-    # TODO: Implement terrainOrderPlanner - Daniel
+    # TODO: Implement terrainOrderPlanner
 
     return
