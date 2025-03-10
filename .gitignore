@@ -6,7 +6,7 @@
 **/devel_isolated
 **/.pio
 **/mapproxy/cache_data/*
-**/mars_ws/src/nav2_autonomy/bags
+**/mars_ws/src/rover_gazebo/bags
 
 __pycache__
 .vscode

@@ -27,7 +27,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
     tmux split-window -v
     tmux send-keys -t rover_startup.1 "source ~/mars_ws/install/setup.bash" Enter
     tmux send-keys -t rover_startup.1 "export ROS_DISCOVERY_SERVER=127.0.0.1:11811" Enter
-    tmux send-keys -t rover_startup.1 "ros2 launch mobility startup.launch.py" Enter
+    tmux send-keys -t rover_startup.1 "ros2 launch rover_bringup rover_startup.launch.py" Enter
 
     # Full color and mouse options
     tmux set-option -g default-terminal "screen-256color"
