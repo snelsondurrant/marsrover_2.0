@@ -1,0 +1,16 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: rover_startup
+start_directory: "~"
+windows:
+  - window_name: main
+    layout: tiled
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - shell_command:
+          - fastdds discovery --server-id 0
+      - shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - export ROS_DISCOVERY_SERVER=127.0.0.1:11811
+          - ros2 launch rover_bringup rover_startup.launch.py

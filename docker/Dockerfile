@@ -192,3 +192,7 @@ RUN pip3 install tmuxp
 # Install matplotlib - Nelson Durrant, Mar 2024
 # Used for plotting calculated path planning routes
 RUN pip3 install matplotlib
+
+# Install pyserial - Nelson Durrant, Mar 2024
+# Used for serial communication with the Arduino
+RUN pip3 install pyserial

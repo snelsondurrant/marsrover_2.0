@@ -33,20 +33,12 @@ fi
 
 # Zip and send the base station version of the Docker image to the rover
 docker save byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
-scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~/marsrover/docker
+scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~
 rm marsrover.tar.gz
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the sync_docker tmux session..."
-ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_docker; \
-    tmux set-option -g default-terminal "screen-256color"; \
-    tmux set -g mouse on; \
-    tmux send-keys -t sync_docker.0 'clear' Enter; \
-    tmux send-keys -t sync_docker.0 'cd ~/marsrover/docker' Enter; \
-    tmux send-keys -t sync_docker.0 'gunzip marsrover.tar.gz' Enter; \
-    tmux send-keys -t sync_docker.0 'docker load < marsrover.tar' Enter; \
-    tmux send-keys -t sync_docker.0 'rm marsrover.tar.gz' Enter; \
-    tmux send-keys -t sync_docker.0 'rm marsrover.tar' Enter"
+ssh marsrover@$ROVER_IP_ADDRESS "tmuxp load -d workspaces/sync_docker.yaml"
 
 # Attach to the 'sync_docker' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_docker"

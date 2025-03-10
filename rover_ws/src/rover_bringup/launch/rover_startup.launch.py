@@ -21,7 +21,7 @@ def generate_launch_description():
 
     peripherals_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(rover_control_dir, 'peripherals.launch.py')),
+            os.path.join(rover_control_launch_dir, 'peripherals.launch.py')),
     )
 
     ld = LaunchDescription()

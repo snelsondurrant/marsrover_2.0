@@ -1,0 +1,17 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: zed_launch
+start_directory: "~/foxy_ws"
+windows:
+  - window_name: main
+    layout: tiled
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - environment:
+          ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+        shell_command:
+          - source /opt/ros/foxy/setup.bash
+          - source ~/foxy_ws/install/setup.bash
+          - cmd: ros2 launch object_detection object_detection_launch.py
+            enter: false

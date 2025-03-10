@@ -35,14 +35,7 @@ fi
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the ZED tmux session..."
-ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s zed_launch; \
-    tmux set-option -g default-terminal "screen-256color"; \
-    tmux set -g mouse on; \
-    tmux send-keys -t zed_launch.0 'clear' Enter; \
-    tmux send-keys -t zed_launch.0 "export ROS_DISCOVERY_SERVER=$LOOPBACK_IP_ADDRESS:$FAST_DDS_PORT" Enter; \
-    tmux send-keys -t zed_launch.0 'source /opt/ros/foxy/setup.bash' Enter; \
-    tmux send-keys -t zed_launch.0 'cd ~/foxy_ws && source install/setup.bash' Enter; \
-    tmux send-keys -t zed_launch.0 'ros2 launch object_detection object_detection_launch.py'" # NO ENTER
+ssh marsrover@$ROVER_IP_ADDRESS "tmuxp load -d workspaces/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"

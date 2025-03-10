@@ -20,7 +20,6 @@ function printError {
 
 LOOPBACK_IP_ADDRESS=127.0.0.1
 ROVER_IP_ADDRESS=192.168.1.120
-FAST_DDS_PORT=11811
 DOCKER_SSH_PORT=2233
 
 # Check for an SSH connection to the base station's Docker container
@@ -37,13 +36,7 @@ fi
 case "$1" in
     "autonomy")
         printInfo "Setting up the autonomy task..."
-        # Send tmux commands to the rover's Docker container over SSH
-        ssh marsrover-docker@$LOOPBACK_IP_ADDRESS -p $DOCKER_SSH_PORT "\
-            tmux new-session -d -s base_launch; \
-            tmux send-keys -t base_launch.0 'clear' Enter; \
-            tmux send-keys -t base_launch.0 "export ROS_DISCOVERY_SERVER=$ROVER_IP_ADDRESS:$FAST_DDS_PORT" Enter; \
-            tmux send-keys -t base_launch.0 'source ~/rover_ws/install/setup.bash' Enter; \
-            tmux send-keys -t base_launch.0 'ros2 launch rover_bringup base_autonomy.launch.py use_rviz:=True use_mapviz:=True'" # NO ENTER
+        ssh marsrover-docker@$LOOPBACK_IP_ADDRESS -p $DOCKER_SSH_PORT "tmuxp load -d workspaces/autonomy/base_autonomy.yaml"
         ;;
     "servicing")
         printWarning "Not implemented yet"

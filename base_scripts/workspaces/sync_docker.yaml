@@ -1,0 +1,17 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: sync_docker
+start_directory: "~"
+windows:
+  - window_name: main
+    layout: tiled
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - shell_command:
+          - gunzip marsrover.tar.gz
+          - docker load < marsrover.tar
+          - rm marsrover.tar.gz
+          - rm marsrover.tar
+          - cmd: cd ~/rover_ws && colcon build
+            enter: false

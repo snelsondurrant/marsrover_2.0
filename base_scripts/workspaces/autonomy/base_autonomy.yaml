@@ -1,0 +1,22 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: base_launch
+start_directory: "~/scripts"
+windows:
+  - window_name: main
+    layout: tiled
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - environment:
+          ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
+        shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: ros2 launch rover_bringup base_autonomy.launch.py rviz:=True mapviz:=True
+            enter: false
+      - environment:
+          ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
+        shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: bash task_exec.sh
+            enter: false

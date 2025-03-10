@@ -1,0 +1,22 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: rover_launch
+start_directory: "~/scripts"
+windows:
+  - window_name: main
+    layout: tiled
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - environment:
+          ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+        shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: ros2 launch rover_bringup rover_autonomy.launch.py
+            enter: false
+      - environment:
+          ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+        shell_command:
+          - cd ~/rover_ws/src/rover_navigation/config && cat waypoints.yaml
+          - cmd: vim waypoints.yaml
+            enter: false
