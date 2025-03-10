@@ -58,7 +58,7 @@ displays:
       visible: true
       collapsed: false
       topic: /mapviz/goal
-      color: "#ff00ff"
+      color: "#ff0000"
       draw_style: points
       position_tolerance: 0
       buffer_size: 100
