@@ -162,7 +162,11 @@ def plotOrder(order, waypoints, fix):
         if wp["leg"] == order[0]:
             first = wp
             plt.text(first["longitude"], first["latitude"], first["leg"])
-    plt.plot([fix.position.longitude, first["longitude"]], [fix.position.latitude, first["latitude"]], "ro-")
+    plt.plot(
+        [fix.position.longitude, first["longitude"]],
+        [fix.position.latitude, first["latitude"]],
+        "ro-",
+    )
 
     # Plot the rest of the legs
     for i in range(len(order) - 1):
@@ -173,7 +177,11 @@ def plotOrder(order, waypoints, fix):
             elif wp["leg"] == order[i + 1]:
                 end = wp
                 plt.text(end["longitude"], end["latitude"], end["leg"])
-        plt.plot([start["longitude"], end["longitude"]], [start["latitude"], end["latitude"]], "ro-")
+        plt.plot(
+            [start["longitude"], end["longitude"]],
+            [start["latitude"], end["latitude"]],
+            "ro-",
+        )
     plt.show()
 
 
