@@ -36,7 +36,7 @@ case $1 in
     	printInfo "Loading the marsrover-ct container..."
     	docker compose -f docker/docker-compose.yaml up -d
 
-    	# Are we running on Jetson Orin architecture (the rover)?
+    	# Are we NOT running on Jetson Orin architecture (the rover)?
     	if [ ! "$(uname -m)" == "aarch64" ]; then
 
 			# Check if a 'rover_dev' tmux session already exists
