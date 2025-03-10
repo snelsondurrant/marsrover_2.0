@@ -180,3 +180,11 @@ USER $NAME
 # Install ascii art packages - Nelson Durrant, Mar 2024
 # Used for the Mars Rover ASCII art display on startup
 RUN pip3 install --upgrade pillow asciimatics
+
+# Install tmux docker-compose-esque launcher - Nelson Durrant, Mar 2024
+# Used for launching multiple tmux windows with a single command
+RUN pip3 install tmuxp
+
+# Install matplotlib - Nelson Durrant, Mar 2024
+# Used for plotting calculated path planning routes
+RUN pip3 install matplotlib
