@@ -25,7 +25,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
     # Launch ROS 2 nodes on system startup
     # make a new pane vertically split
     tmux split-window -v
-    tmux send-keys -t rover_startup.1 "source ~/mars_ws/install/setup.bash" Enter
+    tmux send-keys -t rover_startup.1 "source ~/rover_ws/install/setup.bash" Enter
     tmux send-keys -t rover_startup.1 "export ROS_DISCOVERY_SERVER=127.0.0.1:11811" Enter
     tmux send-keys -t rover_startup.1 "ros2 launch rover_bringup rover_startup.launch.py" Enter
 

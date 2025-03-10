@@ -40,7 +40,7 @@ ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_git; \
     tmux set-option -g default-terminal "screen-256color"; \
     tmux set -g mouse on; \
     tmux send-keys -t sync_git.0 'clear' Enter; \
-    tmux send-keys -t sync_git.0 'cd ~/marsrover/mars_ws' Enter; \
+    tmux send-keys -t sync_git.0 'cd ~/marsrover/rover_ws' Enter; \
     tmux send-keys -t sync_git.0 'git checkout $current_branch' Enter; \
     tmux send-keys -t sync_git.0 'git pull base $current_branch' Enter; \
     tmux send-keys -t sync_git.0 'colcon build'" # NO ENTER

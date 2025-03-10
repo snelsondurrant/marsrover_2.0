@@ -42,7 +42,7 @@ case "$1" in
             tmux new-session -d -s rover_launch; \
             tmux send-keys -t rover_launch.0 'clear' Enter; \
             tmux send-keys -t rover_launch.0 'export ROS_DISCOVERY_SERVER=127.0.0.1:11811' Enter; \
-            tmux send-keys -t rover_launch.0 'source ~/mars_ws/install/setup.bash' Enter; \
+            tmux send-keys -t rover_launch.0 'source ~/rover_ws/install/setup.bash' Enter; \
             tmux send-keys -t rover_launch.0 'ros2 launch rover_bringup rover_task_autonomy.launch.py'" # NO ENTER 
         ;;
     "servicing")

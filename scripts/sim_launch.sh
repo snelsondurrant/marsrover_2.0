@@ -3,5 +3,5 @@
 #
 # Launches the full simulation stack for the autonomy task
 
-source ~/mars_ws/install/setup.bash
+source ~/rover_ws/install/setup.bash
 ros2 launch rover_bringup rover_task_autonomy.launch.py sim_mode:=True use_rviz:=True use_mapviz:=True
