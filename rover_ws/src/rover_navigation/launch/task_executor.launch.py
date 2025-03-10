@@ -36,13 +36,6 @@ def generate_launch_description():
                 parameters=[{"use_sim_time": use_sim_time}],
             ),
             launch_ros.actions.Node(
-                package="rover_gazebo",
-                executable="sim_obj_detect",
-                output="screen",
-                condition=IfCondition(use_sim_time),
-                parameters=[{"use_sim_time": use_sim_time}],
-            ),
-            launch_ros.actions.Node(
                 package="rover_navigation",
                 executable="autonomy_task_executor",
                 output="screen",
