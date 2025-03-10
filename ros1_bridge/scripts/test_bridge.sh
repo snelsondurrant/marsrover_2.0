@@ -4,8 +4,8 @@
 # Tests the ROS 1 bridge using the included ROS 1 and ROS 2 msgs packages
 
 # Define the message type and data to be tested
-export TEST_MSG_TYPE="rover_msgs/msg/RoverStateSingleton"
-export TEST_MSG_DATA="map_roll: 1.0"
+export TEST_MSG_TYPE="std_msgs/String"
+export TEST_MSG_DATA="data: 'Hello, ROS 1 bridge!'"
 
 function printInfo {
   	echo -e "\033[0m\033[36m[INFO] $1\033[0m"
