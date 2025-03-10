@@ -2,7 +2,9 @@
 from nav2_autonomy.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
 
 
-def terrainPathPlanner(geopose1, geopose2):
+def terrainPathPlanner(
+    geopose1, geopose2
+):  # all path planners need to match these arguments
     """
     Generate intermediary waypoints between two GPS coordinates with terrain consideration
 
@@ -15,7 +17,9 @@ def terrainPathPlanner(geopose1, geopose2):
     return
 
 
-def terrainOrderPlanner(legs, waypoints, fix):
+def terrainOrderPlanner(
+    legs, waypoints, fix
+):  # all order planners need to match these arguments
     """
     Select the order in which to visit waypoints based on terrain considerations
 
