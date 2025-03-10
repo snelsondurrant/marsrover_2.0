@@ -30,7 +30,6 @@ def display(screen):
         Print(screen,
               SpeechBubble("Press SPACE to continue..."),
               5*screen.height // 6,
-              speed=1,
               start_frame=10),
     ]
     scenes.append(Scene(effects, -1))

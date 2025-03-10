@@ -152,7 +152,8 @@ USER root
 RUN apt update && apt install -y \
     ros-iron-joy \
     ros-iron-teleop-twist-joy \
-    ros-iron-teleop-twist-keyboard
+    ros-iron-teleop-twist-keyboard \
+    ros-iron-topic-tools
 USER $NAME
 
 # Install zed interface packages - Nelson Durrant, Feb 2024
