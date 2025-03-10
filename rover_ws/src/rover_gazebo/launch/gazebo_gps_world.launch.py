@@ -53,13 +53,6 @@ def generate_launch_description():
     start_gazebo_client_cmd = ExecuteProcess(
         cmd=['gzclient'],
         cwd=[launch_dir], output='both')
-    
-    sim_obj_detect_cmd = Node(
-        package="rover_gazebo",
-        executable="sim_obj_detect",
-        output="screen",
-        parameters=[{"use_sim_time": "true"}],
-    ),
 
     # Create the launch description and populate
     ld = LaunchDescription()
@@ -69,7 +62,6 @@ def generate_launch_description():
     ld.add_action(set_tb3_model_cmd)
 
     # simulator launch
-    ld.add_action(sim_obj_detect_cmd)
     ld.add_action(start_gazebo_server_cmd)
     ld.add_action(start_gazebo_client_cmd)
 
