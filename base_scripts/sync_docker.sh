@@ -36,7 +36,7 @@ docker save byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
 scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~/marsrover/docker
 rm marsrover.tar.gz
 
-# send tmux commands to the rover over SSH
+# Send tmux commands to the rover over SSH
 printInfo "Setting up the sync_docker tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_docker; \
     tmux set-option -g default-terminal "screen-256color"; \
@@ -48,7 +48,7 @@ ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_docker; \
     tmux send-keys -t sync_docker.0 'rm marsrover.tar.gz' Enter; \
     tmux send-keys -t sync_docker.0 'rm marsrover.tar' Enter"
 
-# attach to the 'sync_docker' tmux session to view the output
+# Attach to the 'sync_docker' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_docker"
 
 # Kill the tmux session on exit

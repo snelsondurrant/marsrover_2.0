@@ -31,7 +31,7 @@ then
     exit
 fi
 
-# Check if tmux is running on the rover
+# Send tmux commands to the rover over SSH
 printInfo "Setting up the ZED tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s zed_launch; \
     tmux set-option -g default-terminal "screen-256color"; \
@@ -42,6 +42,7 @@ ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s zed_launch; \
     tmux send-keys -t zed_launch.0 'cd ~/foxy_ws && source install/setup.bash' Enter; \
     tmux send-keys -t zed_launch.0 'ros2 launch object_detection object_detection_launch.py'" # NO ENTER
 
+# Attach to the 'zed_launch' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
 
 # Kill the tmux session on exit
