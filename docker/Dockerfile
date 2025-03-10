@@ -82,6 +82,9 @@ RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
 RUN touch ~/.hushlogin
 
+# Add local python binaries to the PATH
+ENV PATH="$PATH:/home/$NAME/.local/bin"
+
 ###############################################################
 # IMPORTANT! When adding dependencies or Dockerfile commands
 # below, please document your changes following this format:
