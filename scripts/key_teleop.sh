@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Mar 2025
 # 
-# Drive the rover using the keyboard
+# Drive the rover or turtlebot using the keyboard
 
 source ~/mars_ws/install/setup.bash
 ros2 run topic_tools relay /cmd_vel_teleop /cmd_vel & # remap to just /cmd_vel for simulation
