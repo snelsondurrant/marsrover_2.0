@@ -13,5 +13,3 @@ windows:
           - docker load < marsrover.tar
           - rm marsrover.tar.gz
           - rm marsrover.tar
-          - cmd: cd ~/rover_ws && colcon build
-            enter: false
