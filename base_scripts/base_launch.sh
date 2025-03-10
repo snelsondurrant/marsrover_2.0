@@ -26,10 +26,8 @@ DOCKER_SSH_PORT=2233
 # Check for an SSH connection to the base station's Docker container
 if ! ssh marsrover-docker@$LOOPBACK_IP_ADDRESS -p $DOCKER_SSH_PORT "echo" &> /dev/null
 then
-    printError "No available SSH connection to the rover's Docker container"
+    printError "No available SSH connection to the base station's Docker container"
     echo "Here's some debugging suggestions:"
-    echo "  - Ensure the rover is powered on"
-    echo "  - Ensure the rover is connected with a static IP address"
     echo "  - Ensure the rover's Docker container is running"
 
     exit
