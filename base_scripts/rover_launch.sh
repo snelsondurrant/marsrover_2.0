@@ -18,7 +18,9 @@ function printError {
   echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
+LOOPBACK_IP_ADDRESS=127.0.0.1
 ROVER_IP_ADDRESS=192.168.1.120
+FAST_DDS_PORT=11811
 DOCKER_SSH_PORT=2233
 
 # Check for an SSH connection to the rover's Docker container
@@ -41,9 +43,9 @@ case "$1" in
         ssh marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT "\
             tmux new-session -d -s rover_launch; \
             tmux send-keys -t rover_launch.0 'clear' Enter; \
-            tmux send-keys -t rover_launch.0 'export ROS_DISCOVERY_SERVER=127.0.0.1:11811' Enter; \
+            tmux send-keys -t rover_launch.0 "export ROS_DISCOVERY_SERVER=$LOOPBACK_IP_ADDRESS:$FAST_DDS_PORT" Enter; \
             tmux send-keys -t rover_launch.0 'source ~/rover_ws/install/setup.bash' Enter; \
-            tmux send-keys -t rover_launch.0 'ros2 launch rover_bringup rover_task_autonomy.launch.py'" # NO ENTER 
+            tmux send-keys -t rover_launch.0 'ros2 launch rover_bringup rover_autonomy.launch.py'" # NO ENTER 
         ;;
     "servicing")
         printWarning "Not implemented yet"

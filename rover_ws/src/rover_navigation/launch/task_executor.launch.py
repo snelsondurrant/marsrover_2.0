@@ -18,11 +18,11 @@ def generate_launch_description():
         "use_sim_time", default_value="False", description="Use simulation time"
     )
 
-    bringup_dir = get_package_share_directory("rover_bringup")
+    nav_dir = get_package_share_directory("rover_navigation")
     if use_sim_time:
-        wps_file = os.path.join(bringup_dir, "config", "sim_waypoints.yaml")
+        wps_file = os.path.join(nav_dir, "config", "sim_waypoints.yaml")
     else:
-        wps_file = os.path.join(bringup_dir, "config", "waypoints.yaml")
+        wps_file = os.path.join(nav_dir, "config", "waypoints.yaml")
 
     return LaunchDescription(
         [

@@ -40,7 +40,7 @@ def generate_launch_description():
     
     declare_sim_mode_cmd = DeclareLaunchArgument(
         'sim_mode',
-        default_value='false',
+        default_value='False',
         description='Whether to start in simulation mode')
     
     description_cmd = IncludeLaunchDescription(
