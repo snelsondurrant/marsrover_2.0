@@ -1,3 +1,4 @@
+# Modified from the GPS demo - Nelson Durrant, Feb 2025
 capture_directory: "~"
 fixed_frame: map
 target_frame: map
@@ -50,7 +51,7 @@ displays:
       draw_style: points
       position_tolerance: 0
       buffer_size: 1
-  # Added a way to display GPS goals - Nelson Durrant, Feb 2025
+# Added a way to display GPS goals - Nelson Durrant, Feb 2025
   - type: mapviz_plugins/navsat # GPS goal waypoint display
     name: new display
     config:

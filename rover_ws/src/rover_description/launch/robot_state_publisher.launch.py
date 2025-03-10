@@ -22,7 +22,7 @@ def generate_launch_description():
     if use_sim_time:
         urdf = os.path.join(description_dir, 'urdf', 'turtlebot3_waffle_gps.urdf')
     else:
-        urdf = os.path.join(description_dir, 'urdf', 'turtlebot3_waffle.urdf') # TODO: Add rover urdf
+        urdf = os.path.join(description_dir, 'urdf', 'turtlebot3_waffle_gps.urdf') # TODO: Add rover urdf
     with open(urdf, 'r') as infp:
         robot_description = infp.read()
 

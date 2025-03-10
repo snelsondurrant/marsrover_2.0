@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 import asyncio
 import rclpy
 import tf2_geometry_msgs

@@ -1,5 +1,4 @@
-# For parameter descriptions, please refer to the template parameter files for each node.
-
+# Modified from the GPS demo - Nelson Durrant, Feb 2025
 ekf_filter_node_odom:
   ros__parameters:
     frequency: 30.0

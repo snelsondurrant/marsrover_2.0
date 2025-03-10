@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 import rclpy
 from rclpy.node import Node
 

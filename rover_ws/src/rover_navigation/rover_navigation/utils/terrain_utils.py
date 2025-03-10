@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
 
 

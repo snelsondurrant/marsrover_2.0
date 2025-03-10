@@ -1,3 +1,5 @@
+# Modified from the GPS demo - Nelson Durrant, Feb 2025
+
 # GPS WPF CHANGES: 
 # - amcl params where removed. They are not needed because global localization is provided
 #   by an ekf node on robot_localization fusing gps data with local odometry sources

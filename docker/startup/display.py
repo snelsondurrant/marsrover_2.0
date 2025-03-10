@@ -15,6 +15,13 @@ os.chdir(dname)
 
 
 def display(screen):
+    """
+    Displays a spinning gif of Mars and the text "MARS ROVER" in ASCII art.
+
+    :author: Nelson Durrant
+    :date: Mar 2025
+    """
+
     scenes = []
     effects = [
         Print(screen,

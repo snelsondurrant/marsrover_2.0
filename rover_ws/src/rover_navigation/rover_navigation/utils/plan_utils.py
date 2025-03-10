@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 import math
 import utm
 from itertools import permutations
