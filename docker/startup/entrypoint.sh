@@ -15,14 +15,19 @@ if [ "$(uname -m)" == "aarch64" ]; then
     # Set up the Fast DDS discovery server to run in the background
     fastdds discovery --server-id 0 & # start on port 11811
 
-    # Start a new 'rover_runtime' tmux session
-    tmux new-session -d -s rover_runtime
-    tmux send-keys -t rover_runtime.0 "clear" Enter
+    # Start a new 'rover_startup' tmux session
+    tmux new-session -d -s rover_startup
+    tmux send-keys -t rover_startup.0 "clear" Enter
+
+    # Start the Fast DDS discovery server in the tmux session
+    tmux send-keys -t rover_startup.0 "fastdds discovery --server-id 0" Enter
     
     # Launch ROS 2 nodes on system startup
-    tmux send-keys -t rover_runtime.0 "source ~/mars_ws/install/setup.bash" Enter
-    tmux send-keys -t rover_runtime.0 "export ROS_DISCOVERY_SERVER=127.0.0.1:11811" Enter
-    tmux send-keys -t rover_runtime.0 "ros2 launch mobility startup.launch.py" Enter
+    # make a new pane vertically split
+    tmux split-window -v
+    tmux send-keys -t rover_startup.1 "source ~/mars_ws/install/setup.bash" Enter
+    tmux send-keys -t rover_startup.1 "export ROS_DISCOVERY_SERVER=127.0.0.1:11811" Enter
+    tmux send-keys -t rover_startup.1 "ros2 launch mobility startup.launch.py" Enter
 
     # Full color and mouse options
     tmux set-option -g default-terminal "screen-256color"

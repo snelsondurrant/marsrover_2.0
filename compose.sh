@@ -58,8 +58,8 @@ case $1 in
 
 			sleep 1 # IMPORTANT! Give the Docker container a chance to start up
 
-			# Enter the 'rover_runtime' tmux session on the rover
-			docker exec -it marsrover-ct tmux attach -t rover_runtime
+			# Enter the 'rover_startup' tmux session on the rover
+			docker exec -it marsrover-ct tmux attach -t rover_startup
 		fi
     ;;
 esac
