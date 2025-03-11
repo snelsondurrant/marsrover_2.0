@@ -2,7 +2,7 @@
 session_name: sync_docker
 start_directory: "~/marsrover/docker" # outside the container
 environment:
-  ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+  ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
   DISPLAY: ${DISPLAY}
 windows:
   - window_name: main
