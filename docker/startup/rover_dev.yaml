@@ -3,7 +3,7 @@ session_name: rover_dev
 start_directory: "~"
 windows:
   - window_name: main
-    layout: tiled
+    layout: 
     options:
       default-terminal: screen-256color
       mouse: "on"

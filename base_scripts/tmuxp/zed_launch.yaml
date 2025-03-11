@@ -6,7 +6,7 @@ environment:
   DISPLAY: ${DISPLAY}
 windows:
   - window_name: main
-    layout: even-horizontal
+    layout: e-horizontalven
     options:
       default-terminal: screen-256color
       mouse: "on"

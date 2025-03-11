@@ -42,9 +42,9 @@ rm marsrover.tar.gz
 # Send tmux commands to the rover over SSH
 # NOTE: I don't use tmuxp here bc I can't ensure it's installed on the rover computer
 printInfo "Setting up the sync_docker tmux session..."
-envsubst < .tmuxp/sync_docker.yaml > .tmuxp/tmp/sync_docker.yaml # for $DISPLAY
+envsubst < tmuxp/sync_docker.yaml > tmuxp/tmp/sync_docker.yaml # for $DISPLAY
 ssh marsrover@$ROVER_IP_ADDRESS \
-    "tmuxd load -d /home/marsrover/marsrover/base_scripts/.tmuxp/tmp/sync_docker.yaml"
+    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/sync_docker.yaml"
 
 # Attach to the 'sync_docker' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_docker"

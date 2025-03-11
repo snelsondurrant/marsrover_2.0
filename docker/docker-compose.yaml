@@ -15,7 +15,7 @@ services:
       - ../firmware:/home/marsrover-docker/firmware
       - ../scripts:/home/marsrover-docker/scripts
       - ../tutorial_ws:/home/marsrover-docker/tutorial_ws
-      - ../base_scripts/.tmuxp:/home/marsrover-docker/.tmuxp
+      - ../base_scripts/tmuxp:/home/marsrover-docker/.tmuxp
       - ./startup:/startup
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host

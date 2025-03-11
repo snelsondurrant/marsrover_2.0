@@ -35,7 +35,7 @@ fi
 case "$1" in
     "autonomy")
         printInfo "Setting up the autonomy task..."
-        envsubst < .tmuxp/autonomy/rover_autonomy.yaml > .tmuxp/tmp/rover_launch.yaml # for $DISPLAY
+        envsubst < tmuxp/autonomy/rover_autonomy.yaml > tmuxp/tmp/rover_launch.yaml # for $DISPLAY
         ssh marsrover-docker@$ROVER_IP_ADDRESS \
           "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/tmp/rover_launch.yaml"
         ;;

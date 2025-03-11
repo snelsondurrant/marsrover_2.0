@@ -33,9 +33,9 @@ fi
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the ZED tmux session..."
-envsubst < .tmuxp/zed_launch.yaml > .tmuxp/tmp/zed_launch.yaml
+envsubst < tmuxp/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
 ssh marsrover@$ROVER_IP_ADDRESS \
-	"tmuxd load -d /home/marsrover/marsrover/base_scripts/.tmuxp/tmp/zed_launch.yaml"
+	"tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
