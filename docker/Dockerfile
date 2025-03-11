@@ -27,16 +27,6 @@ RUN echo "$NAME:$PASS" | chpasswd
 USER $NAME
 WORKDIR /home/$NAME
 
-# Set up the direct Docker ssh connection
-USER root
-RUN apt update && apt install -y openssh-server
-RUN mkdir -p /var/run/sshd
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-RUN sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-RUN sed -i 's/\(^Port\)/#\1/' /etc/ssh/sshd_config && echo Port 2233 >> /etc/ssh/sshd_config
-EXPOSE 2233
-USER $NAME
-
 # Install general dependencies
 USER root
 RUN apt update && apt install -y \
@@ -46,7 +36,6 @@ RUN apt update && apt install -y \
     vim \
     nano \
     tmux \
-    docker.io \
     python3-pip
 USER $NAME
 

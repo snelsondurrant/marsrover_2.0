@@ -18,9 +18,8 @@ services:
       - ./startup:/startup
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
-      - /var/run/docker.sock:/var/run/docker.sock # Required for docker in docker
       - /tmp/.X11-unix:/tmp/.X11-unix # Required for GUI applications
     stdin_open: true  # Equivalent to -it in docker run
     tty: true  # Equivalent to -it in docker run
     restart: always  # Keeps the container running after exit unless you want it to be removed like with --rm
-    entrypoint: ["/bin/bash", "-c", "/startup/entrypoint.sh"]
+    entrypoint: ["/startup/entrypoint.sh", "/bin/bash"]
