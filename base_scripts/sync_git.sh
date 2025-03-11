@@ -46,7 +46,9 @@ ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_git; \
     tmux send-keys -t sync_git.0 'colcon build'" # NO ENTER
 
 # Attach to the 'sync_git' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_git"
+ssh -t -X marsrover@$ROVER_IP_ADDRESS \
+    "tmux send-keys -t sync_git 'export DISPLAY=$DISPLAY' Enter; \
+    tmux attach -t sync_git"
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t sync_git"

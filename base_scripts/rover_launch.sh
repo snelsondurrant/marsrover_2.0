@@ -18,7 +18,6 @@ function printError {
   echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-LOOPBACK_IP_ADDRESS=127.0.0.1
 ROVER_IP_ADDRESS=192.168.1.120
 DOCKER_SSH_PORT=2233
 
@@ -59,7 +58,9 @@ case "$1" in
 esac
 
 # Attach to the 'rover_launch' tmux session
-ssh -t -X marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT 'tmux attach -t rover_launch'
+ssh -t -X marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT \
+  "tmux send-keys -t rover_launch 'export DISPLAY=$DISPLAY' Enter; \
+  tmux attach -t rover_launch"
 
 # Kill the tmux session on exit
 ssh marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT 'tmux kill-session -t rover_launch'

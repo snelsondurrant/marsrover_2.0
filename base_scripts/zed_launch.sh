@@ -18,7 +18,6 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-LOOPBACK_IP_ADDRESS=127.0.0.1
 ROVER_IP_ADDRESS=192.168.1.120
 
 # Check for an SSH connection to the rover
@@ -37,7 +36,9 @@ printInfo "Setting up the ZED tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmuxp load -d workspaces/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
+ssh -t -X marsrover@$ROVER_IP_ADDRESS \
+	"tmux send-keys -t zed_launch 'export DISPLAY=$DISPLAY' Enter; \
+  	tmux attach -t zed_launch"
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t zed_launch"
