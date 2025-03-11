@@ -10,6 +10,7 @@ windows:
     panes:
       - environment:
           ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+          DISPLAY: ${DISPLAY}
         shell_command:
           - source /opt/ros/foxy/setup.bash
           - source ~/foxy_ws/install/setup.bash

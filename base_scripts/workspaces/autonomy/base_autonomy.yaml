@@ -10,6 +10,7 @@ windows:
     panes:
       - environment:
           ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
+          DISPLAY: ${DISPLAY}
         shell_command:
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup base_autonomy.launch.py rviz:=True mapviz:=True

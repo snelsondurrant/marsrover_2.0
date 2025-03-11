@@ -35,7 +35,8 @@ fi
 case "$1" in
     "autonomy")
         printInfo "Setting up the autonomy task..."
-        ssh marsrover-docker@localhost -p $DOCKER_SSH_PORT "tmuxp load -d workspaces/autonomy/base_autonomy.yaml"
+        envsubst < workspaces/autonomy/base_autonomy.yaml > temp/base_launch.yaml
+        ssh marsrover-docker@localhost -p $DOCKER_SSH_PORT "tmuxp load -d temp/base_launch.yaml"
         ;;
     "servicing")
         printWarning "Not implemented yet"

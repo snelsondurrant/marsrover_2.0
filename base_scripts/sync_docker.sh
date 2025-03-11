@@ -37,6 +37,7 @@ scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~/marsrover/docker
 rm marsrover.tar.gz
 
 # Send tmux commands to the rover over SSH
+# NOTE: I don't use tmuxp here bc I can't ensure it's installed on the rover computer
 printInfo "Setting up the sync_docker tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_docker; \
     tmux set-option -g default-terminal "screen-256color"; \
