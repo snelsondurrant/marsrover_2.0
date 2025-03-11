@@ -36,9 +36,7 @@ printInfo "Setting up the ZED tmux session..."
 ssh marsrover@$ROVER_IP_ADDRESS "tmuxp load -d workspaces/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS \
-	"tmux send-keys -t zed_launch 'export DISPLAY=$DISPLAY' Enter; \
-  	tmux attach -t zed_launch"
+ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t zed_launch"

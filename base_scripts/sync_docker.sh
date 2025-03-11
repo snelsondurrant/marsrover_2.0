@@ -49,9 +49,7 @@ ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_docker; \
     tmux send-keys -t sync_docker.0 'rm marsrover.tar' Enter"
 
 # Attach to the 'sync_docker' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS \
-    "tmux send-keys -t sync_docker 'export DISPLAY=$DISPLAY' Enter; \
-    tmux attach -t sync_docker"
+ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_docker"
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t sync_docker"

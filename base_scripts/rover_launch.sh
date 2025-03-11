@@ -58,9 +58,7 @@ case "$1" in
 esac
 
 # Attach to the 'rover_launch' tmux session
-ssh -t -X marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT \
-  "tmux send-keys -t rover_launch 'export DISPLAY=$DISPLAY' Enter; \
-  tmux attach -t rover_launch"
+ssh -t -X marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT "tmux attach -t rover_launch"
 
 # Kill the tmux session on exit
 ssh marsrover-docker@$ROVER_IP_ADDRESS -p $DOCKER_SSH_PORT 'tmux kill-session -t rover_launch'
