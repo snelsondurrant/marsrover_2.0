@@ -53,3 +53,5 @@ ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_docker"
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t sync_docker"
+
+# TODO: I'm not sure if this'll work with the different processors, but there's got to be a way
