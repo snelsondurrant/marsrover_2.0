@@ -4,17 +4,18 @@ services:
     image: byuawesomerover/marsrover:latest
     container_name: marsrover-ct
     build: .
-    user: ${NAME}
+    user: marsrover-docker
     network_mode: host
     privileged: true
     environment:
       - DISPLAY=$DISPLAY # Required for GUI applications
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
-      - ../rover_ws:/home/${NAME}/rover_ws
-      - ../firmware:/home/${NAME}/firmware
-      - ../scripts:/home/${NAME}/scripts
-      - ../tutorial_ws:/home/${NAME}/tutorial_ws
+      - ../rover_ws:/home/marsrover-docker/rover_ws
+      - ../firmware:/home/marsrover-docker/firmware
+      - ../scripts:/home/marsrover-docker/scripts
+      - ../tutorial_ws:/home/marsrover-docker/tutorial_ws
+      - ../base_scripts/.tmuxp:/home/marsrover-docker/.tmuxp
       - ./startup:/startup
       - /dev:/dev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
@@ -22,4 +23,4 @@ services:
     stdin_open: true  # Equivalent to -it in docker run
     tty: true  # Equivalent to -it in docker run
     restart: always  # Keeps the container running after exit unless you want it to be removed like with --rm
-    entrypoint: ["/startup/entrypoint.sh", "/bin/bash"]
+    entrypoint: ["/startup/entrypoint.sh"]

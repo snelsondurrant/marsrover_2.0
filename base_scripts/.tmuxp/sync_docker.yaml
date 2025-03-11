@@ -1,0 +1,20 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: sync_docker
+start_directory: "~/marsrover/docker" # outside the container
+environment:
+  ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+  DISPLAY: ${DISPLAY}
+windows:
+  - window_name: main
+    layout: even-horizontal
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - shell_command:
+          - clear
+          - cd ~/marsrover/docker
+          - gunzip marsrover.tar.gz
+          - docker load < marsrover.tar
+          - rm marsrover.tar.gz
+          - rm marsrover.tar

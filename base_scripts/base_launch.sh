@@ -18,25 +18,12 @@ function printError {
   echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-ROVER_IP_ADDRESS=192.168.1.120
-DOCKER_SSH_PORT=2233
-
-# Check for an SSH connection to the base station's Docker container
-if ! ssh marsrover-docker@localhost -p $DOCKER_SSH_PORT "echo" &> /dev/null
-then
-    printError "No available SSH connection to the base station's Docker container"
-    echo "Here's some debugging suggestions:"
-    echo "  - Ensure the rover's Docker container is running"
-
-    exit
-fi
-
 # Launch the specified task configuration over SSH
 case "$1" in
     "autonomy")
         printInfo "Setting up the autonomy task..."
-        envsubst < workspaces/autonomy/base_autonomy.yaml > workspaces/temp/base_launch.yaml
-        ssh marsrover-docker@localhost -p $DOCKER_SSH_PORT "tmuxp load -d workspaces/temp/base_launch.yaml"
+        envsubst < .tmuxp/autonomy/base_autonomy.yaml > .tmuxp/tmp/base_launch.yaml # for $DISPLAY
+        docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/tmp/base_launch.yaml
         ;;
     "servicing")
         printWarning "Not implemented yet"
@@ -53,11 +40,12 @@ case "$1" in
     *)
         printWarning "No task specified, simply entering the current tmux session..."
         echo "Specify a task using 'bash launch.sh <task>' (ex. 'bash launch.sh autonomy')"
+        exit
         ;;
 esac
 
 # Attach to the 'base_launch' tmux session
-ssh -t -X marsrover-docker@localhost -p $DOCKER_SSH_PORT "tmux attach -t base_launch"
+docker exec -it marsrover-ct tmux attach -t base_launch
 
 # Kill the tmux session on exit
-ssh marsrover-docker@localhost -p $DOCKER_SSH_PORT 'tmux kill-session -t base_launch'
+docker exec marsrover-ct tmux kill-session -t base_launch

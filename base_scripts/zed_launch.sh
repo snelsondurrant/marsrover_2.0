@@ -33,8 +33,9 @@ fi
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the ZED tmux session..."
-envsubst < workspaces/zed_launch.yaml > workspaces/temp/zed_launch.yaml
-ssh marsrover@$ROVER_IP_ADDRESS "tmuxp load -d workspaces/temp/zed_launch.yaml"
+envsubst < .tmuxp/zed_launch.yaml > .tmuxp/tmp/zed_launch.yaml
+ssh marsrover@$ROVER_IP_ADDRESS \
+	"tmuxd load -d /home/marsrover/marsrover/base_scripts/.tmuxp/tmp/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
@@ -42,4 +43,4 @@ ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t zed_launch"
 
-# TODO: Get the ZED running in a Docker container, add the code to this repo
+# TODO: Get the ZED running in a Docker container

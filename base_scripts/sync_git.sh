@@ -20,9 +20,6 @@ function printError {
 
 ROVER_IP_ADDRESS=192.168.1.120
 
-# Get the current branch name
-current_branch=$(git branch --show-current)
-
 # Check for an SSH connection to the rover
 if ! ssh marsrover@$ROVER_IP_ADDRESS "echo" &> /dev/null
 then
@@ -34,17 +31,14 @@ then
     exit
 fi
 
+# Get the current git branch name
+current_branch=$(git branch --show-current)
+
 # Send tmux commands to the rover over SSH
-# NOTE: I don't use tmuxp here bc I can't ensure it's installed on the rover computer
 printInfo "Setting up the sync_git tmux session..."
-ssh marsrover@$ROVER_IP_ADDRESS "tmux new-session -d -s sync_git; \
-    tmux set-option -g default-terminal "screen-256color"; \
-    tmux set -g mouse on; \
-    tmux send-keys -t sync_git.0 'cd ~/marsrover/rover_ws' Enter; \
-    tmux send-keys -t sync_git.0 'clear' Enter; \
-    tmux send-keys -t sync_git.0 'git checkout $current_branch' Enter; \
-    tmux send-keys -t sync_git.0 'git pull base $current_branch' Enter; \
-    tmux send-keys -t sync_git.0 'colcon build'" # NO ENTER
+envsubst < .tmuxp/sync_git.yaml > .tmuxp/tmp/sync_git.yaml # for $DISPLAY and $current_branch
+ssh marsrover@$ROVER_IP_ADDRESS \
+    "tmuxd load -d /home/marsrover/marsrover/base_scripts/.tmuxp/tmp/sync_git.yaml"
 
 # Attach to the 'sync_git' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_git"

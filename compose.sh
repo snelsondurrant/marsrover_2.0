@@ -24,9 +24,6 @@ if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
     docker run -p 8080:8080 -d -t -v $script_dir/mapproxy:/mapproxy danielsnider/mapproxy
 fi
 
-# IMPORTANT! Match this username to the one defined in the Dockerfile
-export NAME=marsrover-docker
-
 case $1 in
   	"down")
     	printWarning "Stopping the marsrover-ct container..."
@@ -44,7 +41,7 @@ case $1 in
 
 				# If not, create a new 'rover_dev' tmux session
 				printWarning "Creating a new tmux session..."
-				docker exec -it marsrover-ct tmuxp load -d /startup/workspaces/rover_dev.yaml
+				docker exec -it marsrover-ct tmuxp load -d /startup/rover_dev.yaml
 			fi
 			# Attach to the 'rover_dev' tmux session
 			docker exec -it marsrover-ct tmux attach -t rover_dev

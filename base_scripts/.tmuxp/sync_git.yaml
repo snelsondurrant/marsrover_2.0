@@ -1,0 +1,19 @@
+# Created by Nelson Durrant, Mar 2025
+session_name: sync_git
+start_directory: "~/marsrover/rover_ws" # outside the container
+environment:
+  ROS_DISCOVERY_SERVER: 127.0.0.1:11811 # we're on the rover
+  DISPLAY: ${DISPLAY}
+windows:
+  - window_name: main
+    layout: even-horizontal
+    options:
+      default-terminal: screen-256color
+      mouse: "on"
+    panes:
+      - shell_command:
+          - clear
+          - git checkout ${current_branch}
+          - git pull base ${current_branch}
+          - cmd: colcon build
+            enter: false
