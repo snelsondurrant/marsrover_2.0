@@ -23,7 +23,7 @@ ROVER_IP_ADDRESS=192.168.1.120
 # Check for an SSH connection to the rover
 if ! ssh marsrover@$ROVER_IP_ADDRESS "echo" &> /dev/null
 then
-    printError "No available SSH connection to the rover's computer"
+    printError "No available SSH connection to the rover"
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
@@ -41,7 +41,7 @@ rm marsrover.tar.gz
 
 # Send tmux commands to the rover over SSH
 # NOTE: I don't use tmuxp here bc I can't ensure it's installed on the rover computer
-printInfo "Setting up the sync_docker tmux session..."
+printInfo "Setting up the 'sync_docker' tmux session..."
 envsubst < tmuxp/sync_docker.yaml > tmuxp/tmp/sync_docker.yaml # for $DISPLAY
 ssh marsrover@$ROVER_IP_ADDRESS \
     "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/sync_docker.yaml"

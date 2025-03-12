@@ -40,7 +40,7 @@ case $1 in
 			if [ "$(docker exec -it marsrover-ct tmux list-sessions | grep rover_dev)" == "" ]; then
 
 				# If not, create a new 'rover_dev' tmux session
-				printWarning "Creating a new tmux session..."
+				printWarning "Creating a new 'rover_dev' tmux session..."
 				docker exec -it marsrover-ct tmuxp load -d /startup/rover_dev.yaml
 			fi
 			# Attach to the 'rover_dev' tmux session
@@ -48,6 +48,13 @@ case $1 in
 		else
 
 			sleep 1 # IMPORTANT! Give the Docker container a chance to start up
+
+			# Check if the 'rover_startup' tmux session is already running
+			if [ "$(docker exec -it marsrover-ct tmux list-sessions | grep rover_startup)" == "" ]; then
+				printError "The 'rover_startup' tmux session is not running"
+				echo "Please run 'bash compose.sh down' and then 'bash compose.sh' again"
+				exit
+			fi
 
 			# Enter the 'rover_startup' tmux session on the rover
 			docker exec -it marsrover-ct tmux attach -t rover_startup

@@ -23,7 +23,7 @@ ROVER_IP_ADDRESS=192.168.1.120
 # Check for an SSH connection to the rover
 if ! ssh marsrover@$ROVER_IP_ADDRESS "echo" &> /dev/null
 then
-    printError "No available SSH connection to the rover's computer"
+    printError "No available SSH connection to the rover"
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
@@ -35,7 +35,7 @@ fi
 current_branch=$(git branch --show-current)
 
 # Send tmux commands to the rover over SSH
-printInfo "Setting up the sync_git tmux session..."
+printInfo "Setting up the 'sync_git' tmux session..."
 envsubst < tmuxp/sync_git.yaml > tmuxp/tmp/sync_git.yaml # for $DISPLAY and $current_branch
 ssh marsrover@$ROVER_IP_ADDRESS \
     "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/sync_git.yaml"
