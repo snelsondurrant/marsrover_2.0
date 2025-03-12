@@ -1,5 +1,5 @@
 <!-- Created by Nelson Durrant, Mar 2025 -->
-<!-- Just the sensors from the turtlebot3 gps in the position they're in on the rover -->
+<!-- Just the sensor joints from the turtlebot3 gps changed to the position they're in on the rover -->
 
 <?xml version="1.0" ?>
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
