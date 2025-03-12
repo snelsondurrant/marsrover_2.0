@@ -11,16 +11,20 @@ import launch.actions
 
 
 def generate_launch_description():
-    nav_dir = get_package_share_directory(
-        "rover_navigation")
-    rl_params_file = os.path.join(
-        nav_dir, "config", "dual_ekf_navsat_params.yaml")
-    
     use_sim_time = LaunchConfiguration('use_sim_time')
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='False',
         description='Use simulation time')
+    
+    nav_dir = get_package_share_directory(
+        "rover_navigation")
+    if use_sim_time:
+        rl_params_file = os.path.join(
+            nav_dir, "config", "sim_dual_ekf_navsat_params.yaml")
+    else:
+        rl_params_file = os.path.join(
+            nav_dir, "config", "dual_ekf_navsat_params.yaml")
 
     return LaunchDescription(
         [
