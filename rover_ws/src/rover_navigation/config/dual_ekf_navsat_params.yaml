@@ -14,15 +14,15 @@ ekf_filter_node_odom:
 
     # https://docs.nav2.org/tutorials/docs/integrating_vio.html
     # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-    odom0: odom # NOTE: the zed pre-fuses its imu data into this TODO:
-    odom0_config: [false, false, false,
-                  false, false, false,
-                  true,  true,  true,
-                  false, false, true,
-                  false, false, false]
-    odom0_queue_size: 10
+    odom0: odom # TODO: Adjust if namespacing ZED camera (e.g. /zed/odom)
+    odom0_config: [true,  true,  true,  # X, Y, Z
+                  true,  true,  true,  # Roll, Pitch, Yaw
+                  false, false, false, # Vx, Vy, Vz
+                  false, false, false,  # Vroll, Vpitch, Vyaw
+                  false, false, false] # Ax, Ay, Az
     odom0_differential: false
-    odom0_relative: false
+    odom0_relative: true
+    odom0_queue_size: 2
 
     # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
     imu0: unilidar/imu
@@ -69,15 +69,15 @@ ekf_filter_node_map:
 
     # https://docs.nav2.org/tutorials/docs/integrating_vio.html
     # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-    odom0: odom # NOTE: the zed pre-fuses its imu data into this TODO:
-    odom0_config: [false, false, false,
-                  false, false, false,
-                  true,  true,  true,
-                  false, false, true,
-                  false, false, false]
-    odom0_queue_size: 10
+    odom0: odom # TODO: Adjust if namespacing ZED camera (e.g. /zed/odom)
+    odom0_config: [true,  true,  true,  # X, Y, Z
+                  true,  true,  true,  # Roll, Pitch, Yaw
+                  false, false, false, # Vx, Vy, Vz
+                  false, false, false,  # Vroll, Vpitch, Vyaw
+                  false, false, false] # Ax, Ay, Az
     odom0_differential: false
-    odom0_relative: false
+    odom0_relative: true
+    odom0_queue_size: 2
 
     odom1: odometry/gps
     odom1_config: [true,  true,  false,
