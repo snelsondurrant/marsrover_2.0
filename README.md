@@ -34,8 +34,6 @@ ROS 2 Tf2 Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/
 
 GPS Navigation w Nav2 Tutorial* - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
-EKF Localization w ZED VIO Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.html](https://docs.nav2.org/tutorials/docs/integrating_vio.html)
-
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
 --
