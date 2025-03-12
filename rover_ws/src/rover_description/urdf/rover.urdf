@@ -2,8 +2,6 @@
 <!-- Based on the sensor joints from the turtlebot3 gps, modified to match our config -->
 <!-- No visual elements are added to the URDF file, only the joints and links -->
 
-<!-- TODO: Do we need to add 'base_footprint' as a link? - Nelson -->
-
 <?xml version="1.0" ?>
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
