@@ -16,11 +16,13 @@ def generate_launch_description():
     gz_dir = get_package_share_directory("rover_gazebo")
     description_dir = get_package_share_directory("rover_description")
     ublox_dir = get_package_share_directory("ublox_read_2")
+    unitree_dir = get_package_share_directory("unitree_lidar_ros2")
     # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, 'launch')
     gz_launch_dir = os.path.join(gz_dir, 'launch')
     description_launch_dir = os.path.join(description_dir, 'launch')
     ublox_launch_dir = os.path.join(ublox_dir, 'launch')
+    unitree_launch_dir = os.path.join(unitree_dir, 'launch')
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
     nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
@@ -112,7 +114,11 @@ def generate_launch_description():
         condition=UnlessCondition(sim_mode),
     )
 
-    # TODO: Add LiDAR launch files to launch when not sim_mode
+    lidar_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(unitree_launch_dir, 'launch.py')),
+        condition=UnlessCondition(sim_mode),
+    )
 
     task_exec_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -147,6 +153,7 @@ def generate_launch_description():
     # custom launch
     ld.add_action(aruco_opencv_cmd)
     ld.add_action(gps_cmd)
+    ld.add_action(lidar_cmd)
     ld.add_action(task_exec_cmd)
 
     return ld

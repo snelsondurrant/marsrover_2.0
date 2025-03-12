@@ -31,7 +31,7 @@ class DriveSwitch(Node):
     """
 
     def __init__(self):
-        super().__init__("state_switcher")
+        super().__init__("drive_switch")
 
         # Autonomy cmd_vel subscription (Nav2)
         self.nav_sub = self.create_subscription(
