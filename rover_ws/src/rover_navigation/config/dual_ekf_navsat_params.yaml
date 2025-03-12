@@ -1,7 +1,4 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
-# TODO: Fuse the ZED estimate instead of wheel odom for odom0
-# https://docs.nav2.org/tutorials/docs/integrating_vio.html
-# https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
 ekf_filter_node_odom:
   ros__parameters:
     frequency: 30.0
@@ -12,10 +9,12 @@ ekf_filter_node_odom:
 
     map_frame: map
     odom_frame: odom
-    base_link_frame: base_footprint # the frame id used by the turtlebot's diff drive plugin
+    base_link_frame: base_footprint # the frame id used by the turtlebot's diff drive plugin TODO:
     world_frame: odom
 
-    odom0: odom
+    # https://docs.nav2.org/tutorials/docs/integrating_vio.html
+    # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
+    odom0: odom # NOTE: the zed pre-fuses its imu data into this TODO:
     odom0_config: [false, false, false,
                   false, false, false,
                   true,  true,  true,
@@ -25,13 +24,14 @@ ekf_filter_node_odom:
     odom0_differential: false
     odom0_relative: false
 
-    imu0: imu
+    # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
+    imu0: unilidar/imu
     imu0_config: [false, false, false,
                   false,  false,  true,
                   false, false, false,
                   false,  false,  false,
                   false,  false,  false]
-    imu0_differential: false  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
+    imu0_differential: true  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
     imu0_relative: false
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
@@ -64,10 +64,12 @@ ekf_filter_node_map:
 
     map_frame: map
     odom_frame: odom
-    base_link_frame: base_footprint # the frame id used by the turtlebot's diff drive plugin
+    base_link_frame: base_footprint # the frame id used by the turtlebot's diff drive plugin TODO:
     world_frame: map
 
-    odom0: odom
+    # https://docs.nav2.org/tutorials/docs/integrating_vio.html
+    # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
+    odom0: odom # NOTE: the zed pre-fuses its imu data into this TODO:
     odom0_config: [false, false, false,
                   false, false, false,
                   true,  true,  true,
@@ -87,13 +89,14 @@ ekf_filter_node_map:
     odom1_differential: false
     odom1_relative: false
 
-    imu0: imu
+    # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
+    imu0: unilidar/imu
     imu0_config: [false, false, false,
                   false,  false,  true,
                   false, false, false,
                   false,  false,  false,
                   false,  false,  false]
-    imu0_differential: false  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
+    imu0_differential: true  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
     imu0_relative: false
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
