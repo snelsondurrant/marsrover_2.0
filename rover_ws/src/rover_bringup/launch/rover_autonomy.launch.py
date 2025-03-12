@@ -11,6 +11,25 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
 
+    use_rviz = LaunchConfiguration('use_rviz')
+    use_mapviz = LaunchConfiguration('use_mapviz')
+    sim_mode = LaunchConfiguration('sim_mode')
+
+    declare_use_rviz_cmd = DeclareLaunchArgument(
+        'use_rviz',
+        default_value='False',
+        description='Whether to start RVIZ')
+
+    declare_use_mapviz_cmd = DeclareLaunchArgument(
+        'use_mapviz',
+        default_value='False',
+        description='Whether to start mapviz')
+    
+    declare_sim_mode_cmd = DeclareLaunchArgument(
+        'sim_mode',
+        default_value='False',
+        description='Whether to start in simulation mode')
+
     # Get the package directories
     bringup_dir = get_package_share_directory('nav2_bringup')
     nav_dir = get_package_share_directory("rover_navigation")
@@ -35,25 +54,6 @@ def generate_launch_description():
     configured_params = RewrittenYaml(
         source_file=nav2_params, root_key="", param_rewrites="", convert_types=True
     )
-
-    use_rviz = LaunchConfiguration('use_rviz')
-    use_mapviz = LaunchConfiguration('use_mapviz')
-    sim_mode = LaunchConfiguration('sim_mode')
-
-    declare_use_rviz_cmd = DeclareLaunchArgument(
-        'use_rviz',
-        default_value='False',
-        description='Whether to start RVIZ')
-
-    declare_use_mapviz_cmd = DeclareLaunchArgument(
-        'use_mapviz',
-        default_value='False',
-        description='Whether to start mapviz')
-    
-    declare_sim_mode_cmd = DeclareLaunchArgument(
-        'sim_mode',
-        default_value='False',
-        description='Whether to start in simulation mode')
     
     description_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

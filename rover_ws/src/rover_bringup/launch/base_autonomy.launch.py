@@ -12,13 +12,6 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    # Get the launch directories
-    bringup_dir = get_package_share_directory('nav2_bringup')
-    nav_dir = get_package_share_directory('rover_navigation')
-    nav_launch_dir = os.path.join(nav_dir, 'launch')
-    ublox_dir = get_package_share_directory('ublox_read_2')
-    ublox_launch_dir = os.path.join(ublox_dir, 'launch')
-
     use_rviz = LaunchConfiguration('use_rviz')
     use_mapviz = LaunchConfiguration('use_mapviz')
 
@@ -31,6 +24,13 @@ def generate_launch_description():
         'use_mapviz',
         default_value='False',
         description='Whether to start mapviz')
+
+    # Get the launch directories
+    bringup_dir = get_package_share_directory('nav2_bringup')
+    nav_dir = get_package_share_directory('rover_navigation')
+    nav_launch_dir = os.path.join(nav_dir, 'launch')
+    ublox_dir = get_package_share_directory('ublox_read_2')
+    ublox_launch_dir = os.path.join(ublox_dir, 'launch')
 
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
