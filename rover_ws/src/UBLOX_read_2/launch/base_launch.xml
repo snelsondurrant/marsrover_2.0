@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="base_serial_port"    default="/dev/rover/rtk"/>
+    <!-- TODO: what frame is this in? Does it need one? -->
 
     <arg name="base_host"           default="192.168.1.111"/>
     <arg name="base_port"           default="16140"/>
