@@ -250,7 +250,7 @@ void UBLOX::initRover(std::string local_host, uint16_t local_port,
     });
 
     // hook up UDP to listen
-    /// TODO: configure ports and IP from cli
+    /// TODO(old): configure ports and IP from cli
     udp_ = new async_comm::UDP(local_host, local_port, remote_host, remote_port);
     udp_->register_receive_callback([this](const uint8_t* buf, size_t size)
     {
@@ -372,7 +372,7 @@ void UBLOX::initBrover(std::string local_host[], uint16_t local_port[],
                   });
 
                   // hook up UDP to listen to the base
-                  /// TODO: configure ports and IP from cli
+                  /// TODO(old): configure ports and IP from cli
                   udp_ = new async_comm::UDP(local_host[0], local_port[0], base_host[0], base_port[0]);
                   udp_->register_receive_callback([this](const uint8_t* buf, size_t size)
                   {
@@ -476,7 +476,7 @@ void UBLOX::serial_read_cb(const uint8_t *buf, size_t size)
 
     for (int i = 0; i < size; i++)
     {
-        /// TODO: don't give parsers data they don't need
+        /// TODO(old): don't give parsers data they don't need
         if (ubx_.parsing_message())
         {
             ubx_.read_cb(buf[i]);

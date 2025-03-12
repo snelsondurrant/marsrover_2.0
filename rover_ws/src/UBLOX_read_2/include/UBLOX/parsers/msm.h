@@ -107,7 +107,7 @@ struct MSM
             if (mask)
                 sigs[nsig++] = j;
         }
-        /// TODO: check length of RTCM message
+        /// TODO(old): check length of RTCM message
         if (nsat*nsig > 64)
             return -1;
 

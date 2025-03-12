@@ -185,3 +185,9 @@ RUN pip3 install matplotlib
 # Install pyserial - Nelson Durrant, Mar 2024
 # Used for serial communication with the Arduino
 RUN pip3 install pyserial
+
+# Install pcl_conversions - Nelson Durrant, Mar 2024
+# Used for point cloud conversion in the unitree lidar package
+USER root
+RUN apt update && apt install -y ros-iron-pcl-conversions
+USER $NAME
