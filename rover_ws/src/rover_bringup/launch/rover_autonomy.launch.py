@@ -10,6 +10,7 @@ from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
+
     # Get the package directories
     bringup_dir = get_package_share_directory('nav2_bringup')
     nav_dir = get_package_share_directory("rover_navigation")
@@ -17,15 +18,20 @@ def generate_launch_description():
     description_dir = get_package_share_directory("rover_description")
     ublox_dir = get_package_share_directory("ublox_read_2")
     unitree_dir = get_package_share_directory("unitree_lidar_ros2")
+
     # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, 'launch')
     gz_launch_dir = os.path.join(gz_dir, 'launch')
     description_launch_dir = os.path.join(description_dir, 'launch')
     ublox_launch_dir = os.path.join(ublox_dir, 'launch')
     unitree_launch_dir = os.path.join(unitree_dir, 'launch')
+
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
-    nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
+    if sim_mode:
+        nav2_params = os.path.join(nav_params_dir, "sim_nav2_no_map_params.yaml")
+    else:
+        nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
     configured_params = RewrittenYaml(
         source_file=nav2_params, root_key="", param_rewrites="", convert_types=True
     )

@@ -11,7 +11,8 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # Get the launch directory
+
+    # Get the launch directories
     bringup_dir = get_package_share_directory('nav2_bringup')
     nav_dir = get_package_share_directory('rover_navigation')
     nav_launch_dir = os.path.join(nav_dir, 'launch')
