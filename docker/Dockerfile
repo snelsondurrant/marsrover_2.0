@@ -183,7 +183,7 @@ RUN pip3 install tmuxp
 RUN pip3 install matplotlib
 
 # Install pyserial - Nelson Durrant, Mar 2024
-# Used for serial communication with the Arduino
+# Used for serial communication with the Arduinos
 RUN pip3 install pyserial
 
 # Install pcl_conversions - Nelson Durrant, Mar 2024
