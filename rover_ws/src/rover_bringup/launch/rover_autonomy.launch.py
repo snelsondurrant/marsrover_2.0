@@ -5,19 +5,23 @@ from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
-    # Get the launch directory
+    # Get the package directories
     bringup_dir = get_package_share_directory('nav2_bringup')
     nav_dir = get_package_share_directory("rover_navigation")
     gz_dir = get_package_share_directory("rover_gazebo")
     description_dir = get_package_share_directory("rover_description")
+    ublox_dir = get_package_share_directory("ublox_read_2")
+    # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, 'launch')
     gz_launch_dir = os.path.join(gz_dir, 'launch')
     description_launch_dir = os.path.join(description_dir, 'launch')
+    ublox_launch_dir = os.path.join(ublox_dir, 'launch')
+    # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
     nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
     configured_params = RewrittenYaml(
@@ -102,7 +106,13 @@ def generate_launch_description():
         }.items(),
     )
 
-    # TODO: Add ublox and LiDAR launch files to launch when not sim_mode
+    gps_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ublox_launch_dir, 'rover_launch.xml')),
+        condition=UnlessCondition(sim_mode),
+    )
+
+    # TODO: Add LiDAR launch files to launch when not sim_mode
 
     task_exec_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -136,6 +146,7 @@ def generate_launch_description():
 
     # custom launch
     ld.add_action(aruco_opencv_cmd)
+    ld.add_action(gps_cmd)
     ld.add_action(task_exec_cmd)
 
     return ld

@@ -11,6 +11,7 @@ def generate_launch_description():
             # https://docs.ros.org/en/iron/p/joy/
             package="joy",
             executable="joy_node",
+            name="joy_node_rover",
             output="screen",
         ),
         launch_ros.actions.Node(
