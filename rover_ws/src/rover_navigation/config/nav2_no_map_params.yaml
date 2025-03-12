@@ -108,7 +108,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.5 # Changed this - Nelson Durrant, Mar 2025
       yaw_goal_tolerance: 0.25
     # DWB parameters
     FollowPath:
@@ -165,7 +165,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.22
+      robot_radius: 0.22 # TODO: Adjust this to your robot's radius
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -216,7 +216,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.22
+      robot_radius: 0.22 # TODO: Adjust this to your robot's radius
       resolution: 0.1
       # When using GPS navigation you will potentially traverse huge environments which are not practical to
       # fit on a big static costmap. Thus it is recommended to use a rolling global costmap large enough to 
