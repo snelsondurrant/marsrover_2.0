@@ -180,17 +180,31 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan
+        observation_sources: scan, points
+        # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
+        # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
+        # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
         scan:
-          topic: /scan # TODO: Figure out how to use a point cloud instead
+          topic: /unilidar/cloud # unitree lidar
           max_obstacle_height: 2.0
           clearing: True
           marking: True
-          data_type: "LaserScan"
+          data_type: "PointCloud2"
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
+        points:
+          topic: /point_cloud/cloud_registered # ZED depth camera
+          data_type: "PointCloud2"
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          marking: True
+          clearing: True
       always_send_full_costmap: True
 
 # GPS WPF CHANGE: Remove static layer
@@ -217,16 +231,33 @@ global_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
+        observation_sources: scan, points
+        # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
+        # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
+        # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
         scan:
-          topic: /scan # TODO: Figure out how to use a point cloud instead
+          topic: /unilidar/cloud # unitree lidar
           max_obstacle_height: 2.0
           clearing: True
           marking: True
-          data_type: "LaserScan"
+          data_type: "PointCloud2"
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
+          # outdoors there will probably be more inf points
+          inf_is_valid: true
+        points:
+          topic: /point_cloud/cloud_registered # ZED depth camera
+          data_type: "PointCloud2"
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          marking: True
+          clearing: True
           # outdoors there will probably be more inf points
           inf_is_valid: true
       inflation_layer:

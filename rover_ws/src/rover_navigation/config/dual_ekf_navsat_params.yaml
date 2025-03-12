@@ -1,5 +1,7 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
 # TODO: Fuse the ZED estimate instead of wheel odom for odom0
+# https://docs.nav2.org/tutorials/docs/integrating_vio.html
+# https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
 ekf_filter_node_odom:
   ros__parameters:
     frequency: 30.0
