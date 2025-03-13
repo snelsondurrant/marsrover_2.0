@@ -18,8 +18,8 @@ def generate_launch_description():
         "use_sim_time", default_value="False", description="Use simulation time"
     )
 
-    sim_wps_file = "/home/marsrover/rover_ws/src/rover_navigation/config/sim_waypoints.yaml"
-    wps_file = "/home/marsrover/rover_ws/src/rover_navigation/config/waypoints.yaml"
+    sim_wps_file = "/home/marsrover-docker/rover_ws/src/rover_navigation/config/sim_waypoints.yaml"
+    wps_file = "/home/marsrover-docker/rover_ws/src/rover_navigation/config/waypoints.yaml"
 
     return LaunchDescription(
         [
