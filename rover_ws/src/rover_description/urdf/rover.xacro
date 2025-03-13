@@ -86,17 +86,15 @@
   <joint name="gps_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gps_link"/>
-    <!-- TODO: Update the gps position - Nelson -->
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="${-base_length/2} 0 ${base_height/2}" rpy="0 0 0"/>
   </joint>
 
   <link name="gps_link"/>
 
   <joint name="aruco_cam_joint" type="fixed">
-    <parent link="base_link"/>
+    <parent link="pole_link"/>
     <child link="aruco_cam_link"/>
-    <!-- TODO: Update the aruco cam position - Nelson -->
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="${pole_length/2} 0 0.1" rpy="0 0 0"/>
   </joint>
 
   <link name="aruco_cam_link"/>
@@ -104,10 +102,9 @@
   <!-- https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md -->
 
   <joint name="unilidar_lidar_joint" type="fixed">
-    <parent link="base_link"/>
+    <parent link="pole_link"/>
     <child link="unilidar_lidar"/>
-    <!-- TODO: Update the lidar position - Nelson -->
-    <origin xyz="-0.064 0 0.122" rpy="0 0 0"/>
+    <origin xyz="${pole_length/2+0.1} 0 -0.05" rpy="${pi} 0 0"/>
   </joint>
 
   <link name="unilidar_lidar"/>
@@ -124,10 +121,9 @@
   <!-- https://www.stereolabs.com/docs/ros2/020_zed-node#transform-frames -->
 
   <joint name="zed2_camera_joint" type="fixed">
-    <parent link="base_link"/>
+    <parent link="pole_link"/>
     <child link="zed2_camera_link"/>
-    <!-- TODO: Update the camera position - Nelson -->
-    <origin xyz="-0.064 0 0.122" rpy="0 0 0"/>
+    <origin xyz="${pole_length/2} 0 0.05" rpy="0 0 0"/>
   </joint>
 
   <link name="zed2_camera_link"/>
