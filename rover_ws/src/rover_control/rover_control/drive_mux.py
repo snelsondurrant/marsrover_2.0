@@ -6,7 +6,7 @@ from std_srvs.srv import Trigger
 from geometry_msgs.msg import Twist
 
 
-class DriveSwitch(Node):
+class DriveMux(Node):
     """
     Class for switching between drive states
 
@@ -31,7 +31,7 @@ class DriveSwitch(Node):
     """
 
     def __init__(self):
-        super().__init__("drive_switch")
+        super().__init__("drive_mux")
 
         # Autonomy cmd_vel subscription (Nav2)
         self.nav_sub = self.create_subscription(
@@ -147,14 +147,14 @@ class DriveSwitch(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    drive_switch = DriveSwitch()
+    drive_mux = DriveMux()
 
-    rclpy.spin(drive_switch)
+    rclpy.spin(drive_mux)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    drive_switch.destroy_node()
+    drive_mux.destroy_node()
     rclpy.shutdown()
 
 

@@ -25,7 +25,7 @@ def generate_launch_description():
         ),
         launch_ros.actions.Node(
             package="rover_control",
-            executable="drive_switch",
+            executable="drive_mux",
             output="screen",
         ),
         launch_ros.actions.Node(

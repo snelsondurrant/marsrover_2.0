@@ -30,7 +30,7 @@ def generate_launch_description():
             launch_ros.actions.Node(
                 # Easier to include this in the sim than refactor services
                 package="rover_control",
-                executable="drive_switch",
+                executable="drive_mux",
                 output="screen",
                 condition=IfCondition(use_sim_time),
                 parameters=[{"use_sim_time": use_sim_time}],
