@@ -1,11 +1,81 @@
 <!-- Created by Nelson Durrant, Mar 2025 -->
 <!-- Based on the sensor joints from the turtlebot3 gps, modified to match our config -->
-<!-- No visual elements are added to the URDF file, only the joints and links -->
 
 <?xml version="1.0" ?>
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!-- TODO: Make the basic rover structure - Nelson -->
+  <!-- Rover constants -->
+  <xacro:property name="pi" value="3.14159265359"/>
+  <xacro:property name="base_width" value="1.0"/>
+  <xacro:property name="base_length" value="1.5"/>
+  <xacro:property name="base_height" value="0.5"/>
+  <xacro:property name="wheel_radius" value="0.2"/>
+  <xacro:property name="wheel_width" value="0.1"/>
+  <xacro:property name="wheel_xoff" value="0.6"/>
+  <xacro:property name="wheel_ygap" value="0.05"/>
+  <xacro:property name="wheel_zoff" value="0.2"/>
+  <xacro:property name="antenna_length" value="0.5"/>
+
+  <!-- Rover base -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+      <material name="White">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Rover wheels function -->
+  <xacro:macro name="wheel" params="prefix x_reflect y_reflect wheel_pos">
+    <link name="${prefix}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="White">
+          <color rgba="1 1 1 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="${prefix}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${prefix}_link"/>
+      <origin xyz="${x_reflect*(wheel_xoff - (wheel_pos * (base_length/3)))} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_zoff}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Rover wheels -->
+  <xacro:wheel prefix="drivewhl_l_front" x_reflect="-1" y_reflect="1" wheel_pos="0"/>
+  <xacro:wheel prefix="drivewhl_l_middle" x_reflect="-1" y_reflect="1" wheel_pos="1"/>
+  <xacro:wheel prefix="drivewhl_l_rear" x_reflect="-1" y_reflect="1" wheel_pos="2"/>
+  <xacro:wheel prefix="drivewhl_r_front" x_reflect="-1" y_reflect="-1" wheel_pos="0"/>
+  <xacro:wheel prefix="drivewhl_r_middle" x_reflect="-1" y_reflect="-1" wheel_pos="1"/>
+  <xacro:wheel prefix="drivewhl_r_rear" x_reflect="-1" y_reflect="-1" wheel_pos="2"/>
+
+  <!-- Antenna pole -->
+  <link name="antenna_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.01" length="${antenna_length}"/>
+      </geometry>
+      <material name="White">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="antenna_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="antenna_link"/>
+    <origin xyz="0 0 0.5" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Sensors -->
 
   <joint name="gps_joint" type="fixed">
     <parent link="base_link"/>
