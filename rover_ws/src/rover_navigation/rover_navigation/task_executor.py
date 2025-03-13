@@ -108,7 +108,7 @@ class AutonomyTaskExecutor(Node):
     Subscribers:
     - gps/filtered (sensor_msgs/NavSatFix) [norm_callback_group]
     - aruco_detections (aruco_opencv_msgs/ArucoDetection) [norm_callback_group]
-    - obj_detections (vision_msgs/Detection3DArray) [norm_callback_group]
+    - object_detections (vision_msgs/Detection3DArray) [norm_callback_group]
     Publishers:
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
@@ -214,7 +214,7 @@ class AutonomyTaskExecutor(Node):
         # Object detection pose subscriber
         self.obj_subscriber = self.create_subscription(
             Detection3DArray,
-            "obj_detections",
+            "object_detections",
             self.obj_callback,
             10,
             callback_group=norm_callback_group,

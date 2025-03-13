@@ -18,7 +18,7 @@ class SimObjDetect(Node):
     :date: Mar 2025
 
     Publishers:
-    - obj_detections (vision_msgs/Detection3DArray)
+    - object_detections (vision_msgs/Detection3DArray)
     Clients:
     - get_entity_state (gazebo_msgs/GetEntityState)
     """
@@ -52,7 +52,7 @@ class SimObjDetect(Node):
         self.mallet_request.reference_frame = "base_link"
 
         # Publisher for the ZED detections
-        self.zed_pub = self.create_publisher(Detection3DArray, "obj_detections", 10)
+        self.zed_pub = self.create_publisher(Detection3DArray, "object_detections", 10)
 
         self.get_logger().info("SimObjDetect node started")
 
