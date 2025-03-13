@@ -195,5 +195,7 @@ USER $NAME
 # Install xacro convertor package - Nelson Durrant, Mar 2024
 # Used for converting the rover's xacro files to urdf files
 USER root
-RUN apt update && apt install -y ros-iron-xacro
+RUN apt update && apt install -y \
+    ros-iron-xacro \
+    ros-iron-joint-state-publisher-gui
 USER $NAME
