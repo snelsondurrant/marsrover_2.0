@@ -5,15 +5,22 @@
   <!-- Based on the sensor joints from the turtlebot3 gps, modified to match our config -->
 
   <!-- Rover constants -->
-  <xacro:property name="base_width" value="1.0"/>
-  <xacro:property name="base_length" value="1.5"/>
-  <xacro:property name="base_height" value="0.5"/>
-  <xacro:property name="wheel_radius" value="0.2"/>
-  <xacro:property name="wheel_width" value="0.1"/>
-  <xacro:property name="wheel_xoff" value="0.6"/>
-  <xacro:property name="wheel_ygap" value="0.05"/>
-  <xacro:property name="wheel_zoff" value="0.2"/>
-  <xacro:property name="antenna_length" value="0.5"/>
+  <xacro:property name="base_width" value="0.5"/>
+  <xacro:property name="base_length" value="0.4"/>
+  <xacro:property name="base_height" value="0.15"/>
+  <!-- How far back the rover carriage is compared to the center of the middle wheel -->
+  <xacro:property name="base_offset_x" value="0.135"/>
+  <xacro:property name="wheel_radius" value="0.15"/>
+  <xacro:property name="wheel_width" value="0.2"/>
+  <!-- How far the center of the front wheel is from the center of the middle wheel -->
+  <xacro:property name="wheel_xoff" value="0.7"/>
+  <!-- How far the center of the wheel is from the outside of the base -->
+  <xacro:property name="wheel_ygap" value="0.1"/>
+  <!-- How far down the center of the wheels are from the base center -->
+  <xacro:property name="wheel_zoff" value="0.15"/>
+  <xacro:property name="pole_length" value="0.04"/>
+  <xacro:property name="pole_width" value="0.08"/>
+  <xacro:property name="pole_height" value="1.2"/>
 
   <!-- Rover base -->
   <link name="base_link">
@@ -44,23 +51,23 @@
     <joint name="${prefix}_joint" type="fixed">
       <parent link="base_link"/>
       <child link="${prefix}_link"/>
-      <origin xyz="${x_reflect*(wheel_xoff - (wheel_pos * (base_length/3)))} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_zoff}" rpy="0 0 0"/>
+      <origin xyz="${x_reflect*(wheel_xoff*(wheel_pos-1))+base_offset_x} ${y_reflect*(base_width/2+wheel_ygap+wheel_width/2)} ${-wheel_zoff}" rpy="0 0 0"/>
     </joint>
   </xacro:macro>
 
   <!-- Rover wheels -->
-  <xacro:wheel prefix="drivewhl_l_front" x_reflect="-1" y_reflect="1" wheel_pos="0"/>
-  <xacro:wheel prefix="drivewhl_l_middle" x_reflect="-1" y_reflect="1" wheel_pos="1"/>
-  <xacro:wheel prefix="drivewhl_l_rear" x_reflect="-1" y_reflect="1" wheel_pos="2"/>
-  <xacro:wheel prefix="drivewhl_r_front" x_reflect="-1" y_reflect="-1" wheel_pos="0"/>
-  <xacro:wheel prefix="drivewhl_r_middle" x_reflect="-1" y_reflect="-1" wheel_pos="1"/>
-  <xacro:wheel prefix="drivewhl_r_rear" x_reflect="-1" y_reflect="-1" wheel_pos="2"/>
+  <xacro:wheel prefix="wheel_left_front" x_reflect="-1" y_reflect="1" wheel_pos="0"/>
+  <xacro:wheel prefix="wheel_left_middle" x_reflect="-1" y_reflect="1" wheel_pos="1"/>
+  <xacro:wheel prefix="wheel_left_rear" x_reflect="-1" y_reflect="1" wheel_pos="2"/>
+  <xacro:wheel prefix="wheel_right_front" x_reflect="-1" y_reflect="-1" wheel_pos="0"/>
+  <xacro:wheel prefix="wheel_right_middle" x_reflect="-1" y_reflect="-1" wheel_pos="1"/>
+  <xacro:wheel prefix="wheel_right_rear" x_reflect="-1" y_reflect="-1" wheel_pos="2"/>
 
   <!-- Antenna pole -->
-  <link name="antenna_link">
+  <link name="pole_link">
     <visual>
       <geometry>
-        <cylinder radius="0.01" length="${antenna_length}"/>
+        <box size="${pole_length} ${pole_width} ${pole_height}"/>
       </geometry>
       <material name="White">
         <color rgba="1 1 1 1"/>
@@ -68,10 +75,10 @@
     </visual>
   </link>
 
-  <joint name="antenna_joint" type="fixed">
+  <joint name="pole_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="antenna_link"/>
-    <origin xyz="0 0 0.5" rpy="0 0 0"/>
+    <child link="pole_link"/>
+    <origin xyz="${base_length/2+pole_length/2} 0 ${pole_height/2-base_height/2}" rpy="0 0 0"/>
   </joint>
 
   <!-- Sensors -->
