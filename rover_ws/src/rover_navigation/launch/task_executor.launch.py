@@ -5,7 +5,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 import launch_ros.actions
 import os
 import launch.actions
@@ -18,11 +18,8 @@ def generate_launch_description():
         "use_sim_time", default_value="False", description="Use simulation time"
     )
 
-    nav_dir = get_package_share_directory("rover_navigation")
-    if use_sim_time:
-        wps_file = os.path.join(nav_dir, "config", "sim_waypoints.yaml")
-    else:
-        wps_file = os.path.join(nav_dir, "config", "waypoints.yaml")
+    sim_wps_file = "/home/marsrover/rover_ws/src/rover_navigation/config/sim_waypoints.yaml"
+    wps_file = "/home/marsrover/rover_ws/src/rover_navigation/config/waypoints.yaml"
 
     return LaunchDescription(
         [
@@ -40,6 +37,14 @@ def generate_launch_description():
                 executable="autonomy_task_executor",
                 output="screen",
                 parameters=[{"use_sim_time": use_sim_time, "wps_file_path": wps_file}],
+                IfCondition=UnlessCondition(use_sim_time),
+            ),
+            launch_ros.actions.Node(
+                package="rover_navigation",
+                executable="autonomy_task_executor",
+                output="screen",
+                parameters=[{"use_sim_time": use_sim_time, "wps_file_path": sim_wps_file}],
+                IfCondition=IfCondition(use_sim_time),
             ),
         ]
     )

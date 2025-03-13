@@ -133,15 +133,11 @@ class AutonomyTaskExecutor(Node):
         # We've hacked the relevant functions from the BasicNavigator class into this class as a fix.
         # https://github.com/ros-navigation/navigation2/tree/main/nav2_simple_commander
 
-        # Parse the waypoint file
+        # Declare waypoint file path parameter
         self.declare_parameter("wps_file_path", "")
         if not self.get_parameter("wps_file_path").value:
             self.get_logger().fatal("No waypoint file path provided")
             rclpy.shutdown()
-
-        wps_file_path = self.get_parameter("wps_file_path").value
-        self.wp_parser = YamlParser(wps_file_path)
-        self.wps = self.wp_parser.get_wps()
 
         # Initialize variables
         self.leg = None
@@ -517,6 +513,11 @@ class AutonomyTaskExecutor(Node):
         """
         Callback function for the action server
         """
+
+        # Parse the current waypoint file path
+        wps_file_path = self.get_parameter("wps_file_path").value
+        self.wp_parser = YamlParser(wps_file_path)
+        self.wps = self.wp_parser.get_wps()
 
         self.task_goal_handle = goal_handle
         self.cancel_flag = False

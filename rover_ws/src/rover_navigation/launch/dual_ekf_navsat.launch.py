@@ -8,6 +8,7 @@ from launch.actions import DeclareLaunchArgument
 import launch_ros.actions
 import os
 import launch.actions
+from launch.conditions import UnlessCondition, IfCondition
 
 
 def generate_launch_description():
@@ -19,12 +20,8 @@ def generate_launch_description():
     
     nav_dir = get_package_share_directory(
         "rover_navigation")
-    if use_sim_time:
-        rl_params_file = os.path.join(
-            nav_dir, "config", "sim_dual_ekf_navsat_params.yaml")
-    else:
-        rl_params_file = os.path.join(
-            nav_dir, "config", "dual_ekf_navsat_params.yaml")
+    sim_rl_params_file = os.path.join(nav_dir, "config", "sim_dual_ekf_navsat_params.yaml")
+    rl_params_file = os.path.join(nav_dir, "config", "dual_ekf_navsat_params.yaml")
 
     return LaunchDescription(
         [
@@ -42,6 +39,16 @@ def generate_launch_description():
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[("odometry/filtered", "odometry/local")],
+                condition=UnlessCondition(use_sim_time),
+            ),
+            launch_ros.actions.Node(
+                package="robot_localization",
+                executable="ekf_node",
+                name="ekf_filter_node_odom",
+                output="screen",
+                parameters=[sim_rl_params_file, {"use_sim_time": use_sim_time}],
+                remappings=[("odometry/filtered", "odometry/local")],
+                condition=IfCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 package="robot_localization",
@@ -50,6 +57,16 @@ def generate_launch_description():
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[("odometry/filtered", "odometry/global")],
+                condition=UnlessCondition(use_sim_time),
+            ),
+            launch_ros.actions.Node(
+                package="robot_localization",
+                executable="ekf_node",
+                name="ekf_filter_node_map",
+                output="screen",
+                parameters=[sim_rl_params_file, {"use_sim_time": use_sim_time}],
+                remappings=[("odometry/filtered", "odometry/global")],
+                condition=IfCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 package="robot_localization",
@@ -64,13 +81,29 @@ def generate_launch_description():
                     ("odometry/gps", "odometry/gps"),
                     ("odometry/filtered", "odometry/global"),
                 ],
+                condition=UnlessCondition(use_sim_time),
+            ),
+            launch_ros.actions.Node(
+                package="robot_localization",
+                executable="navsat_transform_node",
+                name="navsat_transform",
+                output="screen",
+                parameters=[sim_rl_params_file, {"use_sim_time": use_sim_time}],
+                remappings=[
+                    ("imu/data", "imu/data"),
+                    ("gps/fix", "gps/fix"),
+                    ("gps/filtered", "gps/filtered"),
+                    ("odometry/gps", "odometry/gps"),
+                    ("odometry/filtered", "odometry/global"),
+                ],
+                condition=IfCondition(use_sim_time),
             ),
             # Added PVT to NSF conversion node
             launch_ros.actions.Node(
                 package="rover_navigation",
                 executable="pvt_to_nsf",
                 output="screen",
-                condition=launch.conditions.UnlessCondition(use_sim_time),
+                condition=UnlessCondition(use_sim_time),
             ),
         ]
     )

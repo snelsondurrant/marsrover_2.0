@@ -47,10 +47,11 @@ def generate_launch_description():
 
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
-    if sim_mode:
-        nav2_params = os.path.join(nav_params_dir, "sim_nav2_no_map_params.yaml")
-    else:
-        nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
+    sim_nav2_params = os.path.join(nav_params_dir, "sim_nav2_no_map_params.yaml")
+    nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
+    sim_configured_params = RewrittenYaml(
+        source_file=sim_nav2_params, root_key="", param_rewrites="", convert_types=True
+    )
     configured_params = RewrittenYaml(
         source_file=nav2_params, root_key="", param_rewrites="", convert_types=True
     )
@@ -77,15 +78,29 @@ def generate_launch_description():
         }.items(),
     )
 
+    sim_navigation2_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(bringup_dir, "launch", "navigation_launch.py")
+        ),
+        condition=IfCondition(sim_mode),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+            "params_file": sim_configured_params,
+            "autostart": "True",
+        }.items(),
+    )
+
     navigation2_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(bringup_dir, "launch", "navigation_launch.py")
         ),
+        condition=UnlessCondition(sim_mode),
         launch_arguments={
             "use_sim_time": sim_mode,
             "params_file": configured_params,
             "autostart": "True",
         }.items(),
+
     )
 
     rviz_cmd = IncludeLaunchDescription(
@@ -149,6 +164,7 @@ def generate_launch_description():
 
     # navigation2 launch
     ld.add_action(navigation2_cmd)
+    ld.add_action(sim_navigation2_cmd)
 
     # viz launch
     ld.add_action(declare_use_rviz_cmd)

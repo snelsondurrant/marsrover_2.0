@@ -49,17 +49,14 @@ def generate_launch_description():
             os.path.join(ublox_launch_dir, 'base_launch.xml')),
     )
 
-    ld = LaunchDescription(
-        [
-            Node(
-                # https://docs.ros.org/en/iron/p/joy/
-                package="joy",
-                executable="joy_node",
-                name="joy_node_base",
-                output="screen",
-            ),
-        ]
+    joy_node_cmd = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node_base',
+        output='screen',
     )
+
+    ld = LaunchDescription()
 
     # viz launch
     ld.add_action(declare_use_rviz_cmd)
@@ -67,5 +64,6 @@ def generate_launch_description():
     ld.add_action(declare_use_mapviz_cmd)
     ld.add_action(mapviz_cmd)
     ld.add_action(gps_cmd)
+    ld.add_action(joy_node_cmd)
 
     return ld
