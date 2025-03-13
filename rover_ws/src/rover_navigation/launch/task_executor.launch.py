@@ -37,14 +37,14 @@ def generate_launch_description():
                 executable="autonomy_task_executor",
                 output="screen",
                 parameters=[{"use_sim_time": use_sim_time, "wps_file_path": wps_file}],
-                IfCondition=UnlessCondition(use_sim_time),
+                condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 package="rover_navigation",
                 executable="autonomy_task_executor",
                 output="screen",
                 parameters=[{"use_sim_time": use_sim_time, "wps_file_path": sim_wps_file}],
-                IfCondition=IfCondition(use_sim_time),
+                condition=IfCondition(use_sim_time),
             ),
         ]
     )

@@ -179,7 +179,7 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan, points
+        observation_sources: scan points
         # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
@@ -231,8 +231,7 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan
-        observation_sources: scan, points
+        observation_sources: scan points
         # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
