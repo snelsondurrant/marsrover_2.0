@@ -7,6 +7,7 @@ from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 from nav2_common.launch import RewrittenYaml
+from launch.conditions import UnlessCondition, IfCondition
 
 
 def generate_launch_description():
@@ -105,7 +106,7 @@ def generate_launch_description():
 
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(bringup_dir, "launch", 'rviz_launch.py')),
+            os.path.join(nav_launch_dir, 'rviz.launch.py')),
         condition=IfCondition(use_rviz),
         launch_arguments={
             "use_sim_time": sim_mode,
