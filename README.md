@@ -22,15 +22,19 @@ GitHub Basics Tutorial - [https://docs.github.com/en/get-started/start-your-jour
 
 Docker Concepts and Tutorials - [https://docs.docker.com/get-started/introduction/whats-next/](https://docs.docker.com/get-started/introduction/whats-next/)
 
-ROS 2 Concepts - [https://docs.ros.org/en/iron/Concepts/Basic.html](https://docs.ros.org/en/iron/Concepts/Basic.html)
+ROS2 Concepts - [https://docs.ros.org/en/iron/Concepts/Basic.html](https://docs.ros.org/en/iron/Concepts/Basic.html)
 
-ROS 2 CLI Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html)
+ROS2 CLI Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html)
 
-ROS 2 Code Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html)
+ROS2 Code Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html)
 
-Robotics in ROS 2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+ROS2 Tf2 Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/Tf2-Main.html](https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/Tf2-Main.html)
 
-ROS 2 Tf2 Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/Tf2-Main.html](https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/Tf2-Main.html)
+Robotics in ROS2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+
+Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.org/concepts/index.html)
+
+Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
 
 GPS Navigation w Nav2 Tutorial* - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
