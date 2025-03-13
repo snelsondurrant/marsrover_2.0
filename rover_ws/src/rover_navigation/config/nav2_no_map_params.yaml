@@ -1,12 +1,9 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
 
-# GPS WPF CHANGES: 
-# - amcl params where removed. They are not needed because global localization is provided
-#   by an ekf node on robot_localization fusing gps data with local odometry sources
-# - static layer is removed from both costmaps, in this tutorial we assume there is no map
-#   of the environment
-# - global costmap is set to be rolling to allow the robot to traverse big environment by
-#   following successive relatively close waypoints that fit in a smaller rolling costmap
+# NOTE: It is possible to enable 3D costmaps and navigation planning in Nav2.
+# However, it would take a LOT of work (research papers, etc), and Hanksville is mostly flat.
+# Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
+# to follow and navigate in seems like the best solution for code simplicity and effectiveness.
 
 bt_navigator:
   ros__parameters:
@@ -195,7 +192,7 @@ local_costmap:
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
         points:
-          topic: /point_cloud/cloud_registered # ZED depth camera
+          topic: /point_cloud/cloud_registered # ZED depth camera (we can wee bushes!)
           data_type: "PointCloud2"
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
@@ -248,7 +245,7 @@ global_costmap:
           # outdoors there will probably be more inf points
           inf_is_valid: true
         points:
-          topic: /point_cloud/cloud_registered # ZED depth camera
+          topic: /point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
           data_type: "PointCloud2"
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
