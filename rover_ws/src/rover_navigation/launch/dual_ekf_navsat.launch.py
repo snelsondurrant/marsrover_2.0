@@ -65,5 +65,12 @@ def generate_launch_description():
                     ("odometry/filtered", "odometry/global"),
                 ],
             ),
+            # Added PVT to NSF conversion node
+            launch_ros.actions.Node(
+                package="rover_navigation",
+                executable="pvt_to_nsf",
+                output="screen",
+                condition=launch.conditions.UnlessCondition(use_sim_time),
+            ),
         ]
     )

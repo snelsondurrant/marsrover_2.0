@@ -5,15 +5,6 @@
 <?xml version="1.0" ?>
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <joint name="imu_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="imu_link"/>
-    <!-- TODO: Update the imu position - Nelson -->
-    <origin xyz="0.0 0 0.068" rpy="0 0 0"/>
-  </joint>
-
-  <link name="imu_link"/>
-
   <joint name="gps_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gps_link"/>
@@ -22,6 +13,15 @@
   </joint>
 
   <link name="gps_link"/>
+
+  <joint name="aruco_cam_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="aruco_cam_link"/>
+    <!-- TODO: Update the aruco cam position - Nelson -->
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="aruco_cam_link"/>
 
   <!-- https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md />
 

@@ -4,7 +4,7 @@
     video_device: "/dev/video2"
     framerate: 30.0
     io_method: "mmap"
-    frame_id: "camera"
+    frame_id: "aruco_cam_link"  # Changed to match URDF
     pixel_format: "mjpeg2rgb"  # see usb_cam/supported_formats for list of supported formats
     av_device_format: "YUV422P"
     image_width: 1920
