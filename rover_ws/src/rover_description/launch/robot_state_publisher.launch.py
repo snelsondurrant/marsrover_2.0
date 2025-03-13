@@ -20,7 +20,7 @@ def generate_launch_description():
     description_dir = get_package_share_directory(
         "rover_description")
     if use_sim_time:
-        urdf = os.path.join(description_dir, 'urdf', 'turtlebot3_waffle_gps.urdf')
+        urdf = os.path.join(description_dir, 'urdf', 'rover.urdf')
     else:
         urdf = os.path.join(description_dir, 'urdf', 'rover.urdf')
     with open(urdf, 'r') as infp:
