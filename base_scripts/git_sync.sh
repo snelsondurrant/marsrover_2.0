@@ -39,7 +39,7 @@ current_branch=$(git branch --show-current)
 printInfo "Setting up the 'git_sync' tmux session..."
 envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml # for $DISPLAY and $current_branch
 ssh marsrover@$ROVER_IP_ADDRESS \
-    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
+    "tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
 
 # Attach to the 'git_sync' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t git_sync"

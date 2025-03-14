@@ -45,7 +45,7 @@ rm marsrover.tar.gz
 printInfo "Setting up the 'docker_sync' tmux session..."
 envsubst < tmuxp/docker_sync.yaml > tmuxp/tmp/docker_sync.yaml # for $DISPLAY
 ssh marsrover@$ROVER_IP_ADDRESS \
-    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/docker_sync.yaml"
+    "tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/docker_sync.yaml"
 
 # Attach to the 'docker_sync' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t docker_sync"
