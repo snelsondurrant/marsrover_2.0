@@ -1,1 +1,1 @@
-Tmuxp configurations with substituted environment variables will be placed here.
+Temporary tmuxp configurations with substituted environment variables will be placed here.
