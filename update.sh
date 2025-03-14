@@ -4,4 +4,4 @@
 # Pull the latest Docker image and GitHub changes
 
 docker pull byuawesomerover/marsrover:latest
-git pull origin
+git pull origin # TODO: test this
