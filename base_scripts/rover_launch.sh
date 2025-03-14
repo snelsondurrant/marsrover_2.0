@@ -61,6 +61,7 @@ case "$1" in
 esac
 
 # Attach to the 'rover_launch' tmux session
+# TODO: can this work with mosh?
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "docker exec -it marsrover-ct tmux attach -t rover_launch"
 
 # Kill the tmux session on exit
