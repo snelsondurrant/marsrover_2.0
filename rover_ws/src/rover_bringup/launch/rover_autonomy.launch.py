@@ -5,6 +5,7 @@ from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 from nav2_common.launch import RewrittenYaml
 from launch.conditions import UnlessCondition, IfCondition
@@ -44,7 +45,6 @@ def generate_launch_description():
     gz_launch_dir = os.path.join(gz_dir, 'launch')
     description_launch_dir = os.path.join(description_dir, 'launch')
     ublox_launch_dir = os.path.join(ublox_dir, 'launch')
-    unitree_launch_dir = os.path.join(unitree_dir, 'launch')
 
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
@@ -131,14 +131,14 @@ def generate_launch_description():
     )
 
     gps_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
+        XMLLaunchDescriptionSource(
             os.path.join(ublox_launch_dir, 'rover_launch.xml')),
         condition=UnlessCondition(sim_mode),
     )
 
     lidar_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(unitree_launch_dir, 'launch.py')),
+            os.path.join(unitree_dir, 'launch.py')),
         condition=UnlessCondition(sim_mode),
     )
 

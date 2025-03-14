@@ -5,6 +5,7 @@ from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 from nav2_common.launch import RewrittenYaml
 from launch_ros.actions import Node
@@ -26,7 +27,6 @@ def generate_launch_description():
         description='Whether to start mapviz')
 
     # Get the launch directories
-    bringup_dir = get_package_share_directory('nav2_bringup')
     nav_dir = get_package_share_directory('rover_navigation')
     nav_launch_dir = os.path.join(nav_dir, 'launch')
     ublox_dir = get_package_share_directory('ublox_read_2')
@@ -34,7 +34,7 @@ def generate_launch_description():
 
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(bringup_dir, "launch", 'rviz_launch.py')),
+            os.path.join(nav_launch_dir, 'rviz.launch.py')),
         condition=IfCondition(use_rviz),
     )
 
@@ -45,7 +45,7 @@ def generate_launch_description():
     )
 
     gps_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
+        XMLLaunchDescriptionSource(
             os.path.join(ublox_launch_dir, 'base_launch.xml')),
     )
 

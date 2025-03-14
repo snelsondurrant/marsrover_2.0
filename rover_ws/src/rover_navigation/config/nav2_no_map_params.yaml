@@ -169,7 +169,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        inflation_radius: 0.65 # Changed this due to increased footprint - Nelson Durrant, Mar 2025
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -245,8 +245,6 @@ global_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-          # outdoors there will probably be more inf points
-          inf_is_valid: true
         points:
           topic: /point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
           data_type: "PointCloud2"
@@ -258,12 +256,10 @@ global_costmap:
           raytrace_min_range: 0.0
           marking: True
           clearing: True
-          # outdoors there will probably be more inf points
-          inf_is_valid: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        inflation_radius: 0.65 # Changed this due to increased footprint - Nelson Durrant, Mar 2025
       always_send_full_costmap: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.

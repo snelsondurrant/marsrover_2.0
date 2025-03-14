@@ -10,7 +10,7 @@
     image_width: 1920
     image_height: 1080
     camera_name: "narrow_stereo"
-    camera_info_url: "package://start/config/cam_config/head_cam_info.yaml"
+    camera_info_url: "package://rover_navigation/config/aruco_cam_info.yaml"
     brightness: -1
     contrast: -1
     saturation: -1
