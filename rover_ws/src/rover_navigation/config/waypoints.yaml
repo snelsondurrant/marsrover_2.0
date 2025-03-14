@@ -1,4 +1,7 @@
 # Waypoints for the REAL WORLD environment
+# NOTE: These parameters are parsed and loaded into the order planner in the action callback function.
+# If you edit them, you'll need to kill the current action and request a new one using 'task_exec.sh'.
+# You don't need to rebuild the workspace like with other config files.
 waypoints:
 
 # GPS waypoints
