@@ -33,13 +33,15 @@ then
 fi
 
 # Get the current git branch name
-current_branch=$(git branch --show-current)
+export current_branch=$(git branch --show-current)
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'git_sync' tmux session..."
 envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml # for $DISPLAY and $current_branch
+scp tmuxp/tmp/git_sync.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
 ssh marsrover@$ROVER_IP_ADDRESS \
-    "tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
+    "export PATH='$PATH:/home/marsrover/.local/bin'; \
+    tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
 
 # Attach to the 'git_sync' tmux session to view the output
 ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t git_sync"

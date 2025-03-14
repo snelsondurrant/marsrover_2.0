@@ -7,7 +7,7 @@
 **/.pio
 **/mapproxy/cache_data/*
 **/rover_ws/src/rover_gazebo/bags
-**/tmuxp/tmp/*
+**/tmuxp/tmp/*.yaml
 
 __pycache__
 .vscode

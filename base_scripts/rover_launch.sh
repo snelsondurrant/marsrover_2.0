@@ -21,7 +21,7 @@ function printError {
 ROVER_IP_ADDRESS=192.168.1.120
 
 # Check for an SSH connection to the rover
-if ! ssh marsrover-docker@$ROVER_IP_ADDRESS "echo" &> /dev/null
+if ! ssh marsrover@$ROVER_IP_ADDRESS "echo" &> /dev/null
 then
     printError "No available SSH connection to the rover"
     echo "Here's some debugging suggestions:"
@@ -37,8 +37,9 @@ case "$1" in
     "autonomy")
         printInfo "Setting up the autonomy task..."
         envsubst < tmuxp/autonomy/rover_autonomy.yaml > tmuxp/tmp/rover_launch.yaml # for $DISPLAY
-        ssh marsrover-docker@$ROVER_IP_ADDRESS \
-          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/tmp/rover_launch.yaml"
+        scp tmuxp/tmp/rover_launch.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+        ssh marsrover@$ROVER_IP_ADDRESS \
+          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "servicing")
         printWarning "Not implemented yet"
@@ -60,7 +61,7 @@ case "$1" in
 esac
 
 # Attach to the 'rover_launch' tmux session
-ssh -t -X marsrover-docker@$ROVER_IP_ADDRESS "docker exec -it marsrover-ct tmux attach -t rover_launch"
+ssh -t -X marsrover@$ROVER_IP_ADDRESS "docker exec -it marsrover-ct tmux attach -t rover_launch"
 
 # Kill the tmux session on exit
-ssh marsrover-docker@$ROVER_IP_ADDRESS "docker exec marsrover-ct tmux kill-session -t rover_launch'
+ssh marsrover@$ROVER_IP_ADDRESS "docker exec marsrover-ct tmux kill-session -t rover_launch"

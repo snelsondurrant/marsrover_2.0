@@ -19,16 +19,16 @@ function printError {
 }
 
 # Check if the required tools are installed
-if ! command -v sshpass &> /dev/null; then
-    printError "sshpass is not installed. Please install it to proceed."
+if ! command -v ssh &> /dev/null; then
+    printError "ssh is not installed. Please install it to proceed."
     exit 1
 fi
 if ! command -v ssh-keygen &> /dev/null; then
     printError "ssh-keygen is not installed. Please install it to proceed."
     exit 1
 fi
-if ! command -v ssh &> /dev/null; then
-    printError "ssh is not installed. Please install it to proceed."
+if ! command -v sshpass &> /dev/null; then
+    printError "sshpass is not installed. Please install it to proceed."
     exit 1
 fi
 
