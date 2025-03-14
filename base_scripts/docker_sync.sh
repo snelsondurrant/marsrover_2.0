@@ -42,16 +42,16 @@ rm marsrover.tar.gz
 
 # Send tmux commands to the rover over SSH
 # NOTE: I don't use tmuxp here bc I can't ensure it's installed on the rover computer
-printInfo "Setting up the 'sync_docker' tmux session..."
-envsubst < tmuxp/sync_docker.yaml > tmuxp/tmp/sync_docker.yaml # for $DISPLAY
+printInfo "Setting up the 'docker_sync' tmux session..."
+envsubst < tmuxp/docker_sync.yaml > tmuxp/tmp/docker_sync.yaml # for $DISPLAY
 ssh marsrover@$ROVER_IP_ADDRESS \
-    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/sync_docker.yaml"
+    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/docker_sync.yaml"
 
-# Attach to the 'sync_docker' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_docker"
+# Attach to the 'docker_sync' tmux session to view the output
+ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t docker_sync"
 
 # Kill the tmux session on exit
-ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t sync_docker"
+ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t docker_sync"
 
 # Pull the amd64 version of the Docker image again
 # (this will override the arm64 version we just pulled)

@@ -36,13 +36,13 @@ fi
 current_branch=$(git branch --show-current)
 
 # Send tmux commands to the rover over SSH
-printInfo "Setting up the 'sync_git' tmux session..."
-envsubst < tmuxp/sync_git.yaml > tmuxp/tmp/sync_git.yaml # for $DISPLAY and $current_branch
+printInfo "Setting up the 'git_sync' tmux session..."
+envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml # for $DISPLAY and $current_branch
 ssh marsrover@$ROVER_IP_ADDRESS \
-    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/sync_git.yaml"
+    "tmuxd load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
 
-# Attach to the 'sync_git' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t sync_git"
+# Attach to the 'git_sync' tmux session to view the output
+ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t git_sync"
 
 # Kill the tmux session on exit
-ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t sync_git"
+ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t git_sync"
