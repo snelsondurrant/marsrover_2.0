@@ -29,7 +29,7 @@ then
     echo "  - Ensure the rover is connected with a static IP address"
     echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
 
-    exit
+    exit 1
 fi
 
 # Check for the git upstream 'base'
@@ -38,7 +38,7 @@ then
     printError "No upstream git remote 'base' found on the rover"
     echo "Please run 'bash setup_git.sh' to set up the upstream git remote"
 
-    exit
+    exit 1
 fi
 
 # Get the current git branch name

@@ -29,7 +29,7 @@ then
     echo "  - Ensure the rover is connected with a static IP address"
 	echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
 
-    exit
+    exit 1
 fi
 
 # Send tmux commands to the rover over SSH

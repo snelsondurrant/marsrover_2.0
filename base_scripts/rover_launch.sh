@@ -29,7 +29,7 @@ then
     echo "  - Ensure the rover is connected with a static IP address"
     echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
 
-    exit
+    exit 1
 fi
 
 # Launch the specified task configuration over SSH
@@ -56,7 +56,7 @@ case "$1" in
     *)
         printError "No task specified"
         echo "Specify a task using 'bash launch.sh <task>' (ex. 'bash launch.sh autonomy')"
-        exit
+        exit 1
         ;;
 esac
 
