@@ -22,7 +22,7 @@ function printError {
 case "$1" in
     "autonomy")
         printInfo "Setting up the autonomy task..."
-        envsubst < tmuxp/autonomy/base_launch.yaml > tmuxp/tmp/base_launch.yaml # for $DISPLAY
+        envsubst < tmuxp/autonomy/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "servicing")

@@ -44,7 +44,7 @@ rm marsrover.tar.gz
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'docker_sync' tmux session..."
-envsubst < tmuxp/docker_sync.yaml > tmuxp/tmp/docker_sync.yaml # for $DISPLAY
+envsubst < tmuxp/docker_sync.yaml > tmuxp/tmp/docker_sync.yaml
 scp tmuxp/tmp/docker_sync.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
 ssh marsrover@$ROVER_IP_ADDRESS \
     "export PATH='$PATH:/home/marsrover/.local/bin'; \

@@ -3,7 +3,6 @@ session_name: base_launch
 start_directory: "~/scripts" # inside the container
 environment:
   ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
-  DISPLAY: ${DISPLAY}
 windows:
   - window_name: main
     layout: even-horizontal

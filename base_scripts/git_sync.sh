@@ -37,7 +37,7 @@ export current_branch=$(git branch --show-current)
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'git_sync' tmux session..."
-envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml # for $DISPLAY and $current_branch
+envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml
 scp tmuxp/tmp/git_sync.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
 ssh marsrover@$ROVER_IP_ADDRESS \
     "export PATH='$PATH:/home/marsrover/.local/bin'; \
