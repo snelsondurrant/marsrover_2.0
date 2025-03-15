@@ -36,7 +36,7 @@ fi
 # (this will override the existing image, so we'll have to re-pull it later)
 echo "Pulling the arm64 version of the Docker image..."
 docker pull --platform linux/arm64 byuawesomerover/marsrover:latest
-echo "Saving the arm64 Docker image to a tarball..."
+echo "Saving the arm64 Docker image to a zip file for transfer (this takes a while)..."
 docker save byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
 echo "Sending the Docker image to the rover..."
 scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~/marsrover/docker
@@ -60,3 +60,5 @@ ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t docker_sync"
 # (this will override the arm64 version we just pulled)
 echo "Pulling the amd64 version of the Docker image..."
 docker pull --platform linux/amd64 byuawesomerover/marsrover:latest
+yes | docker image prune
+docker image list

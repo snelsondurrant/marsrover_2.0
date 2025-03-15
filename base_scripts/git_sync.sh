@@ -32,6 +32,15 @@ then
     exit
 fi
 
+# Check for the git upstream 'base'
+if ! ssh marsrover@$ROVER_IP_ADDRESS "cd ~/marsrover && git remote -v" | grep -q "base"
+then
+    printError "No upstream git remote 'base' found on the rover"
+    echo "Please run 'bash setup_git.sh' to set up the upstream git remote"
+
+    exit
+fi
+
 # Get the current git branch name
 export current_branch=$(git branch --show-current)
 

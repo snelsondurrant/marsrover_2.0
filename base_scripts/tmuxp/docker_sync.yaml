@@ -15,5 +15,6 @@ windows:
           - cd ~/marsrover/docker
           - gunzip marsrover.tar.gz
           - docker load < marsrover.tar
-          - rm marsrover.tar.gz
           - rm marsrover.tar
+          - yes | docker image prune
+          - docker image list
