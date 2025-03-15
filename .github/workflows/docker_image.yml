@@ -1,4 +1,6 @@
 # Created by Nelson Durrant, Nov 2024
+# This will build and push a new Docker image to byuawesomerover/marsrover:latest on DockerHub
+# whenever a change to docker/Dockerfile is committed and pushed to the main branch.
 name: Docker Image CI
 
 on:

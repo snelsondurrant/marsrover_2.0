@@ -1,6 +1,6 @@
 #!/bin/bash
-#
 # Created by Braden Meyers, Mar 2025
+#
 # Set up a SSH key for passwordless access to the Mars Rover
 
 function printInfo {

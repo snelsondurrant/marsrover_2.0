@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Mar 2025
 #
-# Pulls the base station docker image onto the rover
+# Pulls the the current docker image onto the rover
 
 function printInfo {
  	# print blue
