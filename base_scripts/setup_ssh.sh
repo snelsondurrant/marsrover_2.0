@@ -42,7 +42,7 @@ ROVER_PWD="thekillpack"
 
 # 1. Generate SSH key pair (if it doesn't exist)
 if [ ! -f ~/.ssh/id_rsa ]; then
-  echo "Generating SSH key pair..."
+  printInfo "Generating SSH key pair..."
   ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
   if [ $? -ne 0 ]; then
     printError "Error generating SSH key pair."
@@ -53,7 +53,7 @@ else
 fi
 
 # 2. Copy the public key to the rover
-echo "Copying public key to rover..."
+printInfo "Copying public key to rover..."
 sshpass -p "$ROVER_PWD" ssh-copy-id -i ~/.ssh/id_rsa.pub "$ROVER_USER@$ROVER_IP_ADDRESS"
 if [ $? -ne 0 ]; then
   printError "Error copying public key to rover."
@@ -61,7 +61,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # 3. Test SSH connection without password
-echo "Testing SSH connection without password..."
+printInfo "Testing SSH connection without password..."
 ssh "$ROVER_USER@$ROVER_IP_ADDRESS" "echo 'SSH connection successful!'"
 
 if [ $? -ne 0 ]; then
