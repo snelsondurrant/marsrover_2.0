@@ -3,7 +3,6 @@ session_name: rover_launch
 start_directory: "~/scripts" # inside the container
 environment:
   ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
-  FASTRTPS_DEFAULT_PROFILES_FILE: "/home/marsrover-docker/rover_ws/rover_super_client_config.xml"
 windows:
   - window_name: main
     layout: even-horizontal
