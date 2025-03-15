@@ -54,15 +54,14 @@ case "$1" in
         exit
         ;;
     *)
-        printError "No task specified, simply entering the current tmux session..."
+        printError "No task specified"
         echo "Specify a task using 'bash launch.sh <task>' (ex. 'bash launch.sh autonomy')"
         exit
         ;;
 esac
 
-# Attach to the 'rover_launch' tmux session
-# TODO: can this work with mosh?
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "docker exec -it marsrover-ct tmux attach -t rover_launch"
+# Attach to the 'rover_launch' tmux session (with mosh)
+mosh marsrover@$ROVER_IP_ADDRESS -- docker exec -it marsrover-ct tmux attach -t rover_launch
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "docker exec marsrover-ct tmux kill-session -t rover_launch"

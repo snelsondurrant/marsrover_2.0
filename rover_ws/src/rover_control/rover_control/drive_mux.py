@@ -71,7 +71,7 @@ class DriveMux(Node):
 
         self.state = "teleop"
 
-        self.get_logger().info("DriveSwitch node started")
+        self.get_logger().info("DriveMux node started")
 
     def nav_callback(self, msg):
         """

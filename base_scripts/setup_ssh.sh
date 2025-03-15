@@ -31,6 +31,10 @@ if ! command -v sshpass &> /dev/null; then
     printError "sshpass is not installed. Please install it to proceed."
     exit 1
 fi
+if ! command -v mosh &> /dev/null; then
+    printError "mosh is not installed. Please install it to proceed."
+    exit 1
+fi
 
 ROVER_IP_ADDRESS="192.168.1.120"
 ROVER_USER="marsrover"

@@ -43,8 +43,8 @@ ssh marsrover@$ROVER_IP_ADDRESS \
     "export PATH='$PATH:/home/marsrover/.local/bin'; \
     tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
 
-# Attach to the 'git_sync' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t git_sync"
+# Attach to the 'git_sync' tmux session to view the output (using mosh)
+mosh marsrover@$ROVER_IP_ADDRESS -- tmux attach -t git_sync
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t git_sync"

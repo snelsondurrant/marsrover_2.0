@@ -50,8 +50,8 @@ ssh marsrover@$ROVER_IP_ADDRESS \
     "export PATH='$PATH:/home/marsrover/.local/bin'; \
     tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/docker_sync.yaml"
 
-# Attach to the 'docker_sync' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t docker_sync"
+# Attach to the 'docker_sync' tmux session to view the output (using mosh)
+mosh marsrover@$ROVER_IP_ADDRESS -- tmux attach -t docker_sync
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t docker_sync"

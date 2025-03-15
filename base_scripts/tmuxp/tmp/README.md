@@ -1,1 +1,1 @@
-Temporary tmuxp configurations with substituted environment variables will be placed here.
+This directory is included in the Docker container as '~/.tmuxp'.

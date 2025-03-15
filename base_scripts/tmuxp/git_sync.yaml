@@ -3,7 +3,6 @@ session_name: git_sync
 start_directory: "~/marsrover/rover_ws" # outside the container
 environment:
   ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
-  DISPLAY: ${DISPLAY}
 windows:
   - window_name: main
     layout: even-horizontal

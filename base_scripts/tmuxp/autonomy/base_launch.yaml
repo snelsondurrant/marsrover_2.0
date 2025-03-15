@@ -13,7 +13,7 @@ windows:
       - shell_command:
           - source ~/rover_ws/install/setup.bash
           - clear
-          - cmd: ros2 launch rover_bringup base_autonomy.launch.py rviz:=True mapviz:=True
+          - cmd: ros2 launch rover_bringup base_autonomy.launch.py use_rviz:=True use_mapviz:=True
             enter: false
       - shell_command:
           - source ~/rover_ws/install/setup.bash

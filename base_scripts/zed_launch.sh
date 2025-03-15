@@ -40,8 +40,8 @@ ssh marsrover@$ROVER_IP_ADDRESS \
 	"export PATH='$PATH:/home/marsrover/.local/bin'; \
 	tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/zed_launch.yaml"
 
-# Attach to the 'zed_launch' tmux session to view the output
-ssh -t -X marsrover@$ROVER_IP_ADDRESS "tmux attach -t zed_launch"
+# Attach to the 'zed_launch' tmux session to view the output (using mosh)
+mosh marsrover@$ROVER_IP_ADDRESS -- tmux attach -t zed_launch
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t zed_launch"
