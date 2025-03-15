@@ -6,8 +6,8 @@
 **/devel_isolated
 **/.pio
 **/mapproxy/cache_data/*
-**/rover_ws/src/rover_gazebo/bags
 **/tmuxp/tmp/*.yaml
+**/nav2_bringup
 
 __pycache__
 .vscode
