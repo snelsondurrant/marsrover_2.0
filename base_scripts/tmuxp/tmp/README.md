@@ -1,1 +1,0 @@
-This directory is included in the Docker container as '~/.tmuxp'.

@@ -36,11 +36,21 @@ fi
 # (this will override the existing image, so we'll have to re-pull it later)
 printInfo "Pulling the arm64 version of the Docker image..."
 docker pull --platform linux/arm64 byuawesomerover/marsrover:latest
+docker image list
+
 printInfo "Saving the arm64 Docker image to a zip file for transfer (this takes a while)..."
-docker save byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
+docker save --platform linux/arm64 byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
+
 printInfo "Sending the Docker image to the rover..."
 scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~/marsrover/docker
 rm marsrover.tar.gz
+
+# Pull the amd64 version of the Docker image again
+# (this will override the arm64 version we just pulled)
+printInfo "Pulling the amd64 version of the Docker image..."
+docker pull --platform linux/amd64 byuawesomerover/marsrover:latest
+yes | docker image prune
+docker image list
 
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'docker_sync' tmux session..."
@@ -55,10 +65,3 @@ mosh marsrover@$ROVER_IP_ADDRESS -- tmux attach -t docker_sync
 
 # Kill the tmux session on exit
 ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t docker_sync"
-
-# Pull the amd64 version of the Docker image again
-# (this will override the arm64 version we just pulled)
-printInfo "Pulling the amd64 version of the Docker image..."
-docker pull --platform linux/amd64 byuawesomerover/marsrover:latest
-yes | docker image prune
-docker image list
