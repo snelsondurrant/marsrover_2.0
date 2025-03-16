@@ -1,5 +1,5 @@
 #!/bin/bash
-# Created by Braden Meyers, Mar 2025
+# Created by Braden Meyers & Nelson Durrant, Mar 2025
 # 
 # Sets up the environment for using the ROS 2 CLI tools with Fast DDS
 

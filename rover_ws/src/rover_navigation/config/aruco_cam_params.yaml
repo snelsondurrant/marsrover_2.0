@@ -1,4 +1,3 @@
-# Copied over by Nelson Durrant, Feb 2025
 /**:
   ros__parameters:
     video_device: "/dev/video2"

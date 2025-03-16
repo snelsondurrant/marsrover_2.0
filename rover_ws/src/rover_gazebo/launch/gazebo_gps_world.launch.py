@@ -1,7 +1,8 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
 
-# NOTE: Future teams might be tempted to try and switch out the turtlebot3 model for our own rover model.
-# The turtlebot3 model is a perfect stand-in sensor-wise for our rover. It's not worth the effort.
+# NOTE: Future teams might be tempted to try and switch out the turtlebot3 model for a custom rover model.
+# Although it would be cool, the turtlebot3 model is a great stand-in for our sensor configuration.
+# We'd reccommend just using the turtlebot3 model here and spending more time testing the real rover.
 
 import os
 from ament_index_python.packages import get_package_share_directory
