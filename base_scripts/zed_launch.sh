@@ -1,5 +1,5 @@
 #!/bin/bash
-# Created by Braden Meyers & Nelson Durrant, Feb 2025
+# Created by Braden Meyers, Feb 2025
 #
 # Launches the ZED over SSH using the 'zed_launch' tmux session
 
