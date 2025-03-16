@@ -18,7 +18,7 @@ services:
       - ../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp
       - ./startup:/startup
       - /dev:/dev:rw
-      - /udev:/udev:rw
+      - /etc/udev:/etc/udev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
       - /tmp/.X11-unix:/tmp/.X11-unix # Required for GUI applications
     stdin_open: true  # Equivalent to -it in docker run
