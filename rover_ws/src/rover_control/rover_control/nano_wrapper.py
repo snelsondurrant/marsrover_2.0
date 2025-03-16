@@ -83,8 +83,8 @@ class RoverStatusNode(Node):
                 data = self.serial_port.readline().strip()
                 voltage = int(data)
 
-                bat_voltage_msg = RawBattery()
-                bat_voltage_msg.voltage = voltage
+                # bat_voltage_msg = RawBattery()
+                # bat_voltage_msg.voltage = voltage
                 # self.battery_pub.publish(bat_voltage_msg)
                 self.serial_port.flush()
 
