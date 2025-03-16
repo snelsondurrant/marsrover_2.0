@@ -5,13 +5,13 @@
 
 # For some reason, I can only get this to work after a device reset
 symlink="/dev/rover/onBoardMega"
-# get the real path
-realpath=$(readlink -f $symlink)
-echo "Real path of the device: $realpath"
+# get bus and device number
+bus=$(udevadm info --query=property --name=$symlink | grep DEVBUS | cut -d'=' -f2)
+echo "Bus: $bus"
+device=$(udevadm info --query=property --name=$symlink | grep DEVPID | cut -d'=' -f2)
+echo "Device: $device"
 # reset the device
-usbreset $realpath
-# wait for the device to reset
-sleep 2
+usbreset $bus/$device
 
 
 pio run -t upload
