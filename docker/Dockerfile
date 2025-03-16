@@ -66,6 +66,14 @@ RUN ln -s /home/$NAME/.platformio/penv/bin/pio /usr/local/bin/pio
 RUN ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
 USER $NAME
 
+# Dry run PlatformIO to install the necessary dependencies
+RUN git clone https://github.com/BYUMarsRover/marsrover.git
+WORKDIR /home/$NAME/marsrover/firmware/mega_pio
+# '|| true' is used to ignore errors if the upload target is not available
+RUN pio run -t upload || true
+WORKDIR /home/$NAME
+RUN rm -rf /home/$NAME/marsrover
+
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
