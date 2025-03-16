@@ -3,4 +3,4 @@
 #
 # Builds and uploads the latest code to the board
 
-pio run -t upload --upload-port /dev/rover/onBoardMega
+pio run -t upload
