@@ -18,7 +18,7 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-# Launch the mapproxy container if it's not already running (doesn't run on the rover)
+# Launch the mapproxy container if it's not already running (not on the rover)
 if [ ! "$(uname -m)" == "aarch64" ]; then
 	# Check if the mapproxy container is already running
 	if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
