@@ -7,10 +7,10 @@
 symlink="/dev/rover/onBoardMega"
 device=$(readlink -f $symlink)
 echo "Resetting device $device"
-sysfs_path=$(udevadm info --query=path --name=$device)
-echo "Sysfs path: $sysfs_path"
-bus_device=$(basename $(dirname $sysfs_path))
-echo "Bus device: $bus_device"
+# Use lsusb to find bus and device numbers
+bus_device=$(lsusb | grep "$(basename $device)" | awk '{print $2"-"$4}' | sed 's/://g')
+echo "Bus-Device: $bus_device"
+
 sudo usbreset $bus_device
 
 pio run -t upload
