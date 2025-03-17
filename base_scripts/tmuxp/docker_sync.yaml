@@ -1,8 +1,6 @@
 # Created by Nelson Durrant, Mar 2025
 session_name: docker_sync
 start_directory: "~/marsrover/docker" # outside the container
-environment:
-  ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
 windows:
   - window_name: main
     layout: even-horizontal
