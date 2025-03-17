@@ -1,6 +1,6 @@
 import math
 from itertools import permutations
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler, latLonToMeters
+from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler, latLon2Meters
 from rover_navigation.utils.plot_utils import plotOrder
 
 
@@ -156,7 +156,7 @@ def costFunction(leg1, leg2, waypoints):
         elif wp["leg"] == leg2:
             end = wp
 
-    distance = latLonToMeters(
+    distance = latLon2Meters(
         start["latitude"], start["longitude"], end["latitude"], end["longitude"]
     )
 
@@ -172,7 +172,7 @@ def costFunctionStart(fix, leg1, waypoints):
         if wp["leg"] == leg1:
             end = wp
 
-    distance = latLonToMeters(
+    distance = latLon2Meters(
         fix.position.latitude, fix.position.longitude, end["latitude"], end["longitude"]
     )
 
