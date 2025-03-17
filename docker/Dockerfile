@@ -207,5 +207,6 @@ USER $NAME
 USER root
 RUN apt update && apt install -y \
     ros-iron-xacro \
-    ros-iron-joint-state-publisher-gui
+    ros-iron-joint-state-publisher-gui \
+    ros-iron-urdf-launch
 USER $NAME

@@ -706,11 +706,6 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Autonomy task execution started")
 
-        self.task_info(
-            "Using order planner: " + globals()["__order_planner__"].__name__
-        )
-        self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
-
         # Check for the first GPS fix
         while self.filtered_gps is None:
             time.sleep(1)
@@ -720,6 +715,13 @@ class AutonomyTaskExecutor(Node):
             if self.task_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
+
+        self.task_info(
+            "Using order planner: " + globals()["__order_planner__"].__name__
+        )
+        self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
+            
+        self.task_info("Please review the plan (exit matplotlib to continue)")
 
         # Determine the best order for the legs
         self.legs = globals()["__order_planner__"](

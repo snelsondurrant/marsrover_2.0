@@ -1,8 +1,7 @@
 import math
-import utm
 from itertools import permutations
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler
-import matplotlib.pyplot as plt
+from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler, latLonToMeters
+from rover_navigation.utils.plot_utils import plotOrder
 
 
 def basicPathPlanner(
@@ -87,7 +86,7 @@ def bruteOrderPlanner(
             lowest_cost = cost
             best_order = order
 
-    # plotOrder(best_order, waypoints, fix) # for debugging
+    plotOrder(best_order, waypoints, fix)
     return best_order
 
 
@@ -128,7 +127,7 @@ def greedyOrderPlanner(
         visited.append(current)
         order.append(current)
 
-    # plotOrder(order, waypoints, fix) # for debugging
+    plotOrder(order, waypoints, fix)
     return order
 
 
@@ -142,46 +141,8 @@ def noOrderPlanner(
     :date: Mar 2025
     """
 
-    # plotOrder(legs, waypoints, fix) # for debugging
+    plotOrder(legs, waypoints, fix)
     return legs
-
-
-def plotOrder(order, waypoints, fix):
-    """
-    Plot the order of task legs using matplotlib
-    """
-
-    plt.title("Order Planner")
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-
-    # Plot from current fix to the first leg
-    plt.text(fix.position.longitude, fix.position.latitude, "FIX")
-    for wp in waypoints:
-        if wp["leg"] == order[0]:
-            first = wp
-            plt.text(first["longitude"], first["latitude"], first["leg"])
-    plt.plot(
-        [fix.position.longitude, first["longitude"]],
-        [fix.position.latitude, first["latitude"]],
-        "ro-",
-    )
-
-    # Plot the rest of the legs
-    for i in range(len(order) - 1):
-        for wp in waypoints:
-            if wp["leg"] == order[i]:
-                start = wp
-                plt.text(start["longitude"], start["latitude"], start["leg"])
-            elif wp["leg"] == order[i + 1]:
-                end = wp
-                plt.text(end["longitude"], end["latitude"], end["leg"])
-        plt.plot(
-            [start["longitude"], end["longitude"]],
-            [start["latitude"], end["latitude"]],
-            "ro-",
-        )
-    plt.show()
 
 
 def costFunction(leg1, leg2, waypoints):
@@ -217,17 +178,3 @@ def costFunctionStart(fix, leg1, waypoints):
 
     return distance
 
-
-def latLonToMeters(lat1, lon1, lat2, lon2):
-    """
-    Convert GPS coordinates to meters using the UTM library
-    """
-
-    # Convert GPS coordinates to UTM
-    utm1 = utm.from_latlon(lat1, lon1)
-    utm2 = utm.from_latlon(lat2, lon2)
-
-    # Calculate the distance between the two points
-    distance = ((utm2[0] - utm1[0]) ** 2 + (utm2[1] - utm1[1]) ** 2) ** 0.5
-
-    return distance
