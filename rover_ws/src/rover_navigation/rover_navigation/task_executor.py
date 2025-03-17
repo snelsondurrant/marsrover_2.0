@@ -565,8 +565,9 @@ class AutonomyTaskExecutor(Node):
         """
 
         # Set zone and hemisphere for UTM conversions
-        self.zone = utm.from_latlon(msg.latitude, msg.longitude)[2]
-        self.hemisphere = "N" if msg.latitude > 0 else "S"
+        if self.zone is None or self.hemisphere is None:
+            self.zone = utm.from_latlon(msg.latitude, msg.longitude)[2]
+            self.hemisphere = "N" if msg.latitude > 0 else "S"
 
         self.filtered_gps = latLonYaw2Geopose(msg.latitude, msg.longitude)
 
