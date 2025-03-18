@@ -12,7 +12,7 @@ def generate_launch_description():
     name='unitree_lidar_ros2_node',
     output='screen',
     parameters= [
-              {'port': '/dev/ttyUSB0'}, # TODO: Check this
+              {'port': '/dev/rover/lidar'},
               {'rotate_yaw_bias': 0.0},
               {'range_scale': 0.001},
               {'range_bias': 0.0},
@@ -25,17 +25,17 @@ def generate_launch_description():
               {'imu_topic': "unilidar/imu"}]
   )
 
-  # # Run Rviz
-  # package_path = subprocess.check_output(['ros2', 'pkg', 'prefix', 'unitree_lidar_ros2']).decode('utf-8').rstrip()
-  # rviz_config_file = os.path.join(package_path, 'share', 'unitree_lidar_ros2', 'view.rviz')
-  # print("rviz_config_file = " + rviz_config_file)
-  # rviz_node = Node(
-  #   package='rviz2',
-  #   executable='rviz2',
-  #   name='rviz2',
-  #   arguments=['-d', rviz_config_file],
-  #   output='log'
-  # )
-  # return LaunchDescription([node1, rviz_node])
+  # Run Rviz
+  package_path = subprocess.check_output(['ros2', 'pkg', 'prefix', 'unitree_lidar_ros2']).decode('utf-8').rstrip()
+  rviz_config_file = os.path.join(package_path, 'share', 'unitree_lidar_ros2', 'view.rviz')
+  print("rviz_config_file = " + rviz_config_file)
+  rviz_node = Node(
+    package='rviz2',
+    executable='rviz2',
+    name='rviz2',
+    arguments=['-d', rviz_config_file],
+    output='log'
+  )
+  return LaunchDescription([node1, rviz_node])
 
   return LaunchDescription([node1])
