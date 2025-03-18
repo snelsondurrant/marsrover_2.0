@@ -1,7 +1,7 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
 
 # NOTE: It is possible to enable 3D costmaps and navigation planning in Nav2.
-# However, it would take a LOT of work (research papers, etc), and Hanksville is mostly flat.
+# However, as of now it would take a LOT of cutting-edge PhD-level work (research papers, etc).
 # Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
 # to follow and navigate in seems like the best solution for code simplicity and effectiveness.
 

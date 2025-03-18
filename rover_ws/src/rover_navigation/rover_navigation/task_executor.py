@@ -4,7 +4,6 @@ import tf2_geometry_msgs
 import tf2_ros
 import time
 import utm
-import yaml
 from action_msgs.msg import GoalStatus
 from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
@@ -24,6 +23,7 @@ from typing import Any
 from vision_msgs.msg import Detection3DArray
 
 from rover_navigation.utils.gps_utils import latLonYaw2Geopose
+from rover_navigation.utils.yaml_utils import waypointParser
 from rover_navigation.utils.plan_utils import (
     basicPathPlanner,  # plan a straight line between two GPS coordinates
     bruteOrderPlanner,  # use brute force to find the best order of legs
@@ -41,25 +41,6 @@ from rover_navigation.utils.terrain_utils import (
 
 globals()["__path_planner__"] = basicPathPlanner
 globals()["__order_planner__"] = greedyOrderPlanner
-
-
-class YamlParser:
-    """
-    Parse a set of GPS waypoints from a yaml file
-    """
-
-    def __init__(self, wps_file_path: str) -> None:
-        with open(wps_file_path, "r") as wps_file:
-            self.wps_dict = yaml.safe_load(wps_file)
-
-    def get_wps(self):
-        """
-        Get an array of GPS waypoint yaml objects from the yaml file
-        """
-        gps_wps = []
-        for wp in self.wps_dict["waypoints"]:
-            gps_wps.append(wp)
-        return gps_wps
 
 
 class PatchRclpyIssue1123(ActionClient):
@@ -516,8 +497,7 @@ class AutonomyTaskExecutor(Node):
 
         # Parse the current waypoint file path
         wps_file_path = self.get_parameter("wps_file_path").value
-        self.wp_parser = YamlParser(wps_file_path)
-        self.wps = self.wp_parser.get_wps()
+        self.wps = waypointParser(wps_file_path)
 
         self.task_goal_handle = goal_handle
         self.cancel_flag = False
@@ -565,8 +545,9 @@ class AutonomyTaskExecutor(Node):
         """
 
         # Set zone and hemisphere for UTM conversions
-        self.zone = utm.from_latlon(msg.latitude, msg.longitude)[2]
-        self.hemisphere = "N" if msg.latitude > 0 else "S"
+        if self.zone is None or self.hemisphere is None:
+            self.zone = utm.from_latlon(msg.latitude, msg.longitude)[2]
+            self.hemisphere = "N" if msg.latitude > 0 else "S"
 
         self.filtered_gps = latLonYaw2Geopose(msg.latitude, msg.longitude)
 
@@ -706,11 +687,6 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Autonomy task execution started")
 
-        self.task_info(
-            "Using order planner: " + globals()["__order_planner__"].__name__
-        )
-        self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
-
         # Check for the first GPS fix
         while self.filtered_gps is None:
             time.sleep(1)
@@ -720,6 +696,13 @@ class AutonomyTaskExecutor(Node):
             if self.task_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
+
+        self.task_info(
+            "Using order planner: " + globals()["__order_planner__"].__name__
+        )
+        self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
+            
+        self.task_info("Please review the order plan (exit matplotlib to continue)")
 
         # Determine the best order for the legs
         self.legs = globals()["__order_planner__"](

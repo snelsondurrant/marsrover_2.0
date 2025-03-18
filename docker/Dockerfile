@@ -68,8 +68,10 @@ USER $NAME
 
 # Dry run PlatformIO to install the necessary dependencies
 RUN git clone https://github.com/BYUMarsRover/marsrover.git
+# '|| true' is used to ignore errors on a pio command failure
 WORKDIR /home/$NAME/marsrover/firmware/mega_pio
-# '|| true' is used to ignore errors if the upload target is not available
+RUN pio run -t upload || true
+WORKDIR /home/$NAME/marsrover/firmware/nano_pio
 RUN pio run -t upload || true
 WORKDIR /home/$NAME
 RUN rm -rf /home/$NAME/marsrover
@@ -205,5 +207,6 @@ USER $NAME
 USER root
 RUN apt update && apt install -y \
     ros-iron-xacro \
-    ros-iron-joint-state-publisher-gui
+    ros-iron-joint-state-publisher-gui \
+    ros-iron-urdf-launch
 USER $NAME
