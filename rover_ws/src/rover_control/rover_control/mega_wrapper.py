@@ -4,11 +4,22 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, String, UInt16MultiArray
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Joy
 # from rover_msgs.msg import IWCMotors, Elevator, HeartbeatStatusRover #, FPVServo
+
+from std_srvs.srv import Trigger
 import serial
 import time
 import queue
 import threading
+
+BACK, START, POWER = 6, 7, 8 # 6: Disable drive, 7: Enable drive
+DPAD_HORIZONTAL, DPAD_VERTICAL = 6, 7
+
+ELEVATOR_DIR_UP, ELEVATOR_DIR_DOWN = 1, 0
+
+ELEVATOR_SPEED_CONSTANTS = [0.3, 0.5, 0.7, 1]
+NUM_OF_ELEVATOR_SPEED_CONSTANTS = len(ELEVATOR_SPEED_CONSTANTS)
 
 class MegaMiddleman(Node):
     def __init__(self):
@@ -16,6 +27,7 @@ class MegaMiddleman(Node):
 
         # SUBSCRIBERS
         self.create_subscription(Twist, 'cmd_vel_switch', self.send_wheel, 1)
+        self.subscription = self.create_subscription(Joy,'joy', self.joy_callback, 10)
         # self.create_subscription(Elevator, '/elevator', self.send_elevator, 1)
         # self.create_subscription(Bool, '/arm_clicker', self.send_clicker, 1)
         # self.create_subscription(Bool, '/arm_laser', self.send_laser, 1)
@@ -26,10 +38,21 @@ class MegaMiddleman(Node):
         # self.pub_IR = self.create_publisher(UInt16MultiArray, '/IR', 1)
         self.pub_Debug = self.create_publisher(String, '/ArduinoDebug', 25)
 
+        # Service clients
+        self.client = self.create_client(Trigger, 'trigger_teleop')
+
         self.latest_wheel_msg = None
         self.latest_heart_msg = None
         self.latest_elevator_msg = None
         self.latest_hands_msg = None
+
+        #Joystick variable from elevator
+        self.last_left_dpad = False
+        self.last_right_dpad = False
+        self.elevator_speed_multiplier_idx = 0
+        self.elevator_speed_multiplier = ELEVATOR_SPEED_CONSTANTS[self.elevator_speed_multiplier_idx]
+
+
 
         self.lock = threading.Lock()
         # Connect to Arduino
@@ -187,8 +210,8 @@ class MegaMiddleman(Node):
         wheel_msg = "$WHEEL," + ",".join(str(int(param)) for param in motor_params) + "*"
         self.latest_wheel_msg = wheel_msg
     
-    def send_elevator(self, msg):
-        eleva_params = [msg.elevator_speed, msg.elevator_direction]
+    def send_elevator(self, speed, direction):
+        eleva_params = [speed, direction]
         eleva_msg = "$ELEVA," + ",".join(str(int(param)) for param in eleva_params) + "*"
         # self.write_debug(f"Orin: Sending elevator message to Arduino. {eleva_msg}")
         self.latest_elevator_msg = eleva_msg
@@ -326,6 +349,93 @@ class MegaMiddleman(Node):
             self.connect()
         else:
             self.relay_mega()
+
+    
+    def joy_callback(self, msg):
+        # Assuming the left joystick is represented by axes 0 and 1
+        left_x = msg.axes[0]  # Left joystick horizontal
+        left_y = msg.axes[1]  # Left joystick vertical
+
+        self.get_logger().info(f'Left Joystick - X: {left_x}, Y: {left_y}')
+
+        # create a case where it calls the trigger_telop when the enable button is pressed
+
+    def elevator_commands(self, msg: Joy):
+
+        elevator_speed = 0
+        elevator_direction = 0
+
+        elevator_input = msg.axes[DPAD_VERTICAL]
+        elevator_speed_input = msg.axes[DPAD_HORIZONTAL]
+
+        elevator_speed = int(self.elevator_speed_multiplier * 255)
+
+        if elevator_input == 1.0:
+            elevator_direction = ELEVATOR_DIR_UP
+        elif elevator_input == -1.0:
+            elevator_direction = ELEVATOR_DIR_DOWN
+        else: 
+            elevator_speed = 0
+        
+        if elevator_speed_input == 1:
+            left_dpad = True
+            right_dpad = False 
+        elif elevator_speed_input == -1:
+            right_dpad = True 
+            left_dpad = False 
+        else:
+            left_dpad = False
+            right_dpad = False      
+
+        if left_dpad and not self.last_left_dpad:
+            if self.elevator_speed_multiplier_idx > 0:
+                self.elevator_speed_multiplier_idx -= 1
+                self.elevator_speed_multiplier = ELEVATOR_SPEED_CONSTANTS[self.elevator_speed_multiplier_idx]
+            self.last_left_dpad = True
+        
+        elif right_dpad and not self.last_right_dpad:
+            if self.elevator_speed_multiplier_idx < NUM_OF_ELEVATOR_SPEED_CONSTANTS - 1:
+                self.elevator_speed_multiplier_idx += 1
+                self.elevator_speed_multiplier = ELEVATOR_SPEED_CONSTANTS[self.elevator_speed_multiplier_idx]
+            self.last_right_dpad = True
+        
+        if not left_dpad:
+            self.last_left_dpad = False
+        if not right_dpad:
+            self.last_right_dpad = False
+        
+        self.send_elevator(elevator_speed, elevator_direction)
+
+        self.check_drive_enabled(msg)
+
+
+    def check_drive_enabled(self, msg: Joy):
+        start_button = msg.buttons[START]
+        back_button = msg.buttons[BACK]
+
+        if back_button:
+            # self.drive_enabled = False
+            # TODO HANDLE DRIVE DISABLED
+            self.get_logger().info('Drive disabled NOT AVAILABLE')
+        elif start_button:
+            self.drive_enabled = True
+            request = Trigger.Request()
+            self.future = self.client.call_async(request)
+            self.get_logger().info('Drive enabled')
+
+            # Add a callback for when the future completes
+            self.future.add_done_callback(self.service_response_callback)
+        
+
+    def service_response_callback(self, future):
+        try:
+            response = future.result()
+            if response is not None:
+                self.get_logger().info('Response: {}'.format(response.message))
+            else:
+                self.get_logger().error('Service call failed with no response.')
+        except Exception as e:
+            self.get_logger().error(f'Exception while calling service: {e}')
 
 def main(args=None):
     rclpy.init(args=args)
