@@ -82,7 +82,6 @@
   </joint>
 
   <!-- Sensors -->
-
   <joint name="gps_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gps_link"/>
@@ -117,8 +116,7 @@
 
   <link name="unilidar_imu"/>
 
-  <!-- TODO: Figure out the if the ZED camera already links itself to base_link -->
-  <!-- https://www.stereolabs.com/docs/ros2/020_zed-node#transform-frames -->
+  <!-- https://www.stereolabs.com/docs/ros2/140_ros2-robot-integration -->
 
   <joint name="zed2_camera_joint" type="fixed">
     <parent link="pole_link"/>
