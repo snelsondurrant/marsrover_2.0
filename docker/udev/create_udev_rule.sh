@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO: Finish this script
 
 # Function to check if required packages are installed
 check_packages() {
