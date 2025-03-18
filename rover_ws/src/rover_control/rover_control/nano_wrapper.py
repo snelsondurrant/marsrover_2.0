@@ -15,6 +15,7 @@ import rclpy
 from rclpy.node import Node
 import serial
 from std_msgs.msg import Int8
+
 # from rover_msgs.msg import NavState, Battery, Gripper, RawBattery, Laser, Clicker
 import time
 import threading
@@ -27,15 +28,15 @@ navigation_state = -1
 q = queue.Queue()
 
 
-class RoverStatusNode(Node):
+class NanoWrapper(Node):
     def __init__(self):
-        super().__init__('rover_status_listener')
-        
+        super().__init__("nano_wrapper")
+
         # Publishers
         # self.battery_pub = self.create_publisher(RawBattery, '/raw_battery_info', 10)
-        
+
         # Subscribers
-        self.create_subscription(Int8, 'nav_state', self.led_callback, 10)
+        self.create_subscription(Int8, "nav_state", self.led_callback, 10)
         # self.create_subscription(Gripper, '/gripper', self.gripper_callback, 10)
         # self.create_subscription(Laser, '/laser_state', self.laser_callback, 10)
         # self.create_subscription(Clicker, '/click', self.click_callback, 10)
@@ -58,7 +59,7 @@ class RoverStatusNode(Node):
 
     def led_callback(self, data):
         # Update LED based on the rover state
-        data_array = f"L{data.data};" 
+        data_array = f"L{data.data};"
         q.put(data_array)
 
     # def gripper_callback(self, data):
@@ -100,16 +101,16 @@ class RoverStatusNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = RoverStatusNode()
+    nano_wrapper = NanoWrapper()
 
     try:
-        rclpy.spin(node)
+        rclpy.spin(nano_wrapper)
     except KeyboardInterrupt:
         pass
     finally:
-        node.queue_handler_thread.join()
-        node.arduino_listener_thread.join()
-        node.destroy_node()
+        nano_wrapper.queue_handler_thread.join()
+        nano_wrapper.arduino_listener_thread.join()
+        nano_wrapper.destroy_node()
         rclpy.shutdown()
 
 
