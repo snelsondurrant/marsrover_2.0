@@ -103,7 +103,7 @@ class MegaWrapper(Node):
                     f"Could not open serial port {arduino_port}: {e}"
                 )
                 failure_count += 1
-            time.sleep(0.1)  # TODO
+            time.sleep(0.1)  # TODO:
         if failure_count >= 10:
             self.get_logger().warn(
                 f"Could not open serial port {arduino_port} after {failure_count} attempts."
@@ -126,7 +126,7 @@ class MegaWrapper(Node):
         self.ser.close()
 
     def serial_writer_loop(self):
-        while True:  # TODO See if ROS2 has a if node is running
+        while True:  # TODO: See if ROS2 has a if node is running
             if not self.handshake:
                 self.write_debug("Orin: Waiting for Arduino handshake")
                 time.sleep(1)
@@ -232,7 +232,7 @@ class MegaWrapper(Node):
             right_wheels_forward = False
 
         # these need to be from 0 to 255 and ints
-        # TODO parameterize these min and max values and mapping params
+        # TODO: parameterize these min and max values and mapping params
 
         left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 10, 0, 255)
         right_wheels_speed = self.map_value(abs(right_wheels_speed), 0, 10, 0, 255)
@@ -476,7 +476,7 @@ class MegaWrapper(Node):
 
         if back_button:
             # self.drive_enabled = False
-            # TODO HANDLE DRIVE DISABLED
+            # TODO: HANDLE DRIVE DISABLED
             self.get_logger().info("Drive disabled NOT AVAILABLE")
         elif start_button:
             self.drive_enabled = True
