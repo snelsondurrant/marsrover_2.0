@@ -23,7 +23,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
     tmux split-window -v
     tmux send-keys -t rover_startup.1 "export ROS_DISCOVERY_SERVER=localhost:11811" Enter
     tmux send-keys -t rover_startup.1 "source ~/rover_ws/install/setup.bash" Enter
-    tmux send-keys -t rover_startup.1 "ros2 launch rover_bringup rover_startup.launch.py" Enter
+    tmux send-keys -t rover_startup.1 "ros2 launch rover_bringup rover_startup.launch.py"  #Enter Commented out because we don't want this to start until we start using this package
 fi
 
 exec /bin/bash
