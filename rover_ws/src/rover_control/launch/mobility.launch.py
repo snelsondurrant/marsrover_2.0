@@ -10,7 +10,7 @@ def generate_launch_description():
     
     control_dir = get_package_share_directory('rover_control')
 
-    teleop_params = os.path.join(control_dir, "config/teleop_twist.yaml")
+    teleop_config = os.path.join(control_dir, "config/teleop_twist.yaml")
     
     return launch.LaunchDescription([
         launch_ros.actions.Node(
