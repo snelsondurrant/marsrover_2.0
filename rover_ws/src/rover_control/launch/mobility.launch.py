@@ -3,7 +3,7 @@ import launch
 import launch_ros.actions
 import launch_ros.descriptions
 from ament_index_python.packages import get_package_share_directory
-
+import os
 
 
 def generate_launch_description():
@@ -24,7 +24,7 @@ def generate_launch_description():
             # https://github.com/ros2/teleop_twist_joy
             package="teleop_twist_joy",
             executable="teleop_node",
-            parameters=[teleop_config]
+            parameters=[teleop_config],
             output="screen",
             remappings=[
                 ("cmd_vel", "cmd_vel_teleop"),

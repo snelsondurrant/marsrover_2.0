@@ -1,11 +1,14 @@
 /teleop_twist_joy_node:
   ros__parameters:
+    
+    ########### ALL axis and button lists are 0 indexed!! ###############
+    
     require_enable_button: true
-    enable_button: 0  # (int, default: 0) Joystick button to enable regular-speed movement.
-    enable_turbo_button: -1 #(int, default: -1) Joystick button to enable high-speed movement (disabled when -1).
+    enable_button: 7  # (int, default: 0) Joystick button to enable regular-speed movement.
+    enable_turbo_button: 5 #(int, default: -1) Joystick button to enable high-speed movement (disabled when -1).
 
     #axis_linear.<axis> Joystick axis to use for linear movement control.
-    axis_linear.x: 5  # (int, default: 5)
+    axis_linear.x: 4  # (int, default: 5)
     axis_linear.y: -1 # (int, default: -1)
     axis_linear.z: -1 # (int, default: -1)
 
@@ -20,7 +23,7 @@
     scale_linear_turbo.z: 0.0 #(double, default: 0.0)
 
     # axis_angular.<axis> Joystick axis to use for angular movement control.
-    axis_angular.yaw: 2 #(int, default: 2)
+    axis_angular.yaw: 3 #(int, default: 2)
     axis_angular.pitch: -1 #(int, default: -1)
     axis_angular.roll: -1 #(int, default: -1)
 

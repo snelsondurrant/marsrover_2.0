@@ -15,7 +15,7 @@ class MegaMiddleman(Node):
         super().__init__('mega_middleman')
 
         # SUBSCRIBERS
-        self.create_subscription(Twist, 'cmd/vel', self.send_wheel, 1)
+        self.create_subscription(Twist, 'cmd_vel_switch', self.send_wheel, 1)
         # self.create_subscription(Elevator, '/elevator', self.send_elevator, 1)
         # self.create_subscription(Bool, '/arm_clicker', self.send_clicker, 1)
         # self.create_subscription(Bool, '/arm_laser', self.send_laser, 1)
@@ -29,6 +29,7 @@ class MegaMiddleman(Node):
         self.latest_wheel_msg = None
         self.latest_heart_msg = None
         self.latest_elevator_msg = None
+        self.latest_hands_msg = None
 
         self.lock = threading.Lock()
         # Connect to Arduino
@@ -83,7 +84,7 @@ class MegaMiddleman(Node):
                 self.write_debug("Orin: Waiting for Arduino handshake")
                 time.sleep(1)
                 continue
-            msg = self.serial_queue.get()  # Blocking until a message is available
+            # msg = self.serial_queue.get()  # Blocking until a message is available
             if not self.disconnected:
                 with self.lock:
                     # Ensure connection
@@ -102,6 +103,9 @@ class MegaMiddleman(Node):
                     if self.latest_heart_msg is not None:
                         messages.append(str(self.latest_heart_msg))
                         self.latest_heart_msg = None
+                    if self.latest_hands_msg is not None:
+                        messages.append(str(self.latest_hands_msg))
+                        self.latest_hands_msg = None
 
 
                     # Send message
@@ -169,8 +173,8 @@ class MegaMiddleman(Node):
         # these need to be from 0 to 255 and ints
         # TODO parameterize these min and max values and mapping params
 
-        left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 5, 0, 255)
-        left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 5, 0, 255)
+        left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 10, 0, 255)
+        right_wheels_speed = self.map_value(abs(right_wheels_speed), 0, 10, 0, 255)
 
         motor_params = [
             left_wheels_speed, left_wheels_forward,
@@ -303,7 +307,9 @@ class MegaMiddleman(Node):
 
         elif(tag == "HANDS"):
             self.handshake = True
-            self.serial_write("$HANDS,*")
+            # self.serial_write("$HANDS,*")
+            
+            self.latest_hands_msg = "$HANDS,*"
             self.write_debug("Orin: Recieved Arduino connection handshake.")
         
         # Debug
