@@ -1,0 +1,28 @@
+# Created by Braden Meyers, Mar 2025
+#
+# DOCKER COMPOSE FILE (ROVER IMAGE, ARM)
+
+services:
+  cougars:
+    image: byuawesomerover/zed:latest
+    build: .
+    platform: linux/arm64
+    container_name: zed-ct
+    user: zed-docker
+    network_mode: host
+    runtime: nvidia
+    environment:
+      DISPLAY: $DISPLAY # Required for GUI applications
+      # MPLBACKEND: Qt5Agg # Required for GUI applications
+    privileged: true
+    volumes:
+      - ../../..:/home/zed-docker/zed_ws
+      - /dev:/dev:rw
+      - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
+      - /tmp/.X11-unix:/tmp/.X11-unix # Required for GUI applications
+      - /dev/shm:/dev/shm
+    command: /bin/bash
+    # entrypoint: /home/frostlab/entrypoint.sh
+    stdin_open: true  # Equivalent to -it in docker run
+    tty: true  # Equivalent to -it in docker run
+    restart: always  # Optional: Keeps the container running after exit unless you want it to be removed like with --rm

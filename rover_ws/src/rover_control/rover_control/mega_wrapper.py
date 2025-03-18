@@ -1,78 +1,176 @@
-# Copied over by Nelson Durrant, Feb 2025
-# Modified to listen to the cmd_vel_switch Twist message instead
-# TODO: I think this could be simplified a lot?
+#!/usr/bin/env python3
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, String, UInt16MultiArray
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Joy
 # from rover_msgs.msg import IWCMotors, Elevator, HeartbeatStatusRover #, FPVServo
+
+from std_srvs.srv import Trigger
 import serial
 import time
 import queue
 import threading
+
+BACK, START, POWER = 6, 7, 8 # 6: Disable drive, 7: Enable drive
+DPAD_HORIZONTAL, DPAD_VERTICAL = 6, 7
+
+ELEVATOR_DIR_UP, ELEVATOR_DIR_DOWN = 1, 0
+
+ELEVATOR_SPEED_CONSTANTS = [0.3, 0.5, 0.7, 1]
+NUM_OF_ELEVATOR_SPEED_CONSTANTS = len(ELEVATOR_SPEED_CONSTANTS)
 
 class MegaMiddleman(Node):
     def __init__(self):
         super().__init__('mega_middleman')
 
         # SUBSCRIBERS
-        self.create_subscription(Twist, 'cmd_vel_switch', self.send_wheel, 1) # only keep the last message
+        self.create_subscription(Twist, 'cmd_vel_switch', self.send_wheel, 1)
+        self.subscription = self.create_subscription(Joy,'joy', self.joy_callback, 10)
         # self.create_subscription(Elevator, '/elevator', self.send_elevator, 1)
         # self.create_subscription(Bool, '/arm_clicker', self.send_clicker, 1)
         # self.create_subscription(Bool, '/arm_laser', self.send_laser, 1)
-        # # self.create_subscription(FPVServo, '/fpv_servo', self.send_fpvsv, 1)
+        # self.create_subscription(FPVServo, '/fpv_servo', self.send_fpvsv, 1)
         # self.create_subscription(HeartbeatStatusRover, '/heartbeat_status_rover', self.send_heart, 1)
 
         # PUBLISHERS
         # self.pub_IR = self.create_publisher(UInt16MultiArray, '/IR', 1)
-        self.pub_Debug = self.create_publisher(String, '/ArduinoDebug', 25) # keep the last 25 messages
+        self.pub_Debug = self.create_publisher(String, '/ArduinoDebug', 25)
 
-        self.serial_queue = queue.Queue()
+        # Service clients
+        self.client = self.create_client(Trigger, 'trigger_teleop')
+
+        self.latest_wheel_msg = None
+        self.latest_heart_msg = None
+        self.latest_elevator_msg = None
+        self.latest_hands_msg = None
+
+        #Joystick variable from elevator
+        self.last_left_dpad = False
+        self.last_right_dpad = False
+        self.elevator_speed_multiplier_idx = 0
+        self.elevator_speed_multiplier = ELEVATOR_SPEED_CONSTANTS[self.elevator_speed_multiplier_idx]
+
+
+
         self.lock = threading.Lock()
         # Connect to Arduino
         self.disconnected = True
+        self.handshake = False   # If a Serial object is good to communicate on the port
         self.connect()
 
+        time.sleep(7.0)
+
+        # Start writer thread
+        self.writer_thread = threading.Thread(target=self.serial_writer_loop, daemon=True)
+        self.writer_thread.start()
+
         # Timer for relay_mega
-        self.create_timer(0.001, self.relay_mega)  # 10 Hz
+        self.create_timer(0.01, self.loop)  # 100 Hz
         self.get_logger().info("MegaMiddle Man started")
-        self.buffer = ""
 
     def connect(self):
         failure_count = 0
         while failure_count < 10:
             try:
                 arduino_port = "/dev/rover/onBoardMega"
-                self.ser = serial.Serial(arduino_port, 115200, timeout=4.0)
+                self.ser = serial.Serial(arduino_port, 115200, timeout=0.3, write_timeout=1.0, dsrdtr=True)
                 break
             except serial.SerialException as e:
                 self.get_logger().warn(f"Could not open serial port {arduino_port}: {e}")
                 failure_count += 1
-            time.sleep(1) #TODO
+            time.sleep(0.1) #TODO
         if failure_count >= 10:
             self.get_logger().warn(f"Could not open serial port {arduino_port} after {failure_count} attempts.")
             self.write_debug("Orin: Could not establish connection to Arduino.")
             self.disconnected = True
+            self.disconnect()
         else:
             self.write_debug("Orin: Connection handshake.")
             self.disconnected = False
-
-    def serial_write(self, msg):
-        if not self.disconnected:
             try:
+                self.ser.reset_input_buffer()
+                self.ser.reset_output_buffer()
+            except:
+                self.write_debug("Orin: Could not reset buffers on connection.")
+
+    def disconnect(self):
+        self.disconnected = True
+        self.handshake = False
+        self.ser.close()
+    
+
+    def serial_writer_loop(self):
+        while True: #TODO See if ROS2 has a if node is running
+            if not self.handshake:
+                self.write_debug("Orin: Waiting for Arduino handshake")
+                time.sleep(1)
+                continue
+            # msg = self.serial_queue.get()  # Blocking until a message is available
+            if not self.disconnected:
                 with self.lock:
-                    self.serial_queue.put(msg)
-                    while not self.serial_queue.empty():
-                        message = self.serial_queue.get()
-                        self.ser.write(message.encode('ascii'))
+                    # Ensure connection
+                    if not self.ser.is_open:
+                        self.get_logger().warn("Orin: Arduino port is not open at time of writing!")
+                        self.write_debug("Orin: Arduino port is not open at time of writing!")
+                        return
+                    
+                    messages = []
+                    if self.latest_wheel_msg is not None:
+                        messages.append(str(self.latest_wheel_msg))
+                        self.latest_wheel_msg = None
+                    if self.latest_elevator_msg is not None:
+                        messages.append(str(self.latest_elevator_msg))
+                        self.latest_elevator_msg = None
+                    if self.latest_heart_msg is not None:
+                        messages.append(str(self.latest_heart_msg))
+                        self.latest_heart_msg = None
+                    if self.latest_hands_msg is not None:
+                        messages.append(str(self.latest_hands_msg))
+                        self.latest_hands_msg = None
 
-            except serial.SerialException as e:
-                self.write_debug("Orin: Failed to send message to Arduino.")
-                self.disconnected = True # Not necessarily disconnected, but could be
-        else:
-            self.write_debug("Orin: Not connected to Arduino; ignoring message.")
 
+                    # Send message
+                    for msg in messages:
+                        try:
+                            self.ser.write((msg).encode('utf-8'))
+                            self.write_debug("Orin: Thread output to Arduino: " + msg)
+                        except (serial.SerialTimeoutException) as e:
+                            self.get_logger().warn(f"Failed to write to serial due to timeout: {e}")
+                            self.write_debug("Orin: Failed to send message to Arduino in time.")
+                            # 2024-25 Experiments revealed these can help with reliability
+                            time.sleep(2) 
+                            self.handshake = False
+                            break  # Exit the loop after handling the exception
+                        except (serial.SerialException) as e:
+                            self.get_logger().warn(f"Failed to write to serial due to exception: {e}")
+                            self.write_debug("Orin: Error when trying to send message to Arduino.")
+                            self.disconnect() # Not necessarily disconnected, but act like we are
+                            break  # Exit the loop after handling the exception
+
+
+                    # Give arduino breathing time
+                    time.sleep(0.05) # [s], delay between writes, only blocks write thread not main thread.
+                                     # Lowering this value can improve input latency, but lowering it too much
+                                     # risks overwhelming the Arduino and causing a I/O timeout -- resulting 
+                                     # in a few seconds of disconnect (not worth shaving a few ms of each volley)
+            else:
+                self.write_debug("Orin: Not connected to Arduino; ignoring message.")
+    
+    
+    def map_value(self, value, from_min, from_max, to_min, to_max):
+        # Clamp the input value to the from_min and from_max range
+        clamped_value = max(from_min, min(value, from_max))
+        
+        # Scale the clamped value to a 0-1 range
+        scaled_value = (clamped_value - from_min) / (from_max - from_min)
+        
+        # Scale it to the new range
+        mapped_value = to_min + (scaled_value * (to_max - to_min))
+        
+        return int(mapped_value)
+    
     def send_wheel(self, msg):
 
         # Constants for differential drive
@@ -82,35 +180,41 @@ class MegaMiddleman(Node):
         # Kinematics for differential drive
         left_wheels_speed = (msg.linear.x - (msg.angular.z * self.wheel_base / 2.0)) / self.wheel_radius
         right_wheels_speed = (msg.linear.x + (msg.angular.z * self.wheel_base / 2.0)) / self.wheel_radius
-
+        
         # Get direction of the wheels
-        if left_wheels_speed > 0:
+        if left_wheels_speed >= 0:
             left_wheels_forward = True
         else:
             left_wheels_forward = False
 
-        if right_wheels_speed > 0:
+        if right_wheels_speed >= 0:
             right_wheels_forward = True
         else:
             right_wheels_forward = False
-        
+
+
+        # these need to be from 0 to 255 and ints
+        # TODO parameterize these min and max values and mapping params
+
+        left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 10, 0, 255)
+        right_wheels_speed = self.map_value(abs(right_wheels_speed), 0, 10, 0, 255)
+
         motor_params = [
-            abs(left_wheels_speed), left_wheels_forward,
-            abs(left_wheels_speed), left_wheels_forward,
-            abs(left_wheels_speed), left_wheels_forward,
-            abs(right_wheels_speed), right_wheels_forward,
-            abs(right_wheels_speed), right_wheels_forward,
-            abs(right_wheels_speed), right_wheels_forward
+            left_wheels_speed, left_wheels_forward,
+            left_wheels_speed, left_wheels_forward,
+            left_wheels_speed, left_wheels_forward,
+            right_wheels_speed, right_wheels_forward,
+            right_wheels_speed, right_wheels_forward,
+            right_wheels_speed, right_wheels_forward
         ]
         wheel_msg = "$WHEEL," + ",".join(str(int(param)) for param in motor_params) + "*"
-        self.write_debug(wheel_msg)
-        self.serial_write(wheel_msg)
-
-    # def send_elevator(self, msg):
-    #     eleva_params = [msg.elevator_speed, msg.elevator_direction]
-    #     eleva_msg = "$ELEVA," + ",".join(str(int(param)) for param in eleva_params) + "*"
-    #     self.write_debug(f"Orin: Sending elevator message to Arduino. {eleva_msg}")
-    #     self.serial_write(eleva_msg)
+        self.latest_wheel_msg = wheel_msg
+    
+    def send_elevator(self, speed, direction):
+        eleva_params = [speed, direction]
+        eleva_msg = "$ELEVA," + ",".join(str(int(param)) for param in eleva_params) + "*"
+        # self.write_debug(f"Orin: Sending elevator message to Arduino. {eleva_msg}")
+        self.latest_elevator_msg = eleva_msg
 
     # def send_clicker(self, msg):
     #     click_value = 1 if msg.data else 0
@@ -127,82 +231,211 @@ class MegaMiddleman(Node):
     #     fpvsv_msg = "$FPVSV," + ",".join(str(param) for param in fpv_params) + "*"
     #     self.serial_write(fpvsv_msg)
 
-    # def send_heart(self, msg):
-    #     heart_msg = f"$HEART,{msg.elapsed_time}*"
-    #     self.serial_write(heart_msg)
+    def send_heart(self, msg):
+        heart_msg = f"$HEART,{msg.elapsed_time}*"
+        self.latest_heart_msg = heart_msg
 
     def read_nmea(self):
+        # Watch for start of new message
         try:
-            # Read all available data from the serial buffer
-            available_data = self.ser.read(self.ser.in_waiting).decode('ascii', errors='ignore')
+            # Check if serial is open
+            if not self.ser.is_open:
+                self.get_logger().warn("Serial port is not open.")
+                self.write_debug("WARNING: Serial port is not open")
+                return -1, ""
 
-            if available_data:
-                self.buffer += available_data
-            else:
-                return 0, ""  # No data available to read
-            #TODO Exception specific for if the device is disconnected or not
-        except Exception as e:
-            self.write_debug(f"WARNING: Read failure - {str(e)}")
-            
-            # self.ser.reset_input_buffer()
+            # Try reading one byte and decoding it
+            x = self.ser.read(1).decode('ascii').strip()
+
+            # Check if data was read
+            if not x:
+                # self.get_logger().info("No data read from serial port.")
+                # self.write_debug("Orin: Nothing to read")  # Optional: uncomment if you want this log
+                return 0, ""
+
+        except serial.SerialException as e:
+            # Handle SerialException (e.g., if the port is not available)
+            self.get_logger().error(f"SerialException: Failed to read from serial port: {e}")
+            self.write_debug(f"ERROR: SerialException: {e}")
+
+            # Try to reset the input buffer and disconnect
+            try:
+                self.ser.reset_input_buffer()  # Reset the buffer
+                self.disconnect()  # Disconnect
+                self.get_logger().info("Serial port input buffer reset and disconnected.")
+            except Exception as reset_e:
+                self.get_logger().warn(f"Could not flush input buffer: {reset_e}")
+                self.write_debug(f"WARNING: Could not flush input buffer: {reset_e}")
+
             return -1, ""
 
-        # Process any complete NMEA sentences in the buffer
-        return self.process_buffer()
+        except Exception as e:
+            # Catch all other unexpected errors
+            self.get_logger().error(f"Unexpected error: {e}")
+            self.write_debug(f"ERROR: Unexpected error: {e}")
+            return -1, ""
+        
+        # Debug
+        # self.write_debug("Orin: Reading a new message from the Arduino starting with " + x)
+        # Verify message is in NMEA format
+        if x != '$':
+            return -1, ""
+        
+        # Read the rest of the sentence until '*'
+        try:
+            mega_msg = self.ser.read_until(b'*').decode('ascii').strip()
+        except:
+            self.get_logger().warn(f"Failed to read from serial - Second")
+            self.write_debug("WARNING: Read failure - Second")
+            try:
+                self.ser.reset_input_buffer()
+            except:
+                self.write_debug("WARNING: Could not flush input buffer")
+            return -1, ""
+        
+        # Ensure message does not contain encased messages
+        if '$' in mega_msg:
+            self.write_debug("WARNING: Nested messages: " + mega_msg)
+            return -1, ""
 
-    def process_buffer(self):
-        messages = []
-        while True:
-            # Find the first valid sentence
-            start_idx = self.buffer.find('$')
-            end_idx = self.buffer.find('*')
-
-            # If no full sentence found, exit the loop
-            if start_idx == -1 or end_idx == -1 or end_idx < start_idx:
-                break
-
-            # Extract the message (without the $ and * and checksum)
-            mega_msg = self.buffer[start_idx + 1:end_idx]
-
-            # Split by the comma to separate the tag and data
-            if ',' in mega_msg:
-                tag, data = mega_msg.split(',', 1)
-                data = data[:-2]  # Exclude checksum part (if present)
-            else:
-                tag, data = mega_msg, ""
-
-            # Store the message and remove the processed part from the buffer
-            messages.append((tag, data))
-            self.buffer = self.buffer[end_idx + 3:]  # Remove the processed sentence
-
-        # If we found any complete messages, return them
-        if messages:
-            for tag, data in messages:
-                self.write_debug(f"Orin: Reading a message from the Arduino w/ tag: {tag}, and data: {data}")
-            return tag, data
+        # Split message tag from data
+        if ',' in mega_msg: 
+            msg_parts = mega_msg.split(',', 1)
+            tag, data = msg_parts[0], msg_parts[1][0:-2] # Strip off trailing ,*
         else:
-            return 0, ""  # No complete message found
+            tag, data = mega_msg, ""
+        # Debug
+        self.write_debug("Orin: Reading a message from the Arduino w/ tag: " + tag + ", and data: " + data)
 
+        return tag, data
+    
     def relay_mega(self):
-        if self.disconnected:
-            self.get_logger().info("Waiting for Mega Connection...", throttle_duration_sec=2.0)
-        else:
-            tag, msg = self.read_nmea()
+        # Read message
+        ###################
+        tag, msg = self.read_nmea()
 
-            if tag == "IRLIG":
-                try:
-                    sensor_data = UInt16MultiArray(data=[int(x) for x in msg.split(',')])
-                    self.pub_IR.publish(sensor_data)
-                except ValueError:
-                    self.write_debug("Orin: Failed to parse IR data")
-                    self.get_logger().warn("Failed to parse IR data")
-            elif tag == "DEBUG":
-                self.pub_Debug.publish(String(data=msg))
-            elif tag == -1:
-                self.write_debug("Orin: Read corrupt or incomplete message.")
+        # Interpret message
+        ###################
+        if(tag == "IRLIG"):
+            # try:
+            #     sensorData = UInt16MultiArray(data=[int(x) for x in msg.split(',')])
+            #     self.pub_IR.publish(sensorData)
+            # except ValueError:
+            #     self.write_debug("Orin: Failed to parse IR data")
+            #     self.get_logger().warn("Failed to parse IR data")
+            pass
+        
+        elif(tag == "DEBUG"):
+            self.write_debug(msg)
+
+        elif(tag == "HANDS"):
+            self.handshake = True
+            # self.serial_write("$HANDS,*")
+            
+            self.latest_hands_msg = "$HANDS,*"
+            self.write_debug("Orin: Recieved Arduino connection handshake.")
+        
+        # Debug
+        elif(tag == -1):
+            self.write_debug("Orin: Read corrupt or incomplete message.  (This is expected after a read error)")
 
     def write_debug(self, msg):
-        self.pub_Debug.publish(String(data=msg))
+        message = String()
+        message.data = msg
+        self.pub_Debug.publish(message)
+
+    def loop(self):
+        if self.disconnected:
+            self.connect()
+        else:
+            self.relay_mega()
+
+    
+    def joy_callback(self, msg):
+        # Assuming the left joystick is represented by axes 0 and 1
+        left_x = msg.axes[0]  # Left joystick horizontal
+        left_y = msg.axes[1]  # Left joystick vertical
+
+        self.get_logger().info(f'Left Joystick - X: {left_x}, Y: {left_y}')
+
+        # create a case where it calls the trigger_telop when the enable button is pressed
+
+    def elevator_commands(self, msg: Joy):
+
+        elevator_speed = 0
+        elevator_direction = 0
+
+        elevator_input = msg.axes[DPAD_VERTICAL]
+        elevator_speed_input = msg.axes[DPAD_HORIZONTAL]
+
+        elevator_speed = int(self.elevator_speed_multiplier * 255)
+
+        if elevator_input == 1.0:
+            elevator_direction = ELEVATOR_DIR_UP
+        elif elevator_input == -1.0:
+            elevator_direction = ELEVATOR_DIR_DOWN
+        else: 
+            elevator_speed = 0
+        
+        if elevator_speed_input == 1:
+            left_dpad = True
+            right_dpad = False 
+        elif elevator_speed_input == -1:
+            right_dpad = True 
+            left_dpad = False 
+        else:
+            left_dpad = False
+            right_dpad = False      
+
+        if left_dpad and not self.last_left_dpad:
+            if self.elevator_speed_multiplier_idx > 0:
+                self.elevator_speed_multiplier_idx -= 1
+                self.elevator_speed_multiplier = ELEVATOR_SPEED_CONSTANTS[self.elevator_speed_multiplier_idx]
+            self.last_left_dpad = True
+        
+        elif right_dpad and not self.last_right_dpad:
+            if self.elevator_speed_multiplier_idx < NUM_OF_ELEVATOR_SPEED_CONSTANTS - 1:
+                self.elevator_speed_multiplier_idx += 1
+                self.elevator_speed_multiplier = ELEVATOR_SPEED_CONSTANTS[self.elevator_speed_multiplier_idx]
+            self.last_right_dpad = True
+        
+        if not left_dpad:
+            self.last_left_dpad = False
+        if not right_dpad:
+            self.last_right_dpad = False
+        
+        self.send_elevator(elevator_speed, elevator_direction)
+
+        self.check_drive_enabled(msg)
+
+
+    def check_drive_enabled(self, msg: Joy):
+        start_button = msg.buttons[START]
+        back_button = msg.buttons[BACK]
+
+        if back_button:
+            # self.drive_enabled = False
+            # TODO HANDLE DRIVE DISABLED
+            self.get_logger().info('Drive disabled NOT AVAILABLE')
+        elif start_button:
+            self.drive_enabled = True
+            request = Trigger.Request()
+            self.future = self.client.call_async(request)
+            self.get_logger().info('Drive enabled')
+
+            # Add a callback for when the future completes
+            self.future.add_done_callback(self.service_response_callback)
+        
+
+    def service_response_callback(self, future):
+        try:
+            response = future.result()
+            if response is not None:
+                self.get_logger().info('Response: {}'.format(response.message))
+            else:
+                self.get_logger().error('Service call failed with no response.')
+        except Exception as e:
+            self.get_logger().error(f'Exception while calling service: {e}')
 
 def main(args=None):
     rclpy.init(args=args)
