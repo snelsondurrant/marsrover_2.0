@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, String, UInt16MultiArray
@@ -22,12 +20,27 @@ ELEVATOR_SPEED_CONSTANTS = [0.3, 0.5, 0.7, 1]
 NUM_OF_ELEVATOR_SPEED_CONSTANTS = len(ELEVATOR_SPEED_CONSTANTS)
 
 class MegaMiddleman(Node):
+    """
+    This node acts as a middleman between the Orin and the Arduino Mega.
+    
+    :author: Braden Meyers
+    :date: Mar 2025
+
+    Subscribers:
+    - cmd_vel_switch (geometry_msgs/Twist)
+    - joy (sensor_msgs/Joy)
+    Publishers:
+    - ArduinoDebug (std_msgs/String)
+    Clients:
+    - trigger_teleop (std_srvs/Trigger)
+    """
+
     def __init__(self):
         super().__init__('mega_middleman')
 
         # SUBSCRIBERS
         self.create_subscription(Twist, 'cmd_vel_switch', self.send_wheel, 1)
-        self.subscription = self.create_subscription(Joy,'joy', self.joy_callback, 10)
+        self.subscription = self.create_subscription(Joy,'joy', self.joy_callback, 10) # direct elevator control
         # self.create_subscription(Elevator, '/elevator', self.send_elevator, 1)
         # self.create_subscription(Bool, '/arm_clicker', self.send_clicker, 1)
         # self.create_subscription(Bool, '/arm_laser', self.send_laser, 1)
