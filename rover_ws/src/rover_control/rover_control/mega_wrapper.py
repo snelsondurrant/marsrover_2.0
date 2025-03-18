@@ -103,7 +103,7 @@ class MegaWrapper(Node):
                     f"Could not open serial port {arduino_port}: {e}"
                 )
                 failure_count += 1
-            time.sleep(0.1)  # TODO:
+            time.sleep(0.1)  # TODO: look at this?
         if failure_count >= 10:
             self.get_logger().warn(
                 f"Could not open serial port {arduino_port} after {failure_count} attempts."
@@ -126,7 +126,7 @@ class MegaWrapper(Node):
         self.ser.close()
 
     def serial_writer_loop(self):
-        while True:  # TODO: See if ROS2 has a if node is running
+        while rclpy.ok(): # Checks if the node is still running
             if not self.handshake:
                 self.write_debug("Orin: Waiting for Arduino handshake")
                 time.sleep(1)
