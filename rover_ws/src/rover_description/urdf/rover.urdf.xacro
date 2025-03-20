@@ -119,7 +119,7 @@
 
   <joint name="zed_camera_joint" type="fixed">
     <parent link="pole_link"/>
-    <child link="zed2_camera_link"/>
+    <child link="zed_camera_link"/>
     <origin xyz="${pole_length/2} 0 0.05" rpy="0 0 0"/>
   </joint>
 
