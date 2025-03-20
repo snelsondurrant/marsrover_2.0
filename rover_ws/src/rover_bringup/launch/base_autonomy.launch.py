@@ -13,47 +13,42 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    use_rviz = LaunchConfiguration('use_rviz')
-    use_mapviz = LaunchConfiguration('use_mapviz')
+    use_rviz = LaunchConfiguration("use_rviz")
+    use_mapviz = LaunchConfiguration("use_mapviz")
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
-        'use_rviz',
-        default_value='False',
-        description='Whether to start RVIZ')
+        "use_rviz", default_value="False", description="Whether to start RVIZ"
+    )
 
     declare_use_mapviz_cmd = DeclareLaunchArgument(
-        'use_mapviz',
-        default_value='False',
-        description='Whether to start mapviz')
+        "use_mapviz", default_value="False", description="Whether to start mapviz"
+    )
 
     # Get the launch directories
-    nav_dir = get_package_share_directory('rover_navigation')
-    nav_launch_dir = os.path.join(nav_dir, 'launch')
-    ublox_dir = get_package_share_directory('ublox_read_2')
-    ublox_launch_dir = os.path.join(ublox_dir, 'launch')
+    nav_dir = get_package_share_directory("rover_navigation")
+    nav_launch_dir = os.path.join(nav_dir, "launch")
+    ublox_dir = get_package_share_directory("ublox_read_2")
+    ublox_launch_dir = os.path.join(ublox_dir, "launch")
 
     rviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'rviz.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "rviz.launch.py")),
         condition=IfCondition(use_rviz),
     )
 
     mapviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'mapviz.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "mapviz.launch.py")),
         condition=IfCondition(use_mapviz),
     )
 
     gps_cmd = IncludeLaunchDescription(
-        XMLLaunchDescriptionSource(
-            os.path.join(ublox_launch_dir, 'base_launch.xml')),
+        XMLLaunchDescriptionSource(os.path.join(ublox_launch_dir, "base_launch.xml")),
     )
 
     joy_node_cmd = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node_base',
-        output='screen',
+        package="joy",
+        executable="joy_node",
+        name="joy_node_base",
+        output="screen",
     )
 
     ld = LaunchDescription()

@@ -13,27 +13,26 @@ from launch.conditions import UnlessCondition, IfCondition
 
 def generate_launch_description():
 
-    use_rviz = LaunchConfiguration('use_rviz')
-    use_mapviz = LaunchConfiguration('use_mapviz')
-    sim_mode = LaunchConfiguration('sim_mode')
+    use_rviz = LaunchConfiguration("use_rviz")
+    use_mapviz = LaunchConfiguration("use_mapviz")
+    sim_mode = LaunchConfiguration("sim_mode")
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
-        'use_rviz',
-        default_value='False',
-        description='Whether to start RVIZ')
+        "use_rviz", default_value="False", description="Whether to start RVIZ"
+    )
 
     declare_use_mapviz_cmd = DeclareLaunchArgument(
-        'use_mapviz',
-        default_value='False',
-        description='Whether to start mapviz')
-    
+        "use_mapviz", default_value="False", description="Whether to start mapviz"
+    )
+
     declare_sim_mode_cmd = DeclareLaunchArgument(
-        'sim_mode',
-        default_value='False',
-        description='Whether to start in simulation mode')
+        "sim_mode",
+        default_value="False",
+        description="Whether to start in simulation mode",
+    )
 
     # Get the package directories
-    bringup_dir = get_package_share_directory('nav2_bringup')
+    bringup_dir = get_package_share_directory("nav2_bringup")
     nav_dir = get_package_share_directory("rover_navigation")
     loc_dir = get_package_share_directory("rover_localization")
     perception_dir = get_package_share_directory("rover_perception")
@@ -43,12 +42,12 @@ def generate_launch_description():
     unitree_dir = get_package_share_directory("unitree_lidar_ros2")
 
     # Get the launch directories
-    nav_launch_dir = os.path.join(nav_dir, 'launch')
-    loc_launch_dir = os.path.join(loc_dir, 'launch')
-    perception_launch_dir = os.path.join(perception_dir, 'launch')
-    gz_launch_dir = os.path.join(gz_dir, 'launch')
-    description_launch_dir = os.path.join(description_dir, 'launch')
-    ublox_launch_dir = os.path.join(ublox_dir, 'launch')
+    nav_launch_dir = os.path.join(nav_dir, "launch")
+    loc_launch_dir = os.path.join(loc_dir, "launch")
+    perception_launch_dir = os.path.join(perception_dir, "launch")
+    gz_launch_dir = os.path.join(gz_dir, "launch")
+    description_launch_dir = os.path.join(description_dir, "launch")
+    ublox_launch_dir = os.path.join(ublox_dir, "launch")
 
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
@@ -60,10 +59,11 @@ def generate_launch_description():
     configured_params = RewrittenYaml(
         source_file=nav2_params, root_key="", param_rewrites="", convert_types=True
     )
-    
+
     description_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(description_launch_dir, 'robot_state_publisher.launch.py')),
+            os.path.join(description_launch_dir, "robot_state_publisher.launch.py")
+        ),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
@@ -71,13 +71,15 @@ def generate_launch_description():
 
     gazebo_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(gz_launch_dir, 'gazebo_gps_world.launch.py')),
+            os.path.join(gz_launch_dir, "gazebo_gps_world.launch.py")
+        ),
         condition=IfCondition(sim_mode),
     )
 
     robot_localization_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(loc_launch_dir, 'dual_ekf_navsat.launch.py')),
+            os.path.join(loc_launch_dir, "dual_ekf_navsat.launch.py")
+        ),
         launch_arguments={
             "use_sim_time": "True",
         }.items(),
@@ -105,12 +107,10 @@ def generate_launch_description():
             "params_file": configured_params,
             "autostart": "True",
         }.items(),
-
     )
 
     rviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'rviz.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "rviz.launch.py")),
         condition=IfCondition(use_rviz),
         launch_arguments={
             "use_sim_time": sim_mode,
@@ -118,8 +118,7 @@ def generate_launch_description():
     )
 
     mapviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'mapviz.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "mapviz.launch.py")),
         condition=IfCondition(use_mapviz),
         launch_arguments={
             "use_sim_time": sim_mode,
@@ -128,27 +127,27 @@ def generate_launch_description():
 
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(perception_launch_dir, 'aruco_opencv.launch.py')),
+            os.path.join(perception_launch_dir, "aruco_opencv.launch.py")
+        ),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
     )
 
     gps_cmd = IncludeLaunchDescription(
-        XMLLaunchDescriptionSource(
-            os.path.join(ublox_launch_dir, 'rover_launch.xml')),
+        XMLLaunchDescriptionSource(os.path.join(ublox_launch_dir, "rover_launch.xml")),
         condition=UnlessCondition(sim_mode),
     )
 
     lidar_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(unitree_dir, 'launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(unitree_dir, "launch.py")),
         condition=UnlessCondition(sim_mode),
     )
 
     task_exec_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'task_executor.launch.py')),
+            os.path.join(nav_launch_dir, "task_executor.launch.py")
+        ),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),

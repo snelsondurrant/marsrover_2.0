@@ -12,15 +12,15 @@ from launch.conditions import UnlessCondition, IfCondition
 
 
 def generate_launch_description():
-    use_sim_time = LaunchConfiguration('use_sim_time')
+    use_sim_time = LaunchConfiguration("use_sim_time")
     declare_use_sim_time_cmd = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='False',
-        description='Use simulation time')
-    
-    loc_dir = get_package_share_directory(
-        "rover_localization")
-    sim_rl_params_file = os.path.join(loc_dir, "config", "sim_dual_ekf_navsat_params.yaml")
+        "use_sim_time", default_value="False", description="Use simulation time"
+    )
+
+    loc_dir = get_package_share_directory("rover_localization")
+    sim_rl_params_file = os.path.join(
+        loc_dir, "config", "sim_dual_ekf_navsat_params.yaml"
+    )
     rl_params_file = os.path.join(loc_dir, "config", "dual_ekf_navsat_params.yaml")
 
     return LaunchDescription(

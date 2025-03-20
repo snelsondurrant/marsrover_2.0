@@ -21,30 +21,34 @@ def generate_launch_description():
     )
 
     # Get the launch directory
-    description_dir = get_package_share_directory(
-        "rover_description")
-    sim_urdf = os.path.join(description_dir, 'urdf', 'turtlebot3_waffle_gps.urdf')
-    with open(sim_urdf, 'r') as infp:
+    description_dir = get_package_share_directory("rover_description")
+    sim_urdf = os.path.join(description_dir, "urdf", "turtlebot3_waffle_gps.urdf")
+    with open(sim_urdf, "r") as infp:
         sim_robot_description = infp.read()
 
     # https://github.com/ros/urdf_launch
     start_robot_state_publisher_cmd = IncludeLaunchDescription(
-        PathJoinSubstitution([FindPackageShare('urdf_launch'), 'launch', 'description.launch.py']),
+        PathJoinSubstitution(
+            [FindPackageShare("urdf_launch"), "launch", "description.launch.py"]
+        ),
         # Uncomment the below (and comment out the above) to see the robot model displayed in RViz
         # PathJoinSubstitution([FindPackageShare('urdf_launch'), 'launch', 'display.launch.py']),
         launch_arguments={
-            'urdf_package': 'rover_description',
-            'urdf_package_path': PathJoinSubstitution(['urdf', 'rover.urdf.xacro'])}.items(),
-        condition=UnlessCondition(use_sim_time)
+            "urdf_package": "rover_description",
+            "urdf_package_path": PathJoinSubstitution(["urdf", "rover.urdf.xacro"]),
+        }.items(),
+        condition=UnlessCondition(use_sim_time),
     )
 
     sim_start_robot_state_publisher_cmd = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher',
-        output='both',
-        parameters=[{'robot_description': sim_robot_description, 'use_sim_time': use_sim_time}],
-        condition=IfCondition(use_sim_time)
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name="robot_state_publisher",
+        output="both",
+        parameters=[
+            {"robot_description": sim_robot_description, "use_sim_time": use_sim_time}
+        ],
+        condition=IfCondition(use_sim_time),
     )
 
     # Create the launch description and populate

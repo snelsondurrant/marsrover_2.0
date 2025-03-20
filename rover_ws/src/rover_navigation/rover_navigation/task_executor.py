@@ -7,6 +7,7 @@ import utm
 from action_msgs.msg import GoalStatus
 from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
+from geometry_msgs.msg import Pose
 from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import FollowGPSWaypoints, Spin
 from nav2_simple_commander.robot_navigator import TaskResult
@@ -20,7 +21,7 @@ from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
 from threading import RLock
 from typing import Any
-from vision_msgs.msg import Detection3DArray
+from zed_msgs.msg import ObjectsStamped, Object
 
 from rover_navigation.utils.gps_utils import latLonYaw2Geopose
 from rover_navigation.utils.yaml_utils import waypointParser
@@ -34,13 +35,6 @@ from rover_navigation.utils.terrain_utils import (
     terrainPathPlanner,
     terrainOrderPlanner,
 )
-
-#####################################################
-### Select the path and leg order planners to use ###
-#####################################################
-
-globals()["__path_planner__"] = basicPathPlanner
-globals()["__order_planner__"] = greedyOrderPlanner
 
 
 class PatchRclpyIssue1123(ActionClient):
@@ -89,7 +83,7 @@ class AutonomyTaskExecutor(Node):
     Subscribers:
     - gps/filtered (sensor_msgs/NavSatFix) [norm_callback_group]
     - aruco_detections (aruco_opencv_msgs/ArucoDetection) [norm_callback_group]
-    - object_detections (vision_msgs/Detection3DArray) [norm_callback_group]
+    - obj_det/objects (zed_msgs/ObjectsStamped) [norm_callback_group]
     Publishers:
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
@@ -119,6 +113,12 @@ class AutonomyTaskExecutor(Node):
         if not self.get_parameter("wps_file_path").value:
             self.get_logger().fatal("No waypoint file path provided")
             rclpy.shutdown()
+
+        # Declare the parameter for the path and leg order planners
+        self.declare_parameter("path_planner", "basicPathPlanner")
+        self.declare_parameter("order_planner", "greedyOrderPlanner")
+        self.path_planner = self.get_parameter("path_planner").value
+        self.order_planner = self.get_parameter("order_planner").value
 
         # Initialize variables
         self.leg = None
@@ -190,8 +190,8 @@ class AutonomyTaskExecutor(Node):
 
         # Object detection pose subscriber
         self.obj_subscriber = self.create_subscription(
-            Detection3DArray,
-            "object_detections",
+            ObjectsStamped,
+            "obj_det/objects",
             self.obj_callback,
             10,
             callback_group=norm_callback_group,
@@ -606,23 +606,30 @@ class AutonomyTaskExecutor(Node):
         """
 
         if self.leg in self.obj_legs:
-            for detection in msg.detections:
-                for result in detection.results:
-                    # Are we looking for this object right now?
-                    if result.hypothesis.class_id == self.leg:
+            for obj in msg.objects:
+                # Are we looking for this object right now?
+                if obj.label in self.leg:
 
-                        self.get_logger().info(
-                            f"Found object {result.hypothesis.class_id}"
-                        )
+                    self.get_logger().info(f"Found object {obj.label}")
 
-                        # Convert the pose to a GeoPose
-                        pose = self.pose_to_geopose(
-                            result.pose.pose, msg.header.frame_id, msg.header.stamp
-                        )
+                    # Convert to a Pose() message
+                    pose = Pose()
+                    pose.position.x = obj.position[0]
+                    pose.position.y = obj.position[1]
+                    pose.position.z = obj.position[2]
+                    pose.orientation.x = 0.0
+                    pose.orientation.y = 0.0
+                    pose.orientation.z = 0.0
+                    pose.orientation.w = 1.0
 
-                        # If it was successful, store it
-                        if pose:
-                            self.found_poses[self.leg] = pose
+                    # Convert the pose to a GeoPose
+                    pose = self.pose_to_geopose(
+                        pose, msg.header.frame_id, msg.header.stamp
+                    )
+
+                    # If it was successful, store it
+                    if pose:
+                        self.found_poses[self.leg] = pose
 
     ###########################
     ### END ROS 2 CALLBACKS ###
@@ -698,16 +705,25 @@ class AutonomyTaskExecutor(Node):
                 raise Exception("Task execution canceled by action client")
 
         self.task_info(
-            "Using order planner: " + globals()["__order_planner__"].__name__
+            "Using order planner: "
+            + self.order_planner
+            + " and path planner: "
+            + self.path_planner
         )
-        self.task_info("Using path planner: " + globals()["__path_planner__"].__name__)
-            
-        self.task_info("Please review the order plan (exit matplotlib to continue)")
+
+        self.task_info("Please review the leg order plan (exit matplotlib to continue)")
 
         # Determine the best order for the legs
-        self.legs = globals()["__order_planner__"](
-            self.legs, self.wps, self.filtered_gps
-        )
+        if self.order_planner == "bruteOrderPlanner":
+            self.legs = bruteOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        elif self.order_planner == "greedyOrderPlanner":
+            self.legs = greedyOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        elif self.order_planner == "terrainOrderPlanner":
+            self.legs = terrainOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        elif self.order_planner == "noOrderPlanner":
+            self.legs = noOrderPlanner(self.legs, self.wps, self.filtered_gps)
+        else:
+            raise Exception("Invalid order planner provided: " + self.order_planner)
 
         self.task_info("Determined best leg order: " + str(self.legs))
 
@@ -810,7 +826,12 @@ class AutonomyTaskExecutor(Node):
         self.task_info("Starting GPS navigation" + src_string)
 
         # Generate a path to the destination waypoint
-        path = globals()["__path_planner__"](self.filtered_gps, dest_wp)
+        if self.path_planner == "basicPathPlanner":
+            path = basicPathPlanner(self.filtered_gps, dest_wp)
+        elif self.path_planner == "terrainPathPlanner":
+            path = terrainPathPlanner(self.filtered_gps, dest_wp)
+        else:
+            raise Exception("Invalid path planner provided: " + self.path_planner)
 
         # Publish the GPS positions to mapviz
         for wp in path:

@@ -8,6 +8,20 @@
 # - global costmap is set to be rolling to allow the robot to traverse big environment by
 #   following successive relatively close waypoints that fit in a smaller rolling costmap
 
+# Custom params to select the order and path planners
+task_executor:
+  ros__parameters:
+    # Path planner options:
+    # - basicPathPlanner (default)
+    # - terrainPathPlanner
+    path_planner: basicPathPlanner
+    # Order planner options:
+    # - greedyOrderPlanner (default)
+    # - bruteOrderPlanner
+    # - noOrderPlanner
+    # - terrainOrderPlanner
+    order_planner: bruteOrderPlanner
+
 bt_navigator:
   ros__parameters:
     global_frame: map
