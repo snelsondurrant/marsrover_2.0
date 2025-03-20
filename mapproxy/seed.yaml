@@ -4,9 +4,9 @@ seed:
     caches: [gm_cache]
     grids: [gm_grid]
     levels:
-      from: 10
+      from: 10 # TODO: Tune these?
       to: 16
-    bbox: [-111.40, 38.30, -111.30, 38.40]
+    bbox: [-111.40, 38.30, -111.30, 38.40] # TODO: These are not right
 
   byu:
     caches: [gm_cache]
