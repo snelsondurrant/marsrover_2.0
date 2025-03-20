@@ -123,7 +123,8 @@ class MegaWrapper(Node):
     def disconnect(self):
         self.disconnected = True
         self.handshake = False
-        self.ser.close()
+        if self.ser is not None:
+            self.ser.close()
 
     def serial_writer_loop(self):
         while rclpy.ok(): # Checks if the node is still running
