@@ -1,2 +1,20 @@
-# TODO: Use mapproxy-seed to seed the cache beforehand with relevant areas
 # https://github.com/mapproxy/mapproxy/blob/master/doc/seed.rst
+seed:
+  sim:
+    caches: [gm_cache]
+    grids: [gm_grid]
+    levels:
+      from: 10
+      to: 16
+    bbox: [-111.40, 38.30, -111.30, 38.40]
+
+  byu:
+    caches: [gm_cache]
+    grids: [gm_grid]
+    levels:
+      from: 10
+      to: 16
+    bbox: [-111.50, 38.40, -111.40, 38.50]
+
+  # TODO: Add gravel pits, hanksville, etc
+    

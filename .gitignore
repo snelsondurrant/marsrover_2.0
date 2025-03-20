@@ -9,6 +9,7 @@
 **/mapproxy/cache_data/*
 **/tmuxp/tmp/*.yaml
 **/nav2_bringup
+**/mapproxy/bounding_boxes_map.html
 
 __pycache__
 .vscode
