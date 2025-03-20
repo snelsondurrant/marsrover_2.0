@@ -117,12 +117,12 @@
 
   <!-- https://www.stereolabs.com/docs/ros2/140_ros2-robot-integration -->
 
-  <joint name="zed2_camera_joint" type="fixed">
+  <joint name="zed_camera_joint" type="fixed">
     <parent link="pole_link"/>
     <child link="zed2_camera_link"/>
     <origin xyz="${pole_length/2} 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <link name="zed2_camera_link"/>
+  <link name="zed_camera_link"/>
 
 </robot>
