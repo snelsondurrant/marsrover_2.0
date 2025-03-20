@@ -15,7 +15,7 @@ def generate_launch_description():
         "use_sim_time", default_value="False", description="Use simulation time"
     )
     cam_config_path = os.path.join(
-        get_package_share_directory("rover_navigation"), "config", "aruco_cam_params.yaml"
+        get_package_share_directory("rover_perception"), "config", "aruco_cam_params.yaml"
     )
 
     return LaunchDescription(

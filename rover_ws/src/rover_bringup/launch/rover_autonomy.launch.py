@@ -35,6 +35,8 @@ def generate_launch_description():
     # Get the package directories
     bringup_dir = get_package_share_directory('nav2_bringup')
     nav_dir = get_package_share_directory("rover_navigation")
+    loc_dir = get_package_share_directory("rover_localization")
+    perception_dir = get_package_share_directory("rover_perception")
     gz_dir = get_package_share_directory("rover_gazebo")
     description_dir = get_package_share_directory("rover_description")
     ublox_dir = get_package_share_directory("ublox_read_2")
@@ -42,6 +44,8 @@ def generate_launch_description():
 
     # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, 'launch')
+    loc_launch_dir = os.path.join(loc_dir, 'launch')
+    perception_launch_dir = os.path.join(perception_dir, 'launch')
     gz_launch_dir = os.path.join(gz_dir, 'launch')
     description_launch_dir = os.path.join(description_dir, 'launch')
     ublox_launch_dir = os.path.join(ublox_dir, 'launch')
@@ -73,7 +77,7 @@ def generate_launch_description():
 
     robot_localization_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'dual_ekf_navsat.launch.py')),
+            os.path.join(loc_launch_dir, 'dual_ekf_navsat.launch.py')),
         launch_arguments={
             "use_sim_time": "True",
         }.items(),
@@ -124,7 +128,7 @@ def generate_launch_description():
 
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, 'aruco_opencv.launch.py')),
+            os.path.join(perception_launch_dir, 'aruco_opencv.launch.py')),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
