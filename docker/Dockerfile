@@ -94,7 +94,7 @@ ENV PATH="$PATH:/home/$NAME/.local/bin"
 #
 ###############################################################
 
-# Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2024
+# Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2025
 # Pre-built full navigation stack for GPS navigation and localization
 USER root
 RUN apt update && apt install -y \
@@ -102,7 +102,7 @@ RUN apt update && apt install -y \
     ros-iron-robot-localization
 USER $NAME
 
-# Install graphical interface packages - Nelson Durrant, Feb 2024
+# Install graphical interface packages - Nelson Durrant, Feb 2025
 # We use RViz2, RQT, and Python3-tk for GUIs
 USER root
 RUN apt update && apt install -y \
@@ -111,13 +111,13 @@ RUN apt update && apt install -y \
     python3-tk
 USER $NAME
 
-# Install plotjuggler - Nelson Durrant, Feb 2024
+# Install plotjuggler - Nelson Durrant, Feb 2025
 # Useful for plotting and visualizing data from ROS 2 bags
 USER root
 RUN apt update && apt install -y ros-iron-plotjuggler-ros
 USER $NAME
 
-# Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2024
+# Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2025
 # We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
 # For some reason, these packages are not available for arm64
 USER root
@@ -128,7 +128,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
 fi
 USER $NAME
 
-# Install the aruco_opencv packages - Nelson Durrant, Feb 2024
+# Install the aruco_opencv packages - Nelson Durrant, Feb 2025
 # Used for detecting ArUco markers in the simulation and real world
 USER root
 RUN apt update && apt install -y \
@@ -136,7 +136,7 @@ RUN apt update && apt install -y \
     ros-iron-usb-cam
 USER $NAME
 
-# Install mapviz packages - Nelson Durrant, Feb 2024
+# Install mapviz packages - Nelson Durrant, Feb 2025
 # Used for visualizing the robot's path and gps location
 # For some reason, these packages are not available for arm64
 USER root
@@ -148,7 +148,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
 fi
 USER $NAME
 
-# Install mobility packages - Nelson Durrant, Feb 2024
+# Install mobility packages - Nelson Durrant, Feb 2025
 # Used for controlling the robot's movement through a joystick or keyboard
 USER root
 RUN apt update && apt install -y \
@@ -158,7 +158,7 @@ RUN apt update && apt install -y \
     ros-iron-topic-tools
 USER $NAME
 
-# Install zed interface packages - Nelson Durrant, Feb 2024
+# Install zed interface packages - Nelson Durrant, Feb 2025
 # Necessary message package to listen to topics from the ZED camera
 USER root
 RUN apt update && apt install -y \
@@ -166,11 +166,11 @@ RUN apt update && apt install -y \
     ros-iron-vision-msgs-rviz-plugins
 USER $NAME
 
-# Install python UTM library - Nelson Durrant, Feb 2024
+# Install python UTM library - Nelson Durrant, Feb 2025
 # Used for converting object and aruco poses to GPS coordinates
 RUN pip3 install utm
 
-# Install turtlesim tf2 packages - Nelson Durrant, Feb 2024
+# Install turtlesim tf2 packages - Nelson Durrant, Feb 2025
 # Used in the ROS 2 and tf2 tutorials
 USER root
 RUN apt update && apt install -y \
@@ -180,29 +180,29 @@ RUN apt update && apt install -y \
     ros-iron-turtlesim
 USER $NAME
 
-# Install ascii art packages - Nelson Durrant, Mar 2024
+# Install ascii art packages - Nelson Durrant, Mar 2025
 # Used for the Mars Rover ASCII art display on startup
 RUN pip3 install --upgrade pillow asciimatics
 
-# Install tmux docker-compose-esque launcher - Nelson Durrant, Mar 2024
+# Install tmux docker-compose-esque launcher - Nelson Durrant, Mar 2025
 # Used for launching multiple tmux windows with a single command
 RUN pip3 install tmuxp
 
-# Install matplotlib - Nelson Durrant, Mar 2024
+# Install matplotlib - Nelson Durrant, Mar 2025
 # Used for plotting calculated path planning routes
 RUN pip3 install matplotlib
 
-# Install pyserial - Nelson Durrant, Mar 2024
+# Install pyserial - Nelson Durrant, Mar 2025
 # Used for serial communication with the Arduinos
 RUN pip3 install pyserial
 
-# Install pcl_conversions - Nelson Durrant, Mar 2024
+# Install pcl_conversions - Nelson Durrant, Mar 2025
 # Used for point cloud conversion in the unitree lidar package
 USER root
 RUN apt update && apt install -y ros-iron-pcl-conversions
 USER $NAME
 
-# Install xacro convertor package - Nelson Durrant, Mar 2024
+# Install xacro convertor package - Nelson Durrant, Mar 2025
 # Used for converting the rover's xacro files to urdf files
 USER root
 RUN apt update && apt install -y \
@@ -210,3 +210,8 @@ RUN apt update && apt install -y \
     ros-iron-joint-state-publisher-gui \
     ros-iron-urdf-launch
 USER $NAME
+
+# Install mapproxy caching utils - Nelson Durrant, Mar 2025
+# Used for pre-caching map data and viewing cache maps
+RUN pip3 install folium
+RUN pip3 install mapproxy
