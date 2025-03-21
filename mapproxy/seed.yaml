@@ -1,11 +1,13 @@
 # https://github.com/mapproxy/mapproxy/blob/master/doc/seed.rst
-seed:
+seeds:
   sim:
     caches: [gm_cache]
     grids: [gm_grid]
     levels:
       from: 10 # TODO: Tune these?
       to: 16
+    refresh_before:
+      weeks: 3
     bbox: [-111.40, 38.30, -111.30, 38.40] # TODO: These are not right
 
   byu:
@@ -14,7 +16,9 @@ seed:
     levels:
       from: 10
       to: 16
-    bbox: [-111.50, 38.40, -111.40, 38.50]
+    refresh_before:
+      weeks: 3
+    bbox: [-111.465, 38.435, -111.435, 38.465]
 
   # TODO: Add gravel pits, hanksville, etc
     

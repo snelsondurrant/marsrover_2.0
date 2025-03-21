@@ -14,11 +14,11 @@ def visualize_bounding_boxes(seed_file="seed.yaml"):
         with open(seed_file, "r") as f:
             config = yaml.safe_load(f)
 
-        if "seed" not in config:
-            print("No 'seed' section found in the configuration file.")
+        if "seeds" not in config:
+            print("No 'seeds' section found in the configuration file.")
             return
 
-        seed_data = config["seed"]
+        seed_data = config["seeds"]
 
         if not seed_data:
             print("No seeds found in the configuration file.")
