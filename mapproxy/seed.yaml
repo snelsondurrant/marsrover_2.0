@@ -21,4 +21,7 @@ seeds:
     bbox: [-111.465, 38.435, -111.435, 38.465]
 
   # TODO: Add gravel pits, hanksville, etc
+
+  # TODO: Write a python script to convert the lat/lon coordinates to EPSG:3857 coordinates
+  # TODO: Write a python script to display the bounding boxes in the seed.yaml file on a map
     
