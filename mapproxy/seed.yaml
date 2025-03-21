@@ -4,7 +4,7 @@ seeds:
     caches: [gm_cache]
     grids: [gm_grid] # EPSG:3857
     levels:
-      from: 15
+      from: 15  # TODO: Tune these
       to: 18  # if this is too high, Google might not have the tile resolution for it and the seed will fail
     refresh_before:
       weeks: 3
