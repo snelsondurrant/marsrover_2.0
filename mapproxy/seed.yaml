@@ -2,20 +2,20 @@
 seeds:
   sim:
     caches: [gm_cache]
-    grids: [gm_grid]
+    grids: [gm_grid] # EPSG:3857
     levels:
-      from: 10 # TODO: Tune these?
-      to: 16
+      from: 15
+      to: 18  # if this is too high, Google might not have the tile resolution for it and the seed will fail
     refresh_before:
       weeks: 3
-    bbox: [-111.40, 38.30, -111.30, 38.40] # TODO: These are not right
+    bbox: [-111.40, 38.30, -111.30, 38.40] # TODO: These need to be converted to the ESPG:3857 coordinates
 
   byu:
     caches: [gm_cache]
-    grids: [gm_grid]
+    grids: [gm_grid] # EPSG:3857
     levels:
-      from: 10
-      to: 16
+      from: 15
+      to: 18  # if this is too high, Google might not have the tile resolution for it and the seed will fail
     refresh_before:
       weeks: 3
     bbox: [-111.465, 38.435, -111.435, 38.465]
