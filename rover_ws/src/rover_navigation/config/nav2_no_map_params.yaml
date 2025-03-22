@@ -5,6 +5,20 @@
 # Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
 # to follow and navigate in seems like the best solution for code simplicity and effectiveness.
 
+# Custom params to select the order and path planners
+task_executor:
+  ros__parameters:
+    # Path planner options:
+    # - basicPathPlanner (default)
+    # - terrainPathPlanner
+    path_planner: basicPathPlanner
+    # Order planner options:
+    # - greedyOrderPlanner (default)
+    # - bruteOrderPlanner
+    # - noOrderPlanner
+    # - terrainOrderPlanner
+    order_planner: greedyOrderPlanner
+
 bt_navigator:
   ros__parameters:
     global_frame: map

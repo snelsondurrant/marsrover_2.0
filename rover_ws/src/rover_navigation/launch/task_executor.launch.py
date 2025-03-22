@@ -18,8 +18,16 @@ def generate_launch_description():
         "use_sim_time", default_value="False", description="Use simulation time"
     )
 
-    sim_wps_file = "/home/marsrover-docker/rover_ws/src/rover_navigation/config/sim_waypoints.yaml"
-    wps_file = "/home/marsrover-docker/rover_ws/src/rover_navigation/config/waypoints.yaml"
+    sim_wps_file = (
+        "/home/marsrover-docker/rover_ws/src/rover_navigation/config/sim_waypoints.yaml"
+    )
+    wps_file = (
+        "/home/marsrover-docker/rover_ws/src/rover_navigation/config/waypoints.yaml"
+    )
+
+    nav_dir = get_package_share_directory("rover_navigation")
+    config_file = os.path.join(nav_dir, "config", "nav2_no_map_params.yaml")
+    sim_config_file = os.path.join(nav_dir, "config", "sim_nav2_no_map_params.yaml")
 
     return LaunchDescription(
         [
@@ -36,14 +44,20 @@ def generate_launch_description():
                 package="rover_navigation",
                 executable="autonomy_task_executor",
                 output="screen",
-                parameters=[{"use_sim_time": use_sim_time, "wps_file_path": wps_file}],
+                parameters=[
+                    config_file,
+                    {"use_sim_time": use_sim_time, "wps_file_path": wps_file},
+                ],
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 package="rover_navigation",
                 executable="autonomy_task_executor",
                 output="screen",
-                parameters=[{"use_sim_time": use_sim_time, "wps_file_path": sim_wps_file}],
+                parameters=[
+                    sim_config_file,
+                    {"use_sim_time": use_sim_time, "wps_file_path": sim_wps_file},
+                ],
                 condition=IfCondition(use_sim_time),
             ),
         ]

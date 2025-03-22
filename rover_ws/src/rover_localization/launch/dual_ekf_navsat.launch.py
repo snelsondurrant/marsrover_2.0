@@ -12,16 +12,16 @@ from launch.conditions import UnlessCondition, IfCondition
 
 
 def generate_launch_description():
-    use_sim_time = LaunchConfiguration('use_sim_time')
+    use_sim_time = LaunchConfiguration("use_sim_time")
     declare_use_sim_time_cmd = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='False',
-        description='Use simulation time')
-    
-    nav_dir = get_package_share_directory(
-        "rover_navigation")
-    sim_rl_params_file = os.path.join(nav_dir, "config", "sim_dual_ekf_navsat_params.yaml")
-    rl_params_file = os.path.join(nav_dir, "config", "dual_ekf_navsat_params.yaml")
+        "use_sim_time", default_value="False", description="Use simulation time"
+    )
+
+    loc_dir = get_package_share_directory("rover_localization")
+    sim_rl_params_file = os.path.join(
+        loc_dir, "config", "sim_dual_ekf_navsat_params.yaml"
+    )
+    rl_params_file = os.path.join(loc_dir, "config", "dual_ekf_navsat_params.yaml")
 
     return LaunchDescription(
         [
@@ -100,7 +100,7 @@ def generate_launch_description():
             ),
             # Added PVT to NSF conversion node
             launch_ros.actions.Node(
-                package="rover_navigation",
+                package="rover_localization",
                 executable="pvt_to_nsf",
                 output="screen",
                 condition=UnlessCondition(use_sim_time),

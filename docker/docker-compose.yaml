@@ -16,6 +16,7 @@ services:
       - ../scripts:/home/marsrover-docker/scripts
       - ../tutorial_ws:/home/marsrover-docker/tutorial_ws
       - ../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp
+      - ../mapproxy:/home/marsrover-docker/mapproxy
       - ./startup:/startup
       - /dev:/dev:rw
       - /dev/shm:/dev/shm

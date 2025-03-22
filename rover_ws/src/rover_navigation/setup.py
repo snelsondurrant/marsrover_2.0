@@ -25,7 +25,6 @@ setup(
     entry_points={
         'console_scripts': [
             'autonomy_task_executor = rover_navigation.task_executor:main',
-            'pvt_to_nsf = rover_navigation.pvt_to_nsf:main',
         ],
     },
 )

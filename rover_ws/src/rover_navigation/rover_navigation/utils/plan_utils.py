@@ -4,9 +4,7 @@ from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_
 from rover_navigation.utils.plot_utils import plotOrder
 
 
-def basicPathPlanner(
-    geopose1, geopose2
-):  # all path planners need to match these arguments
+def basicPathPlanner(geopose1, geopose2):
     """
     Generate intermediary waypoints in a straight line between two GPS coordinates
 
@@ -60,9 +58,7 @@ def basicPathPlanner(
     return new_wps
 
 
-def bruteOrderPlanner(
-    legs, waypoints, fix
-):  # all order planners need to match these arguments
+def bruteOrderPlanner(legs, waypoints, fix):
     """
     Brute force the optimal order to complete the task legs (This is an NP-hard problem)
 
@@ -90,9 +86,7 @@ def bruteOrderPlanner(
     return best_order
 
 
-def greedyOrderPlanner(
-    legs, waypoints, fix
-):  # all order planners need to match these arguments
+def greedyOrderPlanner(legs, waypoints, fix):
     """
     Determine a greedy order to complete the task legs (This is an NP-hard problem)
 
@@ -131,9 +125,7 @@ def greedyOrderPlanner(
     return order
 
 
-def noOrderPlanner(
-    legs, waypoints, fix
-):  # all order planners need to match these arguments
+def noOrderPlanner(legs, waypoints, fix):
     """
     Just return the task legs in the order they were given
 

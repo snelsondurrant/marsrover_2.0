@@ -10,18 +10,19 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    rover_control_dir = get_package_share_directory(
-        "rover_control")
-    rover_control_launch_dir = os.path.join(rover_control_dir, 'launch')
+    rover_control_dir = get_package_share_directory("rover_control")
+    rover_control_launch_dir = os.path.join(rover_control_dir, "launch")
 
     mobility_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(rover_control_launch_dir, 'mobility.launch.py')),
+            os.path.join(rover_control_launch_dir, "mobility.launch.py")
+        ),
     )
 
     peripherals_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(rover_control_launch_dir, 'peripherals.launch.py')),
+            os.path.join(rover_control_launch_dir, "peripherals.launch.py")
+        ),
     )
 
     ld = LaunchDescription()

@@ -5,11 +5,13 @@ import launch_ros.descriptions
 
 
 def generate_launch_description():
-    
-    return launch.LaunchDescription([
-        launch_ros.actions.Node(
-            package="rover_control",
-            executable="nano_wrapper",
-            output="screen",
-        ),
-    ])
+
+    return launch.LaunchDescription(
+        [
+            launch_ros.actions.Node(
+                package="rover_control",
+                executable="nano_wrapper",
+                output="screen",
+            ),
+        ]
+    )
