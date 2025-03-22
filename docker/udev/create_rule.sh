@@ -46,7 +46,7 @@ echo "Detected new device: $NEW_DEVICE_INFO"
 # Check dmesg for the device path
 echo " "
 echo "Checking dmesg for the new device path..."
-dmesg_output=$(sudo dmesg | tail -n 20)
+dmesg_output=$(sudo dmesg | tail -n 5)
 DEV_PATH=$(echo "$dmesg_output" | grep -oP 'ttyUSB[0-9]+' || echo "$dmesg_output" | grep -oP 'ttyACM[0-9]+' | tail -n 1)
 
 if [ -z "$DEV_PATH" ]; then

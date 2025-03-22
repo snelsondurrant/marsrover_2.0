@@ -1,22 +1,24 @@
 # Created by Nelson Durrant, Oct 2024
 services:
   marsrover:
-    image: byuawesomerover/marsrover:latest
-    container_name: marsrover-ct
+    image: byuawesomerover/marsrover:humble
+    container_name: marsrover-humble
     build: .
     user: marsrover-docker
-    network_mode: host
+    # network_mode: host
+    # ipc: host
+    # pid: host
     privileged: true
     environment:
       - DISPLAY=$DISPLAY # Required for GUI applications
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
-      - ../rover_ws:/home/marsrover-docker/rover_ws
-      - ../firmware:/home/marsrover-docker/firmware
-      - ../scripts:/home/marsrover-docker/scripts
-      - ../tutorial_ws:/home/marsrover-docker/tutorial_ws
-      - ../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp
-      - ./startup:/startup
+      - ../../rover_ws:/home/marsrover-docker/rover_ws
+      - ../../firmware:/home/marsrover-docker/firmware
+      - ../../scripts:/home/marsrover-docker/scripts
+      - ../../tutorial_ws:/home/marsrover-docker/tutorial_ws
+      - ../../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp
+      - ../startup:/startup
       - /dev:/dev:rw
       - /dev/shm:/dev/shm
       - /etc/udev:/etc/udev:rw
