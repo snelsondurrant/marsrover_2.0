@@ -84,6 +84,7 @@ def generate_launch_description():
             "use_sim_time": "True",
         }.items(),
     )
+    # TODO: Are we sure we want to use sim time for the ekf?
 
     sim_navigation2_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

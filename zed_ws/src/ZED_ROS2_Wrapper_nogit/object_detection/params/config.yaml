@@ -1,6 +1,0 @@
-zed/object_detection:
-  ros__parameters:
-    engine_name: "/home/zed-docker/zed_ws/yolo_models/yolov8m_1024.engine"
-    process_period_ms: 100
-    sensor_process_period_ms: 100
-    confidence_thresh: 0.3
