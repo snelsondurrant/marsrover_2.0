@@ -93,8 +93,8 @@ class AutonomyTaskExecutor(Node):
     - trigger_teleop (std_srvs/Trigger) [norm_callback_group]
     - trigger_auto (std_srvs/Trigger) [norm_callback_group]
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
-    Action Clients:
     - fromLL (robot_localization/FromLL) [norm_callback_group]
+    Action Clients:
     - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
     - {node_name}/get_state (lifecycle_msgs/GetState) [basic_nav_callback_group] (temporary)
@@ -301,7 +301,7 @@ class AutonomyTaskExecutor(Node):
 
         IMPORTANT! In ROS2 Humble the Nav2 GPS waypoint follower is not avaliable.
         I've implemented a patch to use robot_localization to convert to poses Nav2 can go to.
-        For versions > Humble you should just be able to use that server though.
+        For versions newer than Humble you should just be able to use that server though.
 
         https://github.com/ros-navigation/navigation2_tutorials/issues/77#issuecomment-1856414168
         """
@@ -986,7 +986,7 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Starting spin search" + src_string)
 
-        asyncio.run(self.spin(spin_dist=3.14))
+        asyncio.run(self.spin(spin_dist=6.28))
         while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
 

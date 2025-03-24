@@ -57,18 +57,18 @@ def generate_launch_description():
     # Create the launch description and populate
     ld = LaunchDescription(
         [
-            Node(
-                package="rover_gazebo",
-                executable="sim_obj_detect",
-                output="screen",
-                parameters=[
-                    {
-                        "use_sim_time": True,
-                        "enable_mallet": True,
-                        "enable_bottle": False,
-                    }
-                ],
-            )
+            # Node(
+            #     package="rover_gazebo",
+            #     executable="sim_obj_detect",
+            #     output="screen",
+            #     parameters=[
+            #         {
+            #             "use_sim_time": True,
+            #             "enable_mallet": True,
+            #             "enable_bottle": False,
+            #         }
+            #     ],
+            # )
         ]
     )
 

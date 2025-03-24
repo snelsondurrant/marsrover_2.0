@@ -1,9 +1,11 @@
 # Created by Nelson Durrant, Oct 2024 
-FROM ros:iron-ros-base
-# Why use ROS 2 Iron?
-# The simulator is build using Gazebo Classic, which is only supported in ROS 2 Iron and older.
-# The Navigation2 package's simple GPS navigation functions are only supported in ROS 2 Iron and newer.
-# So, we need to use ROS 2 Iron to run the simulator and the navigation functions at the same time.
+FROM ros:humble-ros-base
+# Why use ROS 2 Humble?
+# The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older,
+# and although Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer,
+# we've implemented a workaround using ROS 2 Humble. Through extensive testing, the Iron-Humble
+# inter-Docker container FastDDS connection doesn't work reliably (the ZED runs in a Humble container)
+# and Iron seems to have less official and community support than Humble (with a sooner EOL).
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
@@ -77,7 +79,7 @@ WORKDIR /home/$NAME
 RUN rm -rf /home/$NAME/marsrover
 
 # Set up automatic ROS 2 sourcing and colorized output
-RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
 RUN touch ~/.hushlogin
 
@@ -98,23 +100,23 @@ ENV PATH="$PATH:/home/$NAME/.local/bin"
 # Pre-built full navigation stack for GPS navigation and localization
 USER root
 RUN apt update && apt install -y \
-    ros-iron-navigation2 \
-    ros-iron-robot-localization
+    ros-humble-navigation2 \
+    ros-humble-robot-localization
 USER $NAME
 
 # Install graphical interface packages - Nelson Durrant, Feb 2025
 # We use RViz2, RQT, and Python3-tk for GUIs
 USER root
 RUN apt update && apt install -y \
-    ros-iron-rviz2 \
-    ros-iron-rqt* \
+    ros-humble-rviz2 \
+    ros-humble-rqt* \
     python3-tk
 USER $NAME
 
 # Install plotjuggler - Nelson Durrant, Feb 2025
 # Useful for plotting and visualizing data from ROS 2 bags
 USER root
-RUN apt update && apt install -y ros-iron-plotjuggler-ros
+RUN apt update && apt install -y ros-humble-plotjuggler-ros
 USER $NAME
 
 # Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2025
@@ -123,8 +125,8 @@ USER $NAME
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
-    ros-iron-nav2-bringup \
-    ros-iron-turtlebot3-gazebo; \
+    ros-humble-nav2-bringup \
+    ros-humble-turtlebot3-gazebo; \
 fi
 USER $NAME
 
@@ -132,8 +134,8 @@ USER $NAME
 # Used for detecting ArUco markers in the simulation and real world
 USER root
 RUN apt update && apt install -y \
-    ros-iron-aruco-opencv \
-    ros-iron-usb-cam
+    ros-humble-aruco-opencv \
+    ros-humble-usb-cam
 USER $NAME
 
 # Install mapviz packages - Nelson Durrant, Feb 2025
@@ -142,9 +144,9 @@ USER $NAME
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
-    ros-iron-mapviz \
-    ros-iron-mapviz-plugins \
-    ros-iron-tile-map; \
+    ros-humble-mapviz \
+    ros-humble-mapviz-plugins \
+    ros-humble-tile-map; \
 fi
 USER $NAME
 
@@ -152,18 +154,18 @@ USER $NAME
 # Used for controlling the robot's movement through a joystick or keyboard
 USER root
 RUN apt update && apt install -y \
-    ros-iron-joy \
-    ros-iron-teleop-twist-joy \
-    ros-iron-teleop-twist-keyboard \
-    ros-iron-topic-tools
+    ros-humble-joy \
+    ros-humble-teleop-twist-joy \
+    ros-humble-teleop-twist-keyboard \
+    ros-humble-topic-tools
 USER $NAME
 
 # Install zed interface packages - Nelson Durrant, Feb 2025
 # Necessary message package to listen to topics from the ZED camera
 USER root
 RUN apt update && apt install -y \
-    ros-iron-vision-msgs \
-    ros-iron-vision-msgs-rviz-plugins
+    ros-humble-vision-msgs \
+    ros-humble-vision-msgs-rviz-plugins
 USER $NAME
 
 # Install python UTM library - Nelson Durrant, Feb 2025
@@ -174,10 +176,10 @@ RUN pip3 install utm
 # Used in the ROS 2 and tf2 tutorials
 USER root
 RUN apt update && apt install -y \
-    ros-iron-turtle-tf2-py \
-    ros-iron-tf2-ros \
-    ros-iron-tf2-tools \
-    ros-iron-turtlesim
+    ros-humble-turtle-tf2-py \
+    ros-humble-tf2-ros \
+    ros-humble-tf2-tools \
+    ros-humble-turtlesim
 USER $NAME
 
 # Install ascii art packages - Nelson Durrant, Mar 2025
@@ -199,14 +201,14 @@ RUN pip3 install pyserial
 # Install pcl_conversions - Nelson Durrant, Mar 2025
 # Used for point cloud conversion in the unitree lidar package
 USER root
-RUN apt update && apt install -y ros-iron-pcl-conversions
+RUN apt update && apt install -y ros-humble-pcl-conversions
 USER $NAME
 
 # Install xacro convertor package - Nelson Durrant, Mar 2025
 # Used for converting the rover's xacro files to urdf files
 USER root
 RUN apt update && apt install -y \
-    ros-iron-xacro \
-    ros-iron-joint-state-publisher-gui \
-    ros-iron-urdf-launch
+    ros-humble-xacro \
+    ros-humble-joint-state-publisher-gui \
+    ros-humble-urdf-launch
 USER $NAME
