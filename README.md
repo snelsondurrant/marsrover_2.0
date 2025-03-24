@@ -36,7 +36,9 @@ Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.or
 
 Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
 
-GPS Navigation w Nav2 Tutorial* - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+
+ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.html](https://docs.nav2.org/tutorials/docs/integrating_vio.html)
 
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
