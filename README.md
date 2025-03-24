@@ -1,6 +1,6 @@
 ### Get Started:
 
-> **NOTE:** Newer Macs (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support and will trigger rover-specific hardware conditionals. I'd recommend just finding and using a campus computer with AMD64 architecture instead.
+> **NOTE:** Newer Macs (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support and will trigger rover-specific hardware conditionals.
 
 **Windows:**
 
