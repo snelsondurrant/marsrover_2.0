@@ -6,8 +6,6 @@ services:
     build: .
     user: marsrover-docker
     network_mode: host
-    # ipc: host # TODO: These might work?
-    # pid: host
     privileged: true
     environment:
       - DISPLAY=$DISPLAY # Required for GUI applications

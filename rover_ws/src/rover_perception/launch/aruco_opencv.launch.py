@@ -4,7 +4,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 import launch_ros.actions
 from ament_index_python.packages import get_package_share_directory
-from launch.conditions import UnlessCondition
+from launch.conditions import UnlessCondition, IfCondition
 import os
 
 
@@ -20,6 +20,27 @@ def generate_launch_description():
         "aruco_cam_params.yaml",
     )
 
+    try:
+        # Path to the symlink
+        udev_path = '/dev/rover/cameras/autonomyWebCam'
+
+        # Read the symlink to get the relative path it points to (e.g., ../../video8)
+        relative_target = os.readlink(udev_path)
+
+        # Extract the final component of the relative path (e.g., 'video8')
+        final_device_name = os.path.basename(relative_target)
+
+        # Construct the absolute path in /dev folder (e.g., /dev/video8)
+        absolute_target = os.path.join('/dev', final_device_name)
+
+        device = {'video_device': absolute_target}
+
+        # Print the final absolute device path
+        print(f"Autonomy Web Cam using: {absolute_target}")
+    
+    except OSError as e:
+        print(f"Error resolving symlink: {e}")
+
     return LaunchDescription(
         [
             declare_use_sim_time_cmd,
@@ -28,7 +49,7 @@ def generate_launch_description():
                 executable="usb_cam_node_exe",
                 namespace="aruco_cam",
                 output="screen",
-                parameters=[cam_config_path],
+                parameters=[device, cam_config_path],
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
@@ -50,6 +71,21 @@ def generate_launch_description():
                         "/intel_realsense_r200_depth/camera_info",
                     ),
                 ],
+                condition=IfCondition(use_sim_time)
+            ),
+            launch_ros.actions.Node(
+                # https://github.com/fictionlab/ros_aruco_opencv
+                package="aruco_opencv",
+                executable="aruco_tracker_autostart",
+                output="screen",
+                parameters=[
+                    {
+                        "cam_base_topic": "aruco_cam/image_raw",
+                        "marker_size": 0.2,
+                        "use_sim_time": use_sim_time,
+                    }
+                ],
+                condition=UnlessCondition(use_sim_time)
             ),
         ]
     )

@@ -24,6 +24,23 @@ ARG GEOGRAPHIC_INFO_VERSION=1.0.6
 ARG POINTCLOUD_TRANSPORT_VERSION=1.0.18
 ARG POINTCLOUD_TRANSPORT_PLUGINS_VERSION=1.0.11
 
+###
+
+# Define a username and password for the new user
+ARG NAME=marsrover-zed
+ARG PASS=marsrover
+
+# Set up a new user
+RUN useradd -ms /bin/bash $NAME
+RUN usermod -aG sudo $NAME
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN usermod -aG video $NAME
+RUN usermod -aG dialout $NAME
+RUN groupadd docker
+RUN usermod -aG docker $NAME
+RUN echo "$NAME:$PASS" | chpasswd
+
+###
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -66,32 +83,12 @@ RUN echo "# R${L4T_MAJOR} (release), REVISION: ${L4T_MINOR}" > /etc/nv_tegra_rel
 # Install the ZED ROS2 Wrapper
 ENV ROS_DISTRO=${ROS2_DIST}
 
-# Copy the sources in the Docker image
-WORKDIR /root/ros2_ws/src
-# COPY tmp_sources/ ./
-
-# # Install missing dependencies from the sources
-# WORKDIR /root/ros2_ws/src
-# RUN wget https://github.com/ros/xacro/archive/refs/tags/${XACRO_VERSION}.tar.gz -O - | tar -xvz && mv xacro-${XACRO_VERSION} xacro && \
-#     wget https://github.com/ros/diagnostics/archive/refs/tags/${DIAGNOSTICS_VERSION}.tar.gz -O - | tar -xvz && mv diagnostics-${DIAGNOSTICS_VERSION} diagnostics && \
-#     wget https://github.com/ament/ament_lint/archive/refs/tags/${AMENT_LINT_VERSION}.tar.gz -O - | tar -xvz && mv ament_lint-${AMENT_LINT_VERSION} ament-lint && \
-#     # wget https://github.com/cra-ros-pkg/robot_localization/archive/refs/tags/${ROBOT_LOCALIZATION_VERSION}.tar.gz -O - | tar -xvz && mv robot_localization-${ROBOT_LOCALIZATION_VERSION} robot-localization && \
-#     wget https://github.com/stereolabs/zed-ros2-interfaces/archive/refs/tags/${ZED_MSGS_VERSION}.tar.gz -O - | tar -xvz && mv zed-ros2-interfaces-${ZED_MSGS_VERSION} zed-ros2-interfaces && \
-#     # wget https://github.com/ros-drivers/nmea_msgs/archive/refs/tags/${NMEA_MSGS_VERSION}.tar.gz -O - | tar -xvz && mv nmea_msgs-${NMEA_MSGS_VERSION} nmea_msgs && \
-#     wget https://github.com/ros/angles/archive/refs/tags/${ANGLES_VERSION}.tar.gz -O - | tar -xvz && mv angles-${ANGLES_VERSION} angles && \
-#     wget https://github.com/ros-perception/point_cloud_transport/archive/refs/tags/${POINTCLOUD_TRANSPORT_VERSION}.tar.gz -O - | tar -xvz && mv point_cloud_transport-${POINTCLOUD_TRANSPORT_VERSION} point_cloud_transport && \
-#     wget https://github.com/ros-perception/point_cloud_transport_plugins/archive/refs/tags/${POINTCLOUD_TRANSPORT_PLUGINS_VERSION}.tar.gz -O - | tar -xvz && mv point_cloud_transport_plugins-${POINTCLOUD_TRANSPORT_PLUGINS_VERSION} point_cloud_transport_plugins 
-#     # wget https://github.com/ros-geographic-info/geographic_info/archive/refs/tags/${GEOGRAPHIC_INFO_VERSION}.tar.gz -O - | tar -xvz && mv geographic_info-${GEOGRAPHIC_INFO_VERSION} geographic-info && \
-#     # cp -r geographic-info/geographic_msgs/ . && \
-#     # rm -rf geographic-info
-    
-# RUN apt update && apt install -y ros-humble-cob-srvs ros-humble-geographic-msgs ros-humble-unique-identifier-msgs ros-humble-rosidl-default-generators ros-humble-nmea-msgs ros-humble-robot-localization
-
-# Set the working directory
-WORKDIR /root/ros2_ws/src
+###
 
 # Install missing dependencies from APT
 RUN apt update && apt install -y \
+    ros-humble-ros-base \
+    ros-humble-zed-msgs \
     ros-humble-xacro \
     ros-humble-ament-lint \
     ros-humble-point-cloud-transport \
@@ -104,22 +101,10 @@ RUN apt update && apt install -y \
     ros-humble-angles \  
     ros-humble-stereo-msgs \
     ros-humble-image-transport \     
-    ros-humble-visualization-msgs \           
-    && rm -rf /var/lib/apt/lists/*
-
-
+    ros-humble-visualization-msgs
+    
 # Install cython
 RUN python3 -m pip install --upgrade cython
-
-# # Build the dependencies and the ZED ROS2 Wrapper
-# WORKDIR /root/ros2_ws
-# RUN /bin/bash -c "source /opt/ros/$ROS_DISTRO/install/setup.bash && \
-#   colcon build --parallel-workers $(nproc) --symlink-install \
-#   --event-handlers console_direct+ --base-paths src \
-#   --cmake-args ' -DCMAKE_BUILD_TYPE=Release' \
-#   ' -DCMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs' \
-#   ' -DCMAKE_CXX_FLAGS="-Wl,--allow-shlib-undefined"' \
-#   ' --no-warn-unused-cli' "
 
 # Install build tools and dependencies
 RUN apt update && apt install -y \
@@ -130,16 +115,12 @@ RUN apt update && apt install -y \
     python3-wheel \
     ros-humble-ament-cmake-auto \
     ros-humble-shape-msgs \
-    ros-humble-ament-lint-auto \
-    && rm -rf /var/lib/apt/lists/*
+    ros-humble-ament-lint-auto
 
-WORKDIR /root/ros2_ws
+RUN chown -R marsrover-zed:marsrover-zed /usr/local
 
-# Setup environment variables 
-# COPY ros_entrypoint_jetson.sh /sbin/ros_entrypoint.sh
-# RUN sudo chmod 755 /sbin/ros_entrypoint.sh
+WORKDIR /home/$NAME
+USER $NAME
 
-# ENTRYPOINT ["/sbin/ros_entrypoint.sh"]
-# CMD ["bash"]
 CMD ["/bin/bash"]
 

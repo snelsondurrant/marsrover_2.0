@@ -4,7 +4,7 @@ services:
     container_name: zed-ros2-wrapper
     build: 
       context: .
-      dockerfile: Dockerfile.l4t-humble
+      dockerfile: Dockerfile.custom-l4t-humble
       args:
         L4T_VERSION: l4t-r36.3.0
         ZED_SDK_MAJOR: 4
@@ -15,8 +15,6 @@ services:
     runtime: nvidia
     privileged: true
     network_mode: host
-    ipc: host
-    pid: host
     environment:
       NVIDIA_DRIVER_CAPABILITIES: all
       DISPLAY: ${DISPLAY}
@@ -26,8 +24,7 @@ services:
       - /dev/shm:/dev/shm
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
-      - ../../..:/root/zed_ws
+      - ../../..:/home/marsrover-zed/zed_ws
     tty: true  # Allows interactive terminal
     entrypoint: ["/bin/bash"]
     restart: always
-
