@@ -202,13 +202,6 @@ USER root
 RUN apt update && apt install -y ros-iron-pcl-conversions
 USER $NAME
 
-# Install mapproxy cache utils - Nelson Durrant, Mar 2025
-# Used for caching map tiles from the map server for offline use
-USER root
-# Not generally recommended to run pip as root, but danielsnider's mapproxy setup requires it
-RUN pip3 install mapproxy
-USER $NAME
-
 # Install xacro convertor package - Nelson Durrant, Mar 2025
 # Used for converting the rover's xacro files to urdf files
 USER root
