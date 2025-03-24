@@ -1,5 +1,4 @@
-# Copied over by Nelson Durrant, Feb 2025
-# Modified to listen to the nav_state Int8 message instead
+# Modified to listen to the nav_state Int8 message - Nelson Durrant, Mar 2025
 # I think this could be simplified, we don't use the battery topic at all
 
 # Also, for reference:

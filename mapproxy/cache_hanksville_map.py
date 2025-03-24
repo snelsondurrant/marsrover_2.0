@@ -1,4 +1,4 @@
-# Simply copied from pre-existing ROS 1 code - Nelson Durrant, Mar 2025
+# Simply copied from pre-existing ROS 1 code
 import requests as r
 import sys
 
