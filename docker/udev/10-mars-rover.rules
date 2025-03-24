@@ -78,7 +78,6 @@ SUBSYSTEM=="tty", KERNEL=="ttyACM*", ATTRS{idVendor}=="1546", ATTRS{idProduct}==
 # Science Arduino #
 SUBSYSTEM=="tty", KERNEL=="ttyUSB*", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="rover/scienceArduinoNano"
 
-
 ##################
 #    Lidar     #
 ##################

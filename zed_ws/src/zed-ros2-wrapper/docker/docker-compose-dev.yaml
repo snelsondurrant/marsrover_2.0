@@ -17,6 +17,7 @@ services:
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
       - ../../..:/root/zed_ws
+      - ~/
     # entrypoint: ros_entrypoint.sh
     entrypoint: ["/bin/bash", "-c", "/root/zed_ws/src/zed-ros2-wrapper/docker/ros_entrypoint.sh && /bin/bash"]
     # command: bash

@@ -123,7 +123,7 @@
         object_detection:
             od_enabled: false # True to enable Object Detection
             model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS' #'MULTI_CLASS_BOX_FAST' # 'MULTI_CLASS_BOX_FAST', 'MULTI_CLASS_BOX_MEDIUM', 'MULTI_CLASS_BOX_ACCURATE', 'PERSON_HEAD_BOX_FAST', 'PERSON_HEAD_BOX_ACCURATE', 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-            custom_onnx_file: '/root/zed_ws/models/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
+            custom_onnx_file: '/usr/local/zed/resources/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
             custom_onnx_input_size: 1024 # Resolution used with the YOLO-like ONNX file. For example, 512 means a input tensor '1x3x512x512'
             custom_label_yaml: '' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the COCO-like YAML file storing the custom class labels.
             allow_reduced_precision_inference: true # Allow inference to run at a lower precision to improve runtime and memory usage

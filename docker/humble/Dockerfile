@@ -1,9 +1,5 @@
 # Created by Nelson Durrant, Oct 2024 
 FROM ros:humble-ros-base
-# Why use ROS 2 Iron?
-# The simulator is build using Gazebo Classic, which is only supported in ROS 2 Iron and older.
-# The Navigation2 package's simple GPS navigation functions are only supported in ROS 2 Iron and newer.
-# So, we need to use ROS 2 Iron to run the simulator and the navigation functions at the same time.
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
