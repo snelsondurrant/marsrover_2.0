@@ -212,3 +212,9 @@ RUN apt update && apt install -y \
     ros-humble-joint-state-publisher-gui \
     ros-humble-urdf-launch
 USER $NAME
+
+# Install zed_msgs package - Nelson Durrant, Mar 2025
+# Official ROS 2 interfaces for the ZED camera
+USER root
+RUN apt update && apt install -y ros-humble-zed-msgs
+USER $NAME
