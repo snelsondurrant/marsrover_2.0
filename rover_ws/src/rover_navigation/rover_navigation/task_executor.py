@@ -367,6 +367,8 @@ class AutonomyTaskExecutor(Node):
         """
         Function to follow a set of GPS waypoints, based on the nav2_simple_commander code
         NOTE: Call this with the asyncio.run() function
+
+        https://github.com/ros-navigation/navigation2_tutorials/issues/77#issuecomment-1856414168
         """
 
         self.debug("Waiting for 'FollowWaypoints' action server")
