@@ -1,7 +1,4 @@
 # Simply copied from pre-existing ROS 1 code - Nelson Durrant, Mar 2025
-# TODO: Someone should work through, simplify, and understand this
-# Probably document how to get the tile space coordinates for a given lat/lon as well
-# Maybe integrate that into a script and combine the different location scripts?
 import requests as r
 import sys
 
