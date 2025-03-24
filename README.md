@@ -1,14 +1,24 @@
 ### Get Started:
 
+> **NOTE:** Newer Macs (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support, and will trigger rover-specific hardware conditionals. I'd recommend just finding and using a campus computer with AMD64 architecture instead.
+
+**Windows:**
+
 - Install WSL2 on your Windows machine by following the instructions [here](https://docs.microsoft.com/en-us/windows/wsl/install).
 
 - Install Docker Desktop on your Windows machine by following the instructions [here](https://docs.docker.com/desktop/), and enable the WSL 2 backend by following the instructions [here](https://docs.docker.com/desktop/windows/wsl/).
 
-- Open a WSL terminal and clone the marsrover repo into your Linux environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
+- Open a WSL terminal and clone the marsrover repo into your WSL environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
 
 - Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
-  > **NOTE:** If you ever need to restart the container, simply run `bash compose.sh down` to stop the container, and then `bash compose.sh` to start it again.
+**Linux:**
+
+- Install Docker Engine on your Linux machine by following the instructions [here](https://docs.docker.com/engine/install/ubuntu/).
+
+- Open a terminal and clone the marsrover repo into your Linux environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
+
+- Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
 --
 
