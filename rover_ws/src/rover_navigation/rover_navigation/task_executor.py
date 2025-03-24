@@ -697,13 +697,11 @@ class AutonomyTaskExecutor(Node):
                 # Are we looking for this object right now?
                 if obj.label in self.leg:
 
-                    self.get_logger().info(f"Found object {obj.label}")
-
                     # Convert to a Pose() message
                     pose = Pose()
-                    pose.position.x = obj.position[0]
-                    pose.position.y = obj.position[1]
-                    pose.position.z = obj.position[2]
+                    pose.position.x = float(obj.position[0])
+                    pose.position.y = float(obj.position[1])
+                    pose.position.z = float(obj.position[2])
                     pose.orientation.x = 0.0
                     pose.orientation.y = 0.0
                     pose.orientation.z = 0.0
@@ -986,7 +984,7 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Starting spin search" + src_string)
 
-        asyncio.run(self.spin(spin_dist=6.28))
+        asyncio.run(self.spin(spin_dist=6.28))  # full rotation
         while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
 
