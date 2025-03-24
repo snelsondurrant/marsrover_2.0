@@ -29,7 +29,7 @@ ARG POINTCLOUD_TRANSPORT_PLUGINS_VERSION=1.0.11
 
 # Added setup for a user (same UID, GID) to avoid FastDDS permission lock issues
 # Define a username and password for the new user
-ARG NAME=marsrover-docker
+ARG NAME=marsrover-zed
 ARG PASS=marsrover
 
 # Setup a new user

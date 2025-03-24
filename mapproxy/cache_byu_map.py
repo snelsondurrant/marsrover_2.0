@@ -1,4 +1,5 @@
 # Simply copied from pre-existing ROS 1 code
+# TODO: Someone should combine these files and make them better
 import requests as r
 import sys
 
