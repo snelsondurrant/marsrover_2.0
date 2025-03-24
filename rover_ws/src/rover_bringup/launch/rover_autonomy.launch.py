@@ -81,10 +81,9 @@ def generate_launch_description():
             os.path.join(loc_launch_dir, "dual_ekf_navsat.launch.py")
         ),
         launch_arguments={
-            "use_sim_time": "True",
+            "use_sim_time": sim_mode,
         }.items(),
     )
-    # TODO: Are we sure we want to use sim time for the ekf?
 
     sim_navigation2_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
