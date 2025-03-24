@@ -7,21 +7,23 @@ import utm
 from action_msgs.msg import GoalStatus
 from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseStamped
 from lifecycle_msgs.srv import GetState
-from nav2_msgs.action import FollowGPSWaypoints, Spin
+from nav2_msgs.action import FollowWaypoints, Spin  # FollowGPSWaypoints
 from nav2_simple_commander.robot_navigator import TaskResult
 from rclpy.action import ActionServer, ActionClient, CancelResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.task import Future
+from robot_localization.srv import FromLL
 from rover_interfaces.action import RunTask
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger
 from threading import RLock
 from typing import Any
 from zed_msgs.msg import ObjectsStamped, Object
+
 
 from rover_navigation.utils.gps_utils import latLonYaw2Geopose
 from rover_navigation.utils.yaml_utils import waypointParser
@@ -91,8 +93,9 @@ class AutonomyTaskExecutor(Node):
     - trigger_teleop (std_srvs/Trigger) [norm_callback_group]
     - trigger_auto (std_srvs/Trigger) [norm_callback_group]
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
+    - fromLL (robot_localization/FromLL) [norm_callback_group]
     Action Clients:
-    - follow_gps_waypoints (nav2_msgs/FollowGPSWaypoints) [basic_nav_callback_group]
+    - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
     - {node_name}/get_state (lifecycle_msgs/GetState) [basic_nav_callback_group] (temporary)
     Action Servers:
@@ -234,6 +237,19 @@ class AutonomyTaskExecutor(Node):
             )
         self.arrival_request = Trigger.Request()
 
+        # Action client to convert lat/lon to pose
+        # NOTE: This is a temporary fix for the lack of a GPS waypoint follower in ROS2 Humble
+        self.localizer = self.create_client(
+            FromLL,
+            "fromLL",
+            callback_group=norm_callback_group,
+        )
+        while not self.localizer.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(
+                "LatLon to pose conversion service not available, waiting again..."
+            )
+        self.req = FromLL.Request()
+
         # Action server to run the task executor
         self.action_server = ActionServer(
             self,
@@ -258,10 +274,10 @@ class AutonomyTaskExecutor(Node):
         self.status = None
 
         self.basic_nav_callback_group = MutuallyExclusiveCallbackGroup()
-        self.follow_gps_waypoints_client = PatchRclpyIssue1123(
+        self.follow_waypoints_client = PatchRclpyIssue1123(
             self,
-            FollowGPSWaypoints,
-            "follow_gps_waypoints",
+            FollowWaypoints,
+            "follow_waypoints",
             callback_group=self.basic_nav_callback_group,
         )
         self.spin_client = PatchRclpyIssue1123(
@@ -282,24 +298,95 @@ class AutonomyTaskExecutor(Node):
         """
         Function to follow a set of GPS waypoints, based on the nav2_simple_commander code
         NOTE: Call this with the asyncio.run() function
+
+        IMPORTANT! In ROS2 Humble the Nav2 GPS waypoint follower is not avaliable.
+        I've implemented a patch to use robot_localization to convert to poses Nav2 can go to.
+        For versions newer than Humble you should just be able to use that server though.
+
+        https://github.com/ros-navigation/navigation2_tutorials/issues/77#issuecomment-1856414168
+        """
+
+        converted_poses = []
+        for wp in gps_poses:
+            self.req.ll_point.longitude = wp.position.longitude
+            self.req.ll_point.latitude = wp.position.latitude
+            self.req.ll_point.altitude = wp.position.altitude
+
+            log = "long{:f}, lat={:f}, alt={:f}".format(
+                self.req.ll_point.longitude,
+                self.req.ll_point.latitude,
+                self.req.ll_point.altitude,
+            )
+            self.get_logger().info(log)
+
+            self.future = self.localizer.call_async(self.req)
+            await self.future  # fix for iron/humble threading bug
+
+            self.resp = PoseStamped()
+            self.resp.header.frame_id = "map"
+            self.resp.header.stamp = self.get_clock().now().to_msg()
+            self.resp.pose.position = self.future.result().map_point
+
+            log = "x={:f}, y={:f}, z={:f}".format(
+                self.future.result().map_point.x,
+                self.future.result().map_point.y,
+                self.future.result().map_point.z,
+            )
+            self.get_logger().info(log)
+
+            self.resp.pose.orientation = wp.orientation
+            converted_poses += [self.resp]
+
+        self.get_logger().info(
+            f"Converted {len(gps_poses)} GPS waypoints to poses for Nav2"
+        )
+        await self.followWaypoints(converted_poses)
+
+        # self.debug("Waiting for 'FollowGPSWaypoints' action server")
+        # while not self.follow_gps_waypoints_client.wait_for_server(timeout_sec=1.0):
+        #     self.info("'FollowGPSWaypoints' action server not available, waiting...")
+
+        # goal_msg = FollowGPSWaypoints.Goal()
+        # goal_msg.gps_poses = gps_poses
+
+        # self.info(f"Following {len(goal_msg.gps_poses)} gps goals....")
+        # send_goal_future = self.follow_gps_waypoints_client.send_goal_async(
+        #     goal_msg, self._feedbackCallback
+        # )
+        # await send_goal_future  # fix for iron/humble threading bug
+        # self.goal_handle = send_goal_future.result()
+
+        # if not self.goal_handle.accepted:
+        #     self.error("FollowGPSWaypoints request was rejected!")
+        #     return False
+
+        # self.result_future = self.goal_handle.get_result_async()
+        # return True
+
+    async def followWaypoints(self, poses):
+        """
+        Function to follow a set of GPS waypoints, based on the nav2_simple_commander code
+        NOTE: Call this with the asyncio.run() function
+
+        https://github.com/ros-navigation/navigation2_tutorials/issues/77#issuecomment-1856414168
         """
 
         self.debug("Waiting for 'FollowWaypoints' action server")
-        while not self.follow_gps_waypoints_client.wait_for_server(timeout_sec=1.0):
+        while not self.follow_waypoints_client.wait_for_server(timeout_sec=1.0):
             self.info("'FollowWaypoints' action server not available, waiting...")
 
-        goal_msg = FollowGPSWaypoints.Goal()
-        goal_msg.gps_poses = gps_poses
+        goal_msg = FollowWaypoints.Goal()
+        goal_msg.poses = poses
 
-        self.info(f"Following {len(goal_msg.gps_poses)} gps goals....")
-        send_goal_future = self.follow_gps_waypoints_client.send_goal_async(
+        self.info(f"Following {len(goal_msg.poses)} goals....")
+        send_goal_future = self.follow_waypoints_client.send_goal_async(
             goal_msg, self._feedbackCallback
         )
-        await send_goal_future  # fix for iron threading bug
+        await send_goal_future  # fix for iron/humble threading bug
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
-            self.error("FollowWaypoints request was rejected!")
+            self.error(f"Following {len(poses)} waypoints request was rejected!")
             return False
 
         self.result_future = self.goal_handle.get_result_async()
@@ -319,14 +406,14 @@ class AutonomyTaskExecutor(Node):
         goal_msg = Spin.Goal()
         goal_msg.target_yaw = spin_dist
         goal_msg.time_allowance = Duration(sec=time_allowance)
-        # disable_collision_checks isn't in the iron release of Nav2
+        # disable_collision_checks isn't in the iron/humble release of Nav2
         # goal_msg.disable_collision_checks = disable_collision_checks
 
         self.info(f"Spinning to angle {goal_msg.target_yaw}....")
         send_goal_future = self.spin_client.send_goal_async(
             goal_msg, self._feedbackCallback
         )
-        await send_goal_future  # fix for iron threading bug
+        await send_goal_future  # fix for iron/humble threading bug
         self.goal_handle = send_goal_future.result()
 
         if not self.goal_handle.accepted:
@@ -345,7 +432,7 @@ class AutonomyTaskExecutor(Node):
         self.info("Canceling current task.")
         if self.result_future:
             future = self.goal_handle.cancel_goal_async()
-            await future  # fix for iron threading bug
+            await future  # fix for iron/humble threading bug
         return
 
     async def isTaskComplete(self):
@@ -358,7 +445,7 @@ class AutonomyTaskExecutor(Node):
             # task was cancelled or completed
             return True
 
-        # Fix for iron threading bug (with timeout)
+        # Fix for iron/humble threading bug (with timeout)
         # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
         try:
             await asyncio.wait_for(self.isTaskCompleteHelper(), timeout=0.1)
@@ -437,7 +524,7 @@ class AutonomyTaskExecutor(Node):
         while state != "active":
             self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
-            await future  # fix for iron threading bug
+            await future  # fix for iron/humble threading bug
             if future.result() is not None:
                 state = future.result().current_state.label
                 self.debug(f"Result of get_state: {state}")
@@ -483,7 +570,7 @@ class AutonomyTaskExecutor(Node):
 
     async def async_service_call(self, client, request):
         """
-        Fix for iron threading bug - https://github.com/ros2/rclpy/issues/1337
+        Fix for iron/humble threading bug - https://github.com/ros2/rclpy/issues/1337
         NOTE: Call this with the asyncio.run() function (and all other async functions)
         """
 
@@ -610,13 +697,11 @@ class AutonomyTaskExecutor(Node):
                 # Are we looking for this object right now?
                 if obj.label in self.leg:
 
-                    self.get_logger().info(f"Found object {obj.label}")
-
                     # Convert to a Pose() message
                     pose = Pose()
-                    pose.position.x = obj.position[0]
-                    pose.position.y = obj.position[1]
-                    pose.position.z = obj.position[2]
+                    pose.position.x = float(obj.position[0])
+                    pose.position.y = float(obj.position[1])
+                    pose.position.z = float(obj.position[2])
                     pose.orientation.x = 0.0
                     pose.orientation.y = 0.0
                     pose.orientation.z = 0.0
@@ -899,7 +984,7 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Starting spin search" + src_string)
 
-        asyncio.run(self.spin(spin_dist=3.14))
+        asyncio.run(self.spin(spin_dist=6.28))  # full rotation
         while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
 

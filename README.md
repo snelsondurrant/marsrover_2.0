@@ -1,14 +1,24 @@
 ### Get Started:
 
+> **NOTE:** Newer Macs (M1, M2, etc) are not able to run the Gazebo simulation due to missing architecture packages and will trigger rover-specific hardware conditionals.
+
+**Windows:**
+
 - Install WSL2 on your Windows machine by following the instructions [here](https://docs.microsoft.com/en-us/windows/wsl/install).
 
 - Install Docker Desktop on your Windows machine by following the instructions [here](https://docs.docker.com/desktop/), and enable the WSL 2 backend by following the instructions [here](https://docs.docker.com/desktop/windows/wsl/).
 
-- Open a WSL terminal and clone the marsrover repo into your Linux environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
+- Open a WSL terminal and clone the marsrover repo into your WSL environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
 
 - Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
-  > **NOTE:** If you ever need to restart the container, simply run `bash compose.sh down` to stop the container, and then `bash compose.sh` to start it again.
+**Linux:**
+
+- Install Docker Engine on your Linux machine by following the instructions [here](https://docs.docker.com/engine/install/ubuntu/).
+
+- Open a terminal and clone the marsrover repo into your Linux environment using `git clone https://github.com/BYUMarsRover/marsrover.git`.
+
+- Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
 --
 
@@ -22,13 +32,13 @@ GitHub Basics Tutorial - [https://docs.github.com/en/get-started/start-your-jour
 
 Docker Concepts and Tutorials - [https://docs.docker.com/get-started/introduction/whats-next/](https://docs.docker.com/get-started/introduction/whats-next/)
 
-ROS2 Concepts - [https://docs.ros.org/en/iron/Concepts/Basic.html](https://docs.ros.org/en/iron/Concepts/Basic.html)
+ROS2 Concepts - [https://docs.ros.org/en/humble/Concepts/Basic.html](https://docs.ros.org/en/humble/Concepts/Basic.html)
 
-ROS2 CLI Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools.html)
+ROS2 CLI Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)
 
-ROS2 Code Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries.html)
+ROS2 Code Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
 
-ROS2 Tf2 Tutorials* - [https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/Tf2-Main.html](https://docs.ros.org/en/iron/Tutorials/Intermediate/Tf2/Tf2-Main.html)
+ROS2 Tf2 Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html](https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html)
 
 Robotics in ROS2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
@@ -36,7 +46,9 @@ Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.or
 
 Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
 
-GPS Navigation w Nav2 Tutorial* - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+
+ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.html](https://docs.nav2.org/tutorials/docs/integrating_vio.html)
 
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
