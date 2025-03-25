@@ -4,6 +4,7 @@ from rclpy.node import Node
 from gazebo_msgs.srv import GetEntityState
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from zed_msgs.msg import ObjectsStamped, Object
+from std_srvs.srv import SetBool
 
 
 class SimObjDetect(Node):
@@ -14,14 +15,18 @@ class SimObjDetect(Node):
     :date: Mar 2025
 
     Publishers:
-    - obj_det/objects (zed_msgs/ObjectsStamped)
+    - zed/zed_node/obj_det/objects (zed_msgs/ObjectsStamped)
     Clients:
     - get_entity_state (gazebo_msgs/GetEntityState)
+    Services:
+    - zed/zed_node/obj_det/objects (std_srvs/SetBool)
     """
 
     def __init__(self):
 
         super().__init__("sim_obj_detect")
+
+        self.enable_flag = False
 
         # declare parameters to enable/disable object detection
         self.declare_parameter("enable_mallet", True)
@@ -74,78 +79,153 @@ class SimObjDetect(Node):
             self.bottle_request.reference_frame = "base_link"
 
         # Publisher for the ZED detections
-        self.zed_pub = self.create_publisher(ObjectsStamped, "obj_det/objects", 10)
+        self.zed_pub = self.create_publisher(ObjectsStamped, "zed/zed_node/obj_det/objects", 10)
+
+        # Service to enable/disable object detection
+        self.enable_service = self.create_service(
+            SetBool, "zed/zed_node/enable_obj_det", self.enable_service_callback
+        )
 
         self.get_logger().info("SimObjDetect node started")
 
+    def enable_service_callback(self, request, response):
+        self.enable_flag = request.data
+        return response
+
     def timer_callback(self):
+    
+        if self.enable_flag:
 
-        if self.enable_mallet:
+            if self.enable_mallet:
 
-            # Call the service to get the position of the mallet
-            future = self.get_entity_state.call_async(self.mallet_request)
-            rclpy.spin_until_future_complete(self, future)
-            mallet_gz_pos = future.result()
+                # Call the service to get the position of the mallet
+                future = self.get_entity_state.call_async(self.mallet_request)
+                rclpy.spin_until_future_complete(self, future)
+                mallet_gz_pos = future.result()
 
-        if self.enable_bottle:
+            if self.enable_bottle:
 
-            # Call the service to get the position of the bottle
-            future = self.get_entity_state.call_async(self.bottle_request)
-            rclpy.spin_until_future_complete(self, future)
-            bottle_gz_pos = future.result()
+                # Call the service to get the position of the bottle
+                future = self.get_entity_state.call_async(self.bottle_request)
+                rclpy.spin_until_future_complete(self, future)
+                bottle_gz_pos = future.result()
 
-        # Create a Detection3Darray
-        zed_msg = ObjectsStamped()
-        zed_msg.header.stamp = self.get_clock().now().to_msg()
-        zed_msg.header.frame_id = "base_link"  # will be different in real life
+            # Create a Detection3Darray
+            zed_msg = ObjectsStamped()
+            zed_msg.header.stamp = self.get_clock().now().to_msg()
+            zed_msg.header.frame_id = "base_link"  # will be different in real life
 
-        if self.enable_mallet:
+            if self.enable_mallet:
 
-            # Check to see if the mallet is in view
-            if (
-                mallet_gz_pos.state.pose.position.x < 3.5
-                and mallet_gz_pos.state.pose.position.x > 0
-                and abs(mallet_gz_pos.state.pose.position.y)
-                < mallet_gz_pos.state.pose.position.x  # cone of vision
-            ):
+                # Check to see if the mallet is in view
+                if (
+                    mallet_gz_pos.state.pose.position.x < 3.5
+                    and mallet_gz_pos.state.pose.position.x > 0
+                    and abs(mallet_gz_pos.state.pose.position.y)
+                    < mallet_gz_pos.state.pose.position.x  # cone of vision
+                ):
 
-                # Create a mallet object and add it to the message
-                mallet_obj = Object()
-                mallet_obj.label = "mallet"
-                mallet_obj.label_id = 0  # from YOLO training documentation
-                mallet_obj.confidence = 99.0
-                mallet_obj.position = [
-                    mallet_gz_pos.state.pose.position.x,
-                    mallet_gz_pos.state.pose.position.y,
-                    mallet_gz_pos.state.pose.position.z,
-                ]
-                zed_msg.objects.append(mallet_obj)
+                    # Create a mallet object and add it to the message
+                    mallet_obj = Object()
+                    mallet_obj.label = "mallet"
+                    mallet_obj.label_id = 0  # from YOLO training documentation
+                    mallet_obj.confidence = 99.0
+                    mallet_obj.position = [
+                        mallet_gz_pos.state.pose.position.x,
+                        mallet_gz_pos.state.pose.position.y,
+                        mallet_gz_pos.state.pose.position.z,
+                    ]
+                    zed_msg.objects.append(mallet_obj)
 
-        if self.enable_bottle:
+            if self.enable_bottle:
 
-            # Check to see if the bottle is in view
-            if (
-                bottle_gz_pos.state.pose.position.x < 3.5
-                and bottle_gz_pos.state.pose.position.x > 0
-                and abs(bottle_gz_pos.state.pose.position.y)
-                < bottle_gz_pos.state.pose.position.x  # cone of vision
-            ):
+                # Check to see if the bottle is in view
+                if (
+                    bottle_gz_pos.state.pose.position.x < 3.5
+                    and bottle_gz_pos.state.pose.position.x > 0
+                    and abs(bottle_gz_pos.state.pose.position.y)
+                    < bottle_gz_pos.state.pose.position.x  # cone of vision
+                ):
 
-                # Create a bottle object and add it to the message
-                bottle_obj = Object()
-                bottle_obj.label = "bottle"
-                bottle_obj.label_id = 1  # from YOLO training documentation
-                bottle_obj.confidence = 99.0
-                bottle_obj.position = [
-                    bottle_gz_pos.state.pose.position.x,
-                    bottle_gz_pos.state.pose.position.y,
-                    bottle_gz_pos.state.pose.position.z,
-                ]
-                zed_msg.objects.append(bottle_obj)
+                    # Create a bottle object and add it to the message
+                    bottle_obj = Object()
+                    bottle_obj.label = "bottle"
+                    bottle_obj.label_id = 1  # from YOLO training documentation
+                    bottle_obj.confidence = 99.0
+                    bottle_obj.position = [
+                        bottle_gz_pos.state.pose.position.x,
+                        bottle_gz_pos.state.pose.position.y    if self.enable_mallet:
 
-        # Publish the message
-        time.sleep(1)  # we're getting data faster than in real life
-        self.zed_pub.publish(zed_msg)
+                # Call the service to get the position of the mallet
+                future = self.get_entity_state.call_async(self.mallet_request)
+                rclpy.spin_until_future_complete(self, future)
+                mallet_gz_pos = future.result()
+
+            if self.enable_bottle:
+
+                # Call the service to get the position of the bottle
+                future = self.get_entity_state.call_async(self.bottle_request)
+                rclpy.spin_until_future_complete(self, future)
+                bottle_gz_pos = future.result()
+
+            # Create a Detection3Darray
+            zed_msg = ObjectsStamped()
+            zed_msg.header.stamp = self.get_clock().now().to_msg()
+            zed_msg.header.frame_id = "base_link"  # will be different in real life
+
+            if self.enable_mallet:
+
+                # Check to see if the mallet is in view
+                if (
+                    mallet_gz_pos.state.pose.position.x < 3.5
+                    and mallet_gz_pos.state.pose.position.x > 0
+                    and abs(mallet_gz_pos.state.pose.position.y)
+                    < mallet_gz_pos.state.pose.position.x  # cone of vision
+                ):
+
+                    # Create a mallet object and add it to the message
+                    mallet_obj = Object()
+                    mallet_obj.label = "mallet"
+                    mallet_obj.label_id = 0  # from YOLO training documentation
+                    mallet_obj.confidence = 99.0
+                    mallet_obj.position = [
+                        mallet_gz_pos.state.pose.position.x,
+                        mallet_gz_pos.state.pose.position.y,
+                        mallet_gz_pos.state.pose.position.z,
+                    ]
+                    zed_msg.objects.append(mallet_obj)
+
+            if self.enable_bottle:
+
+                # Check to see if the bottle is in view
+                if (
+                    bottle_gz_pos.state.pose.position.x < 3.5
+                    and bottle_gz_pos.state.pose.position.x > 0
+                    and abs(bottle_gz_pos.state.pose.position.y)
+                    < bottle_gz_pos.state.pose.position.x  # cone of vision
+                ):
+
+                    # Create a bottle object and add it to the message
+                    bottle_obj = Object()
+                    bottle_obj.label = "bottle"
+                    bottle_obj.label_id = 1  # from YOLO training documentation
+                    bottle_obj.confidence = 99.0
+                    bottle_obj.position = [
+                        bottle_gz_pos.state.pose.position.x,
+                        bottle_gz_pos.state.pose.position.y,
+                        bottle_gz_pos.state.pose.position.z,
+                    ]
+                    zed_msg.objects.append(bottle_obj)
+
+            # Publish the message
+            time.sleep(1)  # we're getting data faster than in real life
+            self.zed_pub.publish(zed_msg)
+                    ]
+                    zed_msg.objects.append(bottle_obj)
+
+            # Publish the message
+            time.sleep(1)  # we're getting data faster than in real life
+            self.zed_pub.publish(zed_msg)
 
 
 def main(args=None):

@@ -19,7 +19,7 @@ from rclpy.task import Future
 from robot_localization.srv import FromLL
 from rover_interfaces.action import RunTask
 from sensor_msgs.msg import NavSatFix
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, SetBool
 from threading import RLock
 from typing import Any
 from zed_msgs.msg import ObjectsStamped, Object
@@ -85,7 +85,7 @@ class AutonomyTaskExecutor(Node):
     Subscribers:
     - gps/filtered (sensor_msgs/NavSatFix) [norm_callback_group]
     - aruco_detections (aruco_opencv_msgs/ArucoDetection) [norm_callback_group]
-    - obj_det/objects (zed_msgs/ObjectsStamped) [norm_callback_group]
+    - zed/zed_node/obj_det/objects (zed_msgs/ObjectsStamped) [norm_callback_group]
     Publishers:
     - mapviz/goal (sensor_msgs/NavSatFix)
     - mapviz/inter (sensor_msgs/NavSatFix)
@@ -94,6 +94,7 @@ class AutonomyTaskExecutor(Node):
     - trigger_auto (std_srvs/Trigger) [norm_callback_group]
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
     - fromLL (robot_localization/FromLL) [norm_callback_group]
+    - zed/zed_node/obj_det/objects (std_srvs/SetBool) [norm_callback_group]
     Action Clients:
     - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
@@ -194,7 +195,7 @@ class AutonomyTaskExecutor(Node):
         # Object detection pose subscriber
         self.obj_subscriber = self.create_subscription(
             ObjectsStamped,
-            "obj_det/objects",
+            "zed/zed_node/obj_det/objects",
             self.obj_callback,
             10,
             callback_group=norm_callback_group,
@@ -236,6 +237,16 @@ class AutonomyTaskExecutor(Node):
                 "Arrival trigger service not available, waiting again..."
             )
         self.arrival_request = Trigger.Request()
+
+        # Client to enable/disable object detection
+        self.obj_client = self.create_client(
+            SetBool, "zed/zed_node/enable_obj_det", callback_group=norm_callback_group
+        )
+        while not self.obj_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(
+                "Object detection service not available, waiting again..."
+            )
+        self.obj_request = SetBool.Request()
 
         # Action client to convert lat/lon to pose
         # NOTE: This is a temporary fix for the lack of a GPS waypoint follower in ROS2 Humble
@@ -843,6 +854,12 @@ class AutonomyTaskExecutor(Node):
             elif self.leg in self.obj_legs:
                 print_string = "object"
 
+                # Enable object detection
+                self.obj_request.data = True
+                asyncio.run(
+                    self.async_service_call(self.obj_client, self.obj_request)
+                )
+
             self.task_info("Starting " + print_string + " leg")
 
             # Get this leg's GPS waypoint
@@ -883,6 +900,13 @@ class AutonomyTaskExecutor(Node):
                 self.task_info("SUCCESS! Navigated to " + print_string)
 
             self.task_info("Flashing LED to indicate arrival")
+
+            if self.leg in self.obj_legs:
+                # Disable object detection
+                self.obj_request.data = False
+                asyncio.run(
+                    self.async_service_call(self.obj_client, self.obj_request)
+                )
 
             # Trigger the arrival state
             asyncio.run(
@@ -995,9 +1019,7 @@ class AutonomyTaskExecutor(Node):
 
             # Check for the aruco tag or object
             pose = self.found_check()
-            if pose:
-                asyncio.run(self.cancelTask())
-                return pose
+            if pose:asyncio
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:

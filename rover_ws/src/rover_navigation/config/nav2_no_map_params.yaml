@@ -23,7 +23,7 @@ bt_navigator:
   ros__parameters:
     global_frame: map
     robot_base_frame: base_link
-    odom_topic: /odom
+    odom_topic: /zed/zed_node/odom
     bt_loop_duration: 10
     default_server_timeout: 200 # Fix for crashes - Nelson Durrant, Feb 2025
     navigators: ["navigate_to_pose", "navigate_through_poses"]
@@ -194,22 +194,22 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan points
+        observation_sources: points # scan
         # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-        scan:
-          topic: /unilidar/cloud # unitree lidar
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "PointCloud2"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+        # scan:
+        #   topic: /unilidar/cloud # unitree lidar
+        #   max_obstacle_height: 2.0
+        #   clearing: True
+        #   marking: True
+        #   data_type: "PointCloud2"
+        #   raytrace_max_range: 3.0
+        #   raytrace_min_range: 0.0
+        #   obstacle_max_range: 2.5
+        #   obstacle_min_range: 0.0
         points:
-          topic: /point_cloud/cloud_registered # ZED depth camera (we can wee bushes!)
+          topic: /zed/zed_node/odom/point_cloud/cloud_registered # ZED depth camera (we can wee bushes!)
           data_type: "PointCloud2"
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
@@ -246,22 +246,22 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan points
+        observation_sources: points # scan
         # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-        scan:
-          topic: /unilidar/cloud # unitree lidar
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "PointCloud2"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+        # scan:
+        #   topic: /unilidar/cloud # unitree lidar
+        #   max_obstacle_height: 2.0
+        #   clearing: True
+        #   marking: True
+        #   data_type: "PointCloud2"
+        #   raytrace_max_range: 3.0
+        #   raytrace_min_range: 0.0
+        #   obstacle_max_range: 2.5
+        #   obstacle_min_range: 0.0
         points:
-          topic: /point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
+          topic: /zed/zed_node/point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
           data_type: "PointCloud2"
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
@@ -356,7 +356,7 @@ velocity_smoother:
     min_velocity: [-0.26, 0.0, -1.0]
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
-    odom_topic: "odom"
+    odom_topic: "zed/zed_node/odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
