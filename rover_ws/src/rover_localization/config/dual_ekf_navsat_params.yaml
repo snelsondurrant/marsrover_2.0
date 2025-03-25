@@ -35,7 +35,7 @@ ekf_filter_node_odom:
     # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
     imu0: imu/data # from the madgwick filter
     imu0_config: [false, false, false,
-                  false,  false,  true,
+                  true,  true,  true,
                   false, false, false,
                   false,  false,  false,
                   false,  false,  false]
@@ -100,7 +100,7 @@ ekf_filter_node_map:
     # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
     imu0: imu/data # from the madgwick filter
     imu0_config: [false, false, false,
-                  false,  false,  true,
+                  true,  true,  true,
                   false, false, false,
                   false,  false,  false,
                   false,  false,  false]
