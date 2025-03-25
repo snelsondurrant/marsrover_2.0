@@ -11,11 +11,15 @@ windows:
       mouse: "on"
     panes:
       - shell_command:
+          - ros2 daemon stop
+          - ros2 daemon start
           - source ~/rover_ws/install/setup.bash
           - clear
           - cmd: ros2 launch rover_bringup rover_autonomy.launch.py
             enter: false
       - shell_command:
+          - ros2 daemon stop
+          - ros2 daemon start
           - source ~/rover_ws/install/setup.bash
           - clear
           - cd ~/rover_ws/src/rover_navigation/config && cat waypoints.yaml
