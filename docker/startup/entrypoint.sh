@@ -17,7 +17,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
     tmux set -g mouse on
 
     # Start the Fast DDS discovery server in the tmux session
-    tmux send-keys -t rover_startup.0 "fastdds discovery --server-id 0" Enter # port 11811
+    tmux send-keys -t rover_startup.0 "fastdds discovery --server-id 0" # TODO: Enter
     
     # Launch ROS 2 nodes on system startup
     tmux split-window -v

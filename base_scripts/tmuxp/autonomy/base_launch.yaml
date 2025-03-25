@@ -15,7 +15,7 @@ windows:
           - ros2 daemon start
           - source ~/rover_ws/install/setup.bash
           - clear
-          - cmd: ros2 launch rover_bringup base_autonomy.launch.py use_rviz:=True use_mapviz:=True
+          - cmd: ros2 launch rover_bringup base_autonomy.launch.py use_mapviz:=True
             enter: false
       - shell_command:
           - ros2 daemon stop
