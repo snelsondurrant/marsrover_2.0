@@ -1,3 +1,4 @@
+# Created by Nelson Durrant & Braden Meyers. Mar 2025
 ARG L4T_VERSION=l4t-r36.3.0
 ARG IMAGE_NAME=dustynv/ros:humble-ros-base-${L4T_VERSION}
 
@@ -24,7 +25,7 @@ ARG GEOGRAPHIC_INFO_VERSION=1.0.6
 ARG POINTCLOUD_TRANSPORT_VERSION=1.0.18
 ARG POINTCLOUD_TRANSPORT_PLUGINS_VERSION=1.0.11
 
-###
+### Set up a new user ###
 
 # Define a username and password for the new user
 ARG NAME=marsrover-zed
@@ -83,9 +84,9 @@ RUN echo "# R${L4T_MAJOR} (release), REVISION: ${L4T_MINOR}" > /etc/nv_tegra_rel
 # Install the ZED ROS2 Wrapper
 ENV ROS_DISTRO=${ROS2_DIST}
 
-###
+### Install custom dependencies ###
 
-# Install missing dependencies from APT
+# Install missing dependencies from the basic ZED ROS2 container
 RUN apt update && apt install -y \
     ros-humble-ros-base \
     ros-humble-zed-msgs \
@@ -106,7 +107,7 @@ RUN apt update && apt install -y \
 # Install cython
 RUN python3 -m pip install --upgrade cython
 
-# Install build tools and dependencies
+# Install missing build tools from the basic ZED ROS2 container
 RUN apt update && apt install -y \
     build-essential \
     python3-colcon-common-extensions \
@@ -117,10 +118,10 @@ RUN apt update && apt install -y \
     ros-humble-shape-msgs \
     ros-humble-ament-lint-auto
 
+# Allow the new user to access the ZED SDK
 RUN chown -R marsrover-zed:marsrover-zed /usr/local
 
 WORKDIR /home/$NAME
 USER $NAME
 
 CMD ["/bin/bash"]
-

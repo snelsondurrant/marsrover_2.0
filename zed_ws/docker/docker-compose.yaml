@@ -1,7 +1,8 @@
+# Created by Braden Meyers, Mar 2025
 services:
-  ros2_ws:
-    image: zed_ros2_l4t_36.3.0_sdk_4.2.5 # Replace with your Docker image tag
-    container_name: zed-ros2-wrapper
+  marsrover-zed:
+    image: zed_ros2_l4t_36.3.0_sdk_4.2.5
+    container_name: marsrover-zed-ct
     build: 
       context: .
       dockerfile: Dockerfile.custom-l4t-humble
@@ -19,12 +20,14 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: all
       DISPLAY: ${DISPLAY}
     volumes:
-      - /tmp/.X11-unix/:/tmp/.X11-unix
-      - /dev:/dev
-      - /dev/shm:/dev/shm
+      - ../../..:/home/marsrover-zed/zed_ws
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
-      - ../../..:/home/marsrover-zed/zed_ws
-    tty: true  # Allows interactive terminal
+      - /dev:/dev:rw
+      - /dev/shm:/dev/shm
+      - /etc/udev:/etc/udev:rw
+      - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
+    stdin_open: true  # Equivalent to -it in docker run
+    tty: true  # Equivalent to -it in docker run
+    estart: always  # Keeps the container running after exit unless you want it to be removed like with --rm
     entrypoint: ["/bin/bash"]
-    restart: always
