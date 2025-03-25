@@ -35,7 +35,7 @@ fi
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'zed_launch' tmux session..."
 envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
-scp tmuxp/tmp/rover_launch.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+scp tmuxp/tmp/zed_launch.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
 ssh marsrover@$ROVER_IP_ADDRESS \
 	"docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
 
