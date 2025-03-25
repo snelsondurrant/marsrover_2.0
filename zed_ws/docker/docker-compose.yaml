@@ -5,7 +5,6 @@ services:
     container_name: zed-ct
     build: 
       context: .
-      dockerfile: Dockerfile.custom-l4t-humble
       args:
         L4T_VERSION: l4t-r36.3.0
         ZED_SDK_MAJOR: 4
