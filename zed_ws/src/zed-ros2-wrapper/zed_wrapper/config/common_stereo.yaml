@@ -50,14 +50,14 @@
             sensors_pub_rate: 200. # frequency of publishing of sensors data. MAX: 400. - MIN: grab rate
 
         region_of_interest:
-            # Changed the below - Nelson Durrant, Mar 2025
-            automatic_roi: true # Enable the automatic ROI generation to automatically detect part of the robot in the FoV and remove them from the processing. Note: if enabled the value of `manual_polygon` is ignored
+            automatic_roi: false # Enable the automatic ROI generation to automatically detect part of the robot in the FoV and remove them from the processing. Note: if enabled the value of `manual_polygon` is ignored
             depth_far_threshold_meters: 2.5 # Filtering how far object in the ROI should be considered, this is useful for a vehicle for instance
             image_height_ratio_cutoff: 0.5 # By default consider only the lower half of the image, can be useful to filter out the sky
             #manual_polygon: '[]' # A polygon defining the ROI where the ZED SDK perform the processing ignoring the rest. Coordinates must be normalized to '1.0' to be resolution independent.
             #manual_polygon: '[[0.25,0.33],[0.75,0.33],[0.75,0.5],[0.5,0.75],[0.25,0.5]]' # A polygon defining the ROI where the ZED SDK perform the processing ignoring the rest. Coordinates must be normalized to '1.0' to be resolution independent.
             #manual_polygon: '[[0.25,0.25],[0.75,0.25],[0.75,0.75],[0.25,0.75]]' # A polygon defining the ROI where the ZED SDK perform the processing ignoring the rest. Coordinates must be normalized to '1.0' to be resolution independent.
             #manual_polygon: '[[0.5,0.25],[0.75,0.5],[0.5,0.75],[0.25,0.5]]' # A polygon defining the ROI where the ZED SDK perform the processing ignoring the rest. Coordinates must be normalized to '1.0' to be resolution independent.
+            # TODO: Set this up
             apply_to_depth: true # Apply ROI to depth processing
             apply_to_positional_tracking: true # Apply ROI to positional tracking processing
             apply_to_object_detection: true # Apply ROI to object detection processing
@@ -129,7 +129,7 @@
             # Changed the below - Nelson Durrant, Mar 2025
             model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS' # 'MULTI_CLASS_BOX_FAST', 'MULTI_CLASS_BOX_MEDIUM', 'MULTI_CLASS_BOX_ACCURATE', 'PERSON_HEAD_BOX_FAST', 'PERSON_HEAD_BOX_ACCURATE', 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
             # Changed the below - Nelson Durrant, Mar 2025
-            custom_onnx_file: '/home/marsrover-zed/zed_ws/yolo/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
+            custom_onnx_file: '/home/marsrover-zed/zed_ws/models/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
             # Changed the below - Nelson Durrant, Mar 2025
             custom_onnx_input_size: 1024 # Resolution used with the YOLO-like ONNX file. For example, 512 means a input tensor '1x3x512x512'
             custom_label_yaml: '' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the COCO-like YAML file storing the custom class labels.

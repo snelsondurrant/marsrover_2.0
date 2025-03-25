@@ -217,3 +217,9 @@ USER $NAME
 USER root
 RUN apt update && apt install -y ros-humble-imu-filter-madgwick
 USER $NAME
+
+# Install tf transformations package - Braden Meyers, Mar 2025
+# Used to calibrate the ZED and lidar positions relative to the mount frame
+USER root
+RUN apt update && apt install -y ros-humble-tf-transformations
+USER $NAME
