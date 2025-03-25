@@ -11,8 +11,6 @@ windows:
       mouse: "on"
     panes:
       - shell_command:
-          - ros2 daemon stop
-          - ros2 daemon start
           - source ~/zed_ws/install/setup.bash
           - clear
           - cmd: ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2
