@@ -123,7 +123,7 @@ USER root
 RUN apt update && apt install -y tmux
 USER $NAME
 ENV PATH="$PATH:/home/$NAME/.local/bin"
-RUN pip3 install tmuxp
+RUN pip3 install --user tmuxp
 
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
