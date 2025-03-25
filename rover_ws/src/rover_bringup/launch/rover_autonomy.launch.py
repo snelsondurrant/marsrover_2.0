@@ -132,6 +132,17 @@ def generate_launch_description():
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
+        condition=UnlessCondition(sim_mode),
+    )
+
+    sim_aruco_opencv_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(perception_launch_dir, "sim_aruco_opencv.launch.py")
+        ),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+        }.items(),
+        condition=IfCondition(sim_mode),
     )
 
     gps_cmd = IncludeLaunchDescription(
@@ -178,6 +189,7 @@ def generate_launch_description():
 
     # custom launch
     ld.add_action(aruco_opencv_cmd)
+    ld.add_action(sim_aruco_opencv_cmd)
     ld.add_action(gps_cmd)
     ld.add_action(lidar_cmd)
     ld.add_action(task_exec_cmd)

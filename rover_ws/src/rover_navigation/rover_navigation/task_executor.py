@@ -94,7 +94,7 @@ class AutonomyTaskExecutor(Node):
     - trigger_auto (std_srvs/Trigger) [norm_callback_group]
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
     - fromLL (robot_localization/FromLL) [norm_callback_group]
-    - zed/zed_node/obj_det/objects (std_srvs/SetBool) [norm_callback_group]
+    - zed/zed_node/enable_obj_det (std_srvs/SetBool) [norm_callback_group]
     Action Clients:
     - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]

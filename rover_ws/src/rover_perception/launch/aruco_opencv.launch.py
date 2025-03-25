@@ -22,7 +22,7 @@ def generate_launch_description():
 
     try:
         # Path to the symlink
-        udev_path = '/dev/rover/cameras/autonomyWebCam'
+        udev_path = "/dev/rover/cameras/autonomyWebCam"
 
         # Read the symlink to get the relative path it points to (e.g., ../../video8)
         relative_target = os.readlink(udev_path)
@@ -31,15 +31,16 @@ def generate_launch_description():
         final_device_name = os.path.basename(relative_target)
 
         # Construct the absolute path in /dev folder (e.g., /dev/video8)
-        absolute_target = os.path.join('/dev', final_device_name)
+        absolute_target = os.path.join("/dev", final_device_name)
 
-        device = {'video_device': absolute_target}
+        device = {"video_device": absolute_target}
 
         # Print the final absolute device path
         print(f"Autonomy Web Cam using: {absolute_target}")
-    
+
     except OSError as e:
-        print(f"Error resolving symlink: {e}")
+        print(f"Could not resolve symlink: {e}")
+        print("This is expected if you're running in simulation mode")
 
     return LaunchDescription(
         [
@@ -50,7 +51,6 @@ def generate_launch_description():
                 namespace="aruco_cam",
                 output="screen",
                 parameters=[device, cam_config_path],
-                condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 # https://github.com/fictionlab/ros_aruco_opencv
@@ -64,28 +64,6 @@ def generate_launch_description():
                         "use_sim_time": use_sim_time,
                     }
                 ],
-                remappings=[
-                    ("/aruco_cam/image_raw", "/intel_realsense_r200_depth/image_raw"),
-                    (
-                        "/aruco_cam/camera_info",
-                        "/intel_realsense_r200_depth/camera_info",
-                    ),
-                ],
-                condition=IfCondition(use_sim_time)
-            ),
-            launch_ros.actions.Node(
-                # https://github.com/fictionlab/ros_aruco_opencv
-                package="aruco_opencv",
-                executable="aruco_tracker_autostart",
-                output="screen",
-                parameters=[
-                    {
-                        "cam_base_topic": "aruco_cam/image_raw",
-                        "marker_size": 0.2,
-                        "use_sim_time": use_sim_time,
-                    }
-                ],
-                condition=UnlessCondition(use_sim_time)
             ),
         ]
     )
