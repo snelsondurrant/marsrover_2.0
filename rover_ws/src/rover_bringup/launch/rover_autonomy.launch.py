@@ -191,7 +191,7 @@ def generate_launch_description():
     ld.add_action(aruco_opencv_cmd)
     ld.add_action(sim_aruco_opencv_cmd)
     ld.add_action(gps_cmd)
-    ld.add_action(lidar_cmd)
+    # ld.add_action(lidar_cmd) # TODO: Test LiDAR
     ld.add_action(task_exec_cmd)
 
     return ld
