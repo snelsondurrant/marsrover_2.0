@@ -3,7 +3,7 @@ FROM ros:humble-ros-base
 # Why use ROS 2 Humble?
 # The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older,
 # and although Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer,
-# we've implemented a workaround using ROS 2 Humble. Through extensive testing, the Iron-Humble
+# we've implemented a workaround using ROS 2 Humble. From lots if experience, the Iron-Humble
 # inter-Docker container FastDDS connection doesn't work reliably (the ZED runs in a Humble container)
 # and Iron seems to have less official and community support than Humble (with a sooner EOL).
 
@@ -158,14 +158,6 @@ RUN apt update && apt install -y \
     ros-humble-teleop-twist-joy \
     ros-humble-teleop-twist-keyboard \
     ros-humble-topic-tools
-USER $NAME
-
-# Install zed interface packages - Nelson Durrant, Feb 2025
-# Necessary message package to listen to topics from the ZED camera
-USER root
-RUN apt update && apt install -y \
-    ros-humble-vision-msgs \
-    ros-humble-vision-msgs-rviz-plugins
 USER $NAME
 
 # Install python UTM library - Nelson Durrant, Feb 2025
