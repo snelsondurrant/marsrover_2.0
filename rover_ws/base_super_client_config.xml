@@ -1,5 +1,3 @@
-<!-- Created by Braden Meyers, Mar 2025 -->
-<!-- Allows ROS 2 cli tools (e.g. ros2 topic list) to see FastDDS topics -->
 <?xml version="1.0" encoding="UTF-8" ?>
  <dds>
      <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
