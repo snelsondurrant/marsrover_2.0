@@ -13,12 +13,14 @@ services:
         ZED_SDK_PATCH: 5
         L4T_MAJOR: 36
         L4T_MINOR: 3
-    runtime: nvidia
-    privileged: true
+    user: marsrover-zed
     network_mode: host
+    privileged: true
+    runtime: nvidia
     environment:
       NVIDIA_DRIVER_CAPABILITIES: all
-      DISPLAY: ${DISPLAY}
+      DISPLAY: ${DISPLAY} # Required for GUI applications
+      QT_X11_NO_MITSHM: 1 # Required for GUI applications
     volumes:
       - ../../..:/home/marsrover-zed/zed_ws
       - /usr/local/zed/resources/:/usr/local/zed/resources/
@@ -27,7 +29,8 @@ services:
       - /dev/shm:/dev/shm
       - /etc/udev:/etc/udev:rw
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
+      - /tmp/.X11-unix:/tmp/.X11-unix # Required for GUI applications
     stdin_open: true  # Equivalent to -it in docker run
     tty: true  # Equivalent to -it in docker run
-    estart: always  # Keeps the container running after exit unless you want it to be removed like with --rm
+    restart: always  # Keeps the container running after exit unless you want it to be removed like with --rm
     entrypoint: ["/bin/bash"]
