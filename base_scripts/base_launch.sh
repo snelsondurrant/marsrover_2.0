@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 #
-# Launches tasks on the base station over SSH using the 'base_launch' tmux session
+# Launches tasks on the base station using the 'base_launch' tmux session
 
 function printInfo {
   # print blue

@@ -9,7 +9,7 @@ from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
 from geometry_msgs.msg import Pose, PoseStamped
 from lifecycle_msgs.srv import GetState
-from nav2_msgs.action import FollowWaypoints, Spin  # FollowGPSWaypoints
+from nav2_msgs.action import FollowWaypoints, Spin
 from nav2_simple_commander.robot_navigator import TaskResult
 from rclpy.action import ActionServer, ActionClient, CancelResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
@@ -22,7 +22,7 @@ from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger, SetBool
 from threading import RLock
 from typing import Any
-from zed_msgs.msg import ObjectsStamped, Object
+from zed_msgs.msg import ObjectsStamped
 
 
 from rover_navigation.utils.gps_utils import latLonYaw2Geopose

@@ -50,6 +50,7 @@
             sensors_pub_rate: 200. # frequency of publishing of sensors data. MAX: 400. - MIN: grab rate
 
         region_of_interest:
+            # Changed the below - Nelson Durrant, Mar 2025
             automatic_roi: true # Enable the automatic ROI generation to automatically detect part of the robot in the FoV and remove them from the processing. Note: if enabled the value of `manual_polygon` is ignored
             depth_far_threshold_meters: 2.5 # Filtering how far object in the ROI should be considered, this is useful for a vehicle for instance
             image_height_ratio_cutoff: 0.5 # By default consider only the lower half of the image, can be useful to filter out the sky
@@ -77,11 +78,14 @@
             pos_tracking_enabled: true # True to enable positional tracking from start
             pos_tracking_mode: 'GEN_1' # Matches the ZED SDK setting: 'GEN_1', 'GEN_2'
             imu_fusion: true # enable/disable IMU fusion. When set to false, only the optical odometry will be used.
+            # Changed the below - Nelson Durrant, Mar 2025
             publish_tf: false # [usually overwritten by launch file] publish `odom -> camera_link` TF
+            # Changed the below - Nelson Durrant, Mar 2025
             publish_map_tf: false # [usually overwritten by launch file] publish `map -> odom` TF
             map_frame: 'map'
             odometry_frame: 'odom'
             area_memory_db_path: ''
+            # Changed the below - Nelson Durrant, Mar 2025
             area_memory: false # Enable to detect loop closure
             reset_odom_with_loop_closure: true # Re-initialize odometry to the last valid pose when loop closure happens (reset camera odometry drift)
             depth_min_range: 0.0 # Set this value for removing fixed zones of the robot in the FoV of the camerafrom the visual odometry evaluation
@@ -122,8 +126,11 @@
 
         object_detection:
             od_enabled: false # True to enable Object Detection
+            # Changed the below - Nelson Durrant, Mar 2025
             model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS' # 'MULTI_CLASS_BOX_FAST', 'MULTI_CLASS_BOX_MEDIUM', 'MULTI_CLASS_BOX_ACCURATE', 'PERSON_HEAD_BOX_FAST', 'PERSON_HEAD_BOX_ACCURATE', 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
+            # Changed the below - Nelson Durrant, Mar 2025
             custom_onnx_file: '/home/marsrover-zed/zed_ws/yolo/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
+            # Changed the below - Nelson Durrant, Mar 2025
             custom_onnx_input_size: 1024 # Resolution used with the YOLO-like ONNX file. For example, 512 means a input tensor '1x3x512x512'
             custom_label_yaml: '' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the COCO-like YAML file storing the custom class labels.
             allow_reduced_precision_inference: true # Allow inference to run at a lower precision to improve runtime and memory usage

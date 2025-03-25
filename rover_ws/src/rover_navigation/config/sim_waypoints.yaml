@@ -1,7 +1,7 @@
 # Waypoints for the SIMULATION environment
 # NOTE: These parameters are parsed and loaded into the order planner in the action callback function.
 # If you edit them, you'll need to kill the current action and request a new one using 'task_sim.sh'.
-# You don't need to 'colcon build' the workspace after editing them like with other config files.
+# You don't need to 'colcon build' the workspace after edits like with other config files.
 waypoints:
 
 # GPS waypoints

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 #
-# Pulls the base station local git branch commit state onto the rover
+# Pulls the base station's local git branch onto the rover
 
 function printInfo {
  	# print blue

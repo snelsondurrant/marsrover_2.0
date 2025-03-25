@@ -26,8 +26,8 @@ services:
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
       - /dev:/dev:rw
-      - /dev/shm:/dev/shm
       - /etc/udev:/etc/udev:rw
+      - /dev/shm:/dev/shm # Required for inter-container communication
       - /etc/localtime:/etc/localtime:ro # Syncs the container's time with the host
       - /tmp/.X11-unix:/tmp/.X11-unix # Required for GUI applications
     stdin_open: true  # Equivalent to -it in docker run

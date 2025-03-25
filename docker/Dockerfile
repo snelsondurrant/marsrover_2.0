@@ -1,11 +1,12 @@
 # Created by Nelson Durrant, Oct 2024 
 FROM ros:humble-ros-base
 # Why use ROS 2 Humble?
-# The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older,
-# and although Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer,
-# we've implemented a workaround using ROS 2 Humble. From lots if experience, the Iron-Humble
-# inter-Docker container FastDDS connection doesn't work reliably (the ZED runs in a Humble container)
-# and Iron seems to have less official and community support than Humble (with a sooner EOL).
+# The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older.
+# Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer, but
+# there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
+# compatible L4T images (it has to match the Orin), and through a lot of trial and error we've learned
+# that inter-Docker container FastDDS connections work reliably between distros. In addition, 
+# Iron seems to have less official and community support than Humble (with a sooner EOL).
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
