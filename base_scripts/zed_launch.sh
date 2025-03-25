@@ -1,21 +1,21 @@
 #!/bin/bash
-# Created by Braden Meyers, Feb 2025
+# Created by Nelson Durrant, Feb 2025
 #
-# Launches the ZED over SSH using the 'zed_launch' tmux session
+# Launches the zed camera over SSH using the 'zed_launch' tmux session
 
 function printInfo {
-  	# print blue
-  	echo -e "\033[0m\033[36m[INFO] $1\033[0m"
+  # print blue
+  echo -e "\033[0m\033[36m[INFO] $1\033[0m"
 }
 
 function printWarning {
-  	# print yellow
-  	echo -e "\033[0m\033[33m[WARNING] $1\033[0m"
+  # print yellow
+  echo -e "\033[0m\033[33m[WARNING] $1\033[0m"
 }
 
 function printError {
-  	# print red
-  	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
+  # print red
+  echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
 ROVER_IP_ADDRESS=192.168.1.120
@@ -27,7 +27,7 @@ then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-	echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
+    echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
 
     exit 1
 fi
@@ -35,15 +35,12 @@ fi
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'zed_launch' tmux session..."
 envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
-scp tmuxp/tmp/zed_launch.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+scp tmuxp/tmp/rover_launch.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
 ssh marsrover@$ROVER_IP_ADDRESS \
-	"export PATH='$PATH:/home/marsrover/.local/bin'; \
-	tmuxp load -d /home/marsrover/marsrover/base_scripts/tmuxp/tmp/zed_launch.yaml"
+	"docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
 
-# Attach to the 'zed_launch' tmux session to view the output (using mosh)
-mosh marsrover@$ROVER_IP_ADDRESS -- tmux attach -t zed_launch
+# Attach to the 'zed_launch' tmux session (with mosh)
+mosh marsrover@$ROVER_IP_ADDRESS -- docker exec -it zed-ct tmux attach -t zed_launch
 
 # Kill the tmux session on exit
-ssh marsrover@$ROVER_IP_ADDRESS "tmux kill-session -t zed_launch"
-
-# TODO: Get the ZED running in a Docker container
+ssh marsrover@$ROVER_IP_ADDRESS "docker exec zed-ct tmux kill-session -t zed_launch"

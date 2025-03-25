@@ -22,6 +22,7 @@ services:
       QT_X11_NO_MITSHM: 1 # Required for GUI applications
     volumes:
       - ../../zed_ws:/home/marsrover-zed/zed_ws
+      - ../../base_scripts/tmuxp/tmp:/home/marsrover-zed/.tmuxp
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
       - /dev:/dev:rw

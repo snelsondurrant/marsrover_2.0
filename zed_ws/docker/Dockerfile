@@ -25,8 +25,6 @@ ARG GEOGRAPHIC_INFO_VERSION=1.0.6
 ARG POINTCLOUD_TRANSPORT_VERSION=1.0.18
 ARG POINTCLOUD_TRANSPORT_PLUGINS_VERSION=1.0.11
 
-### Set up a new user ###
-
 # Define a username and password for the new user
 ARG NAME=marsrover-zed
 ARG PASS=marsrover
@@ -40,8 +38,6 @@ RUN usermod -aG dialout $NAME
 RUN groupadd docker
 RUN usermod -aG docker $NAME
 RUN echo "$NAME:$PASS" | chpasswd
-
-###
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -84,8 +80,6 @@ RUN echo "# R${L4T_MAJOR} (release), REVISION: ${L4T_MINOR}" > /etc/nv_tegra_rel
 # Install the ZED ROS2 Wrapper
 ENV ROS_DISTRO=${ROS2_DIST}
 
-### Install custom dependencies ###
-
 # Install missing dependencies from the basic ZED ROS2 container
 RUN apt update && apt install -y \
     ros-humble-ros-base \
@@ -123,5 +117,17 @@ RUN chown -R marsrover-zed:marsrover-zed /usr/local
 
 WORKDIR /home/$NAME
 USER $NAME
+
+# Setup up tmuxp for launch scripts
+USER root
+RUN apt update && apt install -y tmux
+USER $NAME
+ENV PATH="$PATH:/home/$NAME/.local/bin"
+RUN pip3 install tmuxp
+
+# Set up automatic ROS 2 sourcing and colorized output
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
+RUN touch ~/.hushlogin
 
 CMD ["/bin/bash"]
