@@ -127,8 +127,8 @@ class SimObjDetect(Node):
 
                     # Create a mallet object and add it to the message
                     mallet_obj = Object()
-                    mallet_obj.label = "mallet"
-                    mallet_obj.label_id = 0  # from YOLO training documentation
+                    mallet_obj.label = 'Class ID: 0'
+                    mallet_obj.label_id = 1  # from testing
                     mallet_obj.confidence = 99.0
                     mallet_obj.position = [
                         mallet_gz_pos.state.pose.position.x,
@@ -149,8 +149,8 @@ class SimObjDetect(Node):
 
                     # Create a bottle object and add it to the message
                     bottle_obj = Object()
-                    bottle_obj.label = "bottle"
-                    bottle_obj.label_id = 1  # from YOLO training documentation
+                    bottle_obj.label = 'Class ID: 1'
+                    bottle_obj.label_id = 5  # from testing
                     bottle_obj.confidence = 99.0
                     bottle_obj.position = [
                         bottle_gz_pos.state.pose.position.x,

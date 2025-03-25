@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Oct 2024
 #
-# Manages Docker containers and the 'rover_dev' tmux session
+# Manages the 'marsrover-ct' Docker container and the 'rover_dev' and 'rover_startup' tmux sessions
 
 function printInfo {
  	# print blue

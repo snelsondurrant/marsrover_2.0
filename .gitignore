@@ -9,7 +9,7 @@
 **/mapproxy/cache_data/*
 **/tmuxp/tmp/*.yaml
 **/nav2_bringup
-**/yolo/*
+**/yolo/*.onnx
 
 __pycache__
 .vscode

@@ -1,4 +1,4 @@
-# Created by Nelson Durrant & Braden Meyers. Mar 2025
+# Created by Nelson Durrant & Braden Meyers, Mar 2025
 ARG L4T_VERSION=l4t-r36.3.0
 ARG IMAGE_NAME=dustynv/ros:humble-ros-base-${L4T_VERSION}
 

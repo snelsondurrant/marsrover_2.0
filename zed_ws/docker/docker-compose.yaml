@@ -1,4 +1,4 @@
-# Created by Braden Meyers, Mar 2025
+# Created by Nelson Durrant & Braden Meyers, Mar 2025
 services:
   zed:
     image: zed_ros2_l4t_36.3.0_sdk_4.2.5

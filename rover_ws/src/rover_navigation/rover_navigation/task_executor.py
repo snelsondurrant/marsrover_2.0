@@ -133,6 +133,7 @@ class AutonomyTaskExecutor(Node):
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
         self.obj_legs = ["mallet", "bottle"]
         self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
+        self.labels = {"mallet": 'Class ID: 0', "bottle": 'Class ID: 1'}
 
         # UTM zone and hemisphere (will set on first gps fix)
         self.zone = None
@@ -706,7 +707,7 @@ class AutonomyTaskExecutor(Node):
         if self.leg in self.obj_legs:
             for obj in msg.objects:
                 # Are we looking for this object right now?
-                if obj.label in self.leg:
+                if obj.label == self.labels[self.leg]:
 
                     # Convert to a Pose() message
                     pose = Pose()
