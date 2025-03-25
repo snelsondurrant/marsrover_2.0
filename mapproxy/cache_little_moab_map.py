@@ -1,6 +1,4 @@
-# Simply copied from pre-existing ROS 1 code
 import requests as r
-import sys
 
 level = 19
 base_x = 110000 #These are the coordinates for Hanksville in the tile space

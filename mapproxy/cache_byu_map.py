@@ -1,7 +1,5 @@
-# Simply copied from pre-existing ROS 1 code
 # TODO: Someone should combine these files and make them better
 import requests as r
-import sys
 
 level = 19
 base_x = 99545 #These are the coordinates for BYU in the tile space
