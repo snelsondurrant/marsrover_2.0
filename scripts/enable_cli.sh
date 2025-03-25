@@ -14,11 +14,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     exit 1
 fi
 
+# Get the directory of this script
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
 # Are we running on Jetson Orin architecture (the rover)?
 if [ "$(uname -m)" == "aarch64" ]; then
-    export FASTRTPS_DEFAULT_PROFILES_FILE="~/scripts/config/rover_super_client_config.xml"
+    export FASTRTPS_DEFAULT_PROFILES_FILE=$script_dir"/config/rover_super_client_config.xml"
 else
-    export FASTRTPS_DEFAULT_PROFILES_FILE="~/scripts/config/base_super_client_config.xml"
+    export FASTRTPS_DEFAULT_PROFILES_FILE=$script_dir"/config/base_super_client_config.xml"
 fi
 
 ros2 daemon stop
