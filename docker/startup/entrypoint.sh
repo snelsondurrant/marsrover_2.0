@@ -10,6 +10,8 @@ set -e
 # Are we running on Jetson Orin architecture (the rover)?
 if [ "$(uname -m)" == "aarch64" ]; then
 
+    # TODO: Figure out why the server isn't working here until we restart it
+
     # Start a new 'rover_startup' tmux session
     # NOTE: Using tmuxp in the minimal Docker startup env doesn't work
     tmux new-session -d -s rover_startup
