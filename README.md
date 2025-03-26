@@ -1,6 +1,6 @@
 ## BYU Mars Rover Guide
 
-**Read through this guide!** It outlines the essential steps to getting started with software development in ROS2 for the BYU Mars Rover project, including setup, key tutorials, and contribution guidelines.
+**Read through this guide!** It outlines the essential steps to getting started with software development on the BYU Mars Rover.
 
 --
 
