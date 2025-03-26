@@ -46,7 +46,7 @@ class PVT2NSF(Node):
         )
 
         nsf_msg.header.frame_id = 'gps_link'  # set frame id (urdf)
-        self.nsf_publisher.publish(nsf_msg)
+        self.nsf_pub.publish(nsf_msg)
 
 
 def main(args=None):
