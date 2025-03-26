@@ -1,3 +1,9 @@
+## BYU Mars Rover Guide
+
+**Read through this guide!** It outlines the essential steps to getting started with software development in ROS2 for the BYU Mars Rover project, including setup, key tutorials, and contribution guidelines.
+
+--
+
 ### Get Started
 
 > **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support and will trigger rover-specific hardware conditionals.
@@ -60,7 +66,7 @@ ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.
 
 --
 
-### Video Examples
+### How-To Videos
 
 Running the Simulation - TODO: Add this
 
