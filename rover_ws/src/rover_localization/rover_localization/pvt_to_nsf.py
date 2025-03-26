@@ -12,16 +12,16 @@ class PVT2NSF(Node):
     :date: Mar 2025
 
     Subscribers:
-    - PosVelTime (ublox_read_2/PositionVelocityTime)
+    - rover/PosVelTime (ublox_read_2/PositionVelocityTime)
     Publishers:
-    - /gps/fix (sensor_msgs/NavSatFix)
+    - gps/fix (sensor_msgs/NavSatFix)
     """
 
     def __init__(self):
         super().__init__('pvt_to_nsf')
 
-        self.pvt_sub = self.create_subscription(PositionVelocityTime, 'PosVelTime', self.pvt_callback, 10)
-        self.nsf_pub = self.create_publisher(NavSatFix, '/gps/fix', 10)
+        self.pvt_sub = self.create_subscription(PositionVelocityTime, 'rover/PosVelTime', self.pvt_callback, 10)
+        self.nsf_pub = self.create_publisher(NavSatFix, 'gps/fix', 10)
 
     def pvt_callback(self, msg):
 

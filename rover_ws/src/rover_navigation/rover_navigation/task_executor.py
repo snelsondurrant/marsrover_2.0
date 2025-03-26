@@ -146,6 +146,7 @@ class AutonomyTaskExecutor(Node):
             0.000005  # Threshold for updating tag and item locations
         )
 
+        # TODO: Make this a star pattern, right distances?
         # Hex pattern for searching
         self.hex_coord = [
             (1.0, 0.0),
