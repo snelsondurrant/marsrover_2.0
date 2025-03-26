@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # TODO: Someone should combine these files and make them better
 import requests as r
 
