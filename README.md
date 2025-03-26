@@ -1,9 +1,3 @@
-## BYU Mars Rover Guide
-
-**Read through this guide!** It outlines the essential steps to getting started with software development on the BYU Mars Rover.
-
---
-
 ### Get Started
 
 > **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support and will trigger rover-specific hardware conditionals.
