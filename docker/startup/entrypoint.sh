@@ -17,13 +17,13 @@ if [ "$(uname -m)" == "aarch64" ]; then
     tmux set -g mouse on
 
     # Start the Fast DDS discovery server in the tmux session
-    tmux send-keys -t rover_startup.0 "fastdds discovery --server-id 0" # TODO: Enter
+    tmux send-keys -t rover_startup.0 "fastdds discovery --server-id 0" # NO ENTER ?
     
     # Launch ROS 2 nodes on system startup
     tmux split-window -v
     tmux send-keys -t rover_startup.1 "export ROS_DISCOVERY_SERVER=localhost:11811" Enter
     tmux send-keys -t rover_startup.1 "source ~/rover_ws/install/setup.bash" Enter
-    tmux send-keys -t rover_startup.1 "ros2 launch rover_bringup rover_startup.launch.py"  # TODO: Enter
+    tmux send-keys -t rover_startup.1 "ros2 launch rover_bringup rover_startup.launch.py" # NO ENTER ?
 fi
 
 exec /bin/bash

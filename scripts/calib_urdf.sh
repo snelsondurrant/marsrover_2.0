@@ -3,4 +3,5 @@
 # 
 # Calibrate the position of the ZED and LiDAR in the URDF
 
-# TODO: Add this script
+source ~/rover_ws/install/setup.bash
+ros2 service call /calibrate/zed_lidar std_srvs/srv/Trigger "{}"
