@@ -32,7 +32,9 @@ def generate_launch_description():
             [FindPackageShare("urdf_launch"), "launch", "description.launch.py"]
         ),
         # Uncomment the below (and comment out the above) to see the robot model displayed in RViz
-        # PathJoinSubstitution([FindPackageShare('urdf_launch'), 'launch', 'display.launch.py']),
+        # PathJoinSubstitution(
+        #     [FindPackageShare("urdf_launch"), "launch", "display.launch.py"]
+        # ),
         launch_arguments={
             "urdf_package": "rover_description",
             "urdf_package_path": PathJoinSubstitution(["urdf", "rover.urdf.xacro"]),
@@ -52,11 +54,11 @@ def generate_launch_description():
     )
 
     zed_lidar_calibrate_cmd = Node(
-        package='rover_description',
-        executable='zed_lidar_calibrate',
-        name='zed_lidar_calibrate',
-        output='screen',
-        condition=UnlessCondition(use_sim_time)
+        package="rover_description",
+        executable="zed_lidar_calibrate",
+        name="zed_lidar_calibrate",
+        output="screen",
+        condition=UnlessCondition(use_sim_time),
     )
 
     # Create the launch description and populate

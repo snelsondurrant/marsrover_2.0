@@ -2,7 +2,6 @@
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Created by Nelson Durrant, Mar 2025 -->
-  <!-- TODO: Make this more accurate -->
 
   <!-- Rover constants -->
   <xacro:property name="base_width" value="0.5"/>
@@ -93,7 +92,7 @@
   <joint name="aruco_cam_joint" type="fixed">
     <parent link="pole_link"/>
     <child link="aruco_cam_link"/>
-    <origin xyz="${pole_length/2} 0 0.1" rpy="0 0 0"/>
+    <origin xyz="${pole_length/2+0.1} 0 0.1" rpy="0 0 0"/>
   </joint>
 
   <link name="aruco_cam_link"/>
@@ -103,25 +102,19 @@
   <joint name="unilidar_lidar_joint" type="fixed">
     <parent link="pole_link"/>
     <child link="unilidar_mount"/>
+    <!-- the 'zed_lidar_calibrate' node handles the mount to sensor transform -->
     <origin xyz="${pole_length/2+0.1} 0 -0.05" rpy="0 ${pi/2} 0"/>
   </joint>
 
   <link name="unilidar_mount"/>
-
-  <!-- <joint name="unilidar_imu_joint" type="fixed">
-    <parent link="unilidar_lidar"/>
-    <child link="unilidar_imu"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-  </joint>
-
-  <link name="unilidar_imu"/> -->
 
   <!-- https://www.stereolabs.com/docs/ros2/140_ros2-robot-integration -->
 
   <joint name="zed_camera_joint" type="fixed">
     <parent link="pole_link"/>
     <child link="zed_camera_mount"/>
-    <origin xyz="${pole_length/2} 0 0.05" rpy="0 0 0"/>
+    <!-- the 'zed_lidar_calibrate' node handles the mount to sensor transform -->
+    <origin xyz="${pole_length/2+0.1} 0 0.05" rpy="0 0 0"/>
   </joint>
 
   <link name="zed_camera_mount"/>
