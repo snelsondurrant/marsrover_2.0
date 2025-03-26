@@ -12,5 +12,3 @@ windows:
           - clear
           - git checkout ${current_branch}
           - git pull base ${current_branch}
-          - cmd: colcon build
-            enter: false
