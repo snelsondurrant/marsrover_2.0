@@ -40,7 +40,7 @@ ROS2 Code Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-Client
 
 ROS2 Tf2 Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html](https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html)
 
-ROS2 Server Tutorial* - [https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)
+ROS2 Discovery Server Tutorial* - [https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)
 
 Robotics in ROS2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
