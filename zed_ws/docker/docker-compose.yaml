@@ -26,6 +26,7 @@ services:
       - ../../base_scripts/tmuxp/tmp:/home/marsrover-zed/.tmuxp
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
+      - /usr/local/zed/tools/:/usr/local/zed/tools/
       - /dev:/dev:rw
       - /etc/udev:/etc/udev:rw
       - /dev/shm:/dev/shm # Required for inter-container communication
