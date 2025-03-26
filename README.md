@@ -1,4 +1,4 @@
-### Get Started:
+### Get Started
 
 > **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support and will trigger rover-specific hardware conditionals.
 
@@ -22,7 +22,7 @@
 
 --
 
-### Essential Tutorials:
+### Essential Tutorials
 
 > **NOTE:** <mark>We would **strongly encourage** each year's team to take a couple of months at the beginning of the first semester and simply work together through these tutorials before diving into software development.</mark> It may not seem romantic, but I promise it'll be worth it.
 
@@ -60,7 +60,7 @@ ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.
 
 --
 
-### Video Examples:
+### Video Examples
 
 Running the Simulation - TODO: Add this
 
@@ -68,7 +68,7 @@ Launching the Autonomy Task - TODO: Add this
 
 --
 
-### Contributing:
+### Contributing
 
 - **Create a new branch.** Our main code branches are protected, so you'll need to create a new branch. Name your branch with a combination of your name and the feature you are working on (i.e. nelson/repo-docs).
 
