@@ -26,6 +26,8 @@
 
 > **NOTE:** <mark>We would **strongly encourage** each year's team to take a couple of months at the beginning of the first semester and simply work together through these tutorials before diving into software development.</mark> It may not seem romantic, but I promise it'll be worth it.
 
+**General:**
+
 Linux CLI Tutorial - [https://linuxjourney.com/lesson/the-shell](https://linuxjourney.com/lesson/the-shell)
 
 GitHub Basics Tutorial - [https://docs.github.com/en/get-started/start-your-journey/hello-world](https://docs.github.com/en/get-started/start-your-journey/hello-world)
@@ -42,15 +44,17 @@ ROS2 Tf2 Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2
 
 ROS2 Discovery Server Tutorial* - [https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)
 
-Robotics in ROS2 Tutorials - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+Robotics in ROS2 Tutorial - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
-**[Autonomy]** - Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.org/concepts/index.html)
+**Autonomy:**
 
-**[Autonomy]** - Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
+Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.org/concepts/index.html)
 
-**[Autonomy]** - GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
 
-**[Autonomy]** - ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.html](https://docs.nav2.org/tutorials/docs/integrating_vio.html)
+GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+
+ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.html](https://docs.nav2.org/tutorials/docs/integrating_vio.html)
 
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
