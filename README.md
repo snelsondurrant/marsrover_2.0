@@ -54,6 +54,14 @@ ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.
 
 --
 
+### Video Examples:
+
+Running the Simulation - TODO: Add this
+
+Launching the Autonomy Task - TODO: Add this
+
+--
+
 ### Contributing:
 
 - **Create a new branch.** Our main code branches are protected, so you'll need to create a new branch. Name your branch with a combination of your name and the feature you are working on (i.e. nelson/repo-docs).
