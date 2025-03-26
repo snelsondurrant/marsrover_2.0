@@ -11,6 +11,7 @@
 **/nav2_bringup
 **/models/*.onnx
 **/tutorial_ws/src/*
+!**/tutorial_ws/src/README.md
 
 __pycache__
 .vscode
