@@ -39,7 +39,7 @@ docker pull --platform linux/arm64 byuawesomerover/marsrover:latest
 docker image list
 
 printInfo "Saving the arm64 Docker image to a zip file for transfer (this takes a while)..."
-docker save --platform linux/arm64 byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
+docker save byuawesomerover/marsrover:latest | gzip > marsrover.tar.gz
 
 printInfo "Sending the Docker image to the rover..."
 scp marsrover.tar.gz marsrover@$ROVER_IP_ADDRESS:~/marsrover/docker
