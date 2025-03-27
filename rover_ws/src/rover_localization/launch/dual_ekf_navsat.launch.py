@@ -75,7 +75,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[
-                    ("imu/data", "zed/zed_node/imu/data"),
+                    ("imu/data", "imu/data"),
                     ("gps/fix", "gps/fix"),
                     ("gps/filtered", "gps/filtered"),
                     ("odometry/gps", "odometry/gps"),
@@ -110,6 +110,19 @@ def generate_launch_description():
                 package="rover_localization",
                 executable="geo_to_nsf",
                 output="screen",
+                condition=UnlessCondition(use_sim_time),
+            ),
+            # Added IMU and magnetometer filter node
+            launch_ros.actions.Node(
+                package='imu_filter_madgwick',
+                executable='imu_filter_madgwick_node',
+                name='imu_filter_madgwick',
+                output='screen',
+                remappings=[
+                    ('imu/data_raw', 'zed/zed_node/imu/data_raw'),
+                    ('imu/mag', 'zed/zed_node/imu/mag')
+                ],
+                parameters=[rl_params_file],
                 condition=UnlessCondition(use_sim_time),
             ),
         ]
