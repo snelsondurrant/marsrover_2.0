@@ -16,7 +16,6 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.task import Future
-from robot_localization.srv import FromLL
 from rover_interfaces.action import RunTask
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger, SetBool
@@ -25,7 +24,7 @@ from typing import Any
 from zed_msgs.msg import ObjectsStamped
 
 
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose
+from rover_navigation.utils.gps_utils import latLonYaw2Geopose, geopose2LatLonYaw
 from rover_navigation.utils.yaml_utils import waypointParser
 from rover_navigation.utils.plan_utils import (
     basicPathPlanner,  # plan a straight line between two GPS coordinates
@@ -93,7 +92,6 @@ class AutonomyTaskExecutor(Node):
     - trigger_teleop (std_srvs/Trigger) [norm_callback_group]
     - trigger_auto (std_srvs/Trigger) [norm_callback_group]
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
-    - fromLL (robot_localization/FromLL) [norm_callback_group]
     - zed/zed_node/enable_obj_det (std_srvs/SetBool) [norm_callback_group]
     Action Clients:
     - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
@@ -250,19 +248,6 @@ class AutonomyTaskExecutor(Node):
             )
         self.obj_request = SetBool.Request()
 
-        # Action client to convert lat/lon to pose
-        # NOTE: This is a temporary fix for the lack of a GPS waypoint follower in ROS2 Humble
-        self.localizer = self.create_client(
-            FromLL,
-            "fromLL",
-            callback_group=norm_callback_group,
-        )
-        while not self.localizer.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info(
-                "LatLon to pose conversion service not available, waiting again..."
-            )
-        self.req = FromLL.Request()
-
         # Action server to run the task executor
         self.action_server = ActionServer(
             self,
@@ -321,34 +306,15 @@ class AutonomyTaskExecutor(Node):
 
         converted_poses = []
         for wp in gps_poses:
-            self.req.ll_point.longitude = wp.position.longitude
-            self.req.ll_point.latitude = wp.position.latitude
-            self.req.ll_point.altitude = wp.position.altitude
+            lat, lon, yaw = geopose2LatLonYaw(wp)
+            pose = PoseStamped()
+            pose.header.frame_id = "utm"
+            pose.pose.position.x = utm.from_latlon(lat, lon)[0]
+            pose.pose.position.y = utm.from_latlon(lat, lon)[1]
+            pose.pose.position.z = 0.0
+            pose.pose.orientation = wp.orientation
 
-            log = "long{:f}, lat={:f}, alt={:f}".format(
-                self.req.ll_point.longitude,
-                self.req.ll_point.latitude,
-                self.req.ll_point.altitude,
-            )
-            self.get_logger().info(log)
-
-            self.future = self.localizer.call_async(self.req)
-            await self.future  # fix for iron/humble threading bug
-
-            self.resp = PoseStamped()
-            self.resp.header.frame_id = "map"
-            self.resp.header.stamp = self.get_clock().now().to_msg()
-            self.resp.pose.position = self.future.result().map_point
-
-            log = "x={:f}, y={:f}, z={:f}".format(
-                self.future.result().map_point.x,
-                self.future.result().map_point.y,
-                self.future.result().map_point.z,
-            )
-            self.get_logger().info(log)
-
-            self.resp.pose.orientation = wp.orientation
-            converted_poses += [self.resp]
+            converted_poses.append(pose)
 
         self.get_logger().info(
             f"Converted {len(gps_poses)} GPS waypoints to poses for Nav2"
@@ -510,8 +476,8 @@ class AutonomyTaskExecutor(Node):
         Block until the full navigation system is up and running, based on the nav2_simple_commander code
         """
 
-        if localizer != "robot_localization":  # non-lifecycle node
-            asyncio.run(self._waitForNodeToActivate(localizer))
+        # if localizer != "robot_localization":  # non-lifecycle node
+        #     asyncio.run(self._waitForNodeToActivate(localizer))
         # if localizer == 'amcl':
         #     self._waitForInitialPose()
         asyncio.run(self._waitForNodeToActivate(navigator))
@@ -809,8 +775,6 @@ class AutonomyTaskExecutor(Node):
             + self.path_planner
         )
 
-        self.task_info("Please review the leg order plan (exit matplotlib to continue)")
-
         # Determine the best order for the legs
         if self.order_planner == "bruteOrderPlanner":
             self.legs = bruteOrderPlanner(self.legs, self.wps, self.filtered_gps)
@@ -825,7 +789,7 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Determined best leg order: " + str(self.legs))
 
-        self.waitUntilNav2Active(localizer="robot_localization")
+        self.waitUntilNav2Active()
 
         for leg in self.legs:
             self.exec_leg(leg)

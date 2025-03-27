@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'pvt_to_nsf = rover_localization.pvt_to_nsf:main',
+            'geo_to_nsf = rover_localization.geo_to_nsf:main',
         ],
     },
 )

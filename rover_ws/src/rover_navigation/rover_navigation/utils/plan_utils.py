@@ -82,7 +82,7 @@ def bruteOrderPlanner(legs, waypoints, fix):
             lowest_cost = cost
             best_order = order
 
-    plotOrder(best_order, waypoints, fix)
+    # plotOrder(best_order, waypoints, fix)
     return best_order
 
 
@@ -121,7 +121,7 @@ def greedyOrderPlanner(legs, waypoints, fix):
         visited.append(current)
         order.append(current)
 
-    plotOrder(order, waypoints, fix)
+    # plotOrder(order, waypoints, fix)
     return order
 
 
@@ -133,7 +133,7 @@ def noOrderPlanner(legs, waypoints, fix):
     :date: Mar 2025
     """
 
-    plotOrder(legs, waypoints, fix)
+    # plotOrder(legs, waypoints, fix)
     return legs
 
 

@@ -54,6 +54,13 @@ def latLonYaw2Geopose(latitude: float, longitude: float, yaw: float = 0.0) -> Ge
     geopose.orientation = quaternion_from_euler(0.0, 0.0, yaw)
     return geopose
 
+def geopose2LatLonYaw(geopose: GeoPose) -> tuple[float, float, float]:
+    """
+    Extracts latitude, longitude and yaw from a geographic_msgs/msg/GeoPose object
+    """
+
+    return geopose.position.latitude, geopose.position.longitude, euler_from_quaternion(geopose.orientation)[2]
+
 
 def latLon2Meters(lat1, lon1, lat2, lon2):
     """
