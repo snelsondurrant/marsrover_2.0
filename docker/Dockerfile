@@ -1,12 +1,14 @@
 # Created by Nelson Durrant, Oct 2024 
 FROM ros:humble-ros-base
+
 # Why use ROS 2 Humble?
+#
 # The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older.
 # Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer, but
 # there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
 # compatible L4T images (it has to match the Orin), and through a lot of trial and error we've learned
-# that inter-Docker container FastDDS connections work reliably between distros. In addition, 
-# Iron seems to have less official and community support than Humble (with a sooner EOL).
+# that inter-Docker container FastDDS connections really only work reliably between matching distros.
+# In addition, Iron has a sooner EOL date than Humble and less community support.
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
@@ -210,12 +212,6 @@ USER $NAME
 # Official ROS 2 interfaces for the ZED camera
 USER root
 RUN apt update && apt install -y ros-humble-zed-msgs
-USER $NAME
-
-# Install IMU filter package - Nelson Durrant, Mar 2025
-# Used to combine the ZED's IMU data with its magnetometer data
-USER root
-RUN apt update && apt install -y ros-humble-imu-filter-madgwick
 USER $NAME
 
 # Install tf transformations package - Braden Meyers, Mar 2025
