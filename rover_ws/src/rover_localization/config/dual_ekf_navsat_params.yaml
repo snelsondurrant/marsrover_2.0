@@ -63,7 +63,7 @@ ekf_filter_node_map:
                   false, false, false, # Vx, Vy, Vz
                   false, false, false,  # Vroll, Vpitch, Vyaw
                   false, false, false] # Ax, Ay, Az
-    odom0_differential: true
+    odom0_differential: true # TODO: Maybe check this?
     odom0_relative: true
     odom0_queue_size: 2
 
