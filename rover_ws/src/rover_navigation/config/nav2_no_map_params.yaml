@@ -1,7 +1,9 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
 
 # NOTE: It is possible to enable 3D costmaps and navigation planning in Nav2.
-# However, as of now it would take a LOT of hard, near-PhD-level work (research papers, etc).
+# However, as of now it would take a LOT of hard, near-PhD-level work (research papers, etc)
+# to set up and use up a lot more computing power (CPU usage, etc) than we have available.
+#
 # Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
 # to follow and navigate in seems like the best solution for code simplicity and effectiveness.
 
@@ -194,20 +196,20 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: points # scan
+        observation_sources: points #, scan
         # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-        # scan:
-        #   topic: /unilidar/cloud # unitree lidar
-        #   max_obstacle_height: 2.0
-        #   clearing: True
-        #   marking: True
-        #   data_type: "PointCloud2"
-        #   raytrace_max_range: 3.0
-        #   raytrace_min_range: 0.0
-        #   obstacle_max_range: 2.5
-        #   obstacle_min_range: 0.0
+        scan:
+          topic: /unilidar/cloud # unitree lidar
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
         points:
           topic: /zed/zed_node/point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
           data_type: "PointCloud2"
@@ -246,20 +248,20 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: points # scan
+        observation_sources: points #, scan
         # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-        # scan:
-        #   topic: /unilidar/cloud # unitree lidar
-        #   max_obstacle_height: 2.0
-        #   clearing: True
-        #   marking: True
-        #   data_type: "PointCloud2"
-        #   raytrace_max_range: 3.0
-        #   raytrace_min_range: 0.0
-        #   obstacle_max_range: 2.5
-        #   obstacle_min_range: 0.0
+        scan:
+          topic: /unilidar/cloud # unitree lidar
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
         points:
           topic: /zed/zed_node/point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
           data_type: "PointCloud2"
