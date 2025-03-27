@@ -306,12 +306,11 @@ class AutonomyTaskExecutor(Node):
 
         converted_poses = []
         for wp in gps_poses:
-            lat, lon, yaw = geopose2LatLonYaw(wp)
             pose = PoseStamped()
             pose.header.frame_id = "utm"
-            pose.pose.position.x = utm.from_latlon(lat, lon)[0]
-            pose.pose.position.y = utm.from_latlon(lat, lon)[1]
-            pose.pose.position.z = 0.0
+            pose.header.stamp = self.get_clock().now().to_msg()
+            pose.pose.position.x = utm.from_latlon(wp.position.latitude, wp.position.longitude)[0]
+            pose.pose.position.y = utm.from_latlon(wp.position.latitude, wp.position.longitude)[1]
             pose.pose.orientation = wp.orientation
 
             converted_poses.append(pose)
