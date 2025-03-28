@@ -18,8 +18,17 @@ function printError {
   echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
+# Check for a "-t <task>" argument
+while getopts ":t:" opt; do
+  case $opt in
+    t)
+      task=$OPTARG
+      ;;
+  esac
+done
+
 # Launch the specified task configuration over SSH
-case "$1" in
+case $task in
     "autonomy")
         printInfo "Setting up the autonomy task..."
         envsubst < tmuxp/autonomy/base_launch.yaml > tmuxp/tmp/base_launch.yaml
@@ -39,7 +48,7 @@ case "$1" in
         ;;
     *)
         printError "No task specified"
-        echo "Specify a task using 'bash launch.sh <task>' (ex. 'bash launch.sh autonomy')"
+        echo "Specify a task using 'bash launch.sh -t <task>' (ex. 'bash launch.sh -t autonomy')"
         exit 1
         ;;
 esac

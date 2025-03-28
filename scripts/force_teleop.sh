@@ -4,4 +4,4 @@
 # Force the rover to transition to the teleop state so we can control it
 
 source ~/rover_ws/install/setup.bash
-ros2 service call /trigger_auto std_srvs/srv/Trigger "{}"
+ros2 service call /trigger_teleop std_srvs/srv/Trigger "{}"

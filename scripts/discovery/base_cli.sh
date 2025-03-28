@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Braden Meyers, Mar 2025
 # 
-# Sets up the environment for using the ROS 2 CLI tools with Fast DDS
+# Sets up the base environment for using the ROS 2 CLI tools with Fast DDS
 
 function printError {
   	# print red
@@ -17,12 +17,7 @@ fi
 # Get the directory of this script
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-# Are we running on Jetson Orin architecture (the rover)?
-if [ "$(uname -m)" == "aarch64" ]; then
-    export FASTRTPS_DEFAULT_PROFILES_FILE=$script_dir"/config/rover_super_client_config.xml"
-else
-    export FASTRTPS_DEFAULT_PROFILES_FILE=$script_dir"/config/base_super_client_config.xml"
-fi
+export FASTRTPS_DEFAULT_PROFILES_FILE=$script_dir"/config/base_super_client_config.xml"
 
 ros2 daemon stop
 ros2 daemon start

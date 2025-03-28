@@ -28,9 +28,24 @@ if ! command -v mosh &> /dev/null; then
     exit 1
 fi
 
-ROVER_IP_ADDRESS="192.168.1.120"
-ROVER_USER="marsrover"
-ROVER_PWD="thekillpack"
+ROVER_IP_ADDRESS=192.168.1.120
+ROVER_USERNAME=marsrover
+ROVER_PASSWORD=thekillpack
+
+# Check for a "-a <ip_address>", "-u <username>", or "-p <password>" argument
+while getopts ":a:u:p:" opt; do
+  case $opt in
+    a)
+      ROVER_IP_ADDRESS=$OPTARG
+      ;;
+    u)
+      ROVER_USERNAME=$OPTARG
+      ;;
+    p)
+      ROVER_PASSWORD=$OPTARG
+      ;;
+  esac
+done
 
 # 1. Generate SSH key pair (if it doesn't exist)
 if [ ! -f ~/.ssh/id_rsa ]; then
@@ -46,7 +61,7 @@ fi
 
 # 2. Copy the public key to the rover
 printInfo "Copying public key to rover..."
-sshpass -p "$ROVER_PWD" ssh-copy-id -i ~/.ssh/id_rsa.pub "$ROVER_USER@$ROVER_IP_ADDRESS"
+sshpass -p "$ROVER_PASSWORD" ssh-copy-id -i ~/.ssh/id_rsa.pub "$ROVER_USERNAME@$ROVER_IP_ADDRESS"
 if [ $? -ne 0 ]; then
   printError "Error copying public key to rover."
   exit 1
@@ -54,7 +69,7 @@ fi
 
 # 3. Test SSH connection without password
 printInfo "Testing SSH connection without password..."
-ssh "$ROVER_USER@$ROVER_IP_ADDRESS" "echo 'SSH connection successful!'"
+ssh "$ROVER_USERNAME@$ROVER_IP_ADDRESS" "echo 'SSH connection successful!'"
 
 if [ $? -ne 0 ]; then
   printError "SSH connection failed."

@@ -18,10 +18,41 @@ function printError {
   echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
+ROVER_USERNAME=marsrover
 ROVER_IP_ADDRESS=192.168.1.120
+launch_local=false
+export discovery_addr=ROVER_IP_ADDRESS
+
+# Check for a "-t <task>", "-a <ip_address>", "-u <username>", or "-l" argument
+while getopts ":t:a:u:l" opt; do
+  case $opt in
+    a)
+      ROVER_IP_ADDRESS=$OPTARG
+      ;;
+    u)
+      ROVER_USERNAME=$OPTARG
+      ;;
+    t)
+      task=$OPTARG
+      ;;
+    l)
+      launch_local=true
+      export discovery_addr=localhost
+      ;;
+  esac
+done
+
+if [ $launch_local = true ]; then
+    printWarning "Launching on the local machine..."
+    envsubst < tmuxp/autonomy/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
+    docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml
+    docker exec -it marsrover-ct tmux attach -t rover_launch
+    docker exec marsrover-ct tmux kill-session -t rover_launch
+    exit
+fi
 
 # Check for an SSH connection to the rover
-if ! ssh marsrover@$ROVER_IP_ADDRESS "echo" &> /dev/null
+if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "echo" &> /dev/null
 then
     printError "No available SSH connection to the rover"
     echo "Here's some debugging suggestions:"
@@ -33,12 +64,12 @@ then
 fi
 
 # Launch the specified task configuration over SSH
-case "$1" in
+case $task in
     "autonomy")
         printInfo "Setting up the autonomy task..."
         envsubst < tmuxp/autonomy/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
-        scp tmuxp/tmp/rover_launch.yaml marsrover@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
-        ssh marsrover@$ROVER_IP_ADDRESS \
+        scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+        ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
           "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "servicing")
@@ -55,13 +86,13 @@ case "$1" in
         ;;
     *)
         printError "No task specified"
-        echo "Specify a task using 'bash launch.sh <task>' (ex. 'bash launch.sh autonomy')"
+        echo "Specify a task using 'bash launch.sh -t <task>' (ex. 'bash launch.sh -t autonomy')"
         exit 1
         ;;
 esac
 
 # Attach to the 'rover_launch' tmux session (with mosh)
-mosh marsrover@$ROVER_IP_ADDRESS -- docker exec -it marsrover-ct tmux attach -t rover_launch
+mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- docker exec -it marsrover-ct tmux attach -t rover_launch
 
 # Kill the tmux session on exit
-ssh marsrover@$ROVER_IP_ADDRESS "docker exec marsrover-ct tmux kill-session -t rover_launch"
+ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker exec marsrover-ct tmux kill-session -t rover_launch"

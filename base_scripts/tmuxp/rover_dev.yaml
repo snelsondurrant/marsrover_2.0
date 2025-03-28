@@ -1,6 +1,6 @@
 # Created by Nelson Durrant, Mar 2025
 session_name: rover_dev
-start_directory: "~"
+start_directory: "~" # inside the container
 windows:
   - window_name: main
     layout: 
