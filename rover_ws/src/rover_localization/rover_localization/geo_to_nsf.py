@@ -30,8 +30,8 @@ class GEO2NSF(Node):
             latitude=msg.pose.position.latitude,
             longitude=msg.pose.position.longitude,
             altitude=msg.pose.position.altitude,
-            position_covariance=[0, 0, 0, 0, 0, 0, 0, 0, 0],
-            position_covariance_type=NavSatFix.COVARIANCE_TYPE_UNKNOWN,
+            position_covariance=[0, 0, 0, 0, 0, 0, 0, 0, 0], # not important here
+            position_covariance_type=NavSatFix.COVARIANCE_TYPE_UNKNOWN, # not important here
         )
 
         self.nsf_pub.publish(nsf_msg)

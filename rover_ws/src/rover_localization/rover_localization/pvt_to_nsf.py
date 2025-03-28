@@ -25,8 +25,8 @@ class PVT2NSF(Node):
 
     def pvt_callback(self, msg):
 
-        h_var = (msg.h_acc * 1000)**2  # horizontal covariance
-        v_var = (msg.v_acc * 1000)**2  # vertical covariance
+        h_var = msg.h_acc**2  # horizontal covariance
+        v_var = msg.v_acc**2  # vertical covariance
 
         # Create covariance matrix
         pos_covariance = [
