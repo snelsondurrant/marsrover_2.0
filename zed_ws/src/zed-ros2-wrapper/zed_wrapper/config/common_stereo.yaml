@@ -47,7 +47,7 @@
         sensors:
             publish_imu_tf: true # [usually overwritten by launch file] enable/disable the IMU TF broadcasting
             sensors_image_sync: false # Synchronize Sensors messages with latest published video/depth message
-            sensors_pub_rate: 200. # frequency of publishing of sensors data. MAX: 400. - MIN: grab rate
+            sensors_pub_rate: 40. # frequency of publishing of sensors data. MAX: 400. - MIN: grab rate
 
         region_of_interest:
             automatic_roi: false # Enable the automatic ROI generation to automatically detect part of the robot in the FoV and remove them from the processing. Note: if enabled the value of `manual_polygon` is ignored
