@@ -34,7 +34,7 @@ def generate_launch_description():
             ),
             launch_ros.actions.Node(
                 package="robot_localization",
-                executable="ekf_node",
+                executable="ekf_node", # TODO: Test ukf
                 name="ekf_filter_node_odom",
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
@@ -52,7 +52,7 @@ def generate_launch_description():
             ),
             launch_ros.actions.Node(
                 package="robot_localization",
-                executable="ekf_node",
+                executable="ekf_node", # TODO: Test ukf
                 name="ekf_filter_node_map",
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
