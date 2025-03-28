@@ -29,7 +29,7 @@ ekf_filter_node_odom:
                   false, false, false,  # Vroll, Vpitch, Vyaw
                   false, false, false] # Ax, Ay, Az
     odom0_differential: false
-    odom0_relative: true
+    odom0_relative: false
     odom0_queue_size: 2
 
     imu0: imu/data # from the madgwick filter
@@ -39,7 +39,7 @@ ekf_filter_node_odom:
                   false,  false,  false,
                   false,  false,  false]
     imu0_differential: true  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
-    imu0_relative: false
+    imu0_relative: true
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
 
@@ -102,7 +102,7 @@ ekf_filter_node_map:
                   false, false, false,
                   false,  false,  false,
                   false,  false,  false]
-    imu0_differential: true  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
+    imu0_differential: false  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
     imu0_relative: false
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
