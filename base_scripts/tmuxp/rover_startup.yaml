@@ -15,6 +15,7 @@ windows:
           - fastdds discovery --server-id 0
       - shell_command:
           - clear
+          - sleep 2
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup rover_startup.launch.py
             enter: false

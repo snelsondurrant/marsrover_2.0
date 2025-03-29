@@ -39,7 +39,7 @@ done
 # Check if the launch_local flag is set
 if [ $launch_local = true ]; then
     printWarning "Launching on the local machine..."
-    envsubst < tmuxp/autonomy/rover_startup.yaml > tmuxp/tmp/rover_startup.yaml
+    envsubst < tmuxp/rover_startup.yaml > tmuxp/tmp/rover_startup.yaml
     docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_startup.yaml
     docker exec -it marsrover-ct tmux attach -t rover_startup
     docker exec marsrover-ct tmux kill-session -t rover_startup
