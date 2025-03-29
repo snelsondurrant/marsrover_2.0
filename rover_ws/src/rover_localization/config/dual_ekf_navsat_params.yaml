@@ -9,7 +9,7 @@ imu_filter_madgwick:
 
 ekf_filter_node_odom:
   ros__parameters:
-    frequency: 15.0
+    frequency: 30.0
     two_d_mode: true # Recommended to use 2d mode for nav2 in mostly planar environments
     print_diagnostics: true
     debug: false
@@ -63,7 +63,7 @@ ekf_filter_node_odom:
 
 ekf_filter_node_map:
   ros__parameters:
-    frequency: 15.0
+    frequency: 30.0
     two_d_mode: true  # Recommended to use 2d mode for nav2 in mostly planar environments
     print_diagnostics: true
     debug: false
@@ -86,7 +86,7 @@ ekf_filter_node_map:
     odom0_relative: true
     odom0_queue_size: 2
 
-    odom1: odometry/gps
+    odom1: odometry/gps # from the navsat_transform_node
     odom1_config: [true,  true,  false,
                   false, false, false,
                   false, false, false,
@@ -130,7 +130,7 @@ navsat_transform:
     frequency: 20.0
     delay: 3.0
     # https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml
-    magnetic_declination_radians: 0.18814649
+    magnetic_declination_radians: 0.18814649 # in Provo
     yaw_offset: 0.0
     zero_altitude: true
     broadcast_utm_transform: true
