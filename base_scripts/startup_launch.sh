@@ -26,9 +26,6 @@ export discovery_addr=$ROVER_IP_ADDRESS
 # Check for a "-u <username>" or "-l" argument
 while getopts ":u:l" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;
