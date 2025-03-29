@@ -1,6 +1,6 @@
 ### Get Started
 
-> **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support and will trigger rover-specific hardware conditionals.
+> **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support, and have not been extensively tested.
 
 **Windows:**
 

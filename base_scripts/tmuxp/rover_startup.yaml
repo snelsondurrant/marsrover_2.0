@@ -1,22 +1,20 @@
 # Created by Nelson Durrant, Mar 2025
-session_name: base_launch
+session_name: rover_startup
 start_directory: "~/scripts" # inside the container
 environment:
-  ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
+  ROS_DISCOVERY_SERVER: ${discovery_addr}:11811
 windows:
   - window_name: main
-    layout: even-horizontal
+    layout: 
     options:
       default-terminal: screen-256color
       mouse: "on"
     panes:
       - shell_command:
           - clear
-          - source ~/rover_ws/install/setup.bash
-          - cmd: ros2 launch rover_bringup base_autonomy.launch.py use_mapviz:=True
-            enter: false
+          - fastdds discovery --server-id 0
       - shell_command:
           - clear
           - source ~/rover_ws/install/setup.bash
-          - cmd: bash task_exec.sh
+          - cmd: ros2 launch rover_bringup rover_startup.launch.py
             enter: false

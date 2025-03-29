@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 #
-# Launches the zed camera over SSH using the 'zed_launch' tmux session
+# Launches startup on the rover over SSH using the 'rover_startup' tmux session
 
 function printInfo {
   # print blue
@@ -42,10 +42,10 @@ done
 # Check if the launch_local flag is set
 if [ $launch_local = true ]; then
     printWarning "Launching on the local machine..."
-    envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
-    docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml
-    docker exec -it zed-ct tmux attach -t zed_launch
-    docker exec zed-ct tmux kill-session -t zed_launch
+    envsubst < tmuxp/autonomy/rover_startup.yaml > tmuxp/tmp/rover_startup.yaml
+    docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_startup.yaml
+    docker exec -it marsrover-ct tmux attach -t rover_startup
+    docker exec marsrover-ct tmux kill-session -t rover_startup
     exit
 fi
 
@@ -62,14 +62,14 @@ then
 fi
 
 # Send tmux commands to the rover over SSH
-printInfo "Setting up the 'zed_launch' tmux session..."
-envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
-scp tmuxp/tmp/zed_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+printInfo "Setting up the 'rover_startup' tmux session..."
+envsubst < tmuxp/rover_startup.yaml > tmuxp/tmp/rover_startup.yaml
+scp tmuxp/tmp/rover_startup.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
 ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-	"docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
+	"docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_startup.yaml"
 
-# Attach to the 'zed_launch' tmux session (with mosh)
-mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- docker exec -it zed-ct tmux attach -t zed_launch
+# Attach to the 'rover_startup' tmux session (with mosh)
+mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- docker exec -it marsrover-ct tmux attach -t rover_startup
 
 # Kill the tmux session on exit
-ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker exec zed-ct tmux kill-session -t zed_launch"
+ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker exec marsrover-ct tmux kill-session -t rover_startup"
