@@ -44,9 +44,8 @@ class PVT2NSF(Node):
             position_covariance=pos_covariance,
             position_covariance_type=NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN,
         )
-        # TODO: Double check the incoming timestamps from GPS
-        # they could be throwing us off
-        # I think we test it without it first
+        # TODO: Double check the incoming timestamps from GPS, they could be throwing us off
+        # I think we test it without it first - Nelson
         # nsf_msg.header.stamp = self.get_clock().now().to_msg()
         nsf_msg.header.frame_id = 'gps_link'  # set frame id (urdf)
         self.nsf_pub.publish(nsf_msg)
