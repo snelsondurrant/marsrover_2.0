@@ -10,7 +10,7 @@ function printError {
 
 # Check if this script was run using 'source'
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-    printError "Please source this script ('source enable_cli.sh')"
+    printError "Please source this script ('source disc_rover.sh')"
     exit 1
 fi
 
