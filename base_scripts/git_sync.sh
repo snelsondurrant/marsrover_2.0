@@ -22,11 +22,8 @@ ROVER_IP_ADDRESS=192.168.1.120
 ROVER_USERNAME=marsrover
 
 # Check for a "-a <ip_address>" or "-u <username>" argument
-while getopts ":a:u:" opt; do
+while getopts ":u:" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;

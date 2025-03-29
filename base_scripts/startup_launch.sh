@@ -23,8 +23,8 @@ ROVER_USERNAME=marsrover
 launch_local=false
 export discovery_addr=$ROVER_IP_ADDRESS
 
-# Check for a "-a <ip_address>", "-u <username>", or "-l" argument
-while getopts ":a:u:l" opt; do
+# Check for a "-u <username>" or "-l" argument
+while getopts ":u:l" opt; do
   case $opt in
     a)
       ROVER_IP_ADDRESS=$OPTARG

@@ -24,11 +24,8 @@ launch_local=false
 export discovery_addr=$ROVER_IP_ADDRESS
 
 # Check for a "-a <ip_address>", "-u <username>", or "-l" argument
-while getopts ":a:u:l" opt; do
+while getopts ":u:l" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;

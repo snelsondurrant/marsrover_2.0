@@ -18,26 +18,13 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-# Check if the required tools are installed
-if ! command -v sshpass &> /dev/null; then
-    printError "sshpass is not installed. Please install it to proceed."
-    exit 1
-fi
-if ! command -v mosh &> /dev/null; then
-    printError "mosh is not installed. Please install it to proceed."
-    exit 1
-fi
-
 ROVER_IP_ADDRESS=192.168.1.120
 ROVER_USERNAME=marsrover
 ROVER_PASSWORD=thekillpack
 
-# Check for a "-a <ip_address>", "-u <username>", or "-p <password>" argument
-while getopts ":a:u:p:" opt; do
+# Check for a "-u <username>" or "-p <password>" argument
+while getopts ":u:p:" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;

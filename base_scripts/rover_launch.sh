@@ -23,12 +23,9 @@ ROVER_IP_ADDRESS=192.168.1.120
 launch_local=false
 export discovery_addr=ROVER_IP_ADDRESS
 
-# Check for a "-t <task>", "-a <ip_address>", "-u <username>", or "-l" argument
+# Check for a "-t <task>", "-u <username>", or "-l" argument
 while getopts ":t:a:u:l" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;
