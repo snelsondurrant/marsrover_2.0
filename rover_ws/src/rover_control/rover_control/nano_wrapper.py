@@ -6,6 +6,7 @@
 # int8 TELEOPERATION_STATE = 1
 # int8 ARRIVAL_STATE = 2
 
+
 """
 This wrapper allows us to merge 2 arduinos into one to allow for more USB ports
 """
@@ -20,20 +21,15 @@ import time
 import threading
 import queue
 
-##### Global Variables #####
-# Default no-operation values
-gripper = 0
-navigation_state = -1
-q = queue.Queue()
-
 
 class NanoWrapper(Node):
     def __init__(self):
-        super().__init__("nano_wrapper")
-
+        super().__init__('nano_wrapper')
+        
+        self.q = queue.Queue()
         # Publishers
         # self.battery_pub = self.create_publisher(RawBattery, '/raw_battery_info', 10)
-
+        
         # Subscribers
         self.create_subscription(Int8, "nav_state", self.led_callback, 10)
         # self.create_subscription(Gripper, '/gripper', self.gripper_callback, 10)
@@ -53,8 +49,13 @@ class NanoWrapper(Node):
         # Start threads
         self.queue_handler_thread = threading.Thread(target=self.queue_handler)
         self.queue_handler_thread.start()
-        self.arduino_listener_thread = threading.Thread(target=self.arduino_listener)
-        self.arduino_listener_thread.start()
+        # self.arduino_listener_thread = threading.Thread(target=self.arduino_listener)
+        # self.arduino_listener_thread.start()
+
+        # Default no-operation values
+        # self.gripper = 0
+        # self.navigation_state = -1
+        
 
     def led_callback(self, data):
         # Update LED based on the rover state
@@ -64,52 +65,59 @@ class NanoWrapper(Node):
     # def gripper_callback(self, data):
     #     data_array = f"G{data.gripper}:0;"
     #     self.get_logger().info(f"Gripper command: {data_array}")
-    #     q.put(data_array)
+    #     self.q.put(data_array)
 
     # def laser_callback(self, data):
     #     data_array = "S+;" if data.laser_state else "S-;"
     #     self.get_logger().info("Laser call to Arduino")
-    #     q.put(data_array)
+    #     self.q.put(data_array)
 
     # def click_callback(self, data):
     #     data_array = "S!;"
-    #     q.put(data_array)
+    #     self.q.put(data_array)
 
-    def arduino_listener(self):
-        self.serial_port.flush()
+    # def arduino_listener(self):
+    #     self.serial_port.flush()
 
-        while rclpy.ok():
-            if self.serial_port.in_waiting:
-                data = self.serial_port.readline().strip()
-                voltage = int(data)
+    #     while rclpy.ok():
+    #         if self.serial_port.in_waiting:
+    #             data = self.serial_port.readline().strip()
+    #             # decoded_data = data.decode('utf-8', 'ignore')  # Ignore any decoding errors
+    #             # clean_data = ''.join(c for c in decoded_data if c.isdigit())
 
-                # bat_voltage_msg = RawBattery()
-                # bat_voltage_msg.voltage = voltage
-                # self.battery_pub.publish(bat_voltage_msg)
-                self.serial_port.flush()
+    #             # Convert to integer
+    #             # voltage = int(clean_data)
+    #             # voltage = int(data)
+
+    #             # bat_voltage_msg = RawBattery()
+    #             # bat_voltage_msg.voltage = voltage
+    #             # self.battery_pub.publish(bat_voltage_msg)
+    #             self.serial_port.flush()
+    #         time.sleep(0.1)
 
     def queue_handler(self):
         while rclpy.ok():
-            if not q.empty():
+            if not self.q.empty():
                 try:
-                    data = q.get(timeout=1).encode("utf-8")
+                    data = self.q.get(timeout=1).encode("utf-8")
                     self.serial_port.write(data)
                 except Exception as e:
                     self.get_logger().warn(f"Failed to write to serial: {e}")
+            time.sleep(0.1)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    nano_wrapper = NanoWrapper()
+    node = NanoWrapper()
 
     try:
-        rclpy.spin(nano_wrapper)
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        nano_wrapper.queue_handler_thread.join()
-        nano_wrapper.arduino_listener_thread.join()
-        nano_wrapper.destroy_node()
+        node.queue_handler_thread.join()
+        node.arduino_listener_thread.join()
+        node.destroy_node()
         rclpy.shutdown()
 
 
