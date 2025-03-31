@@ -20,10 +20,13 @@ function printError {
 
 script_dir=$(dirname "$(readlink -f "$0")")
 
-# Check if the mapproxy container is already running
-if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
-	printWarning "Starting the mapproxy container..."
-	docker run -p 8080:8080 -d -t -v $script_dir/mapproxy:/mapproxy danielsnider/mapproxy
+# Mapviz doesn't work on aarch64
+if [ ! $(uname -m) == "aarch64" ]; then
+	# Check if the mapproxy container is already running
+	if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
+		printWarning "Starting the mapproxy container..."
+		docker run -p 8080:8080 -d -t -v $script_dir/mapproxy:/mapproxy danielsnider/mapproxy
+	fi
 fi
 
 case $1 in
