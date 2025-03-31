@@ -42,11 +42,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Set up the upstream git remote for the rover
-ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover && \
+ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && \
     git remote add base marsrover@192.168.1.111:marsrover"
 
 # Check if the remote was added successfully
-if ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover && git remote -v" | grep -q "base"; then
+if ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git remote -v" | grep -q "base"; then
     echo "Successfully added the new upstream."
 else
     printError "Failed to add the new upstream."

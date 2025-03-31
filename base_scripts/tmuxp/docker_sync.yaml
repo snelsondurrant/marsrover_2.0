@@ -10,9 +10,9 @@ windows:
     panes:
       - shell_command:
           - clear
-          - cd ~/marsrover/docker
-          - gunzip marsrover.tar.gz
-          - docker load < marsrover.tar
-          - rm marsrover.tar
+          - cd ~/marsrover_2.0/docker
+          - gunzip marsrover_2.0.tar.gz
+          - docker load < marsrover_2.0.tar
+          - rm marsrover_2.0.tar
           - yes | docker image prune
           - docker image list

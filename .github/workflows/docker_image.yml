@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Nov 2024
-# This will build and push a new Docker image to byuawesomerover/marsrover:latest on DockerHub
+# This will build and push a new Docker image to byuawesomerover/marsrover_2.0:latest on DockerHub
 # whenever a change to docker/Dockerfile is pushed to the main branch.
 name: Docker Image CI
 
@@ -40,4 +40,4 @@ jobs:
        context: "{{defaultContext}}:docker"
        platforms: linux/amd64,linux/arm64
        push: true
-       tags: ${{ secrets.DOCKERHUB_USERNAME }}/marsrover:latest
+       tags: ${{ secrets.DOCKERHUB_USERNAME }}/marsrover_2.0:latest

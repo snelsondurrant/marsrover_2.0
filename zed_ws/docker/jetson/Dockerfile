@@ -27,7 +27,7 @@ ARG POINTCLOUD_TRANSPORT_PLUGINS_VERSION=1.0.11
 
 # Define a username and password for the new user
 ARG NAME=marsrover-zed
-ARG PASS=marsrover
+ARG PASS=thekillpack
 
 # Set up a new user
 RUN useradd -ms /bin/bash $NAME

@@ -15,7 +15,7 @@ ARG TARGETARCH
 
 # Define a username and password for the new user
 ARG NAME=marsrover-docker
-ARG PASS=marsrover
+ARG PASS=thekillpack
 
 # Update and upgrade
 RUN apt update && apt upgrade -y

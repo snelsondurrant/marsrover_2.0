@@ -3,7 +3,7 @@ FROM ros:noetic-ros-base
 
 # Define a username and password for the new user
 ARG NAME=marsrover-bridge
-ARG PASS=marsrover
+ARG PASS=thekillpack
 
 # Update and upgrade
 RUN apt update && apt upgrade -y
