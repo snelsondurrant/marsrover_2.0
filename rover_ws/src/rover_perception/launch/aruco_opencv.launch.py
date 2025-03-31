@@ -64,10 +64,10 @@ def generate_launch_description():
                     }
                 ],
                 remappings=[
-                    ("/aruco_cam/image_raw", "/zed/zed_node/rgb/image_rect_color"),
+                    ("/aruco_cam/image_raw", "/zed/zed_node/rgb_gray/image_rect_gray"),
                     (
                         "/aruco_cam/camera_info",
-                        "/zed/zed_node/rgb/camera_info",
+                        "/zed/zed_node/rgb_gray/camera_info",
                     ),
                 ],
             ),
