@@ -43,7 +43,7 @@ fi
 
 # Set up the upstream git remote for the rover
 ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && \
-    git remote add base marsrover@192.168.1.111:marsrover"
+    git remote add base marsrover@192.168.1.111:marsrover_2.0"
 
 # Check if the remote was added successfully
 if ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git remote -v" | grep -q "base"; then
