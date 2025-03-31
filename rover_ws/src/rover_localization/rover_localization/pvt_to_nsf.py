@@ -26,7 +26,7 @@ class PVT2NSF(Node):
         # IMPORTANT! The covariance defines how closely our EFK output follows the GPS data
         # Since we have reliable RTK GPS data, we may want to trust it more than the GPS reports
         # Thus we can use a tuning factor to adjust the covariance (smaller means more trust)
-        self.declare_parameter('gps_covariance_factor', 0.1)  # covariance for GPS
+        self.declare_parameter('gps_covariance_factor', 0.01)  # covariance for GPS
 
     def pvt_callback(self, msg):
 
