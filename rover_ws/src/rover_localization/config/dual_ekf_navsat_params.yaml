@@ -1,4 +1,8 @@
 # Modified from the GPS demo - Nelson Durrant, Feb 2025
+pvt_to_nsf:
+  ros__parameters:
+    gps_covariance_factor: 0.1
+
 imu_filter_madgwick:
   ros__parameters:
     use_mag: True

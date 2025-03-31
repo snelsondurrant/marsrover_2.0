@@ -104,13 +104,7 @@ def generate_launch_description():
                 executable="pvt_to_nsf",
                 output="screen",
                 condition=UnlessCondition(use_sim_time),
-            ),
-            # Added GEO to NSF conversion node
-            launch_ros.actions.Node(
-                package="rover_localization",
-                executable="geo_to_nsf",
-                output="screen",
-                condition=UnlessCondition(use_sim_time),
+                parameters=[rl_params_file],
             ),
             # Added IMU and magnetometer filter node
             launch_ros.actions.Node(

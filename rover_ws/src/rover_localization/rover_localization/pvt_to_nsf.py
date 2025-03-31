@@ -23,14 +23,15 @@ class PVT2NSF(Node):
         self.pvt_sub = self.create_subscription(PositionVelocityTime, 'rover/PosVelTime', self.pvt_callback, 10)
         self.nsf_pub = self.create_publisher(NavSatFix, 'gps/fix', 10)
 
-    def pvt_callback(self, msg):
-
         # IMPORTANT! The covariance defines how closely our EFK output follows the GPS data
         # Since we have reliable RTK GPS data, we may want to trust it more than the GPS reports
         # Thus we can use a tuning factor to adjust the covariance (smaller means more trust)
-        tuning_factor = 0.1
-        h_var = (msg.h_acc)**2 * tuning_factor  # horizontal covariance
-        v_var = (msg.v_acc)**2 * tuning_factor  # vertical covariance
+        self.declare_parameter('gps_covariance_factor', 0.1)  # covariance for GPS
+
+    def pvt_callback(self, msg):
+
+        h_var = (msg.h_acc)**2 * self.get_parameter('gps_covariance_factor').value
+        v_var = (msg.v_acc)**2 * self.get_parameter('gps_covariance_factor').value
 
         # Create covariance matrix
         pos_covariance = [
@@ -48,9 +49,6 @@ class PVT2NSF(Node):
             position_covariance=pos_covariance,
             position_covariance_type=NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN,
         )
-        # TODO: Double check the incoming timestamps from GPS, they could be throwing us off
-        # I think we test it without it first - Nelson
-        # nsf_msg.header.stamp = self.get_clock().now().to_msg()
         nsf_msg.header.frame_id = 'gps_link'  # set frame id (urdf)
         self.nsf_pub.publish(nsf_msg)
 
