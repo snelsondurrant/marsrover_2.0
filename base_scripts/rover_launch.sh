@@ -21,7 +21,7 @@ function printError {
 ROVER_USERNAME=marsrover
 ROVER_IP_ADDRESS=192.168.1.120
 launch_local=false
-export discovery_addr=ROVER_IP_ADDRESS
+export discovery_addr=$ROVER_IP_ADDRESS
 
 # Check for a "-t <task>", "-u <username>", or "-l" argument
 while getopts ":t:u:l" opt; do
