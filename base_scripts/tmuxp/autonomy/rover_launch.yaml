@@ -1,6 +1,6 @@
 # Created by Nelson Durrant, Mar 2025
 session_name: rover_launch
-start_directory: "~/scripts" # inside the container
+start_directory: "~/rover_ws" # inside the container
 environment:
   ROS_DISCOVERY_SERVER: ${discovery_addr}:11811
 windows:

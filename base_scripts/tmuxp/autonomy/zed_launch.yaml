@@ -1,6 +1,6 @@
 # Created by Nelson Durrant, Mar 2025
 session_name: zed_launch
-start_directory: "~/scripts" # inside the container
+start_directory: "~/zed_ws" # inside the container
 environment:
   ROS_DISCOVERY_SERVER: ${discovery_addr}:11811 # we're on the rover
 windows:
