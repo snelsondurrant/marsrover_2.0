@@ -176,7 +176,7 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-      width: 4 # Changed this due to increased footprint - Nelson Durrant, Mar 2025
+      width: 5 # Changed this due to increased footprint - Nelson Durrant, Mar 2025
       height: 5 # Changed this due to increased footprint - Nelson Durrant, Mar 2025
       resolution: 0.1 # Changed this - Nelson Durrant, Mar 2025
       # The rover's footprint - Nelson Durrant, Mar 2025
