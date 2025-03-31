@@ -5,13 +5,13 @@ imu_filter_madgwick:
     use_magnetic_field_msg: True
     world_frame: 'enu' # to match robot_localization
     publish_tf: False
-    publish_debug_topics: True
+    publish_debug_topics: False
 
 ekf_filter_node_odom:
   ros__parameters:
-    frequency: 30.0
+    frequency: 15.0 # The jetson struggles to run faster than this
     two_d_mode: true # Recommended to use 2d mode for nav2 in mostly planar environments
-    print_diagnostics: true
+    print_diagnostics: false
     debug: false
     publish_tf: true
 
@@ -63,9 +63,9 @@ ekf_filter_node_odom:
 
 ekf_filter_node_map:
   ros__parameters:
-    frequency: 30.0
+    frequency: 15.0 # The jetson struggles to run faster than this
     two_d_mode: true  # Recommended to use 2d mode for nav2 in mostly planar environments
-    print_diagnostics: true
+    print_diagnostics: false
     debug: false
     publish_tf: true
 
@@ -127,7 +127,7 @@ ekf_filter_node_map:
 
 navsat_transform:
   ros__parameters:
-    frequency: 20.0
+    frequency: 15.0 # The jetson struggles to run faster than this
     delay: 3.0
     # https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml
     magnetic_declination_radians: 0.18814649 # in Provo
