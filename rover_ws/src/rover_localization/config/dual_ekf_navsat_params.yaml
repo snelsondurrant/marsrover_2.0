@@ -4,9 +4,10 @@ covariance_tuner:
     # NOTE: The covariance defines how closely our EFK output follows the sensor data
     # A smaller covariance means the EFK will follow the sensor data more closely
     # A larger covariance means the EFK will follow the sensor data less closely
-    odom_covariance_factor: 1000.0
-    gps_covariance_factor: 0.001
+    odom_covariance_factor: 1.0
+    gps_covariance_factor: 1.0
     imu_covariance_factor: 1.0
+    # IMPORTANT! The default covariances (factor of 1.0) seem to do pretty well, be careful tuning them
 
 imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
   ros__parameters:
@@ -23,7 +24,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 # This publishes the map->zed_camera_link transform
 # https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
   ros__parameters:
-    frequency: 15.0 # The Jetson struggles to run faster than this
+    frequency: 20.0 # The Jetson struggles to run faster than this
     two_d_mode: true  # Recommended to use 2d mode for nav2 in mostly planar environments
     print_diagnostics: true
     debug: false
@@ -42,8 +43,8 @@ ekf_filter_node_map: # outputs to the odometry/global topic
                   false, false, false,   # Vx, Vy, Vz
                   false, false, false,   # Vroll, Vpitch, Vyaw
                   false, false, false]   # Ax, Ay, Az
-    odom0_differential: true # Just fuse the differential velocity
-    # odom0_relative: true # Redundant when odom0_differential is true
+    odom0_differential: true # Just fuse the differential change in position and orientation
+    # odom0_relative: true # Redundant with differential
     odom0_queue_size: 2
 
     odom1: odometry/gps_tuned # from the navsat_transform_node
@@ -53,7 +54,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
                   false, false, false,
                   false, false, false]
     odom1_differential: false
-    odom1_relative: false # this is the absolute position of the robot
+    odom1_relative: false # We want to use the absolute GPS position
     odom1_queue_size: 2
 
     imu0: imu/data_tuned # from the madgwick filter
@@ -63,7 +64,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
                   false,  false,  false,
                   false,  false,  false]
     imu0_differential: false
-    imu0_relative: false # this is the absolute orientation of the robot
+    imu0_relative: false # We want to use the absolute IMU orientation
     imu0_queue_size: 2
 
     use_control: false # we could fuse in cmd_vel commands, but they are not very accurate
@@ -72,7 +73,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 
 navsat_transform:
   ros__parameters:
-    frequency: 15.0 # The Jetson struggles to run faster than this
+    frequency: 20.0 # The Jetson struggles to run faster than this
     delay: 3.0
     # https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml
     magnetic_declination_radians: 0.18814649 # in Provo
