@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'pvt_to_nsf = rover_localization.pvt_to_nsf:main',
+            'covariance_tuner = rover_localization.covariance_tuner:main',
         ],
     },
 )

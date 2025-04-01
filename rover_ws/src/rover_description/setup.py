@@ -23,8 +23,6 @@ setup(
     license='MIT',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-            'zed_lidar_calibrate = rover_description.zed_lidar_calibrate:main',
-        ],
+        'console_scripts': [],
     },
 )

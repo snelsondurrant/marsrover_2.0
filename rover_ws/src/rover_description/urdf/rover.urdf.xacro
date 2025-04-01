@@ -2,6 +2,7 @@
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Created by Nelson Durrant, Mar 2025 -->
+  <!-- This model uses zed_camera_link as the top-level frame instead of base_link -->
   <!-- https://docs.nav2.org/setup_guides/urdf/setup_urdf.html#writing-the-urdf -->
 
   <!-- Rover constants -->
@@ -76,9 +77,9 @@
   </link>
 
   <joint name="pole_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="pole_link"/>
-    <origin xyz="${base_length/2+pole_length/2} 0 ${pole_height/2-base_height/2}" rpy="0 0 0"/>
+    <parent link="pole_link"/>
+    <child link="base_link"/>
+    <origin xyz="${-base_length/2-pole_length/2} 0 ${-pole_height/2+base_height/2}" rpy="0 0 0"/>
   </joint>
 
   <!-- Sensors -->
@@ -90,34 +91,24 @@
 
   <link name="gps_link"/>
 
-  <joint name="aruco_cam_joint" type="fixed">
-    <parent link="pole_link"/>
-    <child link="aruco_cam_link"/>
-    <origin xyz="${pole_length/2+0.1} 0 0.1" rpy="0 0 0"/>
-  </joint>
-
-  <link name="aruco_cam_link"/>
-
   <!-- https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md -->
 
   <joint name="unilidar_lidar_joint" type="fixed">
     <parent link="pole_link"/>
-    <child link="unilidar_mount"/>
-    <!-- the 'zed_lidar_calibrate' node handles the mount to sensor transform -->
+    <child link="unilidar_link"/>
     <origin xyz="${pole_length/2+0.1} 0 -0.05" rpy="0 ${pi/2} 0"/>
   </joint>
 
-  <link name="unilidar_mount"/>
+  <link name="unilidar_link"/>
 
   <!-- https://www.stereolabs.com/docs/ros2/140_ros2-robot-integration -->
 
   <joint name="zed_camera_joint" type="fixed">
-    <parent link="pole_link"/>
-    <child link="zed_camera_mount"/>
-    <!-- the 'zed_lidar_calibrate' node handles the mount to sensor transform -->
-    <origin xyz="${pole_length/2+0.1} 0 0.05" rpy="0 0 0"/>
+    <parent link="zed_camera_link"/>
+    <child link="base_link"/>
+    <origin xyz="${-pole_length/2-0.1} 0 -0.05" rpy="0 0 0"/>
   </joint>
 
-  <link name="zed_camera_mount"/>
+  <link name="zed_camera_link"/>
 
 </robot>

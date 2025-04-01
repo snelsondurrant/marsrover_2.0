@@ -53,14 +53,6 @@ def generate_launch_description():
         condition=IfCondition(use_sim_time),
     )
 
-    zed_lidar_calibrate_cmd = Node(
-        package="rover_description",
-        executable="zed_lidar_calibrate",
-        name="zed_lidar_calibrate",
-        output="screen",
-        condition=UnlessCondition(use_sim_time),
-    )
-
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -68,6 +60,5 @@ def generate_launch_description():
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(sim_start_robot_state_publisher_cmd)
-    ld.add_action(zed_lidar_calibrate_cmd)
 
     return ld

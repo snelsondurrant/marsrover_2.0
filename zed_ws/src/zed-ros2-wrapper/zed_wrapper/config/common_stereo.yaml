@@ -84,8 +84,7 @@
             pos_tracking_enabled: true # True to enable positional tracking from start
             pos_tracking_mode: 'GEN_1' # Matches the ZED SDK setting: 'GEN_1', 'GEN_2'
             imu_fusion: true # enable/disable IMU fusion. When set to false, only the optical odometry will be used.
-            # Changed the below to use the EKF - Nelson Durrant, Mar 2025
-            publish_tf: false # [usually overwritten by launch file] publish `odom -> camera_link` TF
+            publish_tf: true # [usually overwritten by launch file] publish `odom -> camera_link` TF
             # Changed the below to use the EKF - Nelson Durrant, Mar 2025
             publish_map_tf: false # [usually overwritten by launch file] publish `map -> odom` TF
             map_frame: 'map'

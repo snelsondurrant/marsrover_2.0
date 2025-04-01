@@ -1,10 +1,12 @@
 # Created by Nelson Durrant, Feb 2025
-pvt_to_nsf: # converts ublox PosVelTime to NavSatFix we can use in the navsat_transform_node
+covariance_tuner:
   ros__parameters:
-    # IMPORTANT! The covariance defines how closely our EFK output follows the GPS data
-    # Since we have reliable RTK GPS data, we may want to trust it more than the GPS reports
-    # Thus we can use a tuning factor to adjust the covariance (smaller means more trust)
-    gps_covariance_factor: 0.01
+    # NOTE: The covariance defines how closely our EFK output follows the sensor data
+    # A smaller covariance means the EFK will follow the sensor data more closely
+    # A larger covariance means the EFK will follow the sensor data less closely
+    odom_covariance_factor: 1000.0
+    gps_covariance_factor: 0.001
+    imu_covariance_factor: 1.0
 
 imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
   ros__parameters:
@@ -14,67 +16,11 @@ imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
     publish_tf: False
     publish_debug_topics: False
 
-ekf_filter_node_odom: # outputs to the odometry/local topic
-# This publishes the odom->base_link transform
-# The position calculated here needs to be continuous, but not necessarily incredibly accurate
-# https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
-  ros__parameters:
-    frequency: 15.0 # The Jetson struggles to run faster than this
-    two_d_mode: true # Recommended to use 2d mode for nav2 in mostly planar environments
-    print_diagnostics: true
-    debug: false
-    publish_tf: true
-
-    map_frame: map
-    odom_frame: odom
-    base_link_frame: base_link # base_footprint is used in Gazebo
-    world_frame: odom
-
-    # https://docs.nav2.org/tutorials/docs/integrating_vio.html
-    # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-    odom0: zed/zed_node/odom # prefuses IMU data with VIO
-    odom0_config: [true,  true,  false,  # X, Y, Z
-                  false,  false,  true,  # Roll, Pitch, Yaw
-                  false, false, false,   # Vx, Vy, Vz
-                  false, false, false,   # Vroll, Vpitch, Vyaw
-                  false, false, false]   # Ax, Ay, Az
-    odom0_differential: false
-    odom0_relative: true
-    odom0_queue_size: 2
-
-    imu0: imu/data # from the madgwick filter
-    imu0_config: [false, false, false,
-                  false,  false,  true,
-                  false, false, false,
-                  false,  false,  false,
-                  false,  false,  false]
-    imu0_differential: false
-    imu0_relative: true
-    imu0_queue_size: 10
-    imu0_remove_gravitational_acceleration: true
-
-    use_control: false # we could fuse in cmd_vel commands, but they are not very accurate
-
-    # The below is from the GPS demo
-    process_noise_covariance: [1e-3, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    1e-3,  0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    1e-3,  0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.3,   0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.3,   0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.01,  0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.5,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.5,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.1,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.3,   0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.3,   0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.3,   0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.3,   0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.3,   0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.3]
+# ekf_filter_node_odom:
+# The ZED calculates and manages the odom->zed_camera_link transform internally, and does a pretty good job
 
 ekf_filter_node_map: # outputs to the odometry/global topic
-# This publishes the map->base_link transform
-# The position calculated here will probably be discrete, but more accurate
+# This publishes the map->zed_camera_link transform
 # https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
   ros__parameters:
     frequency: 15.0 # The Jetson struggles to run faster than this
@@ -85,32 +31,32 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 
     map_frame: map
     odom_frame: odom
-    base_link_frame: base_link # base_footprint is used in Gazebo
+    base_link_frame: zed_camera_link # base_footprint is used in Gazebo
     world_frame: map
 
     # https://docs.nav2.org/tutorials/docs/integrating_vio.html
     # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-    odom0: zed/zed_node/odom # prefuses IMU data with VIO
+    odom0: zed/zed_node/odom_tuned # prefuses IMU data with VIO
     odom0_config: [true,  true,  false,  # X, Y, Z
                   false,  false,  true,  # Roll, Pitch, Yaw
                   false, false, false,   # Vx, Vy, Vz
                   false, false, false,   # Vroll, Vpitch, Vyaw
                   false, false, false]   # Ax, Ay, Az
-    odom0_differential: true
-    odom0_relative: true
+    odom0_differential: true # Just fuse the differential velocity
+    # odom0_relative: true # Redundant when odom0_differential is true
     odom0_queue_size: 2
 
-    odom1: odometry/gps # from the navsat_transform_node
+    odom1: odometry/gps_tuned # from the navsat_transform_node
     odom1_config: [true,  true,  false,
                   false, false, false,
                   false, false, false,
                   false, false, false,
                   false, false, false]
-    odom1_queue_size: 10
     odom1_differential: false
     odom1_relative: false # this is the absolute position of the robot
+    odom1_queue_size: 2
 
-    imu0: imu/data # from the madgwick filter
+    imu0: imu/data_tuned # from the madgwick filter
     imu0_config: [false, false, false,
                   false,  false,  true,
                   false, false, false,
@@ -118,27 +64,11 @@ ekf_filter_node_map: # outputs to the odometry/global topic
                   false,  false,  false]
     imu0_differential: false
     imu0_relative: false # this is the absolute orientation of the robot
-    imu0_queue_size: 10
-    imu0_remove_gravitational_acceleration: true
+    imu0_queue_size: 2
 
     use_control: false # we could fuse in cmd_vel commands, but they are not very accurate
 
-    # The below is from the GPS demo
-    process_noise_covariance: [1.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    1.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    1e-3,   0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.3,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.3,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.01,   0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.5,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.5,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.1,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.3,    0.0,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.3,    0.0,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.3,    0.0,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.3,    0.0,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.3,    0.0,
-                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.3]
+    # NOTE: We just use the built-in process noise covariance, and do the tuning on specific sensors
 
 navsat_transform:
   ros__parameters:

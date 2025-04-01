@@ -23,15 +23,10 @@ class PVT2NSF(Node):
         self.pvt_sub = self.create_subscription(PositionVelocityTime, 'rover/PosVelTime', self.pvt_callback, 10)
         self.nsf_pub = self.create_publisher(NavSatFix, 'gps/fix', 10)
 
-        # IMPORTANT! The covariance defines how closely our EFK output follows the GPS data
-        # Since we have reliable RTK GPS data, we may want to trust it more than the GPS reports
-        # Thus we can use a tuning factor to adjust the covariance (smaller means more trust)
-        self.declare_parameter('gps_covariance_factor', 0.01)  # covariance for GPS
-
     def pvt_callback(self, msg):
 
-        h_var = (msg.h_acc)**2 * self.get_parameter('gps_covariance_factor').value
-        v_var = (msg.v_acc)**2 * self.get_parameter('gps_covariance_factor').value
+        h_var = (msg.h_acc)**2
+        v_var = (msg.v_acc)**2
 
         # Create covariance matrix
         pos_covariance = [

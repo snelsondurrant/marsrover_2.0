@@ -32,16 +32,6 @@ def generate_launch_description():
             launch.actions.DeclareLaunchArgument(
                 "output_location", default_value="~/dual_ekf_navsat_example_debug.txt"
             ),
-            # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
-            launch_ros.actions.Node(
-                package="robot_localization",
-                executable="ekf_node",
-                name="ekf_filter_node_odom",
-                output="screen",
-                parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
-                remappings=[("odometry/filtered", "odometry/local")],
-                condition=UnlessCondition(use_sim_time),
-            ),
             launch_ros.actions.Node(
                 package="robot_localization",
                 executable="ekf_node",
@@ -104,6 +94,13 @@ def generate_launch_description():
             launch_ros.actions.Node(
                 package="rover_localization",
                 executable="pvt_to_nsf",
+                output="screen",
+                condition=UnlessCondition(use_sim_time),
+                parameters=[rl_params_file],
+            ),
+            launch_ros.actions.Node(
+                package="rover_localization",
+                executable="covariance_tuner",
                 output="screen",
                 condition=UnlessCondition(use_sim_time),
                 parameters=[rl_params_file],
