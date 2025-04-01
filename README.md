@@ -52,7 +52,7 @@ Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.or
 
 Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
 
-Robot Localization Concepts - [https://vimeo.com/142624091](https://vimeo.com/142624091) (basic overview) OR [https://docs.ros.org/en/lunar/api/robot_localization/html/_downloads/robot_localization_ias13_revised.pdf](https://docs.ros.org/en/lunar/api/robot_localization/html/_downloads/robot_localization_ias13_revised.pdf) (in depth, technical)
+Robot Localization Concepts - [https://vimeo.com/142624091](https://vimeo.com/142624091)
 
 GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
