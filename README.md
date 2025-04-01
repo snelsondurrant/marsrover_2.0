@@ -56,8 +56,6 @@ Robot Localization Concepts - [https://vimeo.com/142624091](https://vimeo.com/14
 
 GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
-ZED VIO w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/integrating_vio.html](https://docs.nav2.org/tutorials/docs/integrating_vio.html)
-
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS2 tutorial workspace.*
 
 --
