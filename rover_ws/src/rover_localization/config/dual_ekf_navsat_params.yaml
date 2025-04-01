@@ -23,6 +23,9 @@ imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
 
 ekf_filter_node_map: # outputs to the odometry/global topic
 # This publishes the map->zed_camera_link transform
+# https://vimeo.com/142624091
+# https://docs.ros.org/en/lunar/api/robot_localization/html/_downloads/robot_localization_ias13_revised.pdf
+# https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
 # https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
   ros__parameters:
     frequency: 20.0 # The Jetson struggles to run faster than this
@@ -73,6 +76,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
     # NOTE: We just use the built-in process noise covariance, and it seems to work well
 
 navsat_transform:
+  # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
   ros__parameters:
     frequency: 20.0 # The Jetson struggles to run faster than this
     delay: 3.0
