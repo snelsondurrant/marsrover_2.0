@@ -22,7 +22,7 @@ imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
 # https://www.stereolabs.com/docs/ros2/positional-tracking
 
 ekf_filter_node_map: # outputs to the odometry/global topic
-  # This publishes the map->zed_camera_link transform
+  # This publishes the map->odom transform
   # https://vimeo.com/142624091
   # https://docs.ros.org/en/lunar/api/robot_localization/html/_downloads/robot_localization_ias13_revised.pdf
   # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
