@@ -3,8 +3,6 @@
 #
 # Set up a SSH key for passwordless access to the Mars Rover
 
-# TODO: Make this catch spoofing protection errors
-
 function printInfo {
  	# print blue
  	echo -e "\033[0m\033[36m[INFO] $1\033[0m"
@@ -36,7 +34,25 @@ while getopts ":u:p:" opt; do
   esac
 done
 
-# 1. Generate SSH key pair (if it doesn't exist)
+# Function to remove an old SSH key from known_hosts
+remove_old_ssh_key() {
+    local host=$1
+    local port=$2
+
+    if [[ "$port" == "22" ]]; then
+        ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$host" &> /dev/null
+    else
+        ssh-keygen -f "$HOME/.ssh/known_hosts" -R "[$host]:$port" &> /dev/null
+    fi
+
+    printInfo "Removed old SSH key for $host on port $port"
+}
+
+# 1. Remove old SSH key (if it exists)
+printInfo "Removing old SSH key..."
+remove_old_ssh_key "$ROVER_IP_ADDRESS" "22"
+
+# 2. Generate SSH key pair (if it doesn't exist)
 if [ ! -f ~/.ssh/id_rsa ]; then
   printInfo "Generating SSH key pair..."
   ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
@@ -48,7 +64,7 @@ else
   printWarning "SSH key pair already exists."
 fi
 
-# 2. Copy the public key to the rover
+# 3. Copy the public key to the rover
 printInfo "Copying public key to rover..."
 sshpass -p "$ROVER_PASSWORD" ssh-copy-id -i ~/.ssh/id_rsa.pub "$ROVER_USERNAME@$ROVER_IP_ADDRESS"
 if [ $? -ne 0 ]; then
@@ -56,15 +72,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# 3. Test SSH connection without password
+# 4. Test SSH connection without password
 printInfo "Testing SSH connection without password..."
 ssh "$ROVER_USERNAME@$ROVER_IP_ADDRESS" "echo 'SSH connection successful!'"
 
 if [ $? -ne 0 ]; then
   printError "SSH connection failed."
   exit 1
-else
-  echo "SSH connection successful."
 fi
 
 printInfo "SSH key setup complete."
