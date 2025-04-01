@@ -80,6 +80,7 @@
             remove_saturated_areas: true # [DYNAMIC]
 
         pos_tracking:
+            # https://www.stereolabs.com/docs/ros2/positional-tracking
             # https://docs.nav2.org/tutorials/docs/integrating_vio.html
             pos_tracking_enabled: true # True to enable positional tracking from start
             pos_tracking_mode: 'GEN_1' # Matches the ZED SDK setting: 'GEN_1', 'GEN_2'
@@ -90,7 +91,7 @@
             map_frame: 'map'
             odometry_frame: 'odom'
             area_memory_db_path: ''
-            # Changed the below ? - Nelson Durrant, Mar 2025
+            # Changed the below for reliability ? - Nelson Durrant, Mar 2025
             area_memory: true # Enable to detect loop closure
             reset_odom_with_loop_closure: true # Re-initialize odometry to the last valid pose when loop closure happens (reset camera odometry drift)
             depth_min_range: 0.0 # Set this value for removing fixed zones of the robot in the FoV of the camerafrom the visual odometry evaluation
@@ -112,8 +113,7 @@
         gnss_fusion:
             # NOTE: I gave a quick effort to see if I could get this to work, but it just takes too long
             # to initialize (10-15 minutes), and the rolling calibration seemed to perform worse than
-            # our own EKF. You do need to refactor the TF tree to have everything inherit from camera_link
-            # instead of base_link in order to use it. Maybe try again later? - Nelson Durrant, Mar 2025
+            # our own EKF. Maybe try again later? - Nelson Durrant, Mar 2025
             # https://www.stereolabs.com/docs/global-localization
             gnss_fusion_enabled: false # fuse 'sensor_msg/NavSatFix' message information into pose data
             gnss_fix_topic: '/fix' # Name of the GNSS topic of type NavSatFix to subscribe [Default: '/gps/fix']

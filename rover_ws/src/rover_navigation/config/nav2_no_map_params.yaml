@@ -2,7 +2,7 @@
 # https://automaticaddison.com/ros-2-navigation-tuning-guide-nav2/
 
 # NOTE: It is possible to enable 3D costmaps and navigation planning in Nav2.
-# However, as of now it would take a LOT of hard, near-PhD-level work (research papers, etc)
+# However, as of now it would take a LOT of hard, theoretical work (research papers, etc)
 # to set up and would use a lot more computing power (CPU usage, etc) than we have available.
 #
 # Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
@@ -26,7 +26,7 @@ bt_navigator:
   ros__parameters:
     global_frame: map
     robot_base_frame: base_link
-    odom_topic: zed/zed_node/odom
+    odom_topic: zed/zed_node/odom # Use the ZED visual odometry - Nelson Durrant, Mar 2025
     bt_loop_duration: 10
     default_server_timeout: 200 # Fix for crashes - Nelson Durrant, Feb 2025
     navigators: ["navigate_to_pose", "navigate_through_poses"]
@@ -100,7 +100,7 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    controller_frequency: 15.0 # Changed this to match ekf - Nelson Durrant, Mar 2025
+    controller_frequency: 20.0 # Changed this to match ekf - Nelson Durrant, Mar 2025
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
@@ -296,7 +296,7 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 15.0 # Changed this to match ekf - Nelson Durrant, Mar 2025
+    expected_planner_frequency: 20.0 # Changed this to match ekf - Nelson Durrant, Mar 2025
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
@@ -342,7 +342,7 @@ behavior_server:
 
 waypoint_follower:
   ros__parameters:
-    loop_rate: 15 # Changed this to match ekf - Nelson Durrant, Mar 2025
+    loop_rate: 20 # Changed this to match ekf - Nelson Durrant, Mar 2025
     stop_on_failure: false
     action_server_result_timeout: 300 # 5 minute timeout for navigation - Nelson Durrant, Mar 2025
     waypoint_task_executor_plugin: "wait_at_waypoint"
@@ -353,14 +353,14 @@ waypoint_follower:
 
 velocity_smoother:
   ros__parameters:
-    smoothing_frequency: 15.0 # Changed this to match ekf - Nelson Durrant, Mar 2025
+    smoothing_frequency: 20.0 # Changed this to match ekf - Nelson Durrant, Mar 2025
     scale_velocities: False
     feedback: "OPEN_LOOP"
     max_velocity: [0.26, 0.0, 1.0]
     min_velocity: [-0.26, 0.0, -1.0]
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
-    odom_topic: "zed/zed_node/odom" # from the ekf
+    odom_topic: "zed/zed_node/odom" # Use the ZED visual odometry - Nelson Durrant, Mar 2025
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0

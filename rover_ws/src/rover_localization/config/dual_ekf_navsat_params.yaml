@@ -19,6 +19,7 @@ imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
 
 # ekf_filter_node_odom:
 # The ZED calculates and manages the odom->zed_camera_link transform internally, and does a pretty good job
+# https://www.stereolabs.com/docs/ros2/positional-tracking
 
 ekf_filter_node_map: # outputs to the odometry/global topic
 # This publishes the map->zed_camera_link transform
@@ -26,7 +27,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
   ros__parameters:
     frequency: 20.0 # The Jetson struggles to run faster than this
     two_d_mode: true  # Recommended to use 2d mode for nav2 in mostly planar environments
-    print_diagnostics: true
+    print_diagnostics: false
     debug: false
     publish_tf: true
 
@@ -69,7 +70,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 
     use_control: false # we could fuse in cmd_vel commands, but they are not very accurate
 
-    # NOTE: We just use the built-in process noise covariance, and do the tuning on specific sensors
+    # NOTE: We just use the built-in process noise covariance, and it seems to work well
 
 navsat_transform:
   ros__parameters:
