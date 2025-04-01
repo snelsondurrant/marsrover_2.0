@@ -32,6 +32,7 @@ def generate_launch_description():
             launch.actions.DeclareLaunchArgument(
                 "output_location", default_value="~/dual_ekf_navsat_example_debug.txt"
             ),
+            # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
             launch_ros.actions.Node(
                 package="robot_localization",
                 executable="ekf_node",
@@ -50,6 +51,7 @@ def generate_launch_description():
                 remappings=[("odometry/filtered", "odometry/local")],
                 condition=IfCondition(use_sim_time),
             ),
+            # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
             launch_ros.actions.Node(
                 package="robot_localization",
                 executable="ekf_node",
@@ -68,6 +70,7 @@ def generate_launch_description():
                 remappings=[("odometry/filtered", "odometry/global")],
                 condition=IfCondition(use_sim_time),
             ),
+            # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
             launch_ros.actions.Node(
                 package="robot_localization",
                 executable="navsat_transform_node",
@@ -75,7 +78,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[
-                    ("imu/data", "imu/data"),
+                    ("imu/data", "imu/data"), # from the imu_filter_madgwick
                     ("gps/fix", "gps/fix"),
                     ("gps/filtered", "gps/filtered"),
                     ("odometry/gps", "odometry/gps"),
@@ -98,7 +101,6 @@ def generate_launch_description():
                 ],
                 condition=IfCondition(use_sim_time),
             ),
-            # Added PVT to NSF conversion node
             launch_ros.actions.Node(
                 package="rover_localization",
                 executable="pvt_to_nsf",
@@ -106,7 +108,7 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
                 parameters=[rl_params_file],
             ),
-            # Added IMU and magnetometer filter node
+            # https://github.com/CCNYRoboticsLab/imu_tools/tree/humble?tab=readme-ov-file
             launch_ros.actions.Node(
                 package='imu_filter_madgwick',
                 executable='imu_filter_madgwick_node',

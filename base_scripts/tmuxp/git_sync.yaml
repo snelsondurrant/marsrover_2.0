@@ -1,4 +1,5 @@
 # Created by Nelson Durrant, Mar 2025
+# https://tmuxp.git-pull.com/configuration/examples.html
 session_name: git_sync
 start_directory: "~/marsrover_2.0" # outside the container
 windows:

@@ -2,6 +2,7 @@
 # Created by Braden Meyers, Mar 2025
 # 
 # Sets up the base environment with the ROS_DISCOVERY_SERVER environment variable
+# https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
 
 function printError {
   	# print red

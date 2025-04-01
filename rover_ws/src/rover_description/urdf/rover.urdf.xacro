@@ -2,6 +2,7 @@
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Created by Nelson Durrant, Mar 2025 -->
+  <!-- https://docs.nav2.org/setup_guides/urdf/setup_urdf.html#writing-the-urdf -->
 
   <!-- Rover constants -->
   <xacro:property name="base_width" value="0.5"/>

@@ -3,6 +3,8 @@
 #
 # Set up a SSH key for passwordless access to the Mars Rover
 
+# TODO: Make this catch spoofing protection errors
+
 function printInfo {
  	# print blue
  	echo -e "\033[0m\033[36m[INFO] $1\033[0m"

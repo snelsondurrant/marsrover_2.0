@@ -1,6 +1,9 @@
 # config/common_stereo.yaml
 # Common parameters to Stereolabs ZED Stereo cameras
 
+# IMPORTANT! When you make changes here, you need to make sure they aren't overridden
+# in the launch file (zed_wrapper/launch/zed_camera.launch.py).
+
 ---
 /**:
     ros__parameters:
@@ -25,8 +28,8 @@
             serial_number: 0 # usually overwritten by launch file
             pub_resolution: 'CUSTOM' # The resolution used for image and depth map publishing. 'NATIVE' to use the same `general.grab_resolution` - `CUSTOM` to apply the `general.pub_downscale_factor` downscale factory to reduce bandwidth in transmission
             pub_downscale_factor: 2.0 # rescale factor used to rescale image before publishing when 'pub_resolution' is 'CUSTOM'
-            # Changed the below - Nelson Durrant, Mar 2025
-            pub_frame_rate: 15.0 # frequency of publishing of visual images and depth images
+            # Changed the below to save CPU usage - Nelson Durrant, Mar 2025
+            pub_frame_rate: 20.0 # frequency of publishing of visual images and depth images
             enable_image_validity_check: 1 # [SDK5 required] Sets the image validity check. If set to 1, the SDK will check if the frames are valid before processing.
             gpu_id: -1
             optional_opencv_calibration_file: '' # Optional path where the ZED SDK can find a file containing the calibration information of the camera computed by OpenCV. Read the ZED SDK documentation for more information: https://www.stereolabs.com/docs/api/structsl_1_1InitParameters.html#a9eab2753374ef3baec1d31960859ba19
@@ -48,7 +51,7 @@
         sensors:
             publish_imu_tf: true # [usually overwritten by launch file] enable/disable the IMU TF broadcasting
             sensors_image_sync: false # Synchronize Sensors messages with latest published video/depth message
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to save CPU usage - Nelson Durrant, Mar 2025
             sensors_pub_rate: 20.0 # frequency of publishing of sensors data. MAX: 400. - MIN: grab rate
 
         region_of_interest:
@@ -69,7 +72,7 @@
             depth_mode: 'NEURAL_LIGHT' # Matches the ZED SDK setting: 'NONE', 'PERFORMANCE', 'QUALITY', 'ULTRA', 'NEURAL', 'NEURAL_PLUS' - Note: if 'NONE' all the modules that requires depth extraction are disabled by default (Pos. Tracking, Obj. Detection, Mapping, ...)
             depth_stabilization: 30 # Forces positional tracking to start if major than 0 - Range: [0,100]
             openni_depth_mode: false # 'false': 32bit float [meters], 'true': 16bit unsigned int [millimeters]
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to save CPU usage - Nelson Durrant, Mar 2025
             point_cloud_freq: 20.0 # [DYNAMIC] - frequency of the pointcloud publishing (equal or less to `pub_frame_rate` value)
             point_cloud_res: 'COMPACT' # The resolution used for point cloud publishing - 'COMPACT'-Standard resolution. Optimizes processing and bandwidth, 'REDUCED'-Half resolution. Low processing and bandwidth requirements
             depth_confidence: 95 # [DYNAMIC]
@@ -77,18 +80,19 @@
             remove_saturated_areas: true # [DYNAMIC]
 
         pos_tracking:
+            # https://docs.nav2.org/tutorials/docs/integrating_vio.html
             pos_tracking_enabled: true # True to enable positional tracking from start
             pos_tracking_mode: 'GEN_1' # Matches the ZED SDK setting: 'GEN_1', 'GEN_2'
             imu_fusion: true # enable/disable IMU fusion. When set to false, only the optical odometry will be used.
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to use the EKF - Nelson Durrant, Mar 2025
             publish_tf: false # [usually overwritten by launch file] publish `odom -> camera_link` TF
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to use the EKF - Nelson Durrant, Mar 2025
             publish_map_tf: false # [usually overwritten by launch file] publish `map -> odom` TF
             map_frame: 'map'
             odometry_frame: 'odom'
             area_memory_db_path: ''
-            # Changed the below - Nelson Durrant, Mar 2025
-            area_memory: false # Enable to detect loop closure
+            # Changed the below ? - Nelson Durrant, Mar 2025
+            area_memory: true # Enable to detect loop closure
             reset_odom_with_loop_closure: true # Re-initialize odometry to the last valid pose when loop closure happens (reset camera odometry drift)
             depth_min_range: 0.0 # Set this value for removing fixed zones of the robot in the FoV of the camerafrom the visual odometry evaluation
             set_as_static: false # If 'true' the camera will be static and not move in the environment
@@ -96,17 +100,22 @@
             floor_alignment: false # Enable to automatically calculate camera/floor offset
             initial_base_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Initial position of the `camera_link` frame in the map -> [X, Y, Z, R, P, Y]
             path_pub_rate: 2.0 # [DYNAMIC] - Camera trajectory publishing frequency
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to match tutorial - Nelson Durrant, Mar 2025
             path_max_count: 30 # use '-1' for unlimited path size
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to match tutorial - Nelson Durrant, Mar 2025
             two_d_mode: true # Force navigation on a plane. If true the Z value will be fixed to 'fixed_z_value', roll and pitch to zero
             fixed_z_value: 0.00 # Value to be used for Z coordinate if `two_d_mode` is true
             transform_time_offset: 0.0 # The value added to the timestamp of `map->odom` and `odom->camera_link` transform being generated
             reset_pose_with_svo_loop: true # Reset the camera pose the `initial_base_pose` when the SVO loop is enabled and the SVO playback reaches the end of the file.
-            # Added the below - Nelson Durrant, Mar 2025
+            # Added the below to match tutorial - Nelson Durrant, Mar 2025
             qos_depth: 5
             
         gnss_fusion:
+            # NOTE: I gave a quick effort to see if I could get this to work, but it just takes too long
+            # to initialize (10-15 minutes), and the rolling calibration seemed to perform worse than
+            # our own EKF. You do need to refactor the TF tree to have everything inherit from camera_link
+            # instead of base_link in order to use it. Maybe try again later? - Nelson Durrant, Mar 2025
+            # https://www.stereolabs.com/docs/global-localization
             gnss_fusion_enabled: false # fuse 'sensor_msg/NavSatFix' message information into pose data
             gnss_fix_topic: '/fix' # Name of the GNSS topic of type NavSatFix to subscribe [Default: '/gps/fix']
             gnss_zero_altitude: false # Set to `true` to ignore GNSS altitude information
@@ -131,12 +140,13 @@
             pd_normal_similarity_threshold: 15.0 # Plane detection: controls the spread of plane by checking the angle difference.
 
         object_detection:
-            od_enabled: false # True to enable Object Detection
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Leave the below false, we use a service call to enable and disable it
+            od_enabled: false # True to enable Object Detection 
+            # Changed the below to enable custom YOLO detections - Nelson Durrant, Mar 2025
             model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS' # 'MULTI_CLASS_BOX_FAST', 'MULTI_CLASS_BOX_MEDIUM', 'MULTI_CLASS_BOX_ACCURATE', 'PERSON_HEAD_BOX_FAST', 'PERSON_HEAD_BOX_ACCURATE', 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to add the path to our YOLO model - Nelson Durrant, Mar 2025
             custom_onnx_file: '/home/marsrover-zed/zed_ws/models/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
-            # Changed the below - Nelson Durrant, Mar 2025
+            # Changed the below to match our custom YOLO model - Nelson Durrant, Mar 2025
             custom_onnx_input_size: 1024 # Resolution used with the YOLO-like ONNX file. For example, 512 means a input tensor '1x3x512x512'
             custom_label_yaml: '' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the COCO-like YAML file storing the custom class labels.
             allow_reduced_precision_inference: true # Allow inference to run at a lower precision to improve runtime and memory usage

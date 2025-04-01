@@ -45,6 +45,7 @@ def generate_launch_description():
     )
 
     joy_node_cmd = Node(
+        # https://docs.ros.org/en/humble/p/joy/
         package="joy",
         executable="joy_node",
         name="joy_node_base",

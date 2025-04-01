@@ -1,7 +1,9 @@
 # Created by Nelson Durrant, Mar 2025
+# https://tmuxp.git-pull.com/configuration/examples.html
 session_name: zed_launch
 start_directory: "~/zed_ws" # inside the container
 environment:
+  # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
   ROS_DISCOVERY_SERVER: ${discovery_addr}:11811
 windows:
   - window_name: main

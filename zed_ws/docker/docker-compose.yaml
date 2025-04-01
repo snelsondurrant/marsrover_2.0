@@ -15,15 +15,15 @@ services:
     user: marsrover-zed
     network_mode: host
     privileged: true
-    runtime: nvidia
+    runtime: nvidia # Required for GPU access
     environment:
-      NVIDIA_DRIVER_CAPABILITIES: all
+      NVIDIA_DRIVER_CAPABILITIES: all # Required for GPU access
       DISPLAY: ${DISPLAY} # Required for GUI applications
       QT_X11_NO_MITSHM: 1 # Required for GUI applications
     volumes:
-      - ../../../zed_ws:/home/marsrover-zed/zed_ws
-      - ../../../scripts:/home/marsrover-zed/scripts
-      - ../../../base_scripts/tmuxp/tmp:/home/marsrover-zed/.tmuxp
+      - ../../zed_ws:/home/marsrover-zed/zed_ws # ZED ROS 2 workspace
+      - ../../scripts:/home/marsrover-zed/scripts # Helpful scripts
+      - ../../base_scripts/tmuxp/tmp:/home/marsrover-zed/.tmuxp # Temporary tmuxp config files
       - /usr/local/zed/resources/:/usr/local/zed/resources/
       - /usr/local/zed/settings/:/usr/local/zed/settings/
       - /usr/local/zed/tools/:/usr/local/zed/tools/

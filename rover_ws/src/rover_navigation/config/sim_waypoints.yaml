@@ -1,10 +1,11 @@
 # Waypoints for the SIMULATION environment
+#
 # NOTE: These parameters are parsed and loaded into the order planner in the action callback function.
 # If you edit them, you'll need to kill the current action and request a new one using 'task_sim.sh'.
 # You don't need to 'colcon build' the workspace after edits like with other config files.
 waypoints:
 
-# GPS waypoints
+# GPS waypoints (simulation)
 # 1st waypoint (GPS only)
 - leg: gps1
   latitude: 38.162923
@@ -14,7 +15,7 @@ waypoints:
   latitude: 0.0
   longitude: 0.0
 
-# Aruco tag waypoints
+# Aruco tag waypoints (simulation)
 # 3rd waypoint (Aruco tag)
 - leg: aruco1
   latitude: 38.162958
@@ -28,7 +29,7 @@ waypoints:
   latitude: 0.0
   longitude: 0.0
 
-# Object waypoints
+# Object waypoints (simulation)
 # 6th waypoint (Mallet)
 - leg: mallet
   latitude: 38.162633

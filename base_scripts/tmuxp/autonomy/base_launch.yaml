@@ -1,7 +1,9 @@
 # Created by Nelson Durrant, Mar 2025
+# https://tmuxp.git-pull.com/configuration/examples.html
 session_name: base_launch
 start_directory: "~/rover_ws" # inside the container
 environment:
+  # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
   ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
 windows:
   - window_name: main

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Created by Nelson Durrant, Mar 2025
+# https://github.com/peterbrittain/asciimatics/tree/master/samples
 from asciimatics.effects import Print, Stars
 from asciimatics.renderers import ColourImageFile, FigletText, SpeechBubble
 from asciimatics.scene import Scene

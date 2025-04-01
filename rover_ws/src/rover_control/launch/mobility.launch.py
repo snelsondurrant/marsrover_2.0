@@ -14,7 +14,7 @@ def generate_launch_description():
     return launch.LaunchDescription(
         [
             launch_ros.actions.Node(
-                # https://docs.ros.org/en/iron/p/joy/
+                # https://docs.ros.org/en/humble/p/joy/
                 package="joy",
                 executable="joy_node",
                 name="joy_node_rover",
