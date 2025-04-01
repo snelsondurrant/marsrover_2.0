@@ -14,7 +14,7 @@ imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
     publish_tf: False
     publish_debug_topics: False
 
-ekf_filter_node_odom:
+ekf_filter_node_odom: # outputs to the odometry/local topic
 # This publishes the odom->base_link transform
 # The position calculated here needs to be continuous, but not necessarily incredibly accurate
 # https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
@@ -72,7 +72,7 @@ ekf_filter_node_odom:
                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.3,   0.0,
                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.3]
 
-ekf_filter_node_map:
+ekf_filter_node_map: # outputs to the odometry/global topic
 # This publishes the map->base_link transform
 # The position calculated here will probably be discrete, but more accurate
 # https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
