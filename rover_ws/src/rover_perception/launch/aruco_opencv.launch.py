@@ -34,7 +34,7 @@ def generate_launch_description():
                     ("/aruco_cam/image_raw", "/zed/zed_node/rgb_gray/image_rect_gray"),
                     (
                         "/aruco_cam/camera_info",
-                        "/zed/zed_node/rgb/camera_info",
+                        "/zed/zed_node/rgb_gray/camera_info",
                     ),
                 ],
                 condition=UnlessCondition(use_sim_time),
