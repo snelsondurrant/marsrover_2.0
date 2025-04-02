@@ -218,6 +218,10 @@ USER root
 RUN apt update && apt install -y ros-humble-imu-filter-madgwick
 USER $NAME
 
+# Install mapproxy tile caching script deps - Nelson Durrant, Mar 2025
+RUN pip3 install mercantile
+RUN pip3 install requests
+
 # Install tf transformations package - Braden Meyers, Mar 2025
 # Used to calibrate the ZED and lidar positions relative to the mount frame
 USER root
