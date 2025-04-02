@@ -283,14 +283,14 @@ class AutonomyTaskExecutor(Node):
         self.status = None
 
         self.basic_nav_callback_group = MutuallyExclusiveCallbackGroup()
+        self.spin_client = PatchRclpyIssue1123(
+            self, Spin, "spin", callback_group=self.basic_nav_callback_group
+        )
         self.follow_waypoints_client = PatchRclpyIssue1123(
             self,
             FollowWaypoints,
             "follow_waypoints",
-            callback_group=self.basic_nav_callback_group,
-        )
-        self.spin_client = PatchRclpyIssue1123(
-            self, Spin, "spin", callback_group=self.basic_nav_callback_group
+            callback_group=self.basic_nav_callback_group
         )
 
         ###########################################
