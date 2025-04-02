@@ -28,7 +28,7 @@ displays:
         name: Google Maps Rover
         type: wmts
       bing_api_key: ""
-      source: Google Maps Rover # From old code - Nelson Durrant, Feb 2025
+      source: Google Maps Rover
   - type: mapviz_plugins/tf_frame
     name: new display
     config:
