@@ -37,7 +37,7 @@ then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
+    echo "  - Run 'cd tools && bash setup_ssh.sh' to set up SSH access"
 
     exit 1
 fi
@@ -46,7 +46,7 @@ fi
 if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git remote -v" | grep -q "base"
 then
     printError "No upstream git remote 'base' found on the rover"
-    echo "Please run 'bash setup_git.sh' to set up the upstream git remote"
+    echo "Please run 'cd tools && bash setup_git.sh' to set up the upstream git remote"
 
     exit 1
 fi
