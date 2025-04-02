@@ -24,7 +24,7 @@ from typing import Any
 from zed_msgs.msg import ObjectsStamped
 
 
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose, geopose2LatLonYaw
+from rover_navigation.utils.gps_utils import latLonYaw2Geopose, meters2LatLon
 from rover_navigation.utils.yaml_utils import waypointParser
 from rover_navigation.utils.plan_utils import (
     basicPathPlanner,  # plan a straight line between two GPS coordinates
@@ -131,7 +131,7 @@ class AutonomyTaskExecutor(Node):
         self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
         self.obj_legs = ["mallet", "bottle"]
         self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
-        self.labels = {"mallet": 'Class ID: 0', "bottle": 'Class ID: 1'}
+        self.labels = {"mallet": "Class ID: 0", "bottle": "Class ID: 1"}
 
         # UTM zone and hemisphere (will set on first gps fix)
         self.zone = None
@@ -140,21 +140,32 @@ class AutonomyTaskExecutor(Node):
 
         # Tunable values
         self.wait_time = 10  # Time to wait after arrival
-        self.update_threshold = (
-            0.000005  # Threshold for updating tag and item locations
-        )
+        self.update_threshold = 0.000005  # Threshold for updating tag and item locations (in lat/lon degrees)
 
-        # TODO: Make this a star pattern, right distances?
-        # Hex pattern for searching
-        self.hex_coord = [
-            (1.0, 0.0),
-            (0.5, 0.866),
-            (-0.5, 0.866),
-            (-1.0, 0.0),
-            (-0.5, -0.866),
-            (0.5, -0.866),
+        # Assuming we can detect objects and aruco tags up to 5m away, we've determined this is the best
+        # search pattern for covering the 20m radius (fastest traversal, least overlap, most coverage).
+        # It could definitely be changed or tuned in the future as we get more data.
+        # -->
+        #           (07)
+        #   (12) (06) (01) (08)
+        #      (05) (00) (02)
+        #   (11) (04) (03) (09)
+        #           (10)
+        # <--
+        self.hex_coord = [  # in meters
+            (4.5, 7.79),  # (01)
+            (9.0, 0.0),  # (02)
+            (4.5, -7.79),  # (03)
+            (-4.5, -7.79),  # (04)
+            (-9.0, 0.0),  # (05)
+            (-4.5, 7.79),  # (06)
+            (0.0, 15.58),  # (07)
+            (13.5, 7.79),  # (08)
+            (13.5, -7.79),  # (09)
+            (0.0, -15.58),  # (10)
+            (-13.5, -7.79),  # (11)
+            (-13.5, 7.79),  # (12)
         ]
-        self.hex_scalar = 0.0001
 
         #################################
         ### ROS 2 OBJECT DECLARATIONS ###
@@ -309,8 +320,12 @@ class AutonomyTaskExecutor(Node):
             pose = PoseStamped()
             pose.header.frame_id = "utm"
             pose.header.stamp = self.get_clock().now().to_msg()
-            pose.pose.position.x = utm.from_latlon(wp.position.latitude, wp.position.longitude)[0]
-            pose.pose.position.y = utm.from_latlon(wp.position.latitude, wp.position.longitude)[1]
+            pose.pose.position.x = utm.from_latlon(
+                wp.position.latitude, wp.position.longitude
+            )[0]
+            pose.pose.position.y = utm.from_latlon(
+                wp.position.latitude, wp.position.longitude
+            )[1]
             pose.pose.orientation = wp.orientation
 
             converted_poses.append(pose)
@@ -821,9 +836,7 @@ class AutonomyTaskExecutor(Node):
 
                 # Enable object detection
                 self.obj_request.data = True
-                asyncio.run(
-                    self.async_service_call(self.obj_client, self.obj_request)
-                )
+                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
 
             self.task_info("Starting " + print_string + " leg")
 
@@ -869,9 +882,7 @@ class AutonomyTaskExecutor(Node):
             if self.leg in self.obj_legs:
                 # Disable object detection
                 self.obj_request.data = False
-                asyncio.run(
-                    self.async_service_call(self.obj_client, self.obj_request)
-                )
+                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
 
             # Trigger the arrival state
             asyncio.run(
@@ -984,7 +995,9 @@ class AutonomyTaskExecutor(Node):
 
             # Check for the aruco tag or object
             pose = self.found_check()
-            if pose:asyncio
+            if pose:
+                asyncio.run(self.cancelTask())
+                return pose
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
@@ -1011,8 +1024,12 @@ class AutonomyTaskExecutor(Node):
 
         # Generate a hex pattern from the base waypoint
         for i, coord in enumerate(self.hex_coord):
-            hex_lat = base_wp.position.latitude + coord[0] * self.hex_scalar
-            hex_lon = base_wp.position.longitude + coord[1] * self.hex_scalar
+            hex_lat, hex_lon = meters2LatLon(
+                base_wp.position.latitude,
+                base_wp.position.longitude,
+                coord[0],
+                coord[1],
+            )
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
             pose = self.gps_nav(hex_wp, " (hex " + str(i) + ")")

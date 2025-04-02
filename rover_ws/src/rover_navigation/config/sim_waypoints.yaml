@@ -32,8 +32,8 @@ waypoints:
 # Object waypoints (simulation)
 # 6th waypoint (Mallet)
 - leg: mallet
-  latitude: 38.162633
-  longitude: -122.454858
+  latitude: 38.162635
+  longitude: -122.454902
 # 7th waypoint (Bottle)
 - leg: bottle
   latitude: 0.0
