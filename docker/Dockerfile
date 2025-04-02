@@ -136,9 +136,7 @@ USER $NAME
 # Install the aruco_opencv packages - Nelson Durrant, Feb 2025
 # Used for detecting ArUco markers in the simulation and real world
 USER root
-RUN apt update && apt install -y \
-    ros-humble-aruco-opencv \
-    ros-humble-usb-cam
+RUN apt update && apt install -y ros-humble-aruco-opencv
 USER $NAME
 
 # Install mapviz packages - Nelson Durrant, Feb 2025
