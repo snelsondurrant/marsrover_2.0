@@ -233,6 +233,7 @@ class MegaWrapper(Node):
             right_wheels_forward = False
 
         # these need to be from 0 to 255 and ints
+        # TODO: parameterize these values
         left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 10, 0, 255)
         right_wheels_speed = self.map_value(abs(right_wheels_speed), 0, 10, 0, 255)
 
