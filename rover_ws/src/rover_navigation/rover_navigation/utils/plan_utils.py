@@ -30,7 +30,7 @@ def basicPathPlanner(geopose1, geopose2):
     if end_lon < start_lon:
         yaw += math.pi
 
-    # Calculate the distance between the two points
+    # Calculate the distance between the two points in lat/lon degrees
     distance = ((end_lat - start_lat) ** 2 + (end_lon - start_lon) ** 2) ** 0.5
 
     # Calculate the number of intermediary waypoints
@@ -73,9 +73,29 @@ def bruteOrderPlanner(legs, waypoints, fix):
     for order in permutations(legs):
 
         # Calculate the cost of the current order
-        cost = costFunctionStart(fix, order[0], waypoints)
+        fix_geopose = latLonYaw2Geopose(
+            fix.position.latitude, fix.position.longitude
+        )
+        for wp in waypoints:
+            if wp["leg"] == order[0]:
+                leg_geopose = latLonYaw2Geopose(
+                    wp["latitude"], wp["longitude"]
+                )
+                break
+        cost = costFunction(fix_geopose, leg_geopose)
+            
         for i in range(len(order) - 1):
-            cost += costFunction(order[i], order[i + 1], waypoints)
+
+            for wp in waypoints:
+                if wp["leg"] == order[i]:
+                    leg1_geopose = latLonYaw2Geopose(
+                        wp["latitude"], wp["longitude"]
+                    )
+                elif wp["leg"] == order[i + 1]:
+                    leg2_geopose = latLonYaw2Geopose(
+                        wp["latitude"], wp["longitude"]
+                    )
+            cost += costFunction(leg1_geopose, leg2_geopose)
 
         # Update the best order
         if cost < lowest_cost:
@@ -101,7 +121,14 @@ def greedyOrderPlanner(legs, waypoints, fix):
     current = None
     min_cost = float("inf")
     for leg in legs:
-        cost = costFunctionStart(fix, leg, waypoints)
+        fix_geopose = latLonYaw2Geopose(
+            fix.position.latitude, fix.position.longitude
+        )
+        for wp in waypoints:
+            if wp["leg"] == leg:
+                leg_geopose = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
+                break
+        cost = costFunction(fix_geopose, leg_geopose)
         if cost < min_cost:
             min_cost = cost
             current = leg
@@ -113,7 +140,16 @@ def greedyOrderPlanner(legs, waypoints, fix):
         min_cost = float("inf")
         for leg in legs:
             if leg not in visited:
-                cost = costFunction(current, leg, waypoints)
+                for wp in waypoints:
+                    if wp["leg"] == current:
+                        leg1_geopose = latLonYaw2Geopose(
+                            wp["latitude"], wp["longitude"]
+                        )
+                    elif wp["leg"] == leg:
+                        leg2_geopose = latLonYaw2Geopose(
+                            wp["latitude"], wp["longitude"]
+                        )
+                cost = costFunction(leg1_geopose, leg2_geopose)
                 if cost < min_cost:
                     min_cost = cost
                     closest = leg
@@ -137,36 +173,16 @@ def noOrderPlanner(legs, waypoints, fix):
     return legs
 
 
-def costFunction(leg1, leg2, waypoints):
+def costFunction(geopose1, geopose2):
     """
     Calculate the cost of moving from one task leg to another
     """
 
-    for wp in waypoints:
-        if wp["leg"] == leg1:
-            start = wp
-        elif wp["leg"] == leg2:
-            end = wp
-
     distance = latLon2Meters(
-        start["latitude"], start["longitude"], end["latitude"], end["longitude"]
+        geopose1.position.latitude,
+        geopose1.position.longitude,
+        geopose2.position.latitude,
+        geopose2.position.longitude,
     )
 
     return distance
-
-
-def costFunctionStart(fix, leg1, waypoints):
-    """
-    Calculate the cost of moving from the current position to the first task leg
-    """
-
-    for wp in waypoints:
-        if wp["leg"] == leg1:
-            end = wp
-
-    distance = latLon2Meters(
-        fix.position.latitude, fix.position.longitude, end["latitude"], end["longitude"]
-    )
-
-    return distance
-
