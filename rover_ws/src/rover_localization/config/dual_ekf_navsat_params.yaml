@@ -87,4 +87,4 @@ navsat_transform:
     broadcast_utm_transform: true
     publish_filtered_gps: true # used by the path planners
     use_odometry_yaw: true
-    wait_for_datum: false 
+    wait_for_datum: true # set by the sync_origin node

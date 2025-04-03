@@ -105,6 +105,12 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
                 parameters=[rl_params_file],
             ),
+            launch_ros.actions.Node(
+                package="rover_localization",
+                executable="sync_origin",
+                output="screen",
+                parameters=[rl_params_file],
+            ),
             # https://github.com/CCNYRoboticsLab/imu_tools/tree/humble?tab=readme-ov-file
             launch_ros.actions.Node(
                 package='imu_filter_madgwick',
