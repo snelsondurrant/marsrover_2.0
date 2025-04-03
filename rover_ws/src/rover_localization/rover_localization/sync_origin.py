@@ -6,9 +6,7 @@ import sys
 
 class SyncOrigin(Node):
     """
-    Waits for the first GPS fix, sets the origin for navsat_transform via
-    service call, and then periodically publishes the origin coordinates
-    to /mapviz/origin.
+    Syncs the origin of mapviz with the origin of navsat_transform on the first GPS fix
 
     :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: Apr 2025
@@ -131,4 +129,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-    
