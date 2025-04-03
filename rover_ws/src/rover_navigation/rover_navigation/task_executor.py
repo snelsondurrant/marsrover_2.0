@@ -921,6 +921,8 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Starting GPS navigation" + src_string)
 
+        # TODO: Implement timeouts for navigation
+
         # Generate a path to the destination waypoint
         if self.path_planner == "basicPathPlanner":
             path = basicPathPlanner(self.filtered_gps, dest_wp)
