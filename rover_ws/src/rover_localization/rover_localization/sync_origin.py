@@ -36,6 +36,8 @@ class SyncOrigin(Node):
         self.gps_pub = self.create_publisher(NavSatFix, "mapviz/origin", 10)
 
         self.srv_client = self.create_client(SetDatum, "datum")
+        while not self.srv_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for SetDatum service...")
 
         # Timer for periodic publishing - starts immediately but only publishes after origin_msg is set
         self.publish_timer = self.create_timer(self.timer_period, self.publish_origin_callback)
@@ -60,16 +62,6 @@ class SyncOrigin(Node):
 
         # Store the message - this allows the timer to start publishing
         self.origin_msg = msg
-
-        # Call SetDatum service
-        if not self.srv_client.wait_for_service(timeout_sec=1.0):
-            # Log error but continue - timer will still publish stored origin
-            self.get_logger().error("SetDatum service not available within 1 second. Cannot set datum for navsat_transform.")
-            # Destroy subscriber even if service fails, as we've stored the origin
-            self.destroy_subscription(self.gps_sub)
-            self.gps_sub = None
-            self.get_logger().info("GPS subscriber destroyed.")
-            return # Exit callback
 
         request = SetDatum.Request()
         request.geo_pose.position.latitude = msg.latitude
