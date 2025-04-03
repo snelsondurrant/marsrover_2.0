@@ -344,7 +344,6 @@ waypoint_follower:
   ros__parameters:
     loop_rate: 20 # Changed this to match ekf - Nelson Durrant, Mar 2025
     stop_on_failure: false
-    action_server_result_timeout: 300 # 5 minute timeout for navigation - Nelson Durrant, Mar 2025
     waypoint_task_executor_plugin: "wait_at_waypoint"
     wait_at_waypoint:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"

@@ -515,6 +515,7 @@ class AutonomyTaskExecutor(Node):
         req = GetState.Request()
         state = "unknown"
         while state != "active":
+            self.info(f"Waiting for {node_name} to become active...")
             self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
             await future  # fix for iron/humble threading bug
@@ -757,6 +758,16 @@ class AutonomyTaskExecutor(Node):
         task_feedback.status = "[FATAL] [" + self.leg + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
+    def task_success(self, string):
+        """
+        Function to write success back to the RunTask action client
+        """
+
+        self.get_logger().info("[" + self.leg + "] " + string)
+        task_feedback = RunTask.Feedback()
+        task_feedback.status = "[SUCCESS] [" + self.leg + "] " + string
+        self.task_goal_handle.publish_feedback(task_feedback)
+
     ########################################
     ### END TASK EXEC FEEDBACK FUNCTIONS ###
     ########################################
@@ -872,10 +883,10 @@ class AutonomyTaskExecutor(Node):
                             found_loc, " (" + print_string + ")", updating=True
                         )
 
-                    self.task_info("SUCCESS! Found and navigated to " + print_string)
+                    self.task_success("Found and navigated to " + print_string)
 
             else:
-                self.task_info("SUCCESS! Navigated to " + print_string)
+                self.task_success("Navigated to " + print_string)
 
             self.task_info("Flashing LED to indicate arrival")
 
