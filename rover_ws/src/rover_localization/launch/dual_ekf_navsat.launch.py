@@ -100,13 +100,6 @@ def generate_launch_description():
             ),
             launch_ros.actions.Node(
                 package="rover_localization",
-                executable="covariance_tuner",
-                output="screen",
-                condition=UnlessCondition(use_sim_time),
-                parameters=[rl_params_file],
-            ),
-            launch_ros.actions.Node(
-                package="rover_localization",
                 executable="sync_origin",
                 output="screen",
                 parameters=[rl_params_file],

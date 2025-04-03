@@ -1,14 +1,4 @@
 # Created by Nelson Durrant, Feb 2025
-covariance_tuner:
-  ros__parameters:
-    # NOTE: The covariance defines how closely our EFK output follows the sensor data
-    # A smaller covariance means the EFK will follow the sensor data more closely
-    # A larger covariance means the EFK will follow the sensor data less closely
-    odom_covariance_factor: 1.0
-    gps_covariance_factor: 1.0
-    imu_covariance_factor: 1.0
-    # IMPORTANT! The default covariances (factor of 1.0) seem to do pretty well, be careful tuning them
-
 imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
   ros__parameters:
     use_mag: True
@@ -41,7 +31,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 
     # https://docs.nav2.org/tutorials/docs/integrating_vio.html
     # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-    odom0: zed/zed_node/odom_tuned # prefuses IMU data with VIO
+    odom0: zed/zed_node/odom # prefuses IMU data with VIO
     odom0_config: [true,  true,  false,  # X, Y, Z
                   false,  false,  true,  # Roll, Pitch, Yaw
                   false, false, false,   # Vx, Vy, Vz
@@ -51,7 +41,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
     # odom0_relative: true # Redundant with differential
     odom0_queue_size: 2
 
-    odom1: odometry/gps_tuned # from the navsat_transform_node
+    odom1: odometry/gps # from the navsat_transform_node
     odom1_config: [true,  true,  false,
                   false, false, false,
                   false, false, false,
@@ -61,7 +51,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
     odom1_relative: false # We want to use the absolute GPS position
     odom1_queue_size: 2
 
-    imu0: imu/data_tuned # from the madgwick filter
+    imu0: imu/data # from the madgwick filter
     imu0_config: [false, false, false,
                   false,  false,  true,
                   false, false, false,
