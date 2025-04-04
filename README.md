@@ -1,4 +1,4 @@
-[Get Started](https://github.com/BYUMarsRover/marsrover_2.0/tree/main?tab=readme-ov-file#get-started)
+[Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
 
 [Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
 
