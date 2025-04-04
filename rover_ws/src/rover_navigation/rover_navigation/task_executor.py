@@ -132,9 +132,20 @@ class AutonomyTaskExecutor(Node):
         #   (11) (04) (03) (09)
         #           (10)
         # <--
-        self.hex_coord = [  (4.5, 7.79), (9.0, 0.0), (4.5, -7.79), (-4.5, -7.79),
-                            (-9.0, 0.0), (-4.5, 7.79), (0.0, 15.58), (13.5, 7.79), 
-                            (13.5, -7.79), (0.0, -15.58), (-13.5, -7.79), (-13.5, 7.79)  ]
+        self.hex_coord = [
+            (4.5, 7.79),
+            (9.0, 0.0),
+            (4.5, -7.79),
+            (-4.5, -7.79),
+            (-9.0, 0.0),
+            (-4.5, 7.79),
+            (0.0, 15.58),
+            (13.5, 7.79),
+            (13.5, -7.79),
+            (0.0, -15.58),
+            (-13.5, -7.79),
+            (-13.5, 7.79),
+        ]
 
         # Object detection dict
         self.obj_to_label = {"mallet": "Class ID: 0", "bottle": "Class ID: 1"}
@@ -271,7 +282,7 @@ class AutonomyTaskExecutor(Node):
             self,
             FollowWaypoints,
             "follow_waypoints",
-            callback_group=self.basic_nav_callback_group
+            callback_group=self.basic_nav_callback_group,
         )
 
         ###########################################
@@ -565,7 +576,7 @@ class AutonomyTaskExecutor(Node):
         self.legs = []
         self.leg = AutonomyLeg()
         self.leg.name = "start"
-        self.found_poses = { }
+        self.found_poses = {}
 
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
@@ -639,7 +650,7 @@ class AutonomyTaskExecutor(Node):
 
         if self.leg is None:
             return
-        
+
         if self.leg.type == "aruco":
             for marker in msg.markers:
                 # Are we looking for this marker right now?
@@ -815,11 +826,7 @@ class AutonomyTaskExecutor(Node):
         self.leg = leg
 
         # Is it a valid leg type?
-        if (
-            self.leg.type == "gps"
-            or self.leg.type == "aruco"
-            or self.leg.type == "obj"
-        ):
+        if self.leg.type == "gps" or self.leg.type == "aruco" or self.leg.type == "obj":
 
             if self.leg.type == "gps":
                 print_string = "GPS waypoint"
@@ -1046,7 +1053,7 @@ class AutonomyTaskExecutor(Node):
             try:
                 if self.found_poses[self.leg.name]:
                     return self.found_poses[self.leg.name]
-            except KeyError: # if the leg name is not in the found_poses dict
+            except KeyError:  # if the leg name is not in the found_poses dict
                 return False
         return False
 
