@@ -3,8 +3,6 @@
 # 
 # Runs the autonomy task in the real world environment
 
-# TODO: Find a better way to fill out the waypoint legs
-
 source ~/rover_ws/install/setup.bash
 ros2 action send_goal --feedback exec_autonomy_task rover_interfaces/action/AutonomyTask \
     "{legs: [
