@@ -19,9 +19,9 @@ def generate_launch_description():
 
     loc_dir = get_package_share_directory("rover_localization")
     sim_rl_params_file = os.path.join(
-        loc_dir, "config", "sim_dual_ekf_navsat_params.yaml"
+        loc_dir, "config", "sim_localization_params.yaml"
     )
-    rl_params_file = os.path.join(loc_dir, "config", "dual_ekf_navsat_params.yaml")
+    rl_params_file = os.path.join(loc_dir, "config", "localization_params.yaml")
 
     return LaunchDescription(
         [

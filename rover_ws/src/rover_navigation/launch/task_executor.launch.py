@@ -1,14 +1,11 @@
 # Created by Nelson Durrant, Feb 2025
 from launch import LaunchDescription
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition, UnlessCondition
 import launch_ros.actions
 import os
-import launch.actions
 
 
 def generate_launch_description():
@@ -18,16 +15,9 @@ def generate_launch_description():
         "use_sim_time", default_value="False", description="Use simulation time"
     )
 
-    sim_wps_file = (
-        "/home/marsrover-docker/rover_ws/src/rover_navigation/config/sim_waypoints.yaml"
-    )
-    wps_file = (
-        "/home/marsrover-docker/rover_ws/src/rover_navigation/config/waypoints.yaml"
-    )
-
     nav_dir = get_package_share_directory("rover_navigation")
-    config_file = os.path.join(nav_dir, "config", "nav2_no_map_params.yaml")
-    sim_config_file = os.path.join(nav_dir, "config", "sim_nav2_no_map_params.yaml")
+    config_file = os.path.join(nav_dir, "config", "navigation_params.yaml")
+    sim_config_file = os.path.join(nav_dir, "config", "sim_navigation_params.yaml")
 
     return LaunchDescription(
         [
@@ -46,7 +36,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     config_file,
-                    {"use_sim_time": use_sim_time, "wps_file_path": wps_file},
+                    {"use_sim_time": use_sim_time},
                 ],
                 condition=UnlessCondition(use_sim_time),
             ),
@@ -56,7 +46,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     sim_config_file,
-                    {"use_sim_time": use_sim_time, "wps_file_path": sim_wps_file},
+                    {"use_sim_time": use_sim_time},
                 ],
                 condition=IfCondition(use_sim_time),
             ),

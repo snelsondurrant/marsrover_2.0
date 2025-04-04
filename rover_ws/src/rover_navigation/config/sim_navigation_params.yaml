@@ -8,8 +8,7 @@
 # - global costmap is set to be rolling to allow the robot to traverse big environment by
 #   following successive relatively close waypoints that fit in a smaller rolling costmap
 
-# Custom params to select the order and path planners
-task_executor:
+autonomy_task_executor:
   ros__parameters:
     # Path planner options:
     # - basicPathPlanner (default)
@@ -21,6 +20,8 @@ task_executor:
     # - noOrderPlanner
     # - terrainOrderPlanner
     order_planner: bruteOrderPlanner
+    wait_time: 10  # Time to wait after successful arrival
+    update_threshold: 0.000005  # Threshold for updating tag and item locations (in lat/lon degrees)
 
 bt_navigator:
   ros__parameters:
@@ -351,7 +352,7 @@ waypoint_follower:
 velocity_smoother:
   ros__parameters:
     smoothing_frequency: 20.0
-    scale_velocities: False
+    scale_velocities: false
     feedback: "OPEN_LOOP"
     max_velocity: [0.26, 0.0, 1.0]
     min_velocity: [-0.26, 0.0, -1.0]

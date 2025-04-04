@@ -1,7 +1,10 @@
 import math
 from itertools import permutations
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler, latLon2Meters
-from rover_navigation.utils.plot_utils import plotOrder
+from rover_navigation.utils.gps_utils import (
+    latLonYaw2Geopose,
+    quaternion_from_euler,
+    latLon2Meters,
+)
 
 
 def basicPathPlanner(geopose1, geopose2):
@@ -11,6 +14,8 @@ def basicPathPlanner(geopose1, geopose2):
     :author: Nelson Durrant
     :date: Mar 2025
     """
+
+    # TODO: Check this
 
     # Distance between intermediary waypoints (in lat/lon degrees)
     # If the waypoints are too far apart, they won't be in the global costmap
@@ -58,7 +63,7 @@ def basicPathPlanner(geopose1, geopose2):
     return new_wps
 
 
-def bruteOrderPlanner(legs, waypoints, fix):
+def bruteOrderPlanner(legs, fix):
     """
     Brute force the optimal order to complete the task legs (This is an NP-hard problem)
 
@@ -73,28 +78,16 @@ def bruteOrderPlanner(legs, waypoints, fix):
     for order in permutations(legs):
 
         # Calculate the cost of the current order
-        fix_geopose = latLonYaw2Geopose(
-            fix.position.latitude, fix.position.longitude
-        )
-        for wp in waypoints:
-            if wp["leg"] == order[0]:
-                leg_geopose = latLonYaw2Geopose(
-                    wp["latitude"], wp["longitude"]
-                )
-                break
+        fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
+        leg_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
         cost = costFunction(fix_geopose, leg_geopose)
-            
+
         for i in range(len(order) - 1):
 
-            for wp in waypoints:
-                if wp["leg"] == order[i]:
-                    leg1_geopose = latLonYaw2Geopose(
-                        wp["latitude"], wp["longitude"]
-                    )
-                elif wp["leg"] == order[i + 1]:
-                    leg2_geopose = latLonYaw2Geopose(
-                        wp["latitude"], wp["longitude"]
-                    )
+            leg1_geopose = latLonYaw2Geopose(order[i].latitude, order[i].longitude)
+            leg2_geopose = latLonYaw2Geopose(
+                order[i + 1].latitude, order[i + 1].longitude
+            )
             cost += costFunction(leg1_geopose, leg2_geopose)
 
         # Update the best order
@@ -102,11 +95,10 @@ def bruteOrderPlanner(legs, waypoints, fix):
             lowest_cost = cost
             best_order = order
 
-    # plotOrder(best_order, waypoints, fix)
     return best_order
 
 
-def greedyOrderPlanner(legs, waypoints, fix):
+def greedyOrderPlanner(legs, fix):
     """
     Determine a greedy order to complete the task legs (This is an NP-hard problem)
 
@@ -121,13 +113,8 @@ def greedyOrderPlanner(legs, waypoints, fix):
     current = None
     min_cost = float("inf")
     for leg in legs:
-        fix_geopose = latLonYaw2Geopose(
-            fix.position.latitude, fix.position.longitude
-        )
-        for wp in waypoints:
-            if wp["leg"] == leg:
-                leg_geopose = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
-                break
+        fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
+        leg_geopose = latLonYaw2Geopose(leg.latitude, leg.longitude)
         cost = costFunction(fix_geopose, leg_geopose)
         if cost < min_cost:
             min_cost = cost
@@ -140,15 +127,8 @@ def greedyOrderPlanner(legs, waypoints, fix):
         min_cost = float("inf")
         for leg in legs:
             if leg not in visited:
-                for wp in waypoints:
-                    if wp["leg"] == current:
-                        leg1_geopose = latLonYaw2Geopose(
-                            wp["latitude"], wp["longitude"]
-                        )
-                    elif wp["leg"] == leg:
-                        leg2_geopose = latLonYaw2Geopose(
-                            wp["latitude"], wp["longitude"]
-                        )
+                leg1_geopose = latLonYaw2Geopose(current.latitude, current.longitude)
+                leg2_geopose = latLonYaw2Geopose(leg.latitude, leg.longitude)
                 cost = costFunction(leg1_geopose, leg2_geopose)
                 if cost < min_cost:
                     min_cost = cost
@@ -157,11 +137,10 @@ def greedyOrderPlanner(legs, waypoints, fix):
         visited.append(current)
         order.append(current)
 
-    # plotOrder(order, waypoints, fix)
     return order
 
 
-def noOrderPlanner(legs, waypoints, fix):
+def noOrderPlanner(legs, fix):
     """
     Just return the task legs in the order they were given
 
@@ -169,7 +148,6 @@ def noOrderPlanner(legs, waypoints, fix):
     :date: Mar 2025
     """
 
-    # plotOrder(legs, waypoints, fix)
     return legs
 
 

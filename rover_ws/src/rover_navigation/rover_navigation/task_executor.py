@@ -16,7 +16,8 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.task import Future
-from rover_interfaces.action import RunTask
+from rover_interfaces.action import AutonomyTask
+from rover_interfaces.msg import AutonomyLeg
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger, SetBool
 from threading import RLock
@@ -25,7 +26,6 @@ from zed_msgs.msg import ObjectsStamped
 
 
 from rover_navigation.utils.gps_utils import latLonYaw2Geopose, meters2LatLon
-from rover_navigation.utils.yaml_utils import waypointParser
 from rover_navigation.utils.plan_utils import (
     basicPathPlanner,  # plan a straight line between two GPS coordinates
     bruteOrderPlanner,  # use brute force to find the best order of legs
@@ -98,49 +98,29 @@ class AutonomyTaskExecutor(Node):
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
     - {node_name}/get_state (lifecycle_msgs/GetState) [basic_nav_callback_group] (temporary)
     Action Servers:
-    - exec_autonomy_task (rover_interfaces/RunTask) [action_callback_group]
+    - exec_autonomy_task (rover_interfaces/AutonomyTask) [action_callback_group]
     *And a tf2 buffer and listener for pose to GPS transforms
     """
 
     def __init__(self):
 
-        super().__init__("task_executor")
+        super().__init__("autonomy_task_executor")
         # self.navigator = BasicNavigator() # Don't uncomment this line
         # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues.
         # We've hacked the relevant functions from the BasicNavigator class into this class as a fix.
         # https://github.com/ros-navigation/navigation2/tree/main/nav2_simple_commander
 
-        # Declare waypoint file path parameter
-        self.declare_parameter("wps_file_path", "")
-        if not self.get_parameter("wps_file_path").value:
-            self.get_logger().fatal("No waypoint file path provided")
-            rclpy.shutdown()
-
-        # Declare the parameter for the path and leg order planners
+        # Leg and order planner parameters
         self.declare_parameter("path_planner", "basicPathPlanner")
         self.declare_parameter("order_planner", "greedyOrderPlanner")
         self.path_planner = self.get_parameter("path_planner").value
         self.order_planner = self.get_parameter("order_planner").value
 
-        # Initialize variables
-        self.leg = None
-        self.cancel_flag = False
-
-        # Task constants
-        self.gps_legs = ["gps1", "gps2"]
-        self.aruco_legs = ["aruco1", "aruco2", "aruco3"]
-        self.obj_legs = ["mallet", "bottle"]
-        self.tags = {"aruco1": 1, "aruco2": 2, "aruco3": 3}
-        self.labels = {"mallet": "Class ID: 0", "bottle": "Class ID: 1"}
-
-        # UTM zone and hemisphere (will set on first gps fix)
-        self.zone = None
-        self.hemisphere = None
-        self.filtered_gps = None
-
         # Tunable values
-        self.wait_time = 10  # Time to wait after arrival
-        self.update_threshold = 0.000005  # Threshold for updating tag and item locations (in lat/lon degrees)
+        self.declare_parameter("wait_time", 10)
+        self.declare_parameter("update_threshold", 0.000005)
+        self.wait_time = self.get_parameter("wait_time").value
+        self.update_threshold = self.get_parameter("update_threshold").value
 
         # Assuming we can detect objects and aruco tags up to 5m away, we've determined this is the best
         # search pattern for covering the 20m radius (fastest traversal, least overlap, most coverage).
@@ -152,20 +132,21 @@ class AutonomyTaskExecutor(Node):
         #   (11) (04) (03) (09)
         #           (10)
         # <--
-        self.hex_coord = [  # in meters
-            (4.5, 7.79),  # (01)
-            (9.0, 0.0),  # (02)
-            (4.5, -7.79),  # (03)
-            (-4.5, -7.79),  # (04)
-            (-9.0, 0.0),  # (05)
-            (-4.5, 7.79),  # (06)
-            (0.0, 15.58),  # (07)
-            (13.5, 7.79),  # (08)
-            (13.5, -7.79),  # (09)
-            (0.0, -15.58),  # (10)
-            (-13.5, -7.79),  # (11)
-            (-13.5, 7.79),  # (12)
-        ]
+        self.hex_coord = [  (4.5, 7.79), (9.0, 0.0), (4.5, -7.79), (-4.5, -7.79),
+                            (-9.0, 0.0), (-4.5, 7.79), (0.0, 15.58), (13.5, 7.79), 
+                            (13.5, -7.79), (0.0, -15.58), (-13.5, -7.79), (-13.5, 7.79)  ]
+
+        # Object detection dict
+        self.obj_to_label = {"mallet": "Class ID: 0", "bottle": "Class ID: 1"}
+
+        # UTM zone and hemisphere (will set on first gps fix)
+        self.zone = None
+        self.hemisphere = None
+        self.filtered_gps = None
+
+        # Initialize variables
+        self.leg = None
+        self.cancel_flag = False
 
         #################################
         ### ROS 2 OBJECT DECLARATIONS ###
@@ -253,16 +234,16 @@ class AutonomyTaskExecutor(Node):
         self.obj_client = self.create_client(
             SetBool, "zed/zed_node/enable_obj_det", callback_group=norm_callback_group
         )
-        while not self.obj_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info(
-                "Object detection service not available, waiting again..."
-            )
+        # while not self.obj_client.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info(
+        #         "Object detection service not available, waiting again..."
+        #     )
         self.obj_request = SetBool.Request()
 
         # Action server to run the task executor
         self.action_server = ActionServer(
             self,
-            RunTask,
+            AutonomyTask,
             "exec_autonomy_task",
             self.action_server_callback,
             callback_group=action_callback_group,
@@ -576,24 +557,15 @@ class AutonomyTaskExecutor(Node):
         Callback function for the action server
         """
 
-        # Parse the current waypoint file path
-        wps_file_path = self.get_parameter("wps_file_path").value
-        self.wps = waypointParser(wps_file_path)
-
         self.task_goal_handle = goal_handle
         self.cancel_flag = False
-        result = RunTask.Result()
+        result = AutonomyTask.Result()
 
         # Initialize variables
         self.legs = []
-        self.leg = "start"
-        self.found_poses = {
-            "aruco1": None,
-            "aruco2": None,
-            "aruco3": None,
-            "mallet": None,
-            "bottle": None,
-        }
+        self.leg = AutonomyLeg()
+        self.leg.name = "start"
+        self.found_poses = { }
 
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
@@ -665,10 +637,13 @@ class AutonomyTaskExecutor(Node):
         Callback function for the aruco pose subscriber
         """
 
-        if self.leg in self.aruco_legs:
+        if self.leg is None:
+            return
+        
+        if self.leg.type == "aruco":
             for marker in msg.markers:
                 # Are we looking for this marker right now?
-                if marker.marker_id == self.tags[self.leg]:
+                if marker.marker_id == self.leg.tag_id:
 
                     self.get_logger().info(f"Found aruco tag {marker.marker_id}")
 
@@ -679,17 +654,20 @@ class AutonomyTaskExecutor(Node):
 
                     # If it was successful, store it
                     if pose:
-                        self.found_poses[self.leg] = pose
+                        self.found_poses[self.leg.name] = pose
 
     def obj_callback(self, msg):
         """
         Callback function for the object pose subscriber
         """
 
-        if self.leg in self.obj_legs:
+        if self.leg is None:
+            return
+
+        if self.leg.type == "obj":
             for obj in msg.objects:
                 # Are we looking for this object right now?
-                if obj.label == self.labels[self.leg]:
+                if obj.label == self.obj_to_label[self.leg.object_id]:
 
                     # Convert to a Pose() message
                     pose = Pose()
@@ -708,7 +686,7 @@ class AutonomyTaskExecutor(Node):
 
                     # If it was successful, store it
                     if pose:
-                        self.found_poses[self.leg] = pose
+                        self.found_poses[self.leg.name] = pose
 
     ###########################
     ### END ROS 2 CALLBACKS ###
@@ -720,52 +698,52 @@ class AutonomyTaskExecutor(Node):
 
     def task_info(self, string):
         """
-        Function to write info back to the RunTask action client
+        Function to write info back to the AutonomyTask action client
         """
 
-        self.get_logger().info("[" + self.leg + "] " + string)
-        task_feedback = RunTask.Feedback()
-        task_feedback.status = "[" + self.leg + "] " + string
+        self.get_logger().info("[" + self.leg.name + "] " + string)
+        task_feedback = AutonomyTask.Feedback()
+        task_feedback.status = "[" + self.leg.name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_warn(self, string):
         """
-        Function to write warnings back to the RunTask action client
+        Function to write warnings back to the AutonomyTask action client
         """
 
-        self.get_logger().warn("[" + self.leg + "] " + string)
-        task_feedback = RunTask.Feedback()
-        task_feedback.status = "[WARN] [" + self.leg + "] " + string
+        self.get_logger().warn("[" + self.leg.name + "] " + string)
+        task_feedback = AutonomyTask.Feedback()
+        task_feedback.status = "[WARN] [" + self.leg.name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_error(self, string):
         """
-        Function to write errors back to the RunTask action client
+        Function to write errors back to the AutonomyTask action client
         """
 
-        self.get_logger().error("[" + self.leg + "] " + string)
-        task_feedback = RunTask.Feedback()
-        task_feedback.status = "[ERROR] [" + self.leg + "] " + string
+        self.get_logger().error("[" + self.leg.name + "] " + string)
+        task_feedback = AutonomyTask.Feedback()
+        task_feedback.status = "[ERROR] [" + self.leg.name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_fatal(self, string):
         """
-        Function to write fatal errors back to the RunTask action client
+        Function to write fatal errors back to the AutonomyTask action client
         """
 
-        self.get_logger().fatal("[" + self.leg + "] " + string)
-        task_feedback = RunTask.Feedback()
-        task_feedback.status = "[FATAL] [" + self.leg + "] " + string
+        self.get_logger().fatal("[" + self.leg.name + "] " + string)
+        task_feedback = AutonomyTask.Feedback()
+        task_feedback.status = "[FATAL] [" + self.leg.name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_success(self, string):
         """
-        Function to write success back to the RunTask action client
+        Function to write success back to the AutonomyTask action client
         """
 
-        self.get_logger().info("[" + self.leg + "] " + string)
-        task_feedback = RunTask.Feedback()
-        task_feedback.status = "[SUCCESS] [" + self.leg + "] " + string
+        self.get_logger().info("[" + self.leg.name + "] " + string)
+        task_feedback = AutonomyTask.Feedback()
+        task_feedback.status = "[SUCCESS] [" + self.leg.name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     ########################################
@@ -802,24 +780,29 @@ class AutonomyTaskExecutor(Node):
 
         # Determine the best order for the legs
         if self.order_planner == "bruteOrderPlanner":
-            self.legs = bruteOrderPlanner(self.legs, self.wps, self.filtered_gps)
+            self.legs = bruteOrderPlanner(self.legs, self.filtered_gps)
         elif self.order_planner == "greedyOrderPlanner":
-            self.legs = greedyOrderPlanner(self.legs, self.wps, self.filtered_gps)
+            self.legs = greedyOrderPlanner(self.legs, self.filtered_gps)
         elif self.order_planner == "terrainOrderPlanner":
-            self.legs = terrainOrderPlanner(self.legs, self.wps, self.filtered_gps)
+            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps)
         elif self.order_planner == "noOrderPlanner":
-            self.legs = noOrderPlanner(self.legs, self.wps, self.filtered_gps)
+            self.legs = noOrderPlanner(self.legs, self.filtered_gps)
         else:
             raise Exception("Invalid order planner provided: " + self.order_planner)
 
-        self.task_info("Determined best leg order: " + str(self.legs))
+        # Get just the leg names
+        order = []
+        for leg in self.legs:
+            order.append(leg.name)
+        self.task_info("Determined best leg order: " + str(order))
 
         self.waitUntilNav2Active()
 
         for leg in self.legs:
             self.exec_leg(leg)
 
-        self.leg = "end"
+        self.leg = AutonomyLeg()
+        self.leg.name = "end"
         self.task_info("Autonomy task execution completed")
 
     def exec_leg(self, leg):
@@ -833,16 +816,16 @@ class AutonomyTaskExecutor(Node):
 
         # Is it a valid leg type?
         if (
-            self.leg in self.gps_legs
-            or self.leg in self.aruco_legs
-            or self.leg in self.obj_legs
+            self.leg.type == "gps"
+            or self.leg.type == "aruco"
+            or self.leg.type == "obj"
         ):
 
-            if self.leg in self.gps_legs:
+            if self.leg.type == "gps":
                 print_string = "GPS waypoint"
-            elif self.leg in self.aruco_legs:
+            elif self.leg.type == "aruco":
                 print_string = "aruco tag"
-            elif self.leg in self.obj_legs:
+            elif self.leg.type == "obj":
                 print_string = "object"
 
                 # Enable object detection
@@ -852,19 +835,12 @@ class AutonomyTaskExecutor(Node):
             self.task_info("Starting " + print_string + " leg")
 
             # Get this leg's GPS waypoint
-            leg_wp = None
-            for wp in self.wps:
-                if wp["leg"] == self.leg:
-                    leg_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
-
-            if not leg_wp:
-                self.task_error("No GPS waypoint found for leg")
-                return
+            leg_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
 
             found_loc = self.gps_nav(leg_wp)  # look along the way
 
             # Do we need to look for an aruco tag or object?
-            if self.leg in self.aruco_legs or self.leg in self.obj_legs:
+            if self.leg.type == "aruco" or self.leg.type == "obj":
 
                 # Check for the aruco tag or object until found
                 if not found_loc:
@@ -890,7 +866,7 @@ class AutonomyTaskExecutor(Node):
 
             self.task_info("Flashing LED to indicate arrival")
 
-            if self.leg in self.obj_legs:
+            if self.leg.type == "obj":
                 # Disable object detection
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
@@ -906,7 +882,7 @@ class AutonomyTaskExecutor(Node):
             asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         else:
-            self.task_error("Invalid leg type provided:" + self.leg)
+            self.task_error("Invalid leg type provided:" + self.leg.type)
 
     def gps_nav(self, dest_wp, src_string="", updating=False):
         """
@@ -954,6 +930,8 @@ class AutonomyTaskExecutor(Node):
                 asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
 
+            # TODO: Debug this
+
             # See if we get a better pose from the aruco tag or object
             if updating:
                 pose = self.found_check()
@@ -975,6 +953,7 @@ class AutonomyTaskExecutor(Node):
                 pose = self.found_check()
                 if pose:
                     asyncio.run(self.cancelTask())
+                    time.sleep(0.5)  # give the action server time to cancel
                     return pose
 
         result = self.getResult()
@@ -1031,9 +1010,7 @@ class AutonomyTaskExecutor(Node):
         self.task_info("Starting hex search")
 
         # Get the base waypoint
-        for wp in self.wps:
-            if wp["leg"] == self.leg:
-                base_wp = latLonYaw2Geopose(wp["latitude"], wp["longitude"])
+        base_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
 
         # Generate a hex pattern from the base waypoint
         for i, coord in enumerate(self.hex_coord):
@@ -1065,9 +1042,12 @@ class AutonomyTaskExecutor(Node):
         :return: The found GPS location, False otherwise
         """
 
-        if self.leg in self.aruco_legs or self.leg in self.obj_legs:
-            if self.found_poses[self.leg]:
-                return self.found_poses[self.leg]
+        if self.leg.type == "aruco" or self.leg.type == "obj":
+            try:
+                if self.found_poses[self.leg.name]:
+                    return self.found_poses[self.leg.name]
+            except KeyError: # if the leg name is not in the found_poses dict
+                return False
         return False
 
     ###################################
@@ -1078,10 +1058,10 @@ class AutonomyTaskExecutor(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    task_executor = AutonomyTaskExecutor()
+    autonomy_task_executor = AutonomyTaskExecutor()
     # Create a multi-threaded node executor for callback-in-callback threading
     executor = MultiThreadedExecutor()
-    executor.add_node(task_executor)
+    executor.add_node(autonomy_task_executor)
 
     executor.spin()
 
