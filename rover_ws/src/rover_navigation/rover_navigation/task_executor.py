@@ -136,7 +136,6 @@ class AutonomyTaskExecutor(Node):
         self.gps_nav_timeout = self.get_parameter("gps_nav_timeout").value
         self.hex_nav_timeout = self.get_parameter("hex_nav_timeout").value
 
-        # TODO: Test how close we can see the aruco tags and objects
         # Assuming we can detect objects and aruco tags up to 5m away, we've determined this is the best
         # search pattern for covering the 20m radius (fastest traversal, least overlap, most coverage).
         # It could definitely be changed or tuned in the future as we get more data.
