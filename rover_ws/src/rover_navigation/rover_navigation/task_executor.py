@@ -245,10 +245,10 @@ class AutonomyTaskExecutor(Node):
         self.obj_client = self.create_client(
             SetBool, "zed/zed_node/enable_obj_det", callback_group=norm_callback_group
         )
-        # while not self.obj_client.wait_for_service(timeout_sec=1.0):
-        #     self.get_logger().info(
-        #         "Object detection service not available, waiting again..."
-        #     )
+        while not self.obj_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(
+                "Object detection service not available, waiting again..."
+            )
         self.obj_request = SetBool.Request()
 
         # Action server to run the task executor
