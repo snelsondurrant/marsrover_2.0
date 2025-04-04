@@ -1048,11 +1048,11 @@ class AutonomyTaskExecutor(Node):
 
             result = self.getResult()
             if result == TaskResult.SUCCEEDED:
-                self.task_info("Spin search " + str(i) + " completed" + src_string)
+                self.task_info("Spin search " + str(i + 1) + " completed" + src_string)
             elif result == TaskResult.CANCELED:
-                self.task_warn("Spin search " + str(i) + " canceled" + src_string)
+                self.task_warn("Spin search " + str(i + 1) + " canceled" + src_string)
             elif result == TaskResult.FAILED:
-                self.task_error("Spin search " + str(i) + " failed" + src_string)
+                self.task_error("Spin search " + str(i + 1) + " failed" + src_string)
 
         return False
 
@@ -1078,12 +1078,12 @@ class AutonomyTaskExecutor(Node):
             )
             hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
 
-            pose = self.gps_nav(hex_wp, " (hex " + str(i) + ")")
+            pose = self.gps_nav(hex_wp, " (hex " + str(i + 1) + ")")
             # Did the last gps_nav find it?
             if pose:
                 return pose
 
-            pose = self.spin_search(" (hex " + str(i) + ")")  # Do a spin search
+            pose = self.spin_search(" (hex " + str(i + 1) + ")")  # Do a spin search
             # Did the last spin_search find it?
             if pose:
                 return pose
