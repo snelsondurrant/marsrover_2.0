@@ -7,20 +7,13 @@ from rover_navigation.utils.gps_utils import (
 )
 
 
-def basicPathPlanner(geopose1, geopose2):
+def basicPathPlanner(geopose1, geopose2, wp_dist):
     """
     Generate intermediary waypoints in a straight line between two GPS coordinates
 
     :author: Nelson Durrant
     :date: Mar 2025
     """
-
-    # TODO: Check this
-
-    # Distance between intermediary waypoints (in lat/lon degrees)
-    # If the waypoints are too far apart, they won't be in the global costmap
-    # and the navigation2 stack won't be able to plan a path between them
-    STEP_SIZE = 0.0001
 
     new_wps = []
 
@@ -36,10 +29,10 @@ def basicPathPlanner(geopose1, geopose2):
         yaw += math.pi
 
     # Calculate the distance between the two points in lat/lon degrees
-    distance = ((end_lat - start_lat) ** 2 + (end_lon - start_lon) ** 2) ** 0.5
+    distance = latLon2Meters(start_lat, start_lon, end_lat, end_lon)
 
     # Calculate the number of intermediary waypoints
-    num_waypoints = int(distance / STEP_SIZE)
+    num_waypoints = int(math.ceil(distance / wp_dist))
 
     if num_waypoints != 0:
 

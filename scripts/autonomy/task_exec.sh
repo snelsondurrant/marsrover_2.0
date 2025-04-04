@@ -44,13 +44,13 @@ ros2 action send_goal --feedback exec_autonomy_task rover_interfaces/action/Auto
             type: 'obj',
             latitude: 0.0,
             longitude: 0.0,
-            object_id: 'mallet'
+            object: 'mallet'
         },
         {
             name: 'bottle',
             type: 'obj',
             latitude: 0.0,
             longitude: 0.0,
-            object_id: 'bottle'
+            object: 'bottle'
         }
     ]}"

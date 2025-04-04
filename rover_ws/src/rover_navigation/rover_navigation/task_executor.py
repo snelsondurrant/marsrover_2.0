@@ -25,7 +25,11 @@ from typing import Any
 from zed_msgs.msg import ObjectsStamped
 
 
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose, meters2LatLon
+from rover_navigation.utils.gps_utils import (
+    latLonYaw2Geopose,
+    meters2LatLon,
+    latLon2Meters,
+)
 from rover_navigation.utils.plan_utils import (
     basicPathPlanner,  # plan a straight line between two GPS coordinates
     bruteOrderPlanner,  # use brute force to find the best order of legs
@@ -117,11 +121,22 @@ class AutonomyTaskExecutor(Node):
         self.order_planner = self.get_parameter("order_planner").value
 
         # Tunable values
-        self.declare_parameter("wait_time", 10)
-        self.declare_parameter("update_threshold", 0.000005)
+        self.declare_parameter("wait_time", 5)
+        self.declare_parameter("update_threshold", 0.4)
+        self.declare_parameter("waypoint_distance", 18.0)
+        self.declare_parameter("spin_stops", 4)
+        self.declare_parameter("spin_wait_time", 0.5)
+        self.declare_parameter("gps_nav_timeout", 210)
+        self.declare_parameter("hex_nav_timeout", 45)
         self.wait_time = self.get_parameter("wait_time").value
         self.update_threshold = self.get_parameter("update_threshold").value
+        self.waypoint_distance = self.get_parameter("waypoint_distance").value
+        self.spin_stops = self.get_parameter("spin_stops").value
+        self.spin_wait_time = self.get_parameter("spin_wait_time").value
+        self.gps_nav_timeout = self.get_parameter("gps_nav_timeout").value
+        self.hex_nav_timeout = self.get_parameter("hex_nav_timeout").value
 
+        # TODO: Test how close we can see the aruco tags and objects
         # Assuming we can detect objects and aruco tags up to 5m away, we've determined this is the best
         # search pattern for covering the 20m radius (fastest traversal, least overlap, most coverage).
         # It could definitely be changed or tuned in the future as we get more data.
@@ -158,12 +173,11 @@ class AutonomyTaskExecutor(Node):
         # Initialize variables
         self.leg = None
         self.cancel_flag = False
+        self.gps_nav_timeout_flag = False
 
         #################################
         ### ROS 2 OBJECT DECLARATIONS ###
         #################################
-
-        self.cancel_flag = False  # monitor action cancel requests
 
         # Set up a Tf2 buffer for pose to GPS transforms (aruco, object)
         self.tf_buffer = tf2_ros.Buffer()
@@ -440,7 +454,7 @@ class AutonomyTaskExecutor(Node):
         if self.result_future.result():
             self.status = self.result_future.result().status
             if self.status != GoalStatus.STATUS_SUCCEEDED:
-                self.debug(f"Task with failed with status code: {self.status}")
+                self.error(f"Task with failed with status code: {self.status}")
                 return True
         else:
             # Timed out, still processing, not complete yet
@@ -611,7 +625,7 @@ class AutonomyTaskExecutor(Node):
         # Set zone and hemisphere for UTM conversions
         if self.zone is None or self.hemisphere is None:
             self.zone = utm.from_latlon(msg.latitude, msg.longitude)[2]
-            self.hemisphere = "N" if msg.latitude > 0 else "S"
+            self.hemisphere = utm.from_latlon(msg.latitude, msg.longitude)[3]
 
         self.filtered_gps = latLonYaw2Geopose(msg.latitude, msg.longitude)
 
@@ -678,7 +692,7 @@ class AutonomyTaskExecutor(Node):
         if self.leg.type == "obj":
             for obj in msg.objects:
                 # Are we looking for this object right now?
-                if obj.label == self.obj_to_label[self.leg.object_id]:
+                if obj.label == self.obj_to_label[self.leg.object]:
 
                     # Convert to a Pose() message
                     pose = Pose()
@@ -801,7 +815,6 @@ class AutonomyTaskExecutor(Node):
         else:
             raise Exception("Invalid order planner provided: " + self.order_planner)
 
-        # Get just the leg names
         order = []
         for leg in self.legs:
             order.append(leg.name)
@@ -820,7 +833,7 @@ class AutonomyTaskExecutor(Node):
         """
         Function to execute task legs
 
-        :param leg: The leg to execute
+        :param leg: The AutonomyLeg object to execute
         """
 
         self.leg = leg
@@ -845,6 +858,11 @@ class AutonomyTaskExecutor(Node):
             leg_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
 
             found_loc = self.gps_nav(leg_wp)  # look along the way
+
+            # Did we timeout on our way to the GPS waypoint?
+            if self.gps_nav_timeout_flag:
+                self.gps_nav_timeout_flag = False
+                return
 
             # Do we need to look for an aruco tag or object?
             if self.leg.type == "aruco" or self.leg.type == "obj":
@@ -904,13 +922,13 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Starting GPS navigation" + src_string)
 
-        # TODO: Implement timeouts for navigation
-
         # Generate a path to the destination waypoint
         if self.path_planner == "basicPathPlanner":
-            path = basicPathPlanner(self.filtered_gps, dest_wp)
+            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
         elif self.path_planner == "terrainPathPlanner":
-            path = terrainPathPlanner(self.filtered_gps, dest_wp)
+            path = terrainPathPlanner(
+                self.filtered_gps, dest_wp, self.waypoint_distance
+            )
         else:
             raise Exception("Invalid path planner provided: " + self.path_planner)
 
@@ -929,15 +947,35 @@ class AutonomyTaskExecutor(Node):
                 self.mapviz_goal_publisher.publish(navsat_fix)
 
         asyncio.run(self.followGpsWaypoints(path))
+        start_time = self.get_clock().now().to_msg()
         while not asyncio.run(self.isTaskComplete()):
             time.sleep(0.1)
+
+            # Check if we've spent too long on this waypoint and should move on
+            if src_string == "":  # we're navigating to a GPS waypoint
+                if (
+                    self.get_clock().now().to_msg().sec - start_time.sec
+                    > self.gps_nav_timeout
+                ):
+                    self.task_error("GPS navigation timed out")
+                    self.gps_nav_timeout_flag = True
+                    asyncio.run(self.cancelTask())
+                    time.sleep(0.5)  # fix for bug, give time to cancel
+                    return False
+            elif not updating:  # we're navigating to a hex point
+                if (
+                    self.get_clock().now().to_msg().sec - start_time.sec
+                    > self.hex_nav_timeout
+                ):
+                    self.task_error("Hex search timed out")
+                    asyncio.run(self.cancelTask())
+                    time.sleep(0.5)  # fix for bug, give time to cancel
+                    return False
 
             # Check if the goal has been canceled
             if self.task_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
-
-            # TODO: Debug this
 
             # See if we get a better pose from the aruco tag or object
             if updating:
@@ -945,22 +983,24 @@ class AutonomyTaskExecutor(Node):
 
                 # Check if its location has changed by a significant amount
                 if (
-                    abs(pose.position.latitude - dest_wp.position.latitude)
-                    > self.update_threshold
-                ) or (
-                    abs(pose.position.longitude - dest_wp.position.longitude)
+                    latLon2Meters(
+                        pose.position.latitude,
+                        pose.position.longitude,
+                        dest_wp.position.latitude,
+                        dest_wp.position.longitude,
+                    )
                     > self.update_threshold
                 ):
                     self.task_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
-                    time.sleep(0.5)  # give the action server time to cancel
+                    time.sleep(0.5)  # fix for bug, give time to cancel
                     return pose  # restart gps_nav with the new location
             else:
                 # Check for the aruco tag or object while navigating
                 pose = self.found_check()
                 if pose:
                     asyncio.run(self.cancelTask())
-                    time.sleep(0.5)  # give the action server time to cancel
+                    time.sleep(0.5)  # fix for bug, give time to cancel
                     return pose  # restart gps_nav with the new location
 
         result = self.getResult()
@@ -983,29 +1023,37 @@ class AutonomyTaskExecutor(Node):
 
         self.task_info("Starting spin search" + src_string)
 
-        asyncio.run(self.spin(spin_dist=6.28))  # full rotation
-        while not asyncio.run(self.isTaskComplete()):
-            time.sleep(0.1)
+        adj_spin_distance = 6.28 / self.spin_stops
 
-            # Check if the goal has been canceled
-            if self.task_goal_handle.is_cancel_requested:
-                asyncio.run(self.cancelTask())
-                raise Exception("Task execution canceled by action client")
+        for i in range(
+            self.spin_stops - 1
+        ):  # don't need to look back at where we started
 
-            # Check for the aruco tag or object
-            pose = self.found_check()
-            if pose:
-                asyncio.run(self.cancelTask())
-                time.sleep(0.5) # give the action server time to cancel
-                return pose
+            asyncio.run(self.spin(spin_dist=adj_spin_distance))  # full rotation
+            while not asyncio.run(self.isTaskComplete()):
+                time.sleep(0.1)
 
-        result = self.getResult()
-        if result == TaskResult.SUCCEEDED:
-            self.task_info("Spin search completed" + src_string)
-        elif result == TaskResult.CANCELED:
-            self.task_warn("Spin search canceled" + src_string)
-        elif result == TaskResult.FAILED:
-            self.task_error("Spin search failed" + src_string)
+                # Check if the goal has been canceled
+                if self.task_goal_handle.is_cancel_requested:
+                    asyncio.run(self.cancelTask())
+                    raise Exception("Task execution canceled by action client")
+
+                # Check for the aruco tag or object
+                pose = self.found_check()
+                if pose:
+                    asyncio.run(self.cancelTask())
+                    return pose
+
+            time.sleep(self.spin_wait_time)
+
+            result = self.getResult()
+            if result == TaskResult.SUCCEEDED:
+                self.task_info("Spin search " + str(i) + " completed" + src_string)
+            elif result == TaskResult.CANCELED:
+                self.task_warn("Spin search " + str(i) + " canceled" + src_string)
+            elif result == TaskResult.FAILED:
+                self.task_error("Spin search " + str(i) + " failed" + src_string)
+
         return False
 
     def hex_search(self):

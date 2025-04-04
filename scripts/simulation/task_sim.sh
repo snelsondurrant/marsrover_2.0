@@ -24,6 +24,6 @@ ros2 action send_goal --feedback exec_autonomy_task rover_interfaces/action/Auto
             type: 'obj', 
             latitude: 38.162635, 
             longitude: -122.454902, 
-            object_id: 'mallet'
+            object: 'mallet'
         }
     ]}"
