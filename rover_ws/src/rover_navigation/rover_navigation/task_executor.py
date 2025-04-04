@@ -961,7 +961,7 @@ class AutonomyTaskExecutor(Node):
                 if pose:
                     asyncio.run(self.cancelTask())
                     time.sleep(0.5)  # give the action server time to cancel
-                    return pose
+                    return pose  # restart gps_nav with the new location
 
         result = self.getResult()
         if result == TaskResult.SUCCEEDED:
