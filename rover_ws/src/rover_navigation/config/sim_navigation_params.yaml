@@ -20,7 +20,7 @@ autonomy_task_executor:
     # - noOrderPlanner
     # - terrainOrderPlanner
     order_planner: bruteOrderPlanner
-    wait_time: 10  # Time to wait after successful arrival
+    wait_time: 10  # Time to wait after successful arrival (in seconds)
     update_threshold: 0.000005  # Threshold for updating tag and item locations (in lat/lon degrees)
 
 bt_navigator:
