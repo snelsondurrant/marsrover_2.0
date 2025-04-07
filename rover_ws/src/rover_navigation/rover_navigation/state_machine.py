@@ -45,7 +45,19 @@ from rover_navigation.utils.terrain_utils import (
 
 class State(Enum):
     INIT = auto()
-    # TODO: Add here
+    NEXT_LEG = auto()
+    GPS_NAV = auto()
+    SPIN_SEARCH = auto()
+    NEXT_HEX = auto()
+    HEX_NAV = auto()
+    FOUND_NAV = auto()
+    SIGNAL_SUCCESS = auto()
+
+
+class Result(Enum):
+    FOUND = auto()
+    SUCCEEDED = auto()
+    FAILED = auto()
 
 
 class PatchRclpyIssue1123(ActionClient):
@@ -176,9 +188,8 @@ class StateMachine(Node):
         self.filtered_gps = None
 
         # Initialize variables
+        self.legs = []
         self.leg = None
-        self.cancel_flag = False
-        self.gps_nav_timeout_flag = False
 
         #################################
         ### ROS 2 OBJECT DECLARATIONS ###
@@ -592,12 +603,6 @@ class StateMachine(Node):
         self.cancel_flag = False
         result = AutonomyTask.Result()
 
-        # Initialize variables
-        self.legs = []
-        self.leg = AutonomyLeg()
-        self.leg.name = "start"
-        self.found_poses = {}
-
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
         if not self.legs:
@@ -734,9 +739,10 @@ class StateMachine(Node):
         Function to write info back to the AutonomyTask action client
         """
 
-        self.get_logger().info("[" + self.leg.name + "] " + string)
+        name = "task" if self.leg is None else self.leg.name
+        self.get_logger().info("[" + name + "] " + string)
         task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[" + self.leg.name + "] " + string
+        task_feedback.status = "[" + name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_warn(self, string):
@@ -744,9 +750,10 @@ class StateMachine(Node):
         Function to write warnings back to the AutonomyTask action client
         """
 
-        self.get_logger().warn("[" + self.leg.name + "] " + string)
+        name = "task" if self.leg is None else self.leg.name
+        self.get_logger().warn("[" + name + "] " + string)
         task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[WARN] [" + self.leg.name + "] " + string
+        task_feedback.status = "[WARN] [" + name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_error(self, string):
@@ -754,9 +761,10 @@ class StateMachine(Node):
         Function to write errors back to the AutonomyTask action client
         """
 
-        self.get_logger().error("[" + self.leg.name + "] " + string)
+        name = "task" if self.leg is None else self.leg.name
+        self.get_logger().error("[" + name + "] " + string)
         task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[ERROR] [" + self.leg.name + "] " + string
+        task_feedback.status = "[ERROR] [" + name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_fatal(self, string):
@@ -764,9 +772,10 @@ class StateMachine(Node):
         Function to write fatal errors back to the AutonomyTask action client
         """
 
-        self.get_logger().fatal("[" + self.leg.name + "] " + string)
+        name = "task" if self.leg is None else self.leg.name
+        self.get_logger().fatal("[" + name + "] " + string)
         task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[FATAL] [" + self.leg.name + "] " + string
+        task_feedback.status = "[FATAL] [" + name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     def task_success(self, string):
@@ -774,27 +783,200 @@ class StateMachine(Node):
         Function to write success back to the AutonomyTask action client
         """
 
-        self.get_logger().info("[" + self.leg.name + "] " + string)
+        name = "task" if self.leg is None else self.leg.name
+        self.get_logger().info("[" + name + "] " + string)
         task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[SUCCESS] [" + self.leg.name + "] " + string
+        task_feedback.status = "[SUCCESS] [" + name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
     ###################################
     ### END TASK FEEDBACK FUNCTIONS ###
     ###################################
 
+    ########################
+    ### HELPER FUNCTIONS ###
+    ########################
+
+    def navigate_helper(self, dest_wp, hex_mode=False, found_mode=False):
+        """
+        Helper waypoint navigation function that integrates with Nav2
+        """
+
+        # 1. Generate a path to the destination waypoint
+        if self.path_planner == "basicPathPlanner":
+            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
+        elif self.path_planner == "terrainPathPlanner":
+            path = terrainPathPlanner(
+                self.filtered_gps, dest_wp, self.waypoint_distance
+            )
+        else:
+            raise Exception("Invalid path planner provided: " + self.path_planner)
+
+        # 2. Publish the GPS positions to mapviz
+        for wp in path:
+            navsat_fix = NavSatFix()
+            navsat_fix.header.frame_id = "map"
+            navsat_fix.header.stamp = self.get_clock().now().to_msg()
+            navsat_fix.latitude = wp.position.latitude
+            navsat_fix.longitude = wp.position.longitude
+
+            # 2.1 Publish to different topics based on type
+            if wp != dest_wp:
+                self.mapviz_inter_publisher.publish(navsat_fix)
+            else:
+                self.mapviz_goal_publisher.publish(navsat_fix)
+
+        # 3. Follow the determined path
+        asyncio.run(self.followGpsWaypoints(path))
+        start_time = self.get_clock().now().to_msg()
+        while not asyncio.run(self.isTaskComplete()):
+            time.sleep(0.1)
+
+            # 3.1 Check if the goal has been canceled
+            if self.task_goal_handle.is_cancel_requested:
+                asyncio.run(self.cancelTask())
+                raise Exception("Task execution canceled by action client")
+
+            # 3.2 Check if we've spent too long on this waypoint and should move on
+            if not hex_mode and not found_mode:  # we're navigating to a GPS waypoint
+                if (
+                    self.get_clock().now().to_msg().sec - start_time.sec
+                    > self.gps_nav_timeout
+                ):
+                    self.task_error("GPS navigation timed out")
+                    asyncio.run(self.cancelTask())
+                    return Result.FAILED
+            elif hex_mode:  # we're navigating to a hex waypoint
+                if (
+                    self.get_clock().now().to_msg().sec - start_time.sec
+                    > self.hex_nav_timeout
+                ):
+                    self.task_error("Hex navigation timed out")
+                    asyncio.run(self.cancelTask())
+                    return Result.FAILED
+
+            # 3.3 Check for the object or aruco tag while navigating
+            if found_mode:  # we're navigating to a found object
+                # Check if we get a better object or tag location as we get closer
+                if (
+                    latLon2Meters(
+                        self.found_poses[self.leg.name].position.latitude,
+                        self.found_poses[self.leg.name].position.longitude,
+                        dest_wp.position.latitude,
+                        dest_wp.position.longitude,
+                    )
+                    > self.update_threshold
+                ):
+                    asyncio.run(self.cancelTask())
+                    return Result.FOUND
+            else:  # we're navigating to a GPS or hex waypoint
+                # Check for the aruco tag or object while navigating
+                if self.found_helper():
+                    asyncio.run(self.cancelTask())
+                    return Result.FOUND
+
+        result = self.getResult()
+        if result == TaskResult.SUCCEEDED:
+            return Result.SUCCEEDED
+        else:
+            return Result.FAILED
+
+    def spin_helper(self):
+        """
+        Helper spin function that integrates with Nav2
+        """
+
+        # 1. Calculate the angle
+        adj_spin_distance = 6.28 / self.spin_stops
+
+        # 2. Spin to the calculated angle
+        asyncio.run(self.spin(spin_dist=adj_spin_distance))
+        while not asyncio.run(self.isTaskComplete()):
+            time.sleep(0.1)
+
+            # 2.1 Check if the goal has been canceled
+            if self.task_goal_handle.is_cancel_requested:
+                asyncio.run(self.cancelTask())
+                raise Exception("Task execution canceled by action client")
+
+            # 2.2 Check for the aruco tag or object while spinning
+            if self.found_helper():
+                asyncio.run(self.cancelTask())
+                return Result.FOUND
+
+        # 3. Wait a designated amount of time to get a good picture
+        time.sleep(self.spin_wait_time)
+
+        result = self.getResult()
+        if result == TaskResult.SUCCEEDED:
+            return Result.SUCCEEDED
+        elif result == TaskResult.CANCELED or result == TaskResult.FAILED:
+            return Result.FAILED
+        
+    def found_helper(self):
+        """
+        Helper function to check for aruco tags and objects
+        """
+
+        # 1. Check if we have a pose for the object or aruco tag
+        if self.leg.type == "aruco" or self.leg.type == "obj":
+            try:
+                if self.found_poses[self.leg.name]:
+                    return True
+            except KeyError:  # if the leg name is not in the found_poses dict
+                return False
+        return False
+
+    ############################
+    ### END HELPER FUNCTIONS ###
+    ############################
+
     #####################
     ### STATE MACHINE ###
     #####################
 
-    # TODO: Actually make this a state machine
-
     def run_state_machine(self):
         """
-        Function to run the Autonomy task state machine
+        Function to run the state machine
         """
 
-        self.task_info("Autonomy task execution started")
+        self.complete_flag = False
+        self.state = State.INIT
+
+        while not self.complete_flag:
+            self.get_logger().info("Transitioned to state: " + str(self.state))
+            match self.state:
+                case State.INIT:
+                    self.handle_init()
+                case State.NEXT_LEG:
+                    self.handle_next_leg()
+                case State.GPS_NAV:
+                    self.handle_gps_nav()
+                case State.SPIN_SEARCH:
+                    self.handle_spin_search()
+                case State.NEXT_HEX:
+                    self.handle_next_hex()
+                case State.HEX_NAV:
+                    self.handle_hex_nav()
+                case State.FOUND_NAV:
+                    self.handle_found_nav()
+                case State.SIGNAL_SUCCESS:
+                    self.handle_signal_success()
+                case _:
+                    raise Exception("Invalid state: " + str(self.state))
+                
+    def handle_init(self):
+        """
+        Function to handle the initialization state
+        """
+
+        self.task_info("Autonomy task started")
+
+        # Initialize variables
+        self.found_poses = {}
+        self.leg_cntr = 0
+        self.hex_cntr = 0
+        self.coord = None
 
         # Check for the first GPS fix
         while self.filtered_gps is None:
@@ -805,13 +987,10 @@ class StateMachine(Node):
             if self.task_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
-
-        self.task_info(
-            "Using order planner: "
-            + self.order_planner
-            + " and path planner: "
-            + self.path_planner
-        )
+            
+        # Report which order and path planners are selected
+        self.task_info("Order planner: " + self.order_planner)
+        self.task_info("Path planner: " + self.path_planner)
 
         # Determine the best order for the legs
         if self.order_planner == "bruteOrderPlanner":
@@ -830,287 +1009,194 @@ class StateMachine(Node):
             order.append(leg.name)
         self.task_info("Determined best leg order: " + str(order))
 
+        # Make sure the navigation stack is up and running
         self.waitUntilNav2Active(localizer="robot_localization")
 
-        for leg in self.legs:
-            self.exec_leg(leg)
+        self.state = State.NEXT_LEG
 
-        self.leg = AutonomyLeg()
-        self.leg.name = "end"
-        self.task_info("Autonomy task execution completed")
-
-    def exec_leg(self, leg):
+    def handle_next_leg(self):
         """
-        Function to execute task legs
-
-        :param leg: The AutonomyLeg object to execute
+        Function to handle the next leg state
         """
 
-        self.leg = leg
+        # Have we completed all the legs?
+        if self.leg_cntr >= len(self.legs):
+            self.leg = None
+            self.task_info("Autonomy task completed")
+            self.complete_flag = True
+            return
+        
+        self.leg = self.legs[self.leg_cntr]
+        self.leg_cntr += 1
 
-        # Is it a valid leg type?
-        if self.leg.type == "gps" or self.leg.type == "aruco" or self.leg.type == "obj":
+        self.hex_cntr = 0  # reset the hex counter
+
+        # Enable the object detection
+        if self.leg.type == "obj":
+            self.task_info("Enabling object detection")
+            self.obj_request.data = True
+            asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+
+        self.state = State.GPS_NAV
+
+    def handle_gps_nav(self):
+        """
+        Function to handle the GPS navigation state
+        """
+
+        self.task_info("Starting GPS navigation")
+
+        leg_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
+        nav_result = self.navigate_helper(leg_wp)
+
+        if nav_result == Result.SUCCEEDED:
 
             if self.leg.type == "gps":
-                print_string = "GPS waypoint"
-            elif self.leg.type == "aruco":
-                print_string = "aruco tag"
-            elif self.leg.type == "obj":
-                print_string = "object"
-
-                # Enable object detection
-                self.obj_request.data = True
-                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-
-            self.task_info("Starting " + print_string + " leg")
-
-            # Get this leg's GPS waypoint
-            leg_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
-
-            found_loc = self.gps_nav(leg_wp)  # look along the way
-
-            # Did we timeout on our way to the GPS waypoint?
-            if self.gps_nav_timeout_flag:
-                self.gps_nav_timeout_flag = False
-                return
-
-            # Do we need to look for an aruco tag or object?
-            if self.leg.type == "aruco" or self.leg.type == "obj":
-
-                # Check for the aruco tag or object until found
-                if not found_loc:
-                    found_loc = self.spin_search()  # Do a spin search
-                if not found_loc:
-                    found_loc = self.hex_search()  # Do a hex search
-                if not found_loc:
-                    self.task_error("Could not find the " + print_string)
-                    return
-                else:
-                    self.task_info("Found the " + print_string + "!")
-
-                    # Change found GPS location if we get a better one as we move closer
-                    while found_loc:
-                        found_loc = self.gps_nav(
-                            found_loc, " (" + print_string + ")", updating=True
-                        )
-
-                    self.task_success("Found and navigated to " + print_string)
-
+                self.task_success("Navigated to GPS waypoint")
+                self.state = State.SIGNAL_SUCCESS
             else:
-                self.task_success("Navigated to " + print_string)
+                self.task_info("Navigated to GPS waypoint")
+                self.state = State.SPIN_SEARCH
 
-            self.task_info("Flashing LED to indicate arrival")
+        elif nav_result == Result.FAILED:
+            self.task_error("Failed to navigate to GPS waypoint")
 
+            # Disable the object detection
             if self.leg.type == "obj":
-                # Disable object detection
+                self.task_info("Disabling object detection")
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
 
-            # Trigger the arrival state
-            asyncio.run(
-                self.async_service_call(self.arrival_client, self.arrival_request)
-            )
+            self.state = State.NEXT_LEG
+        elif nav_result == Result.FOUND:
+            self.task_info("Found the object/tag")
+            self.state = State.FOUND_NAV
 
-            time.sleep(self.wait_time)
+    def handle_spin_search(self):
+        """
+        Function to handle the spin search state
+        """
 
-            # Trigger the autonomy state
-            asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
+        self.task_info("Starting spin search")
 
+        success_cnt = 0
+        failure_cnt = 0
+        found_flag = False
+
+        for i in range(self.spin_stops - 1):  # don't want to spin back to where we started
+
+            spin_result = self.spin_helper()
+
+            if spin_result == Result.SUCCEEDED:
+                success_cnt += 1
+            elif spin_result == Result.FAILED:
+                failure_cnt += 1
+            elif spin_result == Result.FOUND:
+                found_flag = True
+                break
+
+        if not found_flag:
+            self.task_info("Spin search completed (" + str(success_cnt) + "/" + str(failure_cnt + success_cnt) + ")")
+            self.state = State.NEXT_HEX
         else:
-            self.task_error("Invalid leg type provided:" + self.leg.type)
+            self.task_info("Found the object/tag")
+            self.state = State.FOUND_NAV
 
-    def gps_nav(self, dest_wp, src_string="", updating=False):
+    def handle_next_hex(self):
         """
-        Function to navigate through GPS waypoints
-
-        :param dest_wp: The destination waypoint
-        :param src_string: A string to append to the task info
-        :param updating: Are we already navigating to an object and should check for a better location?
-
-        :return: The improved GPS location (if updating) or a found GPS location, False otherwise
+        Function to handle the next hex state
         """
 
-        self.task_info("Starting GPS navigation" + src_string)
+        # Have we completed all the hex points?
+        if self.hex_cntr >= len(self.hex_coord):
+            self.task_error("Failed to find the object/tag")
+            self.state = State.NEXT_LEG
+            return
 
-        # Generate a path to the destination waypoint
-        if self.path_planner == "basicPathPlanner":
-            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
-        elif self.path_planner == "terrainPathPlanner":
-            path = terrainPathPlanner(
-                self.filtered_gps, dest_wp, self.waypoint_distance
-            )
-        else:
-            raise Exception("Invalid path planner provided: " + self.path_planner)
+        self.coord = self.hex_coord[self.hex_cntr]
+        self.hex_cntr += 1
 
-        # Publish the GPS positions to mapviz
-        for wp in path:
-            navsat_fix = NavSatFix()
-            navsat_fix.header.frame_id = "map"
-            navsat_fix.header.stamp = self.get_clock().now().to_msg()
-            navsat_fix.latitude = wp.position.latitude
-            navsat_fix.longitude = wp.position.longitude
+        self.state = State.HEX_NAV
 
-            # Publish to different topics based on type
-            if wp != dest_wp:
-                self.mapviz_inter_publisher.publish(navsat_fix)
-            else:
-                self.mapviz_goal_publisher.publish(navsat_fix)
-
-        asyncio.run(self.followGpsWaypoints(path))
-        start_time = self.get_clock().now().to_msg()
-        while not asyncio.run(self.isTaskComplete()):
-            time.sleep(0.1)
-
-            # Check if we've spent too long on this waypoint and should move on
-            if src_string == "":  # we're navigating to a GPS waypoint
-                if (
-                    self.get_clock().now().to_msg().sec - start_time.sec
-                    > self.gps_nav_timeout
-                ):
-                    self.task_error("GPS navigation timed out")
-                    self.gps_nav_timeout_flag = True
-                    asyncio.run(self.cancelTask())
-                    return False
-            elif not updating:  # we're navigating to a hex point
-                if (
-                    self.get_clock().now().to_msg().sec - start_time.sec
-                    > self.hex_nav_timeout
-                ):
-                    self.task_error("Hex search timed out")
-                    asyncio.run(self.cancelTask())
-                    return False
-
-            # Check if the goal has been canceled
-            if self.task_goal_handle.is_cancel_requested:
-                asyncio.run(self.cancelTask())
-                raise Exception("Task execution canceled by action client")
-
-            # See if we get a better pose from the aruco tag or object
-            if updating:
-                pose = self.found_check()
-
-                # Check if its location has changed by a significant amount
-                if (
-                    latLon2Meters(
-                        pose.position.latitude,
-                        pose.position.longitude,
-                        dest_wp.position.latitude,
-                        dest_wp.position.longitude,
-                    )
-                    > self.update_threshold
-                ):
-                    self.task_info("Improved GPS location found" + src_string)
-                    asyncio.run(self.cancelTask())
-                    return pose  # restart gps_nav with the new location
-            else:
-                # Check for the aruco tag or object while navigating
-                pose = self.found_check()
-                if pose:
-                    asyncio.run(self.cancelTask())
-                    return pose  # restart gps_nav with the new location
-
-        result = self.getResult()
-        if result == TaskResult.SUCCEEDED:
-            self.task_info("GPS navigation completed" + src_string)
-        elif result == TaskResult.CANCELED:
-            self.task_warn("GPS navigation canceled" + src_string)
-        elif result == TaskResult.FAILED:
-            self.task_error("GPS navigation failed" + src_string)
-        return False
-
-    def spin_search(self, src_string=""):
+    def handle_hex_nav(self):
         """
-        Function to perform a spin search
-
-        :param src_string: A string to append to the task info
-
-        :return: The found GPS location, False otherwise
+        Function to handle the hex navigation state
         """
 
-        self.task_info("Starting spin search" + src_string)
+        self.task_info("Starting hex " + str(self.hex_cntr) + " navigation")
 
-        adj_spin_distance = 6.28 / self.spin_stops
+        hex_lat, hex_lon = meters2LatLon(
+            self.leg.latitude,
+            self.leg.longitude,
+            self.coord[0],
+            self.coord[1],
+        )
+        hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
+        nav_result = self.navigate_helper(hex_wp, hex_mode=True)
 
-        for i in range(
-            self.spin_stops - 1
-        ):  # don't need to look back at where we started
+        if nav_result == Result.SUCCEEDED:
+            self.task_info("Navigated to hex " + str(self.hex_cntr))
+            self.state = State.SPIN_SEARCH
+        elif nav_result == Result.FAILED:
+            self.task_error("Failed to navigate to hex " + str(self.hex_cntr))
+            self.state = State.NEXT_HEX
+        elif nav_result == Result.FOUND:
+            self.task_info("Found the object/tag")
+            self.state = State.FOUND_NAV
 
-            asyncio.run(self.spin(spin_dist=adj_spin_distance))  # full rotation
-            while not asyncio.run(self.isTaskComplete()):
-                time.sleep(0.1)
-
-                # Check if the goal has been canceled
-                if self.task_goal_handle.is_cancel_requested:
-                    asyncio.run(self.cancelTask())
-                    raise Exception("Task execution canceled by action client")
-
-                # Check for the aruco tag or object
-                pose = self.found_check()
-                if pose:
-                    asyncio.run(self.cancelTask())
-                    return pose
-
-            time.sleep(self.spin_wait_time)
-
-            result = self.getResult()
-            if result == TaskResult.SUCCEEDED:
-                self.task_info("Spin search " + str(i + 1) + " completed" + src_string)
-            elif result == TaskResult.CANCELED:
-                self.task_warn("Spin search " + str(i + 1) + " canceled" + src_string)
-            elif result == TaskResult.FAILED:
-                self.task_error("Spin search " + str(i + 1) + " failed" + src_string)
-
-        return False
-
-    def hex_search(self):
+    def handle_found_nav(self):
         """
-        Function to search in a hex pattern
-
-        :return: The found GPS location, False otherwise
+        Function to handle the found navigation state
         """
 
-        self.task_info("Starting hex search")
+        self.task_info("Starting object/tag navigation")
 
-        # Get the base waypoint
-        base_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
+        found_wp = latLonYaw2Geopose(
+            self.found_poses[self.leg.name].position.latitude,
+            self.found_poses[self.leg.name].position.longitude,
+        )
+        nav_result = self.navigate_helper(found_wp, found_mode=True)
 
-        # Generate a hex pattern from the base waypoint
-        for i, coord in enumerate(self.hex_coord):
-            hex_lat, hex_lon = meters2LatLon(
-                base_wp.position.latitude,
-                base_wp.position.longitude,
-                coord[0],
-                coord[1],
-            )
-            hex_wp = latLonYaw2Geopose(hex_lat, hex_lon)
+        if nav_result == Result.SUCCEEDED:
+            self.task_success("Navigated to object/tag")
 
-            pose = self.gps_nav(hex_wp, " (hex " + str(i + 1) + ")")
-            # Did the last gps_nav find it?
-            if pose:
-                return pose
+            # Disable the object detection
+            if self.leg.type == "obj":
+                self.task_info("Disabling object detection")
+                self.obj_request.data = False
+                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
 
-            pose = self.spin_search(" (hex " + str(i + 1) + ")")  # Do a spin search
-            # Did the last spin_search find it?
-            if pose:
-                return pose
+            self.state = State.SIGNAL_SUCCESS
+        elif nav_result == Result.FAILED:
+            self.task_error("Failed to navigate to object/tag")
 
-        self.task_info("Hex search completed")
-        return False
+            # Disable the object detection
+            if self.leg.type == "obj":
+                self.task_info("Disabling object detection")
+                self.obj_request.data = False
+                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
 
-    def found_check(self):
+            self.state = State.NEXT_LEG
+        elif nav_result == Result.FOUND:
+            self.task_info("Updated location for object/tag")
+            self.state = State.FOUND_NAV
+
+    def handle_signal_success(self):
         """
-        Function to check for aruco tags and objects
-
-        :return: The found GPS location, False otherwise
+        Function to handle the signal success state
         """
 
-        if self.leg.type == "aruco" or self.leg.type == "obj":
-            try:
-                if self.found_poses[self.leg.name]:
-                    return self.found_poses[self.leg.name]
-            except KeyError:  # if the leg name is not in the found_poses dict
-                return False
-        return False
+        self.task_info("Flashing LED to indicate arrival")
+
+        # Trigger the arrival state
+        asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
+
+        time.sleep(self.wait_time)
+
+        # Trigger the autonomy state
+        asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
+
+        self.state = State.NEXT_LEG
 
     #########################
     ### END STATE MACHINE ###
