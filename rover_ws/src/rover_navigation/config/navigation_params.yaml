@@ -8,7 +8,7 @@
 # Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
 # to follow and navigate in seems like the best solution for code simplicity and effectiveness.
 
-autonomy_task_executor:
+state_machine:
   ros__parameters:
     # Path planner options:
     # - basicPathPlanner (default)

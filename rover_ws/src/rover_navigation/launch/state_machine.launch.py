@@ -23,6 +23,7 @@ def generate_launch_description():
         [
             declare_use_sim_time_cmd,
             launch_ros.actions.Node(
+                # This only launches in simulation
                 # Easier to include this in the sim than refactor services
                 package="rover_control",
                 executable="drive_mux",
@@ -31,8 +32,9 @@ def generate_launch_description():
                 parameters=[{"use_sim_time": use_sim_time}],
             ),
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="rover_navigation",
-                executable="autonomy_task_executor",
+                executable="state_machine",
                 output="screen",
                 parameters=[
                     config_file,
@@ -41,8 +43,9 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="rover_navigation",
-                executable="autonomy_task_executor",
+                executable="state_machine",
                 output="screen",
                 parameters=[
                     sim_config_file,

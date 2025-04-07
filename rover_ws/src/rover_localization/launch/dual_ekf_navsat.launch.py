@@ -33,6 +33,7 @@ def generate_launch_description():
                 "output_location", default_value="~/dual_ekf_navsat_example_debug.txt"
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_odom",
@@ -43,6 +44,7 @@ def generate_launch_description():
             ),
             # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_map",
@@ -52,6 +54,7 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_map",
@@ -62,6 +65,7 @@ def generate_launch_description():
             ),
             # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="robot_localization",
                 executable="navsat_transform_node",
                 name="navsat_transform",
@@ -77,6 +81,7 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="robot_localization",
                 executable="navsat_transform_node",
                 name="navsat_transform",
@@ -92,6 +97,7 @@ def generate_launch_description():
                 condition=IfCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="rover_localization",
                 executable="pvt_to_nsf",
                 output="screen",
@@ -106,6 +112,7 @@ def generate_launch_description():
             ),
             # https://github.com/CCNYRoboticsLab/imu_tools/tree/humble?tab=readme-ov-file
             launch_ros.actions.Node(
+                # This only launches in real life
                 package='imu_filter_madgwick',
                 executable='imu_filter_madgwick_node',
                 name='imu_filter_madgwick',

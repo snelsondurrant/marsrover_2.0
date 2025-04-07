@@ -28,6 +28,7 @@ def generate_launch_description():
 
     # https://github.com/ros/urdf_launch
     start_robot_state_publisher_cmd = IncludeLaunchDescription(
+        # This only launches in real life
         PathJoinSubstitution(
             [FindPackageShare("urdf_launch"), "launch", "description.launch.py"]
         ),
@@ -43,6 +44,7 @@ def generate_launch_description():
     )
 
     sim_start_robot_state_publisher_cmd = Node(
+        # This only launches in simulation
         package="robot_state_publisher",
         executable="robot_state_publisher",
         name="robot_state_publisher",

@@ -17,6 +17,10 @@ declare_use_sim_time_cmd = DeclareLaunchArgument(
     "use_sim_time", default_value="False", description="Use simulation time"
 )
 
+# IMPORTANT! We've found that running rviz2 on the base station computer and sending Nav2 goals
+# through it over the network to the rover results in a lot of timing errors. It works much better
+# when those goals are sent from the rover computer itself (e.g. in the state machine).
+
 
 def generate_launch_description():
     return launch.LaunchDescription(

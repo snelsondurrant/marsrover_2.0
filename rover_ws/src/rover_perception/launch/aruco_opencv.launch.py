@@ -20,6 +20,7 @@ def generate_launch_description():
             declare_use_sim_time_cmd,
             launch_ros.actions.Node(
                 # https://github.com/fictionlab/ros_aruco_opencv
+                # This only launches in real life
                 package="aruco_opencv",
                 executable="aruco_tracker_autostart",
                 output="screen",
@@ -40,6 +41,7 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="aruco_opencv",
                 executable="aruco_tracker_autostart",
                 output="screen",

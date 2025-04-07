@@ -7,6 +7,7 @@ import utm
 from action_msgs.msg import GoalStatus
 from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
+from enum import Enum, auto
 from geometry_msgs.msg import Pose, PoseStamped
 from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import FollowWaypoints, Spin
@@ -42,6 +43,11 @@ from rover_navigation.utils.terrain_utils import (
 )
 
 
+class State(Enum):
+    INIT = auto()
+    # TODO: Add here
+
+
 class PatchRclpyIssue1123(ActionClient):
     """
     ActionClient patch for rclpy timing issue when multi-threading
@@ -73,13 +79,13 @@ class PatchRclpyIssue1123(ActionClient):
             return super()._get_result_async(*args, **kwargs)
 
 
-class AutonomyTaskExecutor(Node):
+class StateMachine(Node):
     """
     Class for executing the autonomy task using the Nav2 stack
 
     Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator
-    class and our own custom task executor with a lot of multi-threading. It's easiest to think of
-    as three sections with their own seperate threads: the task executor, the Nav2 BasicNavigator,
+    class and our own custom state machine with a lot of multi-threading. It's easiest to think of
+    as three sections with their own seperate threads: the state machine, the Nav2 BasicNavigator,
     and the ROS 2 callbacks.
 
     :author: Nelson Durrant
@@ -108,10 +114,10 @@ class AutonomyTaskExecutor(Node):
 
     def __init__(self):
 
-        super().__init__("autonomy_task_executor")
+        super().__init__("state_machine")
         # self.navigator = BasicNavigator() # Don't uncomment this line
         # IMPORTANT! Simply using the BasicNavigator class causes A LOT of threading issues.
-        # We've hacked the relevant functions from the BasicNavigator class into this class as a fix.
+        # We've included the relevant functions from the BasicNavigator class into this class as a fix.
         # https://github.com/ros-navigation/navigation2/tree/main/nav2_simple_commander
 
         # Leg and order planner parameters
@@ -431,6 +437,7 @@ class AutonomyTaskExecutor(Node):
         if self.result_future:
             future = self.goal_handle.cancel_goal_async()
             await future  # fix for iron/humble threading bug
+        time.sleep(0.5)  # fix for bug, give time to cancel
         return
 
     async def isTaskComplete(self):
@@ -495,10 +502,10 @@ class AutonomyTaskExecutor(Node):
         Block until the full navigation system is up and running, based on the nav2_simple_commander code
         """
 
-        # if localizer != "robot_localization":  # non-lifecycle node
-        #     asyncio.run(self._waitForNodeToActivate(localizer))
-        # if localizer == 'amcl':
-        #     self._waitForInitialPose()
+        if localizer != "robot_localization":  # non-lifecycle node
+            asyncio.run(self._waitForNodeToActivate(localizer))
+        if localizer == 'amcl':
+            self._waitForInitialPose()
         asyncio.run(self._waitForNodeToActivate(navigator))
         self.info("Nav2 is ready for use!")
         return
@@ -603,7 +610,7 @@ class AutonomyTaskExecutor(Node):
         asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
 
         try:
-            self.exec_autonomy_task()
+            self.run_state_machine()
             result.msg = "One small step for a rover, one giant leap for roverkind"
             self.task_goal_handle.succeed()
         except Exception as e:  # catch exceptions to ensure we return to teleop state
@@ -693,6 +700,8 @@ class AutonomyTaskExecutor(Node):
                 # Are we looking for this object right now?
                 if obj.label == self.obj_to_label[self.leg.object]:
 
+                    self.get_logger().info(f"Found object {obj.label}")
+
                     # Convert to a Pose() message
                     pose = Pose()
                     pose.position.x = float(obj.position[0])
@@ -716,9 +725,9 @@ class AutonomyTaskExecutor(Node):
     ### END ROS 2 CALLBACKS ###
     ###########################
 
-    ####################################
-    ### TASK EXEC FEEDBACK FUNCTIONS ###
-    ####################################
+    ###############################
+    ### TASK FEEDBACK FUNCTIONS ###
+    ###############################
 
     def task_info(self, string):
         """
@@ -770,17 +779,19 @@ class AutonomyTaskExecutor(Node):
         task_feedback.status = "[SUCCESS] [" + self.leg.name + "] " + string
         self.task_goal_handle.publish_feedback(task_feedback)
 
-    ########################################
-    ### END TASK EXEC FEEDBACK FUNCTIONS ###
-    ########################################
+    ###################################
+    ### END TASK FEEDBACK FUNCTIONS ###
+    ###################################
 
-    ###############################
-    ### TASK EXECUTOR FUNCTIONS ###
-    ###############################
+    #####################
+    ### STATE MACHINE ###
+    #####################
 
-    def exec_autonomy_task(self):
+    # TODO: Actually make this a state machine
+
+    def run_state_machine(self):
         """
-        Function to execute the autonomy task
+        Function to run the Autonomy task state machine
         """
 
         self.task_info("Autonomy task execution started")
@@ -819,7 +830,7 @@ class AutonomyTaskExecutor(Node):
             order.append(leg.name)
         self.task_info("Determined best leg order: " + str(order))
 
-        self.waitUntilNav2Active()
+        self.waitUntilNav2Active(localizer="robot_localization")
 
         for leg in self.legs:
             self.exec_leg(leg)
@@ -959,7 +970,6 @@ class AutonomyTaskExecutor(Node):
                     self.task_error("GPS navigation timed out")
                     self.gps_nav_timeout_flag = True
                     asyncio.run(self.cancelTask())
-                    time.sleep(0.5)  # fix for bug, give time to cancel
                     return False
             elif not updating:  # we're navigating to a hex point
                 if (
@@ -968,7 +978,6 @@ class AutonomyTaskExecutor(Node):
                 ):
                     self.task_error("Hex search timed out")
                     asyncio.run(self.cancelTask())
-                    time.sleep(0.5)  # fix for bug, give time to cancel
                     return False
 
             # Check if the goal has been canceled
@@ -992,14 +1001,12 @@ class AutonomyTaskExecutor(Node):
                 ):
                     self.task_info("Improved GPS location found" + src_string)
                     asyncio.run(self.cancelTask())
-                    time.sleep(0.5)  # fix for bug, give time to cancel
                     return pose  # restart gps_nav with the new location
             else:
                 # Check for the aruco tag or object while navigating
                 pose = self.found_check()
                 if pose:
                     asyncio.run(self.cancelTask())
-                    time.sleep(0.5)  # fix for bug, give time to cancel
                     return pose  # restart gps_nav with the new location
 
         result = self.getResult()
@@ -1105,18 +1112,18 @@ class AutonomyTaskExecutor(Node):
                 return False
         return False
 
-    ###################################
-    ### END TASK EXECUTOR FUNCTIONS ###
-    ###################################
+    #########################
+    ### END STATE MACHINE ###
+    #########################
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    autonomy_task_executor = AutonomyTaskExecutor()
+    state_machine = StateMachine()
     # Create a multi-threaded node executor for callback-in-callback threading
     executor = MultiThreadedExecutor()
-    executor.add_node(autonomy_task_executor)
+    executor.add_node(state_machine)
 
     executor.spin()
 

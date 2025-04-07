@@ -8,7 +8,7 @@
 # - global costmap is set to be rolling to allow the robot to traverse big environment by
 #   following successive relatively close waypoints that fit in a smaller rolling costmap
 
-autonomy_task_executor:
+state_machine:
   ros__parameters:
     # Path planner options:
     # - basicPathPlanner (default)

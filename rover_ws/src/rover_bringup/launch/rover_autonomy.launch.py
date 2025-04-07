@@ -51,8 +51,8 @@ def generate_launch_description():
 
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
-    sim_nav2_params = os.path.join(nav_params_dir, "sim_nav2_no_map_params.yaml")
-    nav2_params = os.path.join(nav_params_dir, "nav2_no_map_params.yaml")
+    sim_nav2_params = os.path.join(nav_params_dir, "sim_navigation_params.yaml")
+    nav2_params = os.path.join(nav_params_dir, "navigation_params.yaml")
     sim_configured_params = RewrittenYaml(
         source_file=sim_nav2_params, root_key="", param_rewrites="", convert_types=True
     )
@@ -70,6 +70,7 @@ def generate_launch_description():
     )
 
     gazebo_cmd = IncludeLaunchDescription(
+        # This only launches in simulation
         PythonLaunchDescriptionSource(
             os.path.join(gz_launch_dir, "gazebo_gps_world.launch.py")
         ),
@@ -86,6 +87,7 @@ def generate_launch_description():
     )
 
     sim_navigation2_cmd = IncludeLaunchDescription(
+        # This only launches in simulation
         PythonLaunchDescriptionSource(
             os.path.join(bringup_dir, "launch", "navigation_launch.py")
         ),
@@ -98,6 +100,7 @@ def generate_launch_description():
     )
 
     navigation2_cmd = IncludeLaunchDescription(
+        # This only launches in real life
         PythonLaunchDescriptionSource(
             os.path.join(bringup_dir, "launch", "navigation_launch.py")
         ),
@@ -135,18 +138,20 @@ def generate_launch_description():
     )
 
     gps_cmd = IncludeLaunchDescription(
+        # This only launches in real life
         XMLLaunchDescriptionSource(os.path.join(ublox_launch_dir, "rover_launch.xml")),
         condition=UnlessCondition(sim_mode),
     )
 
     lidar_cmd = IncludeLaunchDescription(
+        # This only launches in real life
         PythonLaunchDescriptionSource(os.path.join(unitree_dir, "launch.py")),
         condition=UnlessCondition(sim_mode),
     )
 
-    task_exec_cmd = IncludeLaunchDescription(
+    state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, "task_executor.launch.py")
+            os.path.join(nav_launch_dir, "state_machine.launch.py")
         ),
         launch_arguments={
             "use_sim_time": sim_mode,
@@ -180,6 +185,6 @@ def generate_launch_description():
     ld.add_action(aruco_opencv_cmd)
     ld.add_action(gps_cmd)
     # ld.add_action(lidar_cmd)
-    ld.add_action(task_exec_cmd)
+    ld.add_action(state_machine_cmd)
 
     return ld

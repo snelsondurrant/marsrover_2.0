@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'autonomy_task_executor = rover_navigation.task_executor:main',
+            'state_machine = rover_navigation.state_machine:main',
         ],
     },
 )
