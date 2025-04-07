@@ -40,7 +40,7 @@ while getopts ":t:u:l" opt; do
 done
 
 if [ $launch_local = true ]; then
-    printWarning "Launching on the local machine..."
+    printWarning "Launching (autonomy task) on the local machine..."
     envsubst < tmuxp/autonomy/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
     docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml
     docker exec -it marsrover-ct tmux attach -t rover_launch
