@@ -18,7 +18,6 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.task import Future
 from rover_interfaces.action import AutonomyTask
-from rover_interfaces.msg import AutonomyLeg
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger, SetBool
 from threading import RLock
@@ -648,6 +647,10 @@ class StateMachine(Node):
         # Look up and use the transform to convert the pose to UTM
         try:
             tf = self.tf_buffer.lookup_transform("utm", frame_id, stamp)
+            # Bug fix -- wait for the transform to be available
+            while not tf:
+                time.sleep(0.1)
+                tf = self.tf_buffer.lookup_transform("utm", frame_id, stamp)
             utm_pose = tf2_geometry_msgs.do_transform_pose(pose, tf)
         except Exception as e:
             self.get_logger().warn(f"Could not transform pose: {e}")

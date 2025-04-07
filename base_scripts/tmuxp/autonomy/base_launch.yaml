@@ -20,6 +20,6 @@ windows:
       - shell_command:
           - clear
           - source ~/rover_ws/install/setup.bash
-          - cd ~/scripts
+          - cd ~/scripts/autonomy
           - cmd: bash task_exec.sh
             enter: false
