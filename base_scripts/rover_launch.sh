@@ -23,8 +23,8 @@ ROVER_IP_ADDRESS=192.168.1.120
 launch_local=false
 export discovery_addr=$ROVER_IP_ADDRESS
 
-# Check for a "-t <task>", "-u <username>", or "-l" argument
-while getopts ":t:u:l" opt; do
+# Check for a "-t <task>" or "-u <username>" argument
+while getopts ":t:u:" opt; do
   case $opt in
     u)
       ROVER_USERNAME=$OPTARG
@@ -32,21 +32,8 @@ while getopts ":t:u:l" opt; do
     t)
       task=$OPTARG
       ;;
-    l)
-      launch_local=true
-      export discovery_addr=localhost
-      ;;
   esac
 done
-
-if [ $launch_local = true ]; then
-    printWarning "Launching (autonomy task) on the local machine..."
-    envsubst < tmuxp/autonomy/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
-    docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml
-    docker exec -it marsrover-ct tmux attach -t rover_launch
-    docker exec marsrover-ct tmux kill-session -t rover_launch
-    exit
-fi
 
 # Check for an SSH connection to the rover
 if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "echo" &> /dev/null
