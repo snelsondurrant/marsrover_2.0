@@ -29,7 +29,7 @@ class MegaWrapper(Node):
     :date: Mar 2025
 
     Subscribers:
-    - cmd_vel_switch (geometry_msgs/Twist)
+    - cmd_vel_mux (geometry_msgs/Twist)
     - joy (sensor_msgs/Joy)
     Publishers:
     - ArduinoDebug (std_msgs/String)
@@ -41,7 +41,7 @@ class MegaWrapper(Node):
         super().__init__("mega_wrapper")
 
         # SUBSCRIBERS
-        self.create_subscription(Twist, "cmd_vel_switch", self.send_wheel, 1)
+        self.create_subscription(Twist, "cmd_vel_mux", self.send_wheel, 1)
         self.subscription = self.create_subscription(
             Joy, "joy", self.joy_callback, 10
         )  # direct elevator control
