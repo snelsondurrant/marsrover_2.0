@@ -9,7 +9,8 @@ from aruco_opencv_msgs.msg import ArucoDetection
 from builtin_interfaces.msg import Duration
 from enum import Enum, auto
 from geometry_msgs.msg import Pose, PoseStamped
-from lifecycle_msgs.srv import GetState
+from lifecycle_msgs.srv import ChangeState, GetState
+from lifecycle_msgs.msg import Transition
 from nav2_msgs.action import FollowWaypoints, Spin
 from nav2_simple_commander.robot_navigator import TaskResult
 from rclpy.action import ActionServer, ActionClient, CancelResponse
@@ -114,6 +115,7 @@ class StateMachine(Node):
     - trigger_auto (std_srvs/Trigger) [norm_callback_group]
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
     - zed/zed_node/enable_obj_det (std_srvs/SetBool) [norm_callback_group]
+    - aruco_tracker/change_state (lifecycle_msgs/ChangeState) [norm_callback_group]
     Action Clients:
     - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
@@ -269,6 +271,23 @@ class StateMachine(Node):
                 "Arrival trigger service not available, waiting again..."
             )
         self.arrival_request = Trigger.Request()
+
+        # Client to enable/disable aruco detection
+        self.aruco_client = self.create_client(
+            ChangeState,
+            'aruco_tracker/change_state',
+            callback_group=norm_callback_group
+        )
+        while not self.aruco_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(
+                'Aruco detection service not available, waiting...'
+            )
+        self.aruco_request = ChangeState.Request()
+
+        # Set the aruco detection node state to CONFIGURE
+        self.aruco_request.transition.id = Transition.TRANSITION_CONFIGURE
+        # IMPORTANT! For some reason, this hangs on 'await future' here, but the below works
+        self.aruco_client.call_async(self.aruco_request)  # bug fix, don't await future
 
         # Client to enable/disable object detection
         self.obj_client = self.create_client(
@@ -1035,11 +1054,15 @@ class StateMachine(Node):
 
         self.hex_cntr = 0  # reset the hex counter
 
-        # Enable the object detection
+        # Enable aruco/object detection
         if self.leg.type == "obj":
             self.task_info("Enabling object detection")
             self.obj_request.data = True
             asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+        elif self.leg.type == "aruco":
+            self.task_info("Enabling aruco detection")
+            self.aruco_request.transition.id = Transition.TRANSITION_ACTIVATE
+            asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
         self.state = State.GPS_NAV
 
@@ -1065,11 +1088,15 @@ class StateMachine(Node):
         elif nav_result == Result.FAILED:
             self.task_error("Failed to navigate to GPS waypoint")
 
-            # Disable the object detection
+            # Disable aruco/object detection
             if self.leg.type == "obj":
                 self.task_info("Disabling object detection")
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+            elif self.leg.type == "aruco":
+                self.task_info("Disabling aruco detection")
+                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
+                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
             self.state = State.NEXT_LEG
         elif nav_result == Result.FOUND:
@@ -1172,21 +1199,29 @@ class StateMachine(Node):
         if nav_result == Result.SUCCEEDED:
             self.task_success("Navigated to object/tag")
 
-            # Disable the object detection
+            # Disable aruco/object detection
             if self.leg.type == "obj":
                 self.task_info("Disabling object detection")
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+            elif self.leg.type == "aruco":
+                self.task_info("Disabling aruco detection")
+                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
+                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
             self.state = State.SIGNAL_SUCCESS
         elif nav_result == Result.FAILED:
             self.task_error("Failed to navigate to object/tag")
 
-            # Disable the object detection
+            # Disable aruco/object detection
             if self.leg.type == "obj":
                 self.task_info("Disabling object detection")
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+            elif self.leg.type == "aruco":
+                self.task_info("Disabling aruco detection")
+                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
+                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
             self.state = State.NEXT_LEG
         elif nav_result == Result.FOUND:

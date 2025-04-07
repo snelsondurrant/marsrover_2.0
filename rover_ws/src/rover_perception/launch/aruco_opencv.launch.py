@@ -3,10 +3,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 import launch_ros.actions
-from ament_index_python.packages import get_package_share_directory
 from launch.conditions import UnlessCondition, IfCondition
-import os
-
 
 def generate_launch_description():
 
@@ -22,11 +19,12 @@ def generate_launch_description():
                 # https://github.com/fictionlab/ros_aruco_opencv
                 # This only launches in real life
                 package="aruco_opencv",
-                executable="aruco_tracker_autostart",
+                executable="aruco_tracker",
                 output="screen",
                 parameters=[
                     {
                         "cam_base_topic": "aruco_cam/image_raw",
+                        "image_is_rectified": True,
                         "marker_size": 0.2,
                         "use_sim_time": use_sim_time,
                     }
@@ -43,7 +41,7 @@ def generate_launch_description():
             launch_ros.actions.Node(
                 # This only launches in simulation
                 package="aruco_opencv",
-                executable="aruco_tracker_autostart",
+                executable="aruco_tracker",
                 output="screen",
                 parameters=[
                     {
