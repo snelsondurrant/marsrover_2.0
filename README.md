@@ -1,3 +1,13 @@
+[Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
+
+[Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
+
+[How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
+
+[Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
+
+--
+
 ### Get Started
 
 > **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support, and have not been extensively tested.
