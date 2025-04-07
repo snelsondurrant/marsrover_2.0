@@ -26,7 +26,7 @@ if [ ! $(uname -m) == "aarch64" ]; then
 	if [ $(docker ps | grep danielsnider/mapproxy | wc -l) -eq 0 ]; then
 		# https://github.com/danielsnider/docker-mapproxy-googlemaps/tree/master
 		printWarning "Starting the mapproxy container..."
-		docker run -p 8080:8080 -d -t -v $script_dir/mapproxy:/mapproxy danielsnider/mapproxy
+		docker run -p 8080:8080 -d -t -v ~/mapproxy:/mapproxy danielsnider/mapproxy
 	fi
 fi
 
