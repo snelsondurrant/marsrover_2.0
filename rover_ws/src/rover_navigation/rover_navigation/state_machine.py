@@ -515,7 +515,7 @@ class StateMachine(Node):
 
         if localizer != "robot_localization":  # non-lifecycle node
             asyncio.run(self._waitForNodeToActivate(localizer))
-        if localizer == 'amcl':
+        if localizer == "amcl":
             self._waitForInitialPose()
         asyncio.run(self._waitForNodeToActivate(navigator))
         self.info("Nav2 is ready for use!")
@@ -803,14 +803,17 @@ class StateMachine(Node):
         """
 
         # 1. Generate a path to the destination waypoint
-        if self.path_planner == "basicPathPlanner":
-            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
-        elif self.path_planner == "terrainPathPlanner":
-            path = terrainPathPlanner(
-                self.filtered_gps, dest_wp, self.waypoint_distance
-            )
-        else:
-            raise Exception("Invalid path planner provided: " + self.path_planner)
+        # Determine the best order for the legs
+        try:
+            planner_func = globals()[self.path_planner]
+            if callable(planner_func):
+                path = planner_func(self.filtered_gps, dest_wp, self.waypoint_distance)
+            else:
+                raise Exception(
+                    "Path planner " + str(self.path_planner) + " is not callable"
+                )
+        except KeyError:
+            raise Exception("Path planner " + str(self.path_planner) + " not found")
 
         # 2. Publish the GPS positions to mapviz
         for wp in path:
@@ -912,7 +915,7 @@ class StateMachine(Node):
             return Result.SUCCEEDED
         elif result == TaskResult.CANCELED or result == TaskResult.FAILED:
             return Result.FAILED
-        
+
     def found_helper(self):
         """
         Helper function to check for aruco tags and objects
@@ -964,7 +967,7 @@ class StateMachine(Node):
                     self.handle_signal_success()
                 case _:
                     raise Exception("Invalid state: " + str(self.state))
-                
+
     def handle_init(self):
         """
         Function to handle the initialization state
@@ -987,26 +990,24 @@ class StateMachine(Node):
             if self.task_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
                 raise Exception("Task execution canceled by action client")
-            
+
         # Report which order and path planners are selected
         self.task_info("Order planner: " + self.order_planner)
         self.task_info("Path planner: " + self.path_planner)
 
         # Determine the best order for the legs
-        if self.order_planner == "bruteOrderPlanner":
-            self.legs = bruteOrderPlanner(self.legs, self.filtered_gps)
-        elif self.order_planner == "greedyOrderPlanner":
-            self.legs = greedyOrderPlanner(self.legs, self.filtered_gps)
-        elif self.order_planner == "terrainOrderPlanner":
-            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps)
-        elif self.order_planner == "noOrderPlanner":
-            self.legs = noOrderPlanner(self.legs, self.filtered_gps)
-        else:
-            raise Exception("Invalid order planner provided: " + self.order_planner)
+        try:
+            planner_func = globals()[self.order_planner]
+            if callable(planner_func):
+                self.legs = planner_func(self.legs, self.filtered_gps)
+            else:
+                raise Exception(
+                    "Order planner " + str(self.order_planner) + " is not callable"
+                )
+        except KeyError:
+            raise Exception("Order planner " + str(self.order_planner) + " not found")
 
-        order = []
-        for leg in self.legs:
-            order.append(leg.name)
+        order = [leg.name for leg in self.legs]
         self.task_info("Determined best leg order: " + str(order))
 
         # Make sure the navigation stack is up and running
@@ -1025,7 +1026,7 @@ class StateMachine(Node):
             self.task_info("Autonomy task completed")
             self.complete_flag = True
             return
-        
+
         self.leg = self.legs[self.leg_cntr]
         self.leg_cntr += 1
 
@@ -1083,7 +1084,9 @@ class StateMachine(Node):
         failure_cnt = 0
         found_flag = False
 
-        for i in range(self.spin_stops - 1):  # don't want to spin back to where we started
+        for i in range(
+            self.spin_stops - 1
+        ):  # don't want to spin back to where we started
 
             spin_result = self.spin_helper()
 
@@ -1096,7 +1099,13 @@ class StateMachine(Node):
                 break
 
         if not found_flag:
-            self.task_info("Spin search completed (" + str(success_cnt) + "/" + str(failure_cnt + success_cnt) + ")")
+            self.task_info(
+                "Spin search completed ("
+                + str(success_cnt)
+                + "/"
+                + str(failure_cnt + success_cnt)
+                + ")"
+            )
             self.state = State.NEXT_HEX
         else:
             self.task_info("Found the object/tag")
