@@ -299,6 +299,15 @@ class StateMachine(Node):
             )
         self.obj_request = SetBool.Request()
 
+        # IMPORTANT! Set a reliable QoS profile for action feedback to ensure SUCCESS messages
+        # show up consistently on the base station computer during competition
+        reliable_feedback_qos = rclpy.qos.QoSProfile(
+            reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
+            history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=rclpy.qos.DurabilityPolicy.VOLATILE
+        )
+
         # Action server to run the task executor
         self.action_server = ActionServer(
             self,
@@ -307,6 +316,7 @@ class StateMachine(Node):
             self.action_server_callback,
             callback_group=action_callback_group,
             cancel_callback=self.cancel_callback,
+            feedback_pub_qos_profile=reliable_feedback_qos,
         )
 
         #####################################
