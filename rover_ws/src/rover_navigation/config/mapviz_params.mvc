@@ -8,11 +8,9 @@ enable_antialiasing: true
 show_displays: true
 show_status_bar: true
 show_capture_tools: true
-window_width: 1920
-window_height: 1016
+window_width: 1600
+window_height: 900
 view_scale: 0.564473748
-offset_x: -55.0469894
-offset_y: -4.65194941
 use_latest_transforms: true
 background: "#a0a0a4"
 image_transport: raw
@@ -33,7 +31,7 @@ displays:
     name: new display
     config:
       visible: true
-      collapsed: false
+      collapsed: true
       frame: base_link
       color: "#00ff00"
       draw_style: arrows
@@ -45,7 +43,7 @@ displays:
     name: new display
     config:
       visible: true
-      collapsed: false
+      collapsed: true
       topic: /gps/fix
       color: "#55aaff"
       draw_style: points
@@ -56,7 +54,7 @@ displays:
     name: new display
     config:
       visible: true
-      collapsed: false
+      collapsed: true
       topic: /mapviz/goal
       color: "#ff0000"
       draw_style: points
@@ -66,7 +64,7 @@ displays:
     name: new display
     config:
       visible: true
-      collapsed: false
+      collapsed: true
       topic: /mapviz/inter
       color: "#ffaa00"
       draw_style: points
