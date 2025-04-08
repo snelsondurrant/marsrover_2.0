@@ -191,6 +191,7 @@ class StateMachine(Node):
         # Initialize variables
         self.legs = []
         self.leg = None
+        self.task_goal_handle = None
 
         #################################
         ### ROS 2 OBJECT DECLARATIONS ###
@@ -556,7 +557,8 @@ class StateMachine(Node):
         req = GetState.Request()
         state = "unknown"
         while state != "active":
-            self.info(f"Waiting for {node_name} to become active...")
+            if (node_name == "navigator"):
+                self.task_warn("Waiting for Nav2 to activate...")
             self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
             await future  # fix for iron/humble threading bug
@@ -617,9 +619,9 @@ class StateMachine(Node):
         Callback function for the action server
         """
 
+        result = AutonomyTask.Result()
         self.task_goal_handle = goal_handle
         self.cancel_flag = False
-        result = AutonomyTask.Result()
 
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
@@ -636,14 +638,27 @@ class StateMachine(Node):
             self.run_state_machine()
             result.msg = "One small step for a rover, one giant leap for roverkind"
             self.task_goal_handle.succeed()
-        except Exception as e:  # catch exceptions to ensure we return to teleop state
+        except Exception as e:  # catch exceptions to ensure we disable detections, return to teleop state
             self.task_fatal(str(e))
-            result.msg = "It was the aliens, I'm telling you"
+
+            # Disable aruco/object detection
+            if self.leg.type == "obj":
+                self.task_info("Disabling object detection")
+                self.obj_request.data = False
+                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+            elif self.leg.type == "aruco":
+                self.task_info("Disabling aruco detection")
+                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
+                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+            self.leg = None
+
+            result.msg = "It's alien sabotage, I'm telling you"
             self.task_goal_handle.abort()
 
         # Trigger the teleop state
         asyncio.run(self.async_service_call(self.teleop_client, self.teleop_request))
 
+        self.task_goal_handle = None
         return result
 
     def gps_callback(self, msg):
@@ -865,7 +880,7 @@ class StateMachine(Node):
                     self.get_clock().now().to_msg().sec - start_time.sec
                     > self.gps_nav_timeout
                 ):
-                    self.task_error("GPS navigation timed out")
+                    self.task_warn("GPS navigation timed out")
                     asyncio.run(self.cancelTask())
                     return Result.FAILED
             elif hex_mode:  # we're navigating to a hex waypoint
@@ -873,7 +888,7 @@ class StateMachine(Node):
                     self.get_clock().now().to_msg().sec - start_time.sec
                     > self.hex_nav_timeout
                 ):
-                    self.task_error("Hex navigation timed out")
+                    self.task_warn("Hex navigation timed out")
                     asyncio.run(self.cancelTask())
                     return Result.FAILED
 
@@ -1126,13 +1141,22 @@ class StateMachine(Node):
                 break
 
         if not found_flag:
-            self.task_info(
-                "Spin search completed ("
-                + str(success_cnt)
-                + "/"
-                + str(failure_cnt + success_cnt)
-                + ")"
-            )
+            if failure_cnt > 0:
+                self.task_warn(
+                    "Spin search completed ("
+                    + str(success_cnt)
+                    + "/"
+                    + str(failure_cnt + success_cnt)
+                    + ")"
+                )
+            else:
+                self.task_info(
+                    "Spin search completed ("
+                    + str(success_cnt)
+                    + "/"
+                    + str(failure_cnt + success_cnt)
+                    + ")"
+                )
             self.state = State.NEXT_HEX
         else:
             self.task_info("Found the object/tag")
@@ -1145,6 +1169,7 @@ class StateMachine(Node):
 
         # Have we completed all the hex points?
         if self.hex_cntr >= len(self.hex_coord):
+            self.task_info("Hex search completed")
             self.task_error("Failed to find the object/tag")
             self.state = State.NEXT_LEG
             return
