@@ -25,20 +25,27 @@ def display(screen):
 
     scenes = []
     effects = [
-        Print(screen,
-              ColourImageFile(screen, "mars.gif", 2*screen.height//3,
-                              uni=screen.unicode_aware),
-              screen.height//6),
-        Print(screen,
-              FigletText("MARS ROVER",
-                         font='banner3' if screen.width > 90 else 'banner'),
-              screen.height//2-3,
-              colour=7, bg=7 if screen.unicode_aware else 0),   
+        Print(
+            screen,
+            ColourImageFile(
+                screen, "mars.gif", 2 * screen.height // 3, uni=screen.unicode_aware
+            ),
+            screen.height // 6,
+        ),
+        Print(
+            screen,
+            FigletText("MARS ROVER", font="banner3" if screen.width > 90 else "banner"),
+            screen.height // 2 - 3,
+            colour=7,
+            bg=7 if screen.unicode_aware else 0,
+        ),
         Stars(screen, (screen.width + screen.height) // 2),
-        Print(screen,
-              SpeechBubble("Press SPACE to continue..."),
-              5*screen.height // 6,
-              start_frame=10),
+        Print(
+            screen,
+            SpeechBubble("Press SPACE to continue..."),
+            5 * screen.height // 6,
+            start_frame=10,
+        ),
     ]
     scenes.append(Scene(effects, -1))
 

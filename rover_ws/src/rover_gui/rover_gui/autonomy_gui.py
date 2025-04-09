@@ -151,7 +151,7 @@ class AutonomyGUI(Node, QWidget):
         self.goal_handle = None
         self.close_flag = False
 
-        self.setWindowTitle("BYU Mars Rover Autonomy Task")
+        self.setWindowTitle("Autonomy Task")
         self.layout = QVBoxLayout()
 
         # Waypoint Display

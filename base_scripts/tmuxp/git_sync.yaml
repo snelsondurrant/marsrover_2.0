@@ -10,6 +10,5 @@ windows:
       mouse: "on"
     panes:
       - shell_command:
-          - clear
           - git checkout ${current_branch}
           - git pull base ${current_branch}

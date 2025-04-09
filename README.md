@@ -72,9 +72,9 @@ GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigatio
 
 ### How-To Videos
 
-Running the Simulation - TODO: Add this
+Running the Simulation
 
-Launching the Autonomy Task - TODO: Add this
+TODO: Add this
 
 --
 

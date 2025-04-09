@@ -1,7 +1,7 @@
 # Created by Nelson Durrant, Mar 2025
 # https://tmuxp.git-pull.com/configuration/examples.html
 session_name: docker_sync
-start_directory: "~/marsrover/docker" # outside the container
+start_directory: "~/marsrover_2.0/docker" # outside the container
 windows:
   - window_name: main
     layout: even-horizontal
@@ -10,8 +10,6 @@ windows:
       mouse: "on"
     panes:
       - shell_command:
-          - clear
-          - cd ~/marsrover_2.0/docker
           - gunzip marsrover_2.0.tar.gz
           - docker load < marsrover_2.0.tar
           - rm marsrover_2.0.tar

@@ -1,8 +1,8 @@
 # Created by Nelson Durrant, Feb 2025
 # https://automaticaddison.com/ros-2-navigation-tuning-guide-nav2/
 
-# NOTE: It is possible to enable 3D costmaps and navigation planning in Nav2.
-# However, as of now it would take a LOT of hard, theoretical work (research papers, etc)
+# NOTE: As far as we've researched, it is possible to enable 3D costmaps and navigation planning in Nav2.
+# However, as of now it would take a LOT of hard, technical work (research papers, etc)
 # to set up and would use a lot more computing power (CPU usage, etc) than we have available.
 #
 # Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
@@ -15,11 +15,9 @@ state_machine:
     # - terrainPathPlanner
     path_planner: basicPathPlanner
     # Order planner options:
-    # - greedyOrderPlanner (default)
-    # - bruteOrderPlanner
-    # - noOrderPlanner
+    # - basicOrderPlanner (default)
     # - terrainOrderPlanner
-    order_planner: greedyOrderPlanner
+    order_planner: basicOrderPlanner
     wait_time: 5  # Time to wait (flash LED) after successful arrival (in seconds)
     # The bigger the better below, as it gives Nav2 more room to navigate around obstacles.
     # Make sure not to make it bigger than the size of the rolling global costmap though.

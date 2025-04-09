@@ -15,11 +15,9 @@ state_machine:
     # - terrainPathPlanner
     path_planner: basicPathPlanner
     # Order planner options:
-    # - greedyOrderPlanner (default)
-    # - bruteOrderPlanner
-    # - noOrderPlanner
+    # - basicOrderPlanner (default)
     # - terrainOrderPlanner
-    order_planner: bruteOrderPlanner
+    order_planner: basicOrderPlanner
     wait_time: 5  # Time to wait (flash LED) after successful arrival (in seconds)
     # The bigger the better below, as it gives Nav2 more room to navigate around obstacles.
     # Make sure not to make it bigger than the size of the rolling global costmap though.

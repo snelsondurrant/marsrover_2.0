@@ -20,8 +20,6 @@ function printError {
 
 ROVER_USERNAME=marsrover
 ROVER_IP_ADDRESS=192.168.1.120
-launch_local=false
-export discovery_addr=$ROVER_IP_ADDRESS
 
 # Check for a "-t <task>" or "-u <username>" argument
 while getopts ":t:u:" opt; do
@@ -42,7 +40,7 @@ then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
+    echo "  - Run 'bash setup_ssh.sh' to set up SSH keys"
 
     exit 1
 fi

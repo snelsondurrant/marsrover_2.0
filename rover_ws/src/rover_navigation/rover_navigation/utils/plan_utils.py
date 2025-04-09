@@ -56,9 +56,12 @@ def basicPathPlanner(geopose1, geopose2, wp_dist):
     return new_wps
 
 
-def bruteOrderPlanner(legs, fix):
+def basicOrderPlanner(legs, fix):
     """
-    Brute force the optimal order to complete the task legs (This is an NP-hard problem)
+    Brute force the optimal order to complete the task legs (based on distance)
+
+    This is an NP-hard problem, but (from extensive testing) we deal with such small numbers of legs that
+    we can brute force an basic optimal solution in a reasonable time.
 
     :author: Nelson Durrant
     :date: Mar 2025
@@ -73,7 +76,12 @@ def bruteOrderPlanner(legs, fix):
         # Calculate the cost of the current order
         fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
         leg_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
-        cost = costFunction(fix_geopose, leg_geopose)
+        cost = latLon2Meters(
+            fix_geopose.position.latitude,
+            fix_geopose.position.longitude,
+            leg_geopose.position.latitude,
+            leg_geopose.position.longitude,
+        )
 
         for i in range(len(order) - 1):
 
@@ -81,7 +89,12 @@ def bruteOrderPlanner(legs, fix):
             leg2_geopose = latLonYaw2Geopose(
                 order[i + 1].latitude, order[i + 1].longitude
             )
-            cost += costFunction(leg1_geopose, leg2_geopose)
+            cost += latLon2Meters(
+                leg1_geopose.position.latitude,
+                leg1_geopose.position.longitude,
+                leg2_geopose.position.latitude,
+                leg2_geopose.position.longitude,
+            )
 
         # Update the best order
         if cost < lowest_cost:
@@ -89,71 +102,3 @@ def bruteOrderPlanner(legs, fix):
             best_order = order
 
     return best_order
-
-
-def greedyOrderPlanner(legs, fix):
-    """
-    Determine a greedy order to complete the task legs (This is an NP-hard problem)
-
-    :author: Nelson Durrant
-    :date: Mar 2025
-    """
-
-    order = []
-    visited = []
-
-    # Get the leg closest to the current position
-    current = None
-    min_cost = float("inf")
-    for leg in legs:
-        fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
-        leg_geopose = latLonYaw2Geopose(leg.latitude, leg.longitude)
-        cost = costFunction(fix_geopose, leg_geopose)
-        if cost < min_cost:
-            min_cost = cost
-            current = leg
-    visited.append(current)
-    order.append(current)
-
-    # Visit the rest of the task legs in order of closest distance
-    while len(visited) < len(legs):
-        min_cost = float("inf")
-        for leg in legs:
-            if leg not in visited:
-                leg1_geopose = latLonYaw2Geopose(current.latitude, current.longitude)
-                leg2_geopose = latLonYaw2Geopose(leg.latitude, leg.longitude)
-                cost = costFunction(leg1_geopose, leg2_geopose)
-                if cost < min_cost:
-                    min_cost = cost
-                    closest = leg
-        current = closest
-        visited.append(current)
-        order.append(current)
-
-    return order
-
-
-def noOrderPlanner(legs, fix):
-    """
-    Just return the task legs in the order they were given
-
-    :author: Nelson Durrant
-    :date: Mar 2025
-    """
-
-    return legs
-
-
-def costFunction(geopose1, geopose2):
-    """
-    Calculate the cost of moving from one task leg to another
-    """
-
-    distance = latLon2Meters(
-        geopose1.position.latitude,
-        geopose1.position.longitude,
-        geopose2.position.latitude,
-        geopose2.position.longitude,
-    )
-
-    return distance

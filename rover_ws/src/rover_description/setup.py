@@ -19,7 +19,7 @@ setup(
     zip_safe=True,
     maintainer='Nelson Durrant',
     maintainer_email='snelsondurrant@gmail.com',
-    description='Description and TFs for the Mars Rover',
+    description='Description and URDF for the Mars Rover',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

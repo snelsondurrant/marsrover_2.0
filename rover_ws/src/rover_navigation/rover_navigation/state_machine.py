@@ -33,9 +33,7 @@ from rover_navigation.utils.gps_utils import (
 )
 from rover_navigation.utils.plan_utils import (
     basicPathPlanner,  # plan a straight line between two GPS coordinates
-    bruteOrderPlanner,  # use brute force to find the best order of legs
-    greedyOrderPlanner,  # use a greedy algorithm to find the best order of legs
-    noOrderPlanner,  # don't reorder the legs
+    basicOrderPlanner,  # use brute force to find the best order of legs (based on distance)
 )
 from rover_navigation.utils.terrain_utils import (
     terrainPathPlanner,
@@ -135,7 +133,7 @@ class StateMachine(Node):
 
         # Leg and order planner parameters
         self.declare_parameter("path_planner", "basicPathPlanner")
-        self.declare_parameter("order_planner", "greedyOrderPlanner")
+        self.declare_parameter("order_planner", "basicOrderPlanner")
         self.path_planner = self.get_parameter("path_planner").value
         self.order_planner = self.get_parameter("order_planner").value
 
@@ -652,7 +650,7 @@ class StateMachine(Node):
                 asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
             self.leg = None
 
-            result.msg = "It was alien sabotage, I'm telling you"
+            result.msg = "It's gotta be the aliens, I'm telling you"
             self.task_goal_handle.abort()
 
         # Trigger the teleop state

@@ -4,7 +4,7 @@ session_name: rover_launch
 start_directory: "~/rover_ws" # inside the container
 environment:
   # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
-  ROS_DISCOVERY_SERVER: ${discovery_addr}:11811
+  ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
 windows:
   - window_name: main
     layout: tiled
@@ -13,15 +13,12 @@ windows:
       mouse: "on"
     panes:
       - shell_command:
-          - clear
           - fastdds discovery --server-id 0
       - shell_command:
-          - clear
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup rover_startup.launch.py
             enter: false
       - shell_command:
-          - clear
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup rover_autonomy.launch.py
             enter: false

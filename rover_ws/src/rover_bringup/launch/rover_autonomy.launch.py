@@ -131,6 +131,7 @@ def generate_launch_description():
     )
 
     gui_cmd = IncludeLaunchDescription(
+        # This only launches in simulation
         PythonLaunchDescriptionSource(
             os.path.join(gui_launch_dir, "autonomy_gui.launch.py")
         ),
