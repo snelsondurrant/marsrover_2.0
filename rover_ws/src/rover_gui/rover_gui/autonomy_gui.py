@@ -195,7 +195,7 @@ class AutonomyGUI(Node, QWidget):
         self.layout.setStretch(1, 6)  # Waypoint List
         self.layout.setStretch(2, 1)  # Buttons Container
         self.layout.setStretch(3, 1)  # Feedback Label
-        self.layout.setStretch(4, 20) # Feedback Display
+        self.layout.setStretch(4, 20)  # Feedback Display
 
         self.setLayout(self.layout)
 
@@ -326,7 +326,9 @@ class AutonomyGUI(Node, QWidget):
         self.goal_handle = future.result()
         if not self.goal_handle.accepted:
             self.feedback_display.addItem(
-                self._format_feedback_text("[ERROR] [gui] Goal rejected by action server")
+                self._format_feedback_text(
+                    "[ERROR] [gui] Goal rejected by action server"
+                )
             )
         else:
             self.feedback_display.addItem(
@@ -379,12 +381,14 @@ class AutonomyGUI(Node, QWidget):
         response = future.result()
         if response.return_code == CancelGoal.Response.ERROR_NONE:
             self.feedback_display.addItem(
-                self._format_feedback_text("[gui] Cancel request sent successfully.")
+                self._format_feedback_text("[gui] Cancel request sent successfully")
             )
             self.goal_handle = None
         else:
             self.feedback_display.addItem(
-                self._format_feedback_text("[ERROR] [gui] Failed to send cancel request")
+                self._format_feedback_text(
+                    "[ERROR] [gui] Failed to send cancel request"
+                )
             )
         self.feedback_display.scrollToBottom()
         self._update_button_states()
