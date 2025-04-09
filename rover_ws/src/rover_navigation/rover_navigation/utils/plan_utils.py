@@ -60,8 +60,8 @@ def basicOrderPlanner(legs, fix):
     """
     Brute force the optimal order to complete the task legs (based on distance)
 
-    This is an NP-hard problem, but (from extensive testing) we deal with such small numbers of legs that
-    we can brute force an basic optimal solution in a reasonable time.
+    This is an NP-hard problem, but we deal with such small numbers of legs and such a simple cost function
+    that we can brute force an basic optimal solution in a reasonable time.
 
     :author: Nelson Durrant
     :date: Mar 2025
