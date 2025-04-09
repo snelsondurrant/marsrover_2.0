@@ -17,9 +17,3 @@ windows:
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup base_autonomy.launch.py use_mapviz:=True
             enter: false
-      - shell_command:
-          - clear
-          - source ~/rover_ws/install/setup.bash
-          - cd ~/scripts/autonomy
-          - cmd: bash task_exec.sh
-            enter: false
