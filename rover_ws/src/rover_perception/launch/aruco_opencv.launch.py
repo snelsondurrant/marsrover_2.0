@@ -25,18 +25,11 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     {
-                        "cam_base_topic": "aruco_cam/image_raw",
+                        "cam_base_topic": "zed/zed_node/rgb_gray/image_rect_gray",
                         "image_is_rectified": True,
                         "marker_size": 0.2,
                         "use_sim_time": use_sim_time,
                     }
-                ],
-                remappings=[
-                    ("/aruco_cam/image_raw", "/zed/zed_node/rgb_gray/image_rect_gray"),
-                    (
-                        "/aruco_cam/camera_info",
-                        "/zed/zed_node/rgb/camera_info",
-                    ),
                 ],
                 condition=UnlessCondition(use_sim_time),
             ),
@@ -50,17 +43,10 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     {
-                        "cam_base_topic": "aruco_cam/image_raw",
+                        "cam_base_topic": "intel_realsense_r200_depth/image_raw",
                         "marker_size": 0.2,
                         "use_sim_time": use_sim_time,
                     }
-                ],
-                remappings=[
-                    ("/aruco_cam/image_raw", "/intel_realsense_r200_depth/image_raw"),
-                    (
-                        "/aruco_cam/camera_info",
-                        "/intel_realsense_r200_depth/camera_info",
-                    ),
                 ],
                 condition=IfCondition(use_sim_time),
             ),
