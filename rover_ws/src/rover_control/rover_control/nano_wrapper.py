@@ -1,5 +1,6 @@
 # Modified to listen to the nav_state Int8 message - Nelson Durrant, Mar 2025
 # I think this could be simplified, we don't use the battery topic at all
+# TODO: Update this with Alyssa's code
 
 # Also, for reference:
 # int8 AUTONOMOUS_STATE = 0
