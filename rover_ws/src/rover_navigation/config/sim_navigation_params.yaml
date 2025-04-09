@@ -131,8 +131,8 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 1.0 # Changed this, we don't have to stop so close to a goal - Nelson Durrant, Mar 2025
+      yaw_goal_tolerance: 3.14 # Changed this, we don't have to meet a yaw criteria - Nelson Durrant, Mar 2025
     # DWB parameters
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
