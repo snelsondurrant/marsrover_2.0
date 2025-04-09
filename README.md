@@ -56,11 +56,7 @@
 
 **Autonomy:**
 
-[Nav2 Concepts](https://docs.nav2.org/concepts/index.html)
-
 [Nav2 Tutorials (Gazebo Classic)](https://docs.nav2.org/setup_guides/index.html)*
-
-[Robot Localization Concepts](https://vimeo.com/142624091)
 
 [GPS Navigation w Nav2 Tutorial](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
