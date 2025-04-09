@@ -1,0 +1,7 @@
+# Created by Nelson Durrant, Apr 2025
+# https://github.com/stereolabs/zed-ros2-wrapper?tab=readme-ov-file#custom-object-detection-with-yolo-like-onnx-model-file
+
+# Classes
+names:
+  0: mallet
+  1: bottle

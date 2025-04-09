@@ -178,9 +178,6 @@ class StateMachine(Node):
             (-13.5, 7.79),
         ]
 
-        # Object detection dict
-        self.obj_to_label = {"mallet": "Class ID: 0", "bottle": "Class ID: 1"}
-
         # UTM zone and hemisphere (will set on first gps fix)
         self.zone = None
         self.hemisphere = None
@@ -735,7 +732,7 @@ class StateMachine(Node):
         if self.leg.type == "obj":
             for obj in msg.objects:
                 # Are we looking for this object right now?
-                if obj.label == self.obj_to_label[self.leg.object]:
+                if obj.label == self.leg.object:
 
                     self.get_logger().info(f"Found object {obj.label}")
 

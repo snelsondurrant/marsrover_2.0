@@ -147,7 +147,8 @@
             custom_onnx_file: '/home/marsrover-zed/zed_ws/models/best.onnx' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the YOLO-like ONNX file for custom object detection directly performed by the ZED SDK.
             # Changed the below to match our custom YOLO model - Nelson Durrant, Mar 2025
             custom_onnx_input_size: 1024 # Resolution used with the YOLO-like ONNX file. For example, 512 means a input tensor '1x3x512x512'
-            custom_label_yaml: '' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the COCO-like YAML file storing the custom class labels.
+            # Changed the below to a path to our yaml file - Nelson Durrant, Mar 2025
+            custom_label_yaml: '/home/marsrover-zed/zed_ws/models/custom_labels.yaml' # Only used if 'model' is 'CUSTOM_YOLOLIKE_BOX_OBJECTS'. Path to the COCO-like YAML file storing the custom class labels.
             allow_reduced_precision_inference: true # Allow inference to run at a lower precision to improve runtime and memory usage
             max_range: 20.0 # [m] Defines a upper depth range for detections
             confidence_threshold: 75.0 # [DYNAMIC] - Minimum value of the detection confidence of an object [0,99]
