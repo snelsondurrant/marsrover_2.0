@@ -38,31 +38,31 @@
 
 **General:**
 
-Linux CLI Tutorial - [https://linuxjourney.com/lesson/the-shell](https://linuxjourney.com/lesson/the-shell)
+[Linux CLI Tutorial](https://linuxjourney.com/lesson/the-shell)
 
-GitHub Basics Tutorial - [https://docs.github.com/en/get-started/start-your-journey/hello-world](https://docs.github.com/en/get-started/start-your-journey/hello-world)
+[GitHub Basics Tutorial](https://docs.github.com/en/get-started/start-your-journey/hello-world)
 
-Docker Concepts and Tutorials - [https://docs.docker.com/get-started/introduction/whats-next/](https://docs.docker.com/get-started/introduction/whats-next/)
+[Docker Concepts and Tutorials](https://docs.docker.com/get-started/introduction/whats-next/)
 
-ROS2 Concepts - [https://docs.ros.org/en/humble/Concepts/Basic.html](https://docs.ros.org/en/humble/Concepts/Basic.html)
+[ROS2 Concepts](https://docs.ros.org/en/humble/Concepts/Basic.html)
 
-ROS2 CLI Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)
+[ROS2 CLI Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)*
 
-ROS2 Code Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
+[ROS2 Code Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)*
 
-ROS2 Discovery Server Tutorial* - [https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)
+[ROS2 Discovery Server Tutorial](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)*
+
+[Robotics in ROS2 Tutorial](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
 **Autonomy:**
 
-Robotics in ROS2 Tutorial - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+[Nav2 Concepts](https://docs.nav2.org/concepts/index.html)
 
-Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.org/concepts/index.html)
+[Nav2 Tutorials (Gazebo Classic)](https://docs.nav2.org/setup_guides/index.html)*
 
-Nav2 Tutorials (Gazebo Classic)* - [https://docs.nav2.org/setup_guides/index.html](https://docs.nav2.org/setup_guides/index.html)
+[Robot Localization Concepts](https://vimeo.com/142624091)
 
-Robot Localization Concepts - [https://vimeo.com/142624091](https://vimeo.com/142624091)
-
-GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
+[GPS Navigation w Nav2 Tutorial](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS2 tutorial workspace.*
 
@@ -70,9 +70,7 @@ GPS Navigation w Nav2 Tutorial - [https://docs.nav2.org/tutorials/docs/navigatio
 
 ### How-To Videos
 
-Running the Simulation
-
-TODO: Add this
+[Running the Simulation](https://www.youtube.com/watch?v=uB8YDXrGd-g)
 
 --
 
