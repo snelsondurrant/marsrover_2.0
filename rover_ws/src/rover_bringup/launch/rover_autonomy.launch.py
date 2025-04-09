@@ -34,6 +34,7 @@ def generate_launch_description():
     # Get the package directories
     bringup_dir = get_package_share_directory("nav2_bringup")
     nav_dir = get_package_share_directory("rover_navigation")
+    gui_dir = get_package_share_directory("rover_gui")
     loc_dir = get_package_share_directory("rover_localization")
     perception_dir = get_package_share_directory("rover_perception")
     gz_dir = get_package_share_directory("rover_gazebo")
@@ -44,6 +45,7 @@ def generate_launch_description():
     # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, "launch")
     loc_launch_dir = os.path.join(loc_dir, "launch")
+    gui_launch_dir = os.path.join(gui_dir, "launch")
     perception_launch_dir = os.path.join(perception_dir, "launch")
     gz_launch_dir = os.path.join(gz_dir, "launch")
     description_launch_dir = os.path.join(description_dir, "launch")
@@ -113,7 +115,7 @@ def generate_launch_description():
     )
 
     rviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "rviz.launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "rviz.launch.py")),
         condition=IfCondition(use_rviz),
         launch_arguments={
             "use_sim_time": sim_mode,
@@ -121,8 +123,18 @@ def generate_launch_description():
     )
 
     mapviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "mapviz.launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "mapviz.launch.py")),
         condition=IfCondition(use_mapviz),
+        launch_arguments={
+            "use_sim_time": sim_mode,
+        }.items(),
+    )
+
+    gui_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(gui_launch_dir, "autonomy_gui.launch.py")
+        ),
+        condition=IfCondition(sim_mode),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
@@ -180,6 +192,7 @@ def generate_launch_description():
     ld.add_action(rviz_cmd)
     ld.add_action(declare_use_mapviz_cmd)
     ld.add_action(mapviz_cmd)
+    ld.add_action(gui_cmd)
 
     # custom launch
     ld.add_action(aruco_opencv_cmd)

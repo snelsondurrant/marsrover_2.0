@@ -8,7 +8,7 @@ class SyncOrigin(Node):
     """
     Syncs the origin of mapviz with the origin of navsat_transform on the first GPS fix
 
-    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
+    :author: Nelson Durrant
     :date: Apr 2025
 
     Subscribers:

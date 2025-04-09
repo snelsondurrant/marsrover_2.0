@@ -10,7 +10,6 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 bringup_dir = get_package_share_directory("nav2_bringup")
-nav_dir = get_package_share_directory("rover_navigation")
 
 use_sim_time = LaunchConfiguration("use_sim_time")
 declare_use_sim_time_cmd = DeclareLaunchArgument(

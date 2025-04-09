@@ -46,15 +46,17 @@ class AddWaypointDialog(QDialog):
         self.type_combo.addItems(["gps", "aruco", "obj"])
         self.latitude_edit = QLineEdit("0.0")
         self.longitude_edit = QLineEdit("0.0")
-        self.tag_id_edit = QLineEdit()
-        self.object_edit = QLineEdit()
+        self.tag_id_combo = QComboBox()
+        self.tag_id_combo.addItems(["1", "2", "3"])
+        self.object_combo = QComboBox()
+        self.object_combo.addItems(["mallet", "bottle"])
 
         self.layout.addRow("Name:", self.name_edit)
         self.layout.addRow("Type:", self.type_combo)
         self.layout.addRow("Latitude:", self.latitude_edit)
         self.layout.addRow("Longitude:", self.longitude_edit)
-        self.layout.addRow("Tag ID (for aruco):", self.tag_id_edit)
-        self.layout.addRow("Object Name (for obj):", self.object_edit)
+        self.layout.addRow("Tag ID:", self.tag_id_combo)
+        self.layout.addRow("Object Name:", self.object_combo)
 
         self.type_combo.currentIndexChanged.connect(self.update_fields_visibility)
         self.update_fields_visibility()
@@ -68,8 +70,8 @@ class AddWaypointDialog(QDialog):
 
     def update_fields_visibility(self):
         waypoint_type = self.type_combo.currentText()
-        self.tag_id_edit.setVisible(waypoint_type == "aruco")
-        self.object_edit.setVisible(waypoint_type == "obj")
+        self.tag_id_combo.setVisible(waypoint_type == "aruco")
+        self.object_combo.setVisible(waypoint_type == "obj")
 
     def get_waypoint_data(self):
         waypoint = {}
@@ -84,13 +86,10 @@ class AddWaypointDialog(QDialog):
             )
             return None
         if waypoint["type"] == "aruco":
-            try:
-                waypoint["tag_id"] = int(self.tag_id_edit.text())
-            except ValueError:
-                QMessageBox.critical(self, "Error", "Tag ID must be an integer.")
-                return None
+            tag_id_text = self.tag_id_combo.currentText()
+            waypoint["tag_id"] = int(tag_id_text)
         elif waypoint["type"] == "obj":
-            waypoint["object"] = self.object_edit.text()
+            waypoint["object"] = self.object_combo.currentText()
         return waypoint
 
 
@@ -111,20 +110,20 @@ class AutonomyGUI(Node, QWidget):
 {
     "legs": [
         {
-            "name": "sim_gps1",
+            "name": "gps1_sim",
             "type": "gps",
             "latitude": 38.162923,
             "longitude": -122.454987
         },
         {
-            "name": "sim_aruco1",
+            "name": "aruco1_sim",
             "type": "aruco",
             "latitude": 38.162958,
             "longitude": -122.455412,
             "tag_id": 1
         },
         {
-            "name": "sim_mallet",
+            "name": "mallet_sim",
             "type": "obj",
             "latitude": 38.162635,
             "longitude": -122.454902,
@@ -138,7 +137,7 @@ class AutonomyGUI(Node, QWidget):
         Node.__init__(self, "autonomy_gui")
         QWidget.__init__(self)
 
-        self.resize(1200, 800)
+        self.resize(800, 800)
 
         self.callback_group = ReentrantCallbackGroup()
         self._action_client = ActionClient(
@@ -237,7 +236,7 @@ class AutonomyGUI(Node, QWidget):
         elif "[WARN]" in text:
             item.setForeground(QColor("orange"))
         self.feedback_display.addItem(item)
-        self.feedback_display.scrollToBottom() 
+        self.feedback_display.scrollToBottom()
 
     def closeEvent(self, event):
         self.close_flag = True
@@ -282,7 +281,7 @@ class AutonomyGUI(Node, QWidget):
         self.waypoint_list.clear()
         for waypoint in self.waypoints:
             self.waypoint_list.addItem(str(waypoint))
-            self.feedback_display.scrollToBottom() 
+            self.feedback_display.scrollToBottom()
 
     def start_task(self):
         self.get_logger().info("Starting task...")
@@ -337,21 +336,21 @@ class AutonomyGUI(Node, QWidget):
                 self.feedback_display.addItem(" - " + str(wp))
             get_result_future = self.goal_handle.get_result_async()
             get_result_future.add_done_callback(self.get_result_callback)
-            self.feedback_display.scrollToBottom() 
+            self.feedback_display.scrollToBottom()
         self._update_button_states()
 
     def goal_feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
         formatted_text = self._format_feedback_text(f"{feedback.status}")
         self.feedback_display.addItem(formatted_text)
-        self.feedback_display.scrollToBottom() 
+        self.feedback_display.scrollToBottom()
         self._update_button_states()
 
     def get_result_callback(self, future):
         result = future.result()
         formatted_text = self._format_feedback_text(f"[gui] {result.result.msg}")
         self.feedback_display.addItem(formatted_text)
-        self.feedback_display.scrollToBottom() 
+        self.feedback_display.scrollToBottom()
         self.goal_handle = None
         self._update_button_states()
 
@@ -387,7 +386,7 @@ class AutonomyGUI(Node, QWidget):
             self.feedback_display.addItem(
                 self._format_feedback_text("[ERROR] [gui] Failed to send cancel request")
             )
-        self.feedback_display.scrollToBottom() 
+        self.feedback_display.scrollToBottom()
         self._update_button_states()
 
 

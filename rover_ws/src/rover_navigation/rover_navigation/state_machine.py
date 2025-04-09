@@ -652,7 +652,7 @@ class StateMachine(Node):
                 asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
             self.leg = None
 
-            result.msg = "It's alien sabotage, I'm telling you"
+            result.msg = "It was alien sabotage, I'm telling you"
             self.task_goal_handle.abort()
 
         # Trigger the teleop state

@@ -9,8 +9,8 @@ from launch.actions import DeclareLaunchArgument
 import os
 from ament_index_python.packages import get_package_share_directory
 
-nav_dir = get_package_share_directory("rover_navigation")
-mapviz_config_file = os.path.join(nav_dir, "config", "mapviz_params.mvc")
+gui_dir = get_package_share_directory("rover_gui")
+mapviz_config_file = os.path.join(gui_dir, "config", "mapviz_params.mvc")
 
 use_sim_time = LaunchConfiguration("use_sim_time")
 declare_use_sim_time_cmd = DeclareLaunchArgument(
