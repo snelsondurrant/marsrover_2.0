@@ -50,13 +50,11 @@ ROS2 CLI Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Too
 
 ROS2 Code Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
 
-ROS2 Tf2 Tutorials* - [https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html](https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html)
-
 ROS2 Discovery Server Tutorial* - [https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)
 
-Robotics in ROS2 Tutorial - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
-
 **Autonomy:**
+
+Robotics in ROS2 Tutorial - [https://github.com/henki-robotics/robotics_essentials_ros2/tree/main](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
 Nav2 Concepts - [https://docs.nav2.org/concepts/index.html](https://docs.nav2.org/concepts/index.html)
 
