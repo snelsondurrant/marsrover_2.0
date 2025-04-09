@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Mar 2025
 #
-# Calibrate the ZED magnetometer on the rover
+# Calibrate the ZED camera magnetometer on the rover
 # TODO: Test this
 
 function printInfo {
