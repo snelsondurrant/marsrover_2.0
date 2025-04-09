@@ -1,9 +1,10 @@
 # Created by Nelson Durrant, Mar 2025
+# https://tmuxp.git-pull.com/configuration/examples.html
 session_name: rover_dev
 start_directory: "~" # inside the container
 windows:
   - window_name: main
-    layout: 
+    layout: even-horizontal
     options:
       default-terminal: screen-256color
       mouse: "on"

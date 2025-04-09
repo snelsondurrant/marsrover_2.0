@@ -2,6 +2,7 @@
 # Created by Braden Meyers, Mar 2025
 # 
 # Sets up the base environment with the ROS_DISCOVERY_SERVER environment variable
+# https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
 
 function printError {
   	# print red
@@ -10,7 +11,7 @@ function printError {
 
 # Check if this script was run using 'source'
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-    printError "Please source this script ('source enable_cli.sh')"
+    printError "Please source this script ('source disc_base.sh')"
     exit 1
 fi
 

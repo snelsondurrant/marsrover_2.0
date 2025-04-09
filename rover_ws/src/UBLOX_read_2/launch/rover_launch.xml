@@ -2,6 +2,7 @@
 <launch>
     <!-- be sure to check the rover serial port, it is often not ACM0-->
     <arg name="rover_serial_port"   default="/dev/rover/rtk"/>
+    <!-- https://github.com/byu-magicc/UBLOX_read_2?tab=readme-ov-file#basic-setup -->
 
     <arg name="base_host"           default="192.168.1.111"/>
     <arg name="base_port"           default="16140"/>

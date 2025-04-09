@@ -21,12 +21,9 @@ function printError {
 ROVER_IP_ADDRESS=192.168.1.120
 ROVER_USERNAME=marsrover
 
-# Check for a "-a <ip_address>" or "-u <username>" argument
-while getopts ":a:u:" opt; do
+# Check for a "-u <username>" argument
+while getopts ":u:" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;
@@ -39,17 +36,17 @@ if [ $? -ne 0 ]; then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
+    echo "  - Run 'bash setup_ssh.sh' to set up SSH keys"
 
     exit 1
 fi
 
 # Set up the upstream git remote for the rover
-ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover && \
-    git remote add base marsrover@192.168.1.111:marsrover"
+ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && \
+    git remote add base marsrover@192.168.1.111:marsrover_2.0"
 
 # Check if the remote was added successfully
-if ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover && git remote -v" | grep -q "base"; then
+if ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git remote -v" | grep -q "base"; then
     echo "Successfully added the new upstream."
 else
     printError "Failed to add the new upstream."

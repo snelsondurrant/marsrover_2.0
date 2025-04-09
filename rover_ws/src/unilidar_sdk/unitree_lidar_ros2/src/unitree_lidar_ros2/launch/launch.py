@@ -12,7 +12,7 @@ def generate_launch_description():
     name='unitree_lidar_ros2_node',
     output='screen',
     parameters= [
-              {'port': '/dev/rover/lidar'},
+              {'port': '/dev/rover/lidar'}, # Changed this to match the udev rule - Nelson Durrant, Mar 2025
               {'rotate_yaw_bias': 0.0},
               {'range_scale': 0.001},
               {'range_bias': 0.0},

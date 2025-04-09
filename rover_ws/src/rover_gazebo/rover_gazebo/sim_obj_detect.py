@@ -79,7 +79,9 @@ class SimObjDetect(Node):
             self.bottle_request.reference_frame = "base_link"
 
         # Publisher for the ZED detections
-        self.zed_pub = self.create_publisher(ObjectsStamped, "zed/zed_node/obj_det/objects", 10)
+        self.zed_pub = self.create_publisher(
+            ObjectsStamped, "zed/zed_node/obj_det/objects", 10
+        )
 
         # Service to enable/disable object detection
         self.enable_service = self.create_service(
@@ -93,7 +95,7 @@ class SimObjDetect(Node):
         return response
 
     def timer_callback(self):
-    
+
         if self.enable_flag:
 
             if self.enable_mallet:
@@ -119,7 +121,7 @@ class SimObjDetect(Node):
 
                 # Check to see if the mallet is in view
                 if (
-                    mallet_gz_pos.state.pose.position.x < 3.5
+                    mallet_gz_pos.state.pose.position.x < 5.0  # up to 5m away
                     and mallet_gz_pos.state.pose.position.x > 0
                     and abs(mallet_gz_pos.state.pose.position.y)
                     < mallet_gz_pos.state.pose.position.x  # cone of vision
@@ -127,7 +129,7 @@ class SimObjDetect(Node):
 
                     # Create a mallet object and add it to the message
                     mallet_obj = Object()
-                    mallet_obj.label = 'Class ID: 0'
+                    mallet_obj.label = "mallet"
                     mallet_obj.label_id = 1  # from testing
                     mallet_obj.confidence = 99.0
                     mallet_obj.position = [
@@ -141,7 +143,7 @@ class SimObjDetect(Node):
 
                 # Check to see if the bottle is in view
                 if (
-                    bottle_gz_pos.state.pose.position.x < 3.5
+                    bottle_gz_pos.state.pose.position.x < 5.0  # up to 5m away
                     and bottle_gz_pos.state.pose.position.x > 0
                     and abs(bottle_gz_pos.state.pose.position.y)
                     < bottle_gz_pos.state.pose.position.x  # cone of vision
@@ -149,7 +151,7 @@ class SimObjDetect(Node):
 
                     # Create a bottle object and add it to the message
                     bottle_obj = Object()
-                    bottle_obj.label = 'Class ID: 1'
+                    bottle_obj.label = "bottle"
                     bottle_obj.label_id = 5  # from testing
                     bottle_obj.confidence = 99.0
                     bottle_obj.position = [

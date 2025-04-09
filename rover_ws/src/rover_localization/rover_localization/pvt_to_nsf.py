@@ -25,8 +25,8 @@ class PVT2NSF(Node):
 
     def pvt_callback(self, msg):
 
-        h_var = msg.h_acc**2  # horizontal covariance
-        v_var = msg.v_acc**2  # vertical covariance
+        h_var = (msg.h_acc)**2
+        v_var = (msg.v_acc)**2
 
         # Create covariance matrix
         pos_covariance = [
@@ -44,9 +44,6 @@ class PVT2NSF(Node):
             position_covariance=pos_covariance,
             position_covariance_type=NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN,
         )
-        #TODO: Double check the incoming timestamps from GPS
-        # they could be throwing us off
-        nsf_msg.header.stamp = self.get_clock().now().to_msg()
         nsf_msg.header.frame_id = 'gps_link'  # set frame id (urdf)
         self.nsf_pub.publish(nsf_msg)
 

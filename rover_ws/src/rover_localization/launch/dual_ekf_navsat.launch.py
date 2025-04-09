@@ -1,4 +1,4 @@
-# Modified from the GPS demo - Nelson Durrant, Feb 2025
+# Create by Nelson Durrant, Feb 2025
 from launch import LaunchDescription
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription
@@ -19,9 +19,9 @@ def generate_launch_description():
 
     loc_dir = get_package_share_directory("rover_localization")
     sim_rl_params_file = os.path.join(
-        loc_dir, "config", "sim_dual_ekf_navsat_params.yaml"
+        loc_dir, "config", "sim_localization_params.yaml"
     )
-    rl_params_file = os.path.join(loc_dir, "config", "dual_ekf_navsat_params.yaml")
+    rl_params_file = os.path.join(loc_dir, "config", "localization_params.yaml")
 
     return LaunchDescription(
         [
@@ -33,15 +33,7 @@ def generate_launch_description():
                 "output_location", default_value="~/dual_ekf_navsat_example_debug.txt"
             ),
             launch_ros.actions.Node(
-                package="robot_localization",
-                executable="ekf_node",
-                name="ekf_filter_node_odom",
-                output="screen",
-                parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
-                remappings=[("odometry/filtered", "odometry/local")],
-                condition=UnlessCondition(use_sim_time),
-            ),
-            launch_ros.actions.Node(
+                # This only launches in simulation
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_odom",
@@ -50,7 +42,9 @@ def generate_launch_description():
                 remappings=[("odometry/filtered", "odometry/local")],
                 condition=IfCondition(use_sim_time),
             ),
+            # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_map",
@@ -60,6 +54,7 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_map",
@@ -68,14 +63,16 @@ def generate_launch_description():
                 remappings=[("odometry/filtered", "odometry/global")],
                 condition=IfCondition(use_sim_time),
             ),
+            # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="robot_localization",
                 executable="navsat_transform_node",
                 name="navsat_transform",
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[
-                    ("imu/data", "imu/data"),
+                    ("imu/data", "imu/data"), # from the imu_filter_madgwick
                     ("gps/fix", "gps/fix"),
                     ("gps/filtered", "gps/filtered"),
                     ("odometry/gps", "odometry/gps"),
@@ -84,6 +81,7 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
+                # This only launches in simulation
                 package="robot_localization",
                 executable="navsat_transform_node",
                 name="navsat_transform",
@@ -98,22 +96,23 @@ def generate_launch_description():
                 ],
                 condition=IfCondition(use_sim_time),
             ),
-            # Added PVT to NSF conversion node
             launch_ros.actions.Node(
+                # This only launches in real life
                 package="rover_localization",
                 executable="pvt_to_nsf",
                 output="screen",
                 condition=UnlessCondition(use_sim_time),
+                parameters=[rl_params_file],
             ),
-            # Added GEO to NSF conversion node
             launch_ros.actions.Node(
                 package="rover_localization",
-                executable="geo_to_nsf",
+                executable="sync_origin",
                 output="screen",
-                condition=UnlessCondition(use_sim_time),
+                parameters=[rl_params_file],
             ),
-            # Added IMU and magnetometer filter node
+            # https://github.com/CCNYRoboticsLab/imu_tools/tree/humble?tab=readme-ov-file
             launch_ros.actions.Node(
+                # This only launches in real life
                 package='imu_filter_madgwick',
                 executable='imu_filter_madgwick_node',
                 name='imu_filter_madgwick',

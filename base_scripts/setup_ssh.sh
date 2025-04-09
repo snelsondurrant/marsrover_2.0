@@ -18,64 +18,54 @@ function printError {
   	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
 }
 
-# Check if the required tools are installed
-if ! command -v sshpass &> /dev/null; then
-    printError "sshpass is not installed. Please install it to proceed."
-    exit 1
-fi
-if ! command -v mosh &> /dev/null; then
-    printError "mosh is not installed. Please install it to proceed."
-    exit 1
-fi
-
 ROVER_IP_ADDRESS=192.168.1.120
 ROVER_USERNAME=marsrover
 ROVER_PASSWORD=thekillpack
 
-# Check for a "-a <ip_address>", "-u <username>", or "-p <password>" argument
-while getopts ":a:u:p:" opt; do
+# Check for a "-u <username>" argument
+while getopts ":u:p:" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;
     p)
-      ROVER_PASSWORD=$OPTARG
+      ROVER_PWD=$OPTARG
       ;;
   esac
 done
 
-# 1. Generate SSH key pair (if it doesn't exist)
-if [ ! -f ~/.ssh/id_rsa ]; then
-  printInfo "Generating SSH key pair..."
-  ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
-  if [ $? -ne 0 ]; then
-    printError "Error generating SSH key pair."
-    exit 1
-  fi
+# Function to remove an old SSH key from known_hosts
+# This prevents SSH errors if the host's key has changed.
+remove_old_ssh_key() {
+    local host=$1
+    local port=$2
+
+    if [[ "$port" == "22" ]]; then
+        # Remove without specifying port notation for default SSH port
+        ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$host" &> /dev/null
+    else
+        # Remove using port notation for non-default ports
+        ssh-keygen -f "$HOME/.ssh/known_hosts" -R "[$host]:$port" &> /dev/null
+    fi
+
+    printWarning "Removed old SSH key for $host on port $port"
+}
+
+# Check if ssh pass is installed
+if ! command -v sshpass &> /dev/null; then
+    printWarning "Please install 'sshpass' using (sudo apt install sshpass)"
+    ROVER_CONNECT="ssh"
 else
-  printWarning "SSH key pair already exists."
+    ROVER_CONNECT="sshpass -p $ROVER_PWD ssh"
 fi
 
-# 2. Copy the public key to the rover
-printInfo "Copying public key to rover..."
-sshpass -p "$ROVER_PASSWORD" ssh-copy-id -i ~/.ssh/id_rsa.pub "$ROVER_USERNAME@$ROVER_IP_ADDRESS"
-if [ $? -ne 0 ]; then
-  printError "Error copying public key to rover."
-  exit 1
-fi
+# Remove old SSH key (if it exists) to prevent key mismatch issues
+remove_old_ssh_key "$ROVER_IP_ADDRESS" "22"
 
-# 3. Test SSH connection without password
-printInfo "Testing SSH connection without password..."
-ssh "$ROVER_USERNAME@$ROVER_IP_ADDRESS" "echo 'SSH connection successful!'"
+# Test the SSH connection to accept the new key if prompted
+$ROVER_CONNECT -o StrictHostKeyChecking=accept-new $ROVER_USERNAME@$ROVER_IP_ADDRESS "echo" &> /dev/null
 
-if [ $? -ne 0 ]; then
-  printError "SSH connection failed."
-  exit 1
-else
-  echo "SSH connection successful."
-fi
+# Copy the SSH key to the rover (physical machine)
+ssh-copy-id marsrover@$ROVER_IP_ADDRESS
 
-printInfo "SSH key setup complete."
+printInfo "SSH key successfully set up on the rover"

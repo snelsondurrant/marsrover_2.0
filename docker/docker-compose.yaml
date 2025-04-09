@@ -1,7 +1,7 @@
 # Created by Nelson Durrant, Oct 2024
 services:
   marsrover:
-    image: byuawesomerover/marsrover:latest
+    image: byuawesomerover/marsrover_2.0:latest
     container_name: marsrover-ct
     build: .
     user: marsrover-docker
@@ -11,12 +11,12 @@ services:
       - DISPLAY=$DISPLAY # Required for GUI applications
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
-      - ../rover_ws:/home/marsrover-docker/rover_ws
-      - ../firmware:/home/marsrover-docker/firmware
-      - ../scripts:/home/marsrover-docker/scripts
-      - ../tutorial_ws:/home/marsrover-docker/tutorial_ws
-      - ../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp
-      - ./startup:/startup
+      - ../rover_ws:/home/marsrover-docker/rover_ws # Rover ROS 2 workspace
+      - ../firmware:/home/marsrover-docker/firmware # PIO microcontroller projects
+      - ../scripts:/home/marsrover-docker/scripts # Helpful scripts
+      - ../tutorial_ws:/home/marsrover-docker/tutorial_ws # Tutorial ROS 2 workspace
+      - ../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp # Temporary tmuxp config files
+      - ./startup:/startup # Startup scripts
       - /dev:/dev:rw
       - /etc/udev:/etc/udev:rw
       - /dev/shm:/dev/shm # Required for inter-container communication

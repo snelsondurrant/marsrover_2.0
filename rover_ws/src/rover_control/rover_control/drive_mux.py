@@ -22,7 +22,7 @@ class DriveMux(Node):
     - cmd_vel_nav (geometry_msgs/Twist)
     - cmd_vel_teleop (geometry_msgs/Twist)
     Publishers:
-    - cmd_vel_switch (geometry_msgs/Twist)
+    - cmd_vel_mux (geometry_msgs/Twist)
     - cmd_led (std_msgs/Int8)
     Services:
     - trigger_teleop (std_srvs/Trigger)
@@ -60,8 +60,8 @@ class DriveMux(Node):
             Trigger, "trigger_arrival", self.arrival_service_callback
         )
 
-        # Publisher for cmd_vel_switch
-        self.cmd_vel_switch_pub = self.create_publisher(Twist, "cmd_vel_switch", 10)
+        # Publisher for cmd_vel_mux
+        self.cmd_vel_mux_pub = self.create_publisher(Twist, "cmd_vel_mux", 10)
 
         # Publisher for cmd_led
         self.cmd_led_pub = self.create_publisher(Int8, "cmd_led", 10)
@@ -79,7 +79,7 @@ class DriveMux(Node):
         """
 
         if self.state == "auto":
-            self.cmd_vel_switch_pub.publish(msg)
+            self.cmd_vel_mux_pub.publish(msg)
         else:
             self.get_logger().warn("Received cmd_vel_nav while not in auto state")
 
@@ -89,7 +89,7 @@ class DriveMux(Node):
         """
 
         if self.state == "teleop":
-            self.cmd_vel_switch_pub.publish(msg)
+            self.cmd_vel_mux_pub.publish(msg)
         else:
             self.get_logger().warn("Received cmd_vel_teleop while not in teleop state")
 

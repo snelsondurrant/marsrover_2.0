@@ -16,7 +16,7 @@ setup(
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*')),
         (os.path.join('share', package_name, 'models/turtlebot_waffle_gps'),
             glob('models/turtlebot_waffle_gps/*')),
-        # Add new models like this so they show up in Gazebo
+        # IMPORTANT! Add new custom models here so they show up in Gazebo sensors
         (os.path.join('share', package_name, 'models/urc_aruco_0'),
             glob('models/urc_aruco_0/model*')),
         (os.path.join('share', package_name, 'models/urc_aruco_0/meshes'),

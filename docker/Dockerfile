@@ -15,7 +15,7 @@ ARG TARGETARCH
 
 # Define a username and password for the new user
 ARG NAME=marsrover-docker
-ARG PASS=marsrover
+ARG PASS=thekillpack
 
 # Update and upgrade
 RUN apt update && apt upgrade -y
@@ -72,14 +72,14 @@ RUN ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggd
 USER $NAME
 
 # Dry run PlatformIO to install the necessary dependencies
-RUN git clone https://github.com/BYUMarsRover/marsrover.git
+RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git
 # '|| true' is used to ignore errors on a pio command failure
-WORKDIR /home/$NAME/marsrover/firmware/mega_pio
+WORKDIR /home/$NAME/marsrover_2.0/firmware/mega_pio
 RUN pio run -t upload || true
-WORKDIR /home/$NAME/marsrover/firmware/nano_pio
+WORKDIR /home/$NAME/marsrover_2.0/firmware/nano_pio
 RUN pio run -t upload || true
 WORKDIR /home/$NAME
-RUN rm -rf /home/$NAME/marsrover
+RUN rm -rf /home/$NAME/marsrover_2.0
 
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
@@ -136,9 +136,7 @@ USER $NAME
 # Install the aruco_opencv packages - Nelson Durrant, Feb 2025
 # Used for detecting ArUco markers in the simulation and real world
 USER root
-RUN apt update && apt install -y \
-    ros-humble-aruco-opencv \
-    ros-humble-usb-cam
+RUN apt update && apt install -y ros-humble-aruco-opencv
 USER $NAME
 
 # Install mapviz packages - Nelson Durrant, Feb 2025
@@ -219,6 +217,10 @@ USER $NAME
 USER root
 RUN apt update && apt install -y ros-humble-imu-filter-madgwick
 USER $NAME
+
+# Install mapproxy tile caching script deps - Nelson Durrant, Mar 2025
+RUN pip3 install mercantile
+RUN pip3 install requests
 
 # Install tf transformations package - Braden Meyers, Mar 2025
 # Used to calibrate the ZED and lidar positions relative to the mount frame

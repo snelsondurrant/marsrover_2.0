@@ -25,19 +25,23 @@ def generate_launch_description():
     )
 
     # Get the launch directories
-    nav_dir = get_package_share_directory("rover_navigation")
-    nav_launch_dir = os.path.join(nav_dir, "launch")
+    gui_dir = get_package_share_directory("rover_gui")
+    gui_launch_dir = os.path.join(gui_dir, "launch")
     ublox_dir = get_package_share_directory("ublox_read_2")
     ublox_launch_dir = os.path.join(ublox_dir, "launch")
 
     rviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "rviz.launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "rviz.launch.py")),
         condition=IfCondition(use_rviz),
     )
 
     mapviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_dir, "mapviz.launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "mapviz.launch.py")),
         condition=IfCondition(use_mapviz),
+    )
+
+    gui_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "autonomy_gui.launch.py")),
     )
 
     gps_cmd = IncludeLaunchDescription(
@@ -45,6 +49,7 @@ def generate_launch_description():
     )
 
     joy_node_cmd = Node(
+        # https://docs.ros.org/en/humble/p/joy/
         package="joy",
         executable="joy_node",
         name="joy_node_base",
@@ -58,6 +63,7 @@ def generate_launch_description():
     ld.add_action(rviz_cmd)
     ld.add_action(declare_use_mapviz_cmd)
     ld.add_action(mapviz_cmd)
+    ld.add_action(gui_cmd)
     ld.add_action(gps_cmd)
     ld.add_action(joy_node_cmd)
 

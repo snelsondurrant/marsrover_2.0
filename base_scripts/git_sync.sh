@@ -21,12 +21,9 @@ function printError {
 ROVER_IP_ADDRESS=192.168.1.120
 ROVER_USERNAME=marsrover
 
-# Check for a "-a <ip_address>" or "-u <username>" argument
-while getopts ":a:u:" opt; do
+# Check for a "-u <username>" argument
+while getopts ":u:" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;
@@ -40,13 +37,13 @@ then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
+    echo "  - Run 'bash setup_ssh.sh' to set up SSH keys"
 
     exit 1
 fi
 
 # Check for the git upstream 'base'
-if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover && git remote -v" | grep -q "base"
+if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git remote -v" | grep -q "base"
 then
     printError "No upstream git remote 'base' found on the rover"
     echo "Please run 'bash setup_git.sh' to set up the upstream git remote"
@@ -60,10 +57,10 @@ export current_branch=$(git branch --show-current)
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'git_sync' tmux session..."
 envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml
-scp tmuxp/tmp/git_sync.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+scp tmuxp/tmp/git_sync.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
 ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
     "export PATH='$PATH:/home/$ROVER_USERNAME/.local/bin'; \
-    tmuxp load -d /home/$ROVER_USERNAME/marsrover/base_scripts/tmuxp/tmp/git_sync.yaml"
+    tmuxp load -d /home/$ROVER_USERNAME/marsrover_2.0/base_scripts/tmuxp/tmp/git_sync.yaml"
 
 # Attach to the 'git_sync' tmux session to view the output (using mosh)
 mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- tmux attach -t git_sync

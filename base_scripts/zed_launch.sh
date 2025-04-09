@@ -20,34 +20,15 @@ function printError {
 
 ROVER_IP_ADDRESS=192.168.1.120
 ROVER_USERNAME=marsrover
-launch_local=false
-export discovery_addr=$ROVER_IP_ADDRESS
 
-# Check for a "-a <ip_address>", "-u <username>", or "-l" argument
-while getopts ":a:u:l" opt; do
+# Check for a "-u <username>" argument
+while getopts ":u:" opt; do
   case $opt in
-    a)
-      ROVER_IP_ADDRESS=$OPTARG
-      ;;
     u)
       ROVER_USERNAME=$OPTARG
       ;;
-    l)
-      launch_local=true
-      export discovery_addr=localhost
-      ;;
   esac
 done
-
-# Check if the launch_local flag is set
-if [ $launch_local = true ]; then
-    printWarning "Launching on the local machine..."
-    envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
-    docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml
-    docker exec -it zed-ct tmux attach -t zed_launch
-    docker exec zed-ct tmux kill-session -t zed_launch
-    exit
-fi
 
 # Check for an SSH connection to the rover
 if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "echo" &> /dev/null
@@ -56,7 +37,7 @@ then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash setup_ssh.sh' to set up SSH access"
+    echo "  - Run 'bash setup_ssh.sh' to set up SSH keys"
 
     exit 1
 fi
@@ -64,7 +45,7 @@ fi
 # Send tmux commands to the rover over SSH
 printInfo "Setting up the 'zed_launch' tmux session..."
 envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
-scp tmuxp/tmp/zed_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover/base_scripts/tmuxp/tmp/
+scp tmuxp/tmp/zed_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
 ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
 	"docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
 

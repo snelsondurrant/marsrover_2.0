@@ -29,7 +29,7 @@ class MegaWrapper(Node):
     :date: Mar 2025
 
     Subscribers:
-    - cmd_vel_switch (geometry_msgs/Twist)
+    - cmd_vel_mux (geometry_msgs/Twist)
     - joy (sensor_msgs/Joy)
     Publishers:
     - ArduinoDebug (std_msgs/String)
@@ -41,7 +41,7 @@ class MegaWrapper(Node):
         super().__init__("mega_wrapper")
 
         # SUBSCRIBERS
-        self.create_subscription(Twist, "cmd_vel_switch", self.send_wheel, 1)
+        self.create_subscription(Twist, "cmd_vel_mux", self.send_wheel, 1)
         self.subscription = self.create_subscription(
             Joy, "joy", self.joy_callback, 10
         )  # direct elevator control
@@ -103,7 +103,7 @@ class MegaWrapper(Node):
                     f"Could not open serial port {arduino_port}: {e}"
                 )
                 failure_count += 1
-            time.sleep(0.1)  # TODO: look at this?
+            time.sleep(0.1)
         if failure_count >= 10:
             self.get_logger().warn(
                 f"Could not open serial port {arduino_port} after {failure_count} attempts."
@@ -233,8 +233,7 @@ class MegaWrapper(Node):
             right_wheels_forward = False
 
         # these need to be from 0 to 255 and ints
-        # TODO: parameterize these min and max values and mapping params
-
+        # TODO: parameterize these values
         left_wheels_speed = self.map_value(abs(left_wheels_speed), 0, 10, 0, 255)
         right_wheels_speed = self.map_value(abs(right_wheels_speed), 0, 10, 0, 255)
 

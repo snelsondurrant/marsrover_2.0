@@ -1,21 +1,19 @@
 import math
 from itertools import permutations
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose, quaternion_from_euler, latLon2Meters
-from rover_navigation.utils.plot_utils import plotOrder
+from rover_navigation.utils.gps_utils import (
+    latLonYaw2Geopose,
+    quaternion_from_euler,
+    latLon2Meters,
+)
 
 
-def basicPathPlanner(geopose1, geopose2):
+def basicPathPlanner(geopose1, geopose2, wp_dist):
     """
     Generate intermediary waypoints in a straight line between two GPS coordinates
 
     :author: Nelson Durrant
     :date: Mar 2025
     """
-
-    # Distance between intermediary waypoints (in lat/lon degrees)
-    # If the waypoints are too far apart, they won't be in the global costmap
-    # and the navigation2 stack won't be able to plan a path between them
-    STEP_SIZE = 0.0001
 
     new_wps = []
 
@@ -30,11 +28,11 @@ def basicPathPlanner(geopose1, geopose2):
     if end_lon < start_lon:
         yaw += math.pi
 
-    # Calculate the distance between the two points
-    distance = ((end_lat - start_lat) ** 2 + (end_lon - start_lon) ** 2) ** 0.5
+    # Calculate the distance between the two points in lat/lon degrees
+    distance = latLon2Meters(start_lat, start_lon, end_lat, end_lon)
 
     # Calculate the number of intermediary waypoints
-    num_waypoints = int(distance / STEP_SIZE)
+    num_waypoints = int(math.ceil(distance / wp_dist))
 
     if num_waypoints != 0:
 
@@ -58,9 +56,12 @@ def basicPathPlanner(geopose1, geopose2):
     return new_wps
 
 
-def bruteOrderPlanner(legs, waypoints, fix):
+def basicOrderPlanner(legs, fix):
     """
-    Brute force the optimal order to complete the task legs (This is an NP-hard problem)
+    Brute force the optimal order to complete the task legs (based on distance)
+
+    This is an NP-hard problem, but we deal with such small numbers of legs and such a simple cost function
+    that we can brute force an basic optimal solution in a reasonable time.
 
     :author: Nelson Durrant
     :date: Mar 2025
@@ -73,100 +74,31 @@ def bruteOrderPlanner(legs, waypoints, fix):
     for order in permutations(legs):
 
         # Calculate the cost of the current order
-        cost = costFunctionStart(fix, order[0], waypoints)
+        fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
+        leg_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
+        cost = latLon2Meters(
+            fix_geopose.position.latitude,
+            fix_geopose.position.longitude,
+            leg_geopose.position.latitude,
+            leg_geopose.position.longitude,
+        )
+
         for i in range(len(order) - 1):
-            cost += costFunction(order[i], order[i + 1], waypoints)
+
+            leg1_geopose = latLonYaw2Geopose(order[i].latitude, order[i].longitude)
+            leg2_geopose = latLonYaw2Geopose(
+                order[i + 1].latitude, order[i + 1].longitude
+            )
+            cost += latLon2Meters(
+                leg1_geopose.position.latitude,
+                leg1_geopose.position.longitude,
+                leg2_geopose.position.latitude,
+                leg2_geopose.position.longitude,
+            )
 
         # Update the best order
         if cost < lowest_cost:
             lowest_cost = cost
             best_order = order
 
-    # plotOrder(best_order, waypoints, fix)
     return best_order
-
-
-def greedyOrderPlanner(legs, waypoints, fix):
-    """
-    Determine a greedy order to complete the task legs (This is an NP-hard problem)
-
-    :author: Nelson Durrant
-    :date: Mar 2025
-    """
-
-    order = []
-    visited = []
-
-    # Get the leg closest to the current position
-    current = None
-    min_cost = float("inf")
-    for leg in legs:
-        cost = costFunctionStart(fix, leg, waypoints)
-        if cost < min_cost:
-            min_cost = cost
-            current = leg
-    visited.append(current)
-    order.append(current)
-
-    # Visit the rest of the task legs in order of closest distance
-    while len(visited) < len(legs):
-        min_cost = float("inf")
-        for leg in legs:
-            if leg not in visited:
-                cost = costFunction(current, leg, waypoints)
-                if cost < min_cost:
-                    min_cost = cost
-                    closest = leg
-        current = closest
-        visited.append(current)
-        order.append(current)
-
-    # plotOrder(order, waypoints, fix)
-    return order
-
-
-def noOrderPlanner(legs, waypoints, fix):
-    """
-    Just return the task legs in the order they were given
-
-    :author: Nelson Durrant
-    :date: Mar 2025
-    """
-
-    # plotOrder(legs, waypoints, fix)
-    return legs
-
-
-def costFunction(leg1, leg2, waypoints):
-    """
-    Calculate the cost of moving from one task leg to another
-    """
-
-    for wp in waypoints:
-        if wp["leg"] == leg1:
-            start = wp
-        elif wp["leg"] == leg2:
-            end = wp
-
-    distance = latLon2Meters(
-        start["latitude"], start["longitude"], end["latitude"], end["longitude"]
-    )
-
-    return distance
-
-
-def costFunctionStart(fix, leg1, waypoints):
-    """
-    Calculate the cost of moving from the current position to the first task leg
-    """
-
-    for wp in waypoints:
-        if wp["leg"] == leg1:
-            end = wp
-
-    distance = latLon2Meters(
-        fix.position.latitude, fix.position.longitude, end["latitude"], end["longitude"]
-    )
-
-    return distance
-

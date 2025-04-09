@@ -1,5 +1,3 @@
-Add a brief summary of the changes you made here:
-
 ...
 
 - [ ] This code builds and runs correctly in the Docker container on my own computer.

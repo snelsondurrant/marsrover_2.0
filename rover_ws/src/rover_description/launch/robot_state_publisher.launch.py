@@ -28,6 +28,7 @@ def generate_launch_description():
 
     # https://github.com/ros/urdf_launch
     start_robot_state_publisher_cmd = IncludeLaunchDescription(
+        # This only launches in real life
         PathJoinSubstitution(
             [FindPackageShare("urdf_launch"), "launch", "description.launch.py"]
         ),
@@ -43,6 +44,7 @@ def generate_launch_description():
     )
 
     sim_start_robot_state_publisher_cmd = Node(
+        # This only launches in simulation
         package="robot_state_publisher",
         executable="robot_state_publisher",
         name="robot_state_publisher",
@@ -53,14 +55,6 @@ def generate_launch_description():
         condition=IfCondition(use_sim_time),
     )
 
-    zed_lidar_calibrate_cmd = Node(
-        package="rover_description",
-        executable="zed_lidar_calibrate",
-        name="zed_lidar_calibrate",
-        output="screen",
-        condition=UnlessCondition(use_sim_time),
-    )
-
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -68,6 +62,5 @@ def generate_launch_description():
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(sim_start_robot_state_publisher_cmd)
-    ld.add_action(zed_lidar_calibrate_cmd)
 
     return ld
