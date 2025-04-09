@@ -42,5 +42,5 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Launch the ZED Sensor Viewer over SSH -X
+# Launch the ZED Sensor Viewer over SSH
 ssh -t -X $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd /usr/local/zed/tools && ./ZED_Sensor_Viewer"
