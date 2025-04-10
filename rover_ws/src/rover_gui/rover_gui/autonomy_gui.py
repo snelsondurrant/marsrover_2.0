@@ -23,9 +23,33 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 from PyQt5.QtGui import QColor
+from PyQt5.QtCore import QThread
 import sys
 import threading
 import json
+
+
+class ROS2Thread(QThread):
+    """
+    Fix for occasional threading crashes
+
+    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
+    :date: Apr 2025
+    """
+
+    def __init__(self, node):
+        super().__init__()
+        self._node = node
+        self._close_flag = False
+
+    def run(self):
+        while not self._close_flag and rclpy.ok():
+            rclpy.spin_once(self._node, timeout_sec=0.1)
+        self._node.destroy_node()
+        rclpy.shutdown()
+
+    def stop(self):
+        self._close_flag = True
 
 
 class AddWaypointDialog(QDialog):
@@ -199,9 +223,8 @@ class AutonomyGUI(Node, QWidget):
 
         self.setLayout(self.layout)
 
-        self.spin_thread = threading.Thread(target=rclpy.spin, args=(self,))
-        self.spin_thread.daemon = True
-        self.spin_thread.start()
+        self.ros2_thread = ROS2Thread(self)
+        self.ros2_thread.start()
 
         self._load_default_waypoints()
         self._update_button_states()
@@ -241,7 +264,8 @@ class AutonomyGUI(Node, QWidget):
     def closeEvent(self, event):
         self.close_flag = True
         self.stop_task()
-        self.destroy_node()
+        self.ros2_thread.stop()
+        self.ros2_thread.wait()
         event.accept()
 
     def _update_button_states(self):
