@@ -22,3 +22,7 @@ windows:
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup rover_autonomy.launch.py
             enter: false
+      - shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: ros2 launch ublox_read_2 rover_launch.xml
+            enter: false

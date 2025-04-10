@@ -197,7 +197,7 @@ def generate_launch_description():
 
     # custom launch
     ld.add_action(aruco_opencv_cmd)
-    ld.add_action(gps_cmd)
+    # ld.add_action(gps_cmd)
     # ld.add_action(lidar_cmd)
     ld.add_action(state_machine_cmd)
 

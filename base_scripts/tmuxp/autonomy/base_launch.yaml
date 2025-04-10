@@ -16,3 +16,7 @@ windows:
           - source ~/rover_ws/install/setup.bash
           - cmd: ros2 launch rover_bringup base_autonomy.launch.py use_mapviz:=True
             enter: false
+      - shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: ros2 launch ublox_read_2 base_launch.xml
+            enter: false
