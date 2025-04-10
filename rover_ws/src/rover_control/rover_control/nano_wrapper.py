@@ -1,6 +1,5 @@
 # Modified to listen to the nav_state Int8 message - Nelson Durrant, Mar 2025
-# I think this could be simplified, we don't use the battery topic at all
-# TODO: Update this with Alyssa's code
+# TODO: I think this could be simplified, we don't use the battery topic at all
 
 # Also, for reference:
 # int8 AUTONOMOUS_STATE = 0
@@ -16,7 +15,6 @@ import rclpy
 from rclpy.node import Node
 import serial
 from std_msgs.msg import Int8
-
 # from rover_msgs.msg import NavState, Battery, Gripper, RawBattery, Laser, Clicker
 import time
 import threading
@@ -32,7 +30,7 @@ class NanoWrapper(Node):
         # self.battery_pub = self.create_publisher(RawBattery, '/raw_battery_info', 10)
         
         # Subscribers
-        self.create_subscription(Int8, "nav_state", self.led_callback, 10)
+        self.create_subscription(Int8, '/nav_state', self.led_callback, 10)
         # self.create_subscription(Gripper, '/gripper', self.gripper_callback, 10)
         # self.create_subscription(Laser, '/laser_state', self.laser_callback, 10)
         # self.create_subscription(Clicker, '/click', self.click_callback, 10)
@@ -61,7 +59,7 @@ class NanoWrapper(Node):
     def led_callback(self, data):
         # Update LED based on the rover state
         data_array = f"L{data.data};"
-        q.put(data_array)
+        self.q.put(data_array)
 
     # def gripper_callback(self, data):
     #     data_array = f"G{data.gripper}:0;"
@@ -83,16 +81,16 @@ class NanoWrapper(Node):
     #     while rclpy.ok():
     #         if self.serial_port.in_waiting:
     #             data = self.serial_port.readline().strip()
-    #             # decoded_data = data.decode('utf-8', 'ignore')  # Ignore any decoding errors
-    #             # clean_data = ''.join(c for c in decoded_data if c.isdigit())
+    #             decoded_data = data.decode('utf-8', 'ignore')  # Ignore any decoding errors
+    #             clean_data = ''.join(c for c in decoded_data if c.isdigit())
 
-    #             # Convert to integer
-    #             # voltage = int(clean_data)
-    #             # voltage = int(data)
+    #             Convert to integer
+    #             voltage = int(clean_data)
+    #             voltage = int(data)
 
-    #             # bat_voltage_msg = RawBattery()
-    #             # bat_voltage_msg.voltage = voltage
-    #             # self.battery_pub.publish(bat_voltage_msg)
+    #             bat_voltage_msg = RawBattery()
+    #             bat_voltage_msg.voltage = voltage
+    #             self.battery_pub.publish(bat_voltage_msg)
     #             self.serial_port.flush()
     #         time.sleep(0.1)
 
