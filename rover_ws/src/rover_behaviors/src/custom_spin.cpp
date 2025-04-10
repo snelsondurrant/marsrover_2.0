@@ -1,4 +1,4 @@
-// Modified from the Nav2 Spin action - Nelson Durrant, Apr 2025
+// Modified from the default Nav2 Spin behavior - Nelson Durrant, Apr 2025
 // https://github.com/ros-navigation/navigation2/blob/humble/nav2_behaviors/plugins/spin.cpp
 // https://docs.nav2.org/plugin_tutorials/docs/writing_new_behavior_plugin.html
 
