@@ -19,8 +19,8 @@ state_machine:
     update_threshold: 0.4  # Threshold for updating tag and item locations (in meters)
     spin_stops: 4  # Number of different angles to stop at during spin search to get a good image
     spin_wait_time: 0.5  # Time to wait during each spin stop (in seconds)
-    gps_nav_timeout: 240  # Maximum time to wait for GPS navigation to complete before moving on (in seconds)
-    hex_nav_timeout: 90  # Maximum time to wait for hex navigation to complete before moving on (in seconds)
+    gps_nav_timeout: 210  # Maximum time to wait for GPS navigation to complete before moving on (in seconds)
+    hex_nav_timeout: 45  # Maximum time to wait for hex navigation to complete before moving on (in seconds)
 
 bt_navigator:
   ros__parameters:
