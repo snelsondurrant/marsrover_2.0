@@ -132,10 +132,10 @@ class StateMachine(Node):
         # https://github.com/ros-navigation/navigation2/tree/main/nav2_simple_commander
 
         # Leg and order planner parameters
-        self.declare_parameter("path_planner", "basicPathPlanner")
-        self.declare_parameter("order_planner", "basicOrderPlanner")
-        self.path_planner = self.get_parameter("path_planner").value
-        self.order_planner = self.get_parameter("order_planner").value
+        self.declare_parameter("use_terrain_path_planner", False)
+        self.declare_parameter("use_terrain_order_planner", False)
+        self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
+        self.use_terrain_order_planner = self.get_parameter("use_terrain_order_planner").value
 
         # Tunable values
         self.declare_parameter("wait_time", 5)
@@ -832,17 +832,10 @@ class StateMachine(Node):
         """
 
         # 1. Generate a path to the destination waypoint
-        # Determine the best order for the legs
-        try:
-            planner_func = globals()[self.path_planner]
-            if callable(planner_func):
-                path = planner_func(self.filtered_gps, dest_wp, self.waypoint_distance)
-            else:
-                raise Exception(
-                    "Path planner " + str(self.path_planner) + " is not callable"
-                )
-        except KeyError:
-            raise Exception("Path planner " + str(self.path_planner) + " not found")
+        if self.use_terrain_path_planner:
+            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
+        else:
+            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
 
         # 2. Publish the GPS positions to mapviz
         for wp in path:
@@ -1021,20 +1014,20 @@ class StateMachine(Node):
                 raise Exception("Task execution canceled by action client")
 
         # Report which order and path planners are selected
-        self.task_info("Order planner: " + self.order_planner)
-        self.task_info("Path planner: " + self.path_planner)
+        if self.use_terrain_order_planner:
+            self.task_info("Order planner: terrainOrderPlanner")
+        else:
+            self.task_info("Order planner: basicOrderPlanner")
+        if self.use_terrain_path_planner:
+            self.task_info("Path planner: terrainPathPlanner")
+        else:
+            self.task_info("Path planner: basicPathPlanner")
 
         # Determine the best order for the legs
-        try:
-            planner_func = globals()[self.order_planner]
-            if callable(planner_func):
-                self.legs = planner_func(self.legs, self.filtered_gps)
-            else:
-                raise Exception(
-                    "Order planner " + str(self.order_planner) + " is not callable"
-                )
-        except KeyError:
-            raise Exception("Order planner " + str(self.order_planner) + " not found")
+        if self.use_terrain_order_planner:
+            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps)
+        else:
+            self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 
         order = [leg.name for leg in self.legs]
         self.task_info("Determined best leg order: " + str(order))
