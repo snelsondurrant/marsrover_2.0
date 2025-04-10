@@ -6,7 +6,6 @@
 **/devel_isolated
 
 **/.pio
-**/mapproxy/cache_data/*
 **/tmuxp/tmp/*.yaml
 **/nav2_bringup
 **/models/*.onnx
