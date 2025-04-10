@@ -441,6 +441,11 @@ class StateMachine(Node):
         # disable_collision_checks isn't in the iron/humble release of Nav2
         # goal_msg.disable_collision_checks = disable_collision_checks
 
+        # IMPORTANT! We ran into a lot of issues with the collision checker canceling spin goals
+        # when no obstacles were present. We have implemented a custom behavior (rover_behaviors/CustomSpin)
+        # that disables the collision checks, but hopefully disable_collision_checks is avaliable
+        # in future versions of ROS2 as the team moves forward.
+
         self.info(f"Spinning to angle {goal_msg.target_yaw}....")
         send_goal_future = self.spin_client.send_goal_async(
             goal_msg, self._feedbackCallback
