@@ -226,4 +226,4 @@ RUN pip3 install requests
 # Used to calibrate the ZED and lidar positions relative to the mount frame
 USER root
 RUN apt update && apt install -y ros-humble-tf-transformations
-USER $NAME
+USER $NAME 
