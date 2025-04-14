@@ -1,5 +1,5 @@
 > **TO THE 2026 MARS ROVER TEAM:** I put in 20+ hours of research on best practices for robot development at the beginning of the Winter 2025 semester, and learned A TON about the tools major open-source and professional projects use. This repository is the synthesis of our existing approach with some of those industry-standard best practices, including:
-> - Dockerized full task simulator for rapid development and validation
+> - A dockerized full task simulator for rapid development and validation
 > - Industry-standard Nav2 path planning and hazard avoidance
 > - Tuned and tested EKF for fusing odometry sources with GPS data
 > - A fully-defined map->odom->robot TF tree and rover URDF
