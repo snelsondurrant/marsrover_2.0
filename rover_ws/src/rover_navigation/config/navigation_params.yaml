@@ -197,10 +197,14 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: points #, scan
-        # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
+        # IMPORTANT! Nav2 can be customized to use both/either of the depth camera or the lidar
+        # for obstacle detection. The depth camera is more accurate and can see bushes, etc,
+        # but is more CPU intensive. (There may be a way to convert it to a simpler LaserScan type tho).
+        # https://github.com/stereolabs/zed-ros2-examples/tree/master/examples/zed_depth_to_laserscan
+        # The unitree lidar is more efficient, but less dense. - Nelson Durrant, Apr 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
+        observation_sources: points #, scan
         scan:
           topic: /unilidar/cloud # unitree lidar
           max_obstacle_height: 2.0
@@ -249,10 +253,14 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: points #, scan
-        # Modified to use the ZED depth camera and unitree lidar - Nelson Durrant, Mar 2025
+        # IMPORTANT! Nav2 can be customized to use both/either of the depth camera or the lidar
+        # for obstacle detection. The depth camera is more accurate and can see bushes, etc,
+        # but is more CPU intensive. (There may be a way to convert it to a simpler LaserScan type tho).
+        # https://github.com/stereolabs/zed-ros2-examples/tree/master/examples/zed_depth_to_laserscan
+        # The unitree lidar is more efficient, but less dense. - Nelson Durrant, Apr 2025
         # https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
+        observation_sources: points #, scan
         scan:
           topic: /unilidar/cloud # unitree lidar
           max_obstacle_height: 2.0

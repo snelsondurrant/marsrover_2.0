@@ -83,6 +83,7 @@
     </include>
 
     <include>
+      <!-- This is floating bc otherwise the turtlebot gets stuck on it - Nelson Durrant, Apr 2025 -->
       <uri>model://hammer</uri>
       <pose>-14 129 0.7 0 0 0</pose>
     </include>

@@ -56,22 +56,22 @@ void CustomSpin::onConfigure()
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "simulate_ahead_time", rclcpp::ParameterValue(2.0));
+    "simulate_ahead_time", rclcpp::ParameterValue(2.0)); // TODO: Adjust these
   node->get_parameter("simulate_ahead_time", simulate_ahead_time_);
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "max_rotational_vel", rclcpp::ParameterValue(1.0));
+    "max_rotational_vel", rclcpp::ParameterValue(1.0)); // TODO: Adjust these
   node->get_parameter("max_rotational_vel", max_rotational_vel_);
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "min_rotational_vel", rclcpp::ParameterValue(0.4));
+    "min_rotational_vel", rclcpp::ParameterValue(0.4)); // TODO: Adjust these
   node->get_parameter("min_rotational_vel", min_rotational_vel_);
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "rotational_acc_lim", rclcpp::ParameterValue(3.2));
+    "rotational_acc_lim", rclcpp::ParameterValue(3.2)); // TODO: Adjust these
   node->get_parameter("rotational_acc_lim", rotational_acc_lim_);
 }
 
@@ -152,7 +152,7 @@ nav2_behaviors::Status CustomSpin::onCycleUpdate()
 
 /**
 IMPORTANT! I found that collisions were being detected incorrecly EVERY TIME in real life,
-and often in simulation. The entire point of this custom behavior is literally just to comment it out.
+and often in simulation. The entire point of this custom behavior is literally just to comment this out.
 - Nelson Durrant, Apr 2025 
 */
 
