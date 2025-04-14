@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Mar 2025
 #
-# Calibrate the ZED camera magnetometer on the rover
+# Reset the USB devices on the rover over SSH
 
 function printInfo {
  	# print blue
@@ -36,10 +36,10 @@ if [ $? -ne 0 ]; then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash setup_ssh.sh' to set up SSH keys"
+    echo "  - Run 'bash ssh_setup.sh' to set up SSH keys"
 
     exit 1
 fi
 
-# Launch the ZED Sensor Viewer over SSH
-ssh -t -X $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd /usr/local/zed/tools && ./ZED_Sensor_Viewer"
+# Reset the USB devices on the rover over SSH
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && bash usb_reset.sh"
