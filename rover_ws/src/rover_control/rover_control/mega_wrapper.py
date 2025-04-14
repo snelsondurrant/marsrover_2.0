@@ -28,6 +28,9 @@ class MegaWrapper(Node):
     :author: Braden Meyers
     :date: Mar 2025
 
+    TODO: We need to add A LOT of functionality to this - elevator, speed changes, etc.
+    Like in the Autonomy-ROS2 repository.
+
     Subscribers:
     - cmd_vel_mux (geometry_msgs/Twist)
     - joy (sensor_msgs/Joy)

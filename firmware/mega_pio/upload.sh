@@ -3,4 +3,4 @@
 #
 # Builds and uploads the latest code to the board
 
-pio run -t upload
+pio run -t upload # TODO: Test this
