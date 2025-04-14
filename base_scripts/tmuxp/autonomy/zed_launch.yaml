@@ -14,5 +14,5 @@ windows:
     panes:
       - shell_command:
           - source ~/zed_ws/install/setup.bash
-          - cmd: ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
+          - cmd: ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i serial_number:=37628625
             enter: false

@@ -5,6 +5,9 @@
 **/install_isolated
 **/devel_isolated
 
+*.png
+*.lck
+
 **/.pio
 **/tmuxp/tmp/*.yaml
 **/nav2_bringup
