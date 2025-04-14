@@ -52,9 +52,9 @@ class ROS2Thread(QThread):
         self._close_flag = True
 
 
-class AddWaypointDialog(QDialog):
+class WaypointDialog(QDialog):
     """
-    Interactive dialog for adding a waypoint
+    Interactive dialog for adding or editing a waypoint
 
     :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: Apr 2025
@@ -186,15 +186,23 @@ class AutonomyGUI(Node, QWidget):
 
         # Buttons Layout
         buttons_layout = QHBoxLayout()
-        self.add_button = QPushButton("Add Waypoint")
+        self.add_button = QPushButton("Add")
         self.add_button.clicked.connect(self.open_add_waypoint_dialog)
         buttons_layout.addWidget(self.add_button)
 
-        self.remove_button = QPushButton("Remove Waypoint")
+        self.edit_button = QPushButton("Edit")
+        self.edit_button.clicked.connect(self.open_edit_waypoint_dialog)
+        buttons_layout.addWidget(self.edit_button)
+        
+        self.duplicate_button = QPushButton("Duplicate")
+        self.duplicate_button.clicked.connect(self.duplicate_waypoint)
+        buttons_layout.addWidget(self.duplicate_button)
+
+        self.remove_button = QPushButton("Remove")
         self.remove_button.clicked.connect(self.remove_waypoint)
         buttons_layout.addWidget(self.remove_button)
 
-        self.clear_button = QPushButton("Clear All")
+        self.clear_button = QPushButton("Clear")
         self.clear_button.clicked.connect(self.clear_waypoints)
         buttons_layout.addWidget(self.clear_button)
 
@@ -278,13 +286,47 @@ class AutonomyGUI(Node, QWidget):
 
     def open_add_waypoint_dialog(self):
         self.get_logger().info("Adding waypoint...")
-        dialog = AddWaypointDialog(self)
+        dialog = WaypointDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             waypoint_data = dialog.get_waypoint_data()
             if waypoint_data:
                 self.waypoints.append(waypoint_data)
                 self.update_waypoint_list()
                 self._update_button_states()
+
+    def open_edit_waypoint_dialog(self):
+        self.get_logger().info("Editing waypoint...")
+        selected_item = self.waypoint_list.currentItem()
+        if selected_item:
+            index = self.waypoint_list.row(selected_item)
+            waypoint_data = self.waypoints[index]
+            dialog = WaypointDialog(self)
+            dialog.name_edit.setText(waypoint_data["name"])
+            dialog.type_combo.setCurrentText(waypoint_data["type"])
+            dialog.latitude_edit.setText(str(waypoint_data["latitude"]))
+            dialog.longitude_edit.setText(str(waypoint_data["longitude"]))
+            if waypoint_data["type"] == "aruco":
+                dialog.tag_id_combo.setCurrentText(str(waypoint_data.get("tag_id", 0)))
+            elif waypoint_data["type"] == "obj":
+                dialog.object_combo.setCurrentText(waypoint_data.get("object", ""))
+            if dialog.exec_() == QDialog.Accepted:
+                updated_waypoint_data = dialog.get_waypoint_data()
+                if updated_waypoint_data:
+                    self.waypoints[index] = updated_waypoint_data
+                    self.update_waypoint_list()
+                    self._update_button_states()
+
+    def duplicate_waypoint(self):
+        self.get_logger().info("Duplicating waypoint...")
+        selected_item = self.waypoint_list.currentItem()
+        if selected_item:
+            index = self.waypoint_list.row(selected_item)
+            waypoint_data = self.waypoints[index]
+            new_waypoint_data = waypoint_data.copy()
+            new_waypoint_data["name"] += "_copy"
+            self.waypoints.append(new_waypoint_data)
+            self.update_waypoint_list()
+            self._update_button_states()
 
     def remove_waypoint(self):
         self.get_logger().info("Removing waypoint...")

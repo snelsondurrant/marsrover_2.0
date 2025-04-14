@@ -153,7 +153,7 @@ class StateMachine(Node):
         self.gps_nav_timeout = self.get_parameter("gps_nav_timeout").value
         self.hex_nav_timeout = self.get_parameter("hex_nav_timeout").value
 
-        # Assuming we can detect objects and aruco tags up to 5m away, we've determined this is the best
+        # Assuming we can detect aruco tags up to 5m away, we've determined this is the best
         # search pattern for covering the 20m radius (fastest traversal, least overlap, most coverage).
         # It could definitely be changed or tuned in the future as we get more data.
         # -->
@@ -163,7 +163,7 @@ class StateMachine(Node):
         #   (11) (04) (03) (09)
         #           (10)
         # <--
-        self.hex_coord = [
+        self.hex_coord_aruco = [
             (4.5, 7.79),
             (9.0, 0.0),
             (4.5, -7.79),
@@ -176,6 +176,23 @@ class StateMachine(Node):
             (0.0, -15.58),
             (-13.5, -7.79),
             (-13.5, 7.79),
+        ]
+
+        # Assuming we can detect objects up to 5m away, we've determined this is the best
+        # search pattern for covering the 10m radius (fastest traversal, least overlap, most coverage).
+        # It could definitely be changed or tuned in the future as we get more data.
+        # -->
+        #         (06) (01)
+        #      (05) (00) (02)
+        #         (04) (03)
+        # <--
+        self.hex_coord_obj = [
+            (4.5, 7.79),
+            (9.0, 0.0),
+            (4.5, -7.79),
+            (-4.5, -7.79),
+            (-9.0, 0.0),
+            (-4.5, 7.79),
         ]
 
         # Object detection dict
@@ -1162,6 +1179,11 @@ class StateMachine(Node):
         """
         Function to handle the next hex state
         """
+
+        if self.leg.type == "aruco":
+            self.hex_coord = self.hex_coord_aruco
+        elif self.leg.type == "obj":
+            self.hex_coord = self.hex_coord_obj
 
         # Have we completed all the hex points?
         if self.hex_cntr >= len(self.hex_coord):
