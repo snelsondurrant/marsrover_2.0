@@ -9,7 +9,7 @@
 >
 > <mark>In short, I think there's clear 100-point potential in using this approach and these open-source tools. I'd encourage the 2026 team to mess around with the simulator to understand a bit better how it all works, decide if it's worth purchasing a more powerful computer (laptop with a GPU?), and then revisit development on this code base.</mark>
 >
-> I'll be starting my Master's program at BYU this next semester, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant step for roverkind!
+> I'll be starting my Master's program at BYU Fall 2026, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant step for roverkind!
 >
 > Nelson Durrant
 
