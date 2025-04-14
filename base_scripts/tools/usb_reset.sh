@@ -42,4 +42,4 @@ if [ $? -ne 0 ]; then
 fi
 
 # Reset the USB devices on the rover over SSH
-ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && bash usb_reset.sh"
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker/udev && bash usb_reset.sh"

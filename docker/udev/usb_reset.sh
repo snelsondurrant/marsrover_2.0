@@ -30,10 +30,3 @@ if [[ $answer == "y" || $answer == "Y" ]]; then
     PRODUCT=$(udevadm info --attribute-walk --path $(udevadm info --query path --name /dev/rover/cameras/ZED_front) | grep idProduct | head -n 1 | sed 's/.*="//; s/"$//')
     sudo usbreset $VENDOR:$PRODUCT
 fi
-
-# read -p "Do you want to reset the USB camera? (y/n): " answer
-# if [[ $answer == "y" || $answer == "Y" ]]; then
-#     VENDOR=$(udevadm info --attribute-walk --path $(udevadm info --query path --name /dev/rover/cameras/autonomyWebCam) | grep idVendor | head -n 1 | sed 's/.*="//; s/"$//')
-#     PRODUCT=$(udevadm info --attribute-walk --path $(udevadm info --query path --name /dev/rover/cameras/autonomyWebCam) | grep idProduct | head -n 1 | sed 's/.*="//; s/"$//')
-#     sudo usbreset $VENDOR:$PRODUCT
-# fi
