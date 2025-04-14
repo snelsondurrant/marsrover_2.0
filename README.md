@@ -1,3 +1,20 @@
+> **TO THE 2026 MARS ROVER TEAM:** I put in 20+ hours of research on best practices for robot development at the beginning of the Winter 2025 semester, and learned A TON about the tools major open-source and professional projects use. This repository is the synthesis of our existing approach with some of those industry-standard best practices, including:
+> - Dockerized full task simulator for rapid development and validation
+> - Industry-standard Nav2 path planning and hazard avoidance
+> - Tuned and tested EKF for fusing odometry sources with GPS data
+> - A fully-defined map->odom->robot TF tree and rover URDF
+> - Lots and lots of QOL and scripting updates
+> 
+> I've successfully tested and completed GPS, aruco, and object detection legs with the rover just behind the EB (even navigating between and around the trees and posts!) with a 100% success rate. I've completed hundreds more in simulation, testing outlier cases like blocked hex points. However, when I've tried to increase the rover speed on our physical hardware to as quick as we'd need to run it at competition, the CPU can't keep up with the depth cloud processing from the ZED camera for object avoidance and we don't recognize obstacles in time before crashing into them. Even with cost-cutting measures, it's clear that we simply just don't have the CPU power on the Jetson Orin to run the full Nav2 stack at the speed we need to to compete, and forcing all the tasks to transition to a new computer so late into the semester isn't a feasible option.
+>
+> <mark>In short, I think there's very clear 100-point potential in this approach and these open-source tools. I'd encourage the 2026 team to mess around with the simulator to understand a bit better their capabilities, decide if it's worth purchasing a more powerful computer (laptop with a GPU?), and then revisit this code base.</mark>
+>
+> I'll be starting my Master's program at BYU this next semester, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant step for roverkind!
+>
+> Nelson Durrant
+
+--
+
 [Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
 
 [Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
