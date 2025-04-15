@@ -1,4 +1,4 @@
-> **TO THE 2026 MARS ROVER TEAM:** I put in 30+ hours of research on robotics best practices at the beginning of the Winter 2025 semester and learned A TON about the open-source tools and software structure industry-grade robots use. After a short coding spree, this repository is the synthesis of our existing approach with some of those industry-standard best practices, including:
+> **TO THE 2026 MARS ROVER TEAM:** I put in 30+ hours of research on robotics best practices at the beginning of the Winter 2025 semester and learned A TON about the open-source tools and software structure industry-grade robots use. After a short coding spree, this repository is the synthesis of our existing approach with some of those best practices, including:
 > - A dockerized full-task simulator for rapid development and validation
 > - Industry-standard Nav2 path planning and hazard avoidance
 > - Tuned and tested EKF for fusing odometry sources with GPS data
