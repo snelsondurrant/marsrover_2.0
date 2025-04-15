@@ -56,22 +56,22 @@ void CustomSpin::onConfigure()
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "simulate_ahead_time", rclcpp::ParameterValue(2.0)); // TODO: Adjust these
+    "simulate_ahead_time", rclcpp::ParameterValue(2.0));
   node->get_parameter("simulate_ahead_time", simulate_ahead_time_);
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "max_rotational_vel", rclcpp::ParameterValue(1.0)); // TODO: Adjust these
+    "max_rotational_vel", rclcpp::ParameterValue(1.0));
   node->get_parameter("max_rotational_vel", max_rotational_vel_);
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "min_rotational_vel", rclcpp::ParameterValue(0.4)); // TODO: Adjust these
+    "min_rotational_vel", rclcpp::ParameterValue(0.4));
   node->get_parameter("min_rotational_vel", min_rotational_vel_);
 
   nav2_util::declare_parameter_if_not_declared(
     node,
-    "rotational_acc_lim", rclcpp::ParameterValue(3.2)); // TODO: Adjust these
+    "rotational_acc_lim", rclcpp::ParameterValue(3.2));
   node->get_parameter("rotational_acc_lim", rotational_acc_lim_);
 }
 
