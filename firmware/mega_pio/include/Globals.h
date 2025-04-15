@@ -139,7 +139,7 @@ extern unsigned long blinkInterval;
 //IR reader
 extern unsigned int sensorArray[2];
 extern unsigned long currentTime;
-extern unsigned long lastIRmsgTime;
+extern unsigned long lastSlowTime;
 
 //Motor card interface objects
 #include "Wheels.h"

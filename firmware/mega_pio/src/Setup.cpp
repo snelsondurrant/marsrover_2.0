@@ -32,7 +32,7 @@ unsigned long blinkInterval = 500;  // 200ms -> 5Hz
 //IR reader
 unsigned int sensorArray[2] = {0, 0};
 unsigned long currentTime = 0;
-unsigned long lastIRmsgTime = 0;
+unsigned long lastSlowTime = 0;
 
 //Motor card reset queue
 unsigned short motorStatuses[NUM_WHEELS];

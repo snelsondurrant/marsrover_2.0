@@ -7,7 +7,7 @@
 
 void handleDrive(int speeds[], int dirs[]);
 void handleLaser(int laser);
-void handleElevator(int speed, int dir);
+void handleElevator(int speed, int dir, bool force);
 void handleClickerCommand(bool click);
 void handleFPV(float yawCmd, float pitchCmd);
 void handleHeartbeat(float elapsedTime);

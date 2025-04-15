@@ -39,7 +39,7 @@ void loop() {
       //Try to open communications again
       // This code is inside the blink condition to make it 
       // trigger less often, in order to spare I/O capacity
-      if (currentTime - lastContactTime >= 10*MAXTIMEDIFF) {
+      if (currentTime - lastContactTime >= 5*MAXTIMEDIFF) {
         openSerial();
       }
     }
@@ -49,22 +49,14 @@ void loop() {
     falseLED = false;
   }
 
-  // Handle IR and motor resets at slower rate
-  if( currentTime - lastIRmsgTime >= SLOWPERIOD ) {
+  // Handle IR, motor resets, and limit switches at slower rate
+  if( currentTime - lastSlowTime >= SLOWPERIOD ) {
     sensorArray[0] = analogRead(GRIP_IR1);
     sensorArray[1] = analogRead(GRIP_IR2);
     sendIRData();
 
     //Also check motors intermitently for speed
     handleMotorCardErrors();
-
-    //Also send debug messages intermitently
-    // This code is inside the IR condition to make it 
-    // trigger less often, in order to spare I/O capacity
-    #if DEBUG
-    if (debugMessage[0] != '\0')
-      sendDebugData();
-    #endif
 
     // Check for limit switch actuation outside of commands
     //  Limit switches are also checked at the time of commands,
@@ -83,6 +75,14 @@ void loop() {
       wheels.wheelList[6].dir = STOP_WHEELS;
     }
     
-    lastIRmsgTime = currentTime;
+    //Also send debug messages intermitently
+    // This code is inside the IR condition to make it 
+    // trigger less often, in order to spare I/O capacity
+    #if DEBUG
+    if (debugMessage[0] != '\0')
+      sendDebugData();
+    #endif
+    
+    lastSlowTime = currentTime;
   }
 }

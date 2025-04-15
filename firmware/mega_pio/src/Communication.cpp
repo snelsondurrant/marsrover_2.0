@@ -78,7 +78,8 @@ void parseNMEA(char* sentence) {
     token = strtok(NULL, ",");
     int dir = atoi(token);
     token = strtok(NULL, ",");
-    handleElevator(speed, dir);
+    bool force = atoi(token);
+    handleElevator(speed, dir, force);
   }
   else if (strncmp(sentence, "CLICK", 5) == 0 && !cardiacArrest) {
     char* token = strtok(sentence + 6, ","); 

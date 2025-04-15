@@ -21,12 +21,28 @@ void handleLaser(int laser) {
   }
 }
 
-void handleElevator(int speed, int dir) {
+void handleElevator(int speed, int dir, bool force) {
+  // Always move the elevator when forced
+  if (force) {
+    wheels.wheelList[6].set_speed = speed;
+    wheels.wheelList[6].dir = dir;
+
+    #if DEBUG
+    if (speed != 0) {
+      prepareDebugData("Arduino: Overriding limit switch checks. Speed: ");
+      prepareDebugData(speed);
+      prepareDebugData(" | Dir: ");
+      prepareDebugData(dir);
+      prepareDebugData(" (1 is up)");
+    }
+    #endif
+  }
+
   // If the top limit switch (active HIGH) is NOT pressed OR if the elevator is moving DOWN (0)
   // If the bottom limit switch (active HIGH) is NOT pressed OR if the elevator is moving UP (1)
   // Send the elevator commands as normal
-  if ((!digitalRead(ELEVATOR_TOP_LIMIT_SWITCH) || dir == 0) 
-   && (!digitalRead(ELEVATOR_BOTTOM_LIMIT_SWITCH) || dir == 1)) {
+  else if ((!digitalRead(ELEVATOR_TOP_LIMIT_SWITCH) || dir == 0) 
+        && (!digitalRead(ELEVATOR_BOTTOM_LIMIT_SWITCH) || dir == 1)) {
     wheels.wheelList[6].set_speed = speed;
     wheels.wheelList[6].dir = dir;
 
