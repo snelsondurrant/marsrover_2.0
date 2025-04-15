@@ -207,7 +207,7 @@ local_costmap:
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
         # Added the camera depth point cloud as an observation source - Nelson Durrant, Mar 2025
-        # NOTE: Simulating this slows the simulation down QUITE A LOT.
+        # NOTE: Simulating this slows the simulation down considerably.
         points:
           topic: /intel_realsense_r200_depth/points
           data_type: "PointCloud2"
@@ -258,7 +258,7 @@ global_costmap:
           # outdoors there will probably be more inf points
           inf_is_valid: true
         # Added the camera depth point cloud as an observation source - Nelson Durrant, Mar 2025
-        # NOTE: Simulating this slows the simulation down QUITE A LOT. Like almost unusable.
+        # NOTE: Simulating this slows the simulation down considerably.
         points:
           topic: /intel_realsense_r200_depth/points
           data_type: "PointCloud2"
