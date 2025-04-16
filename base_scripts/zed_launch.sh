@@ -37,7 +37,7 @@ then
     echo "Here's some debugging suggestions:"
     echo "  - Ensure the rover is powered on"
     echo "  - Ensure the rover is connected with a static IP address"
-    echo "  - Run 'bash ssh_setup.sh' to set up SSH keys"
+    echo "  - Run 'bash setup_ssh.sh' to set up SSH keys"
 
     exit 1
 fi
