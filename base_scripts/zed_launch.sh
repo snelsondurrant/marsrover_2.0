@@ -43,8 +43,9 @@ then
 fi
 
 # Start the Docker container if not already running
-if [ ! "$(ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker ps -q -f name=zed-ct")" ]; then
-    ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && docker-compose up -d"
+if ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker ps" | grep -q "zed-ct" ; then
+    printWarning "Starting the zed-ct container on the rover..."
+    ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/zed_ws/docker && docker compose up -d"
 fi
 
 # Send tmux commands to the rover over SSH

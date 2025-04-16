@@ -27,9 +27,14 @@ while getopts ":t:" opt; do
   esac
 done
 
-# Start the Docker container if not already running
-if [ ! "$(docker ps -q -f name=marsrover-ct)" ]; then
-    cd ~/marsrover_2.0/docker && docker-compose up -d
+# Start the Docker containers if not already running
+if [ $(docker ps | grep marsrover-ct | wc -l) -eq 0 ]; then
+		printWarning "Starting the marsrover-ct container..."
+		cd ~/marsrover_2.0/docker && docker-compose up -d
+fi
+if [ $(docker ps | grep mapproxy | wc -l) -eq 0 ]; then
+    printWarning "Starting the mapproxy container..."
+    docker run -p 8080:8080 -d -t -v ~/mapproxy:/mapproxy danielsnider/mapproxy
 fi
 
 # Launch the specified task configuration over SSH
