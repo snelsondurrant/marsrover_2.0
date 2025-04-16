@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Oct 2024
 #
-# Manages the 'marsrover-ct' Docker container and the 'rover_dev' tmux session
+# Simple script to set up a quick Mars Rover development environment
 
 function printInfo {
  	# print blue
