@@ -10,4 +10,6 @@ VENDOR=$(udevadm info --attribute-walk --path $(udevadm info --query path --name
 PRODUCT=$(udevadm info --attribute-walk --path $(udevadm info --query path --name $1/dev/rover/onBoardMega) | grep idProduct | head -n 1 | sed 's/.*="//; s/"$//')
 sudo usbreset $VENDOR:$PRODUCT
 
+sl
+
 pio run -t upload --upload-port /dev/rover/onBoardMega
