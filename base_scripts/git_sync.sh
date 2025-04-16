@@ -55,19 +55,5 @@ fi
 export current_branch=$(git branch --show-current)
 
 ssh -t marsrover@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git checkout $current_branch"
-ssh -t marsrover@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git fetch base"
 ssh -t marsrover@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0 && git pull base ${current_branch}"
 
-# Send tmux commands to the rover over SSH
-# printInfo "Setting up the 'git_sync' tmux session..."
-# envsubst < tmuxp/git_sync.yaml > tmuxp/tmp/git_sync.yaml
-# scp tmuxp/tmp/git_sync.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
-# ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-#     "export PATH='$PATH:/home/$ROVER_USERNAME/.local/bin'; \
-#     tmuxp load -d /home/$ROVER_USERNAME/marsrover_2.0/base_scripts/tmuxp/tmp/git_sync.yaml"
-
-# Attach to the 'git_sync' tmux session to view the output (using mosh)
-# mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- tmux attach -t git_sync
-
-# # Kill the tmux session on exit
-# ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "tmux kill-session -t git_sync"
