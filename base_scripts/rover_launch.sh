@@ -46,7 +46,7 @@ then
 fi
 
 # Start the Docker container if not already running
-if [! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker ps" | grep -q "marsrover-ct" ]; then
+if [ ! ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker ps" | grep -q "marsrover-ct" ]; then
     printWarning "Starting the marsrover-ct container on the rover..."
     ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && docker compose up -d"
 fi
