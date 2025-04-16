@@ -37,7 +37,7 @@
 
 - Open a WSL terminal and clone the marsrover_2.0 repo into your WSL environment using `git clone https://github.com/BYUMarsRover/marsrover_2.0.git`.
 
-- Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
+- Run `cd marsrover_2.0 && bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
 **Linux:**
 
@@ -45,7 +45,7 @@
 
 - Open a terminal and clone the marsrover_2.0 repo into your Linux environment using `git clone https://github.com/BYUMarsRover/marsrover_2.0.git`.
 
-- Run `bash compose.sh` to pull and launch the latest Docker image from DockerHub.
+- Run `cd marsrover_2.0 && bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
 --
 
