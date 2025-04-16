@@ -27,6 +27,11 @@ while getopts ":t:" opt; do
   esac
 done
 
+# Start the Docker container if not already running
+if [ ! "$(docker ps -q -f name=marsrover-ct)" ]; then
+    cd ~/marsrover_2.0/docker && docker-compose up -d
+fi
+
 # Launch the specified task configuration over SSH
 case $task in
     "autonomy")

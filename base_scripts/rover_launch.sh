@@ -45,6 +45,11 @@ then
     exit 1
 fi
 
+# Start the Docker container if not already running
+if [ ! "$(ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker ps -q -f name=marsrover-ct")" ]; then
+    ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && docker-compose up -d"
+fi
+
 # Launch the specified task configuration over SSH
 case $task in
     "autonomy")
