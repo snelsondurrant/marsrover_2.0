@@ -51,7 +51,7 @@ else
 fi
 
 # Pull the platform-specific version of the Docker image
-printInfo "Pulling the $rover_id version of the Docker image..."
+printInfo "Pulling the $rover_id version of the Docker image onto the base station..."
 docker pull --platform $rover_id byuawesomerover/marsrover_2.0:latest
 docker image list
 
@@ -62,23 +62,16 @@ printInfo "Sending the Docker image to the rover..."
 scp marsrover_2.0.tar.gz $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/docker
 rm marsrover_2.0.tar.gz
 
-# Pull the amd64 version of the Docker image
-# (this will override the version we just pulled)
-printInfo "Pulling the linux/amd64 version of the Docker image..."
+printInfo "Unzipping the Docker image on the rover..."
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && gunzip marsrover_2.0.tar.gz"
+
+printInfo "Loading the Docker image on the rover..."
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && docker load < marsrover_2.0.tar"
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/docker && rm marsrover_2.0.tar"
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "yes | docker image prune"
+ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker image list"
+
+printInfo "Pulling the linux/amd64 Docker image onto the base station..."
 docker pull --platform linux/amd64 byuawesomerover/marsrover_2.0:latest
 yes | docker image prune
 docker image list
-
-# Send tmux commands to the rover over SSH
-printInfo "Setting up the 'docker_sync' tmux session..."
-envsubst < tmuxp/docker_sync.yaml > tmuxp/tmp/docker_sync.yaml
-scp tmuxp/tmp/docker_sync.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
-ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-    "export PATH='$PATH:/home/$ROVER_USERNAME/.local/bin'; \
-    tmuxp load -d /home/$ROVER_USERNAME/marsrover_2.0/base_scripts/tmuxp/tmp/docker_sync.yaml"
-
-# Attach to the 'docker_sync' tmux session to view the output (using mosh)
-mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- tmux attach -t docker_sync
-
-# Kill the tmux session on exit
-ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "tmux kill-session -t docker_sync"
