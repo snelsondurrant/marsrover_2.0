@@ -47,8 +47,6 @@ remove_old_ssh_key() {
         # Remove using port notation for non-default ports
         ssh-keygen -f "$HOME/.ssh/known_hosts" -R "[$host]:$port" &> /dev/null
     fi
-
-    printWarning "Removed old SSH key for $host on port $port"
 }
 
 # Check if ssh pass is installed
