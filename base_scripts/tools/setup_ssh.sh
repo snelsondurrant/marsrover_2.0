@@ -67,5 +67,3 @@ $ROVER_CONNECT -o StrictHostKeyChecking=accept-new $ROVER_USERNAME@$ROVER_IP_ADD
 
 # Copy the SSH key to the rover (physical machine)
 ssh-copy-id marsrover@$ROVER_IP_ADDRESS
-
-printInfo "SSH key successfully set up on the rover"
