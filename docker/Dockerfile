@@ -75,8 +75,10 @@ USER $NAME
 RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git
 # '|| true' is used to ignore errors on a pio command failure
 WORKDIR /home/$NAME/marsrover_2.0/firmware/mega_pio
+RUN pio pkg install || true
 RUN pio run -t upload || true
 WORKDIR /home/$NAME/marsrover_2.0/firmware/nano_pio
+RUN pio pkg install || true
 RUN pio run -t upload || true
 WORKDIR /home/$NAME
 RUN rm -rf /home/$NAME/marsrover_2.0
