@@ -41,6 +41,7 @@ fi
 case $task in
     "autonomy")
         printInfo "Setting up the autonomy task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
         envsubst < tmuxp/autonomy/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;

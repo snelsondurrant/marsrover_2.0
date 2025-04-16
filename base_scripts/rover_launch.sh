@@ -55,6 +55,7 @@ fi
 case $task in
     "autonomy")
         printInfo "Setting up the autonomy task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
         envsubst < tmuxp/autonomy/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
         scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
         ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
