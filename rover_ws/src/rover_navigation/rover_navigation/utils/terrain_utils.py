@@ -5,6 +5,7 @@ import math
 import os
 import rasterio
 from rasterio.transform import rowcol
+from rover_navigation.utils.gps_utils import latLonYaw2Geopose
 import utm
 
 
@@ -30,16 +31,12 @@ class TerrainGraph(AStar):
     def neighbors(self, node):
         row, col = node
         neighbors_list = []
-        # Get all viable neighbors (8 directions)
+        # Get all viable neighbors (4 directions)
         for dr, dc in [
             (0, 1),
             (0, -1),
             (1, 0),
             (-1, 0),
-            (1, 1),
-            (1, -1),
-            (-1, 1),
-            (-1, -1),
         ]:
             new_row, new_col = row + dr, col + dc
             if 0 <= new_row < self.rows and 0 <= new_col < self.cols:
@@ -87,6 +84,37 @@ def pixel_to_geopose(pixel_coords, transform, utm_zone):
     return new_geopose
 
 
+def downsample_points(num_points, des_dist):
+    """
+    Downsamples points such that the points are approximately evenly spaced, with the spacing being
+    less than or equal to the desired distance.
+
+    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
+    :date: Apr 2025
+    """
+
+    path_length = num_points - 1
+
+    # If the path is short enough, just return the endpoint
+    if des_dist >= path_length:
+        return [num_points - 1]
+
+    num_intervals = math.ceil(path_length / des_dist)
+    actual_spacing = path_length / num_intervals
+    selected_indices_set = set()
+
+    for i in range(1, num_intervals + 1):
+        # Calculate the ideal position along the path (0 to path_length)
+        ideal_position = i * actual_spacing
+        # Round to the nearest integer index
+        index = round(ideal_position)
+        index = max(0, min(num_points - 1, index))
+        selected_indices_set.add(index)
+
+    # Convert the set to a sorted list for ordered output
+    return sorted(list(selected_indices_set))
+
+
 def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
     """
     Generate intermediary waypoints between two GPS coordinates with terrain consideration
@@ -116,9 +144,7 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
                     break
 
     if not geotiff_file:
-        print("No valid GeoTIFF file found in the specified directory.")
-        # TODO: Handle this
-        return []
+        raise Exception("No viable map found for terrain-based planning")
 
     with rasterio.open(geotiff_file) as src:
         elevation_data = src.read(1)
@@ -133,7 +159,7 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
         terrain_graph = TerrainGraph(elevation_data, transform, elev_cost)
         path_pixels = terrain_graph.astar(start_pixel, end_pixel)
         if not path_pixels:
-            raise Exception("No viable terrain-based path found using AStar.")
+            raise Exception("No viable path found by terrain-based AStar planner")
 
         # Convert pixel path to GeoPose path
         path_geoposes = []
@@ -142,17 +168,22 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
             path_geoposes.append(gp)
         path_geoposes[-1] = end_geopose
 
-        # TODO: Add this here
+        # Downsample the path to evenly spaced waypoints
+        final_path_result = path_geoposes
+        num_points = len(path_geoposes)
+        if num_points >= 2:
+            selected_indices = downsample_points(num_points, wp_dist)
+            downsampled_geoposes = [path_geoposes[i] for i in selected_indices]
+            final_path_result = downsampled_geoposes
 
-        return path_geoposes
+        return final_path_result, len(path_geoposes)
 
 
 def terrainOrderPlanner(legs, fix, elev_cost):
     """
     Brute force the optimal order to complete the task legs (based on terrain)
 
-    This is an NP-hard problem, but we deal with such small numbers of legs that we can brute force a
-    basic optimal solution in a reasonable time.
+    TODO: This might take too long. Is there a better or simpler way to do this?
 
     :author: Nelson Durrant
     :date: Apr 2025
@@ -164,11 +195,18 @@ def terrainOrderPlanner(legs, fix, elev_cost):
     # Generate all possible permutations of the task legs
     for order in permutations(legs):
 
-        cost = 0.0  # TODO: Calculate the cost from fix to the first leg
+        fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
+        order_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
+
+        cost = terrainPathPlanner(fix_geopose, order_geopose, 1.0, elev_cost)[1]
 
         for i in range(len(order) - 1):
 
-            cost = 0.0  # TODO: Calculate the cost from order[i] to order[i+1]
+            order1_geopose = latLonYaw2Geopose(order[i].latitude, order[i].longitude)
+            order2_geopose = latLonYaw2Geopose(order[i + 1].latitude, order[i + 1].longitude)
+
+            # We want the spacing to be 1.0 m for ease of distance calculation
+            cost = terrainPathPlanner(order1_geopose, order2_geopose, 1.0, elev_cost)[1]
 
         # Update the best order
         if cost < lowest_cost:
