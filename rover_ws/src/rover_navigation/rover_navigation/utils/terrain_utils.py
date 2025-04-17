@@ -99,7 +99,7 @@ def terrainPathPlanner(start_geopose, end_geopose, elev_cost=1.0):
     geotiff_path = (
         "/home/marsrover-docker/rover_ws/src/rover_navigation/rover_navigation/maps"
     )
-    
+
     # Check all of our maps to see if we have a valid one
     geotiff_files = [f for f in os.listdir(geotiff_path) if f.endswith(".tif")]
     for file in geotiff_files:
@@ -140,6 +140,8 @@ def terrainPathPlanner(start_geopose, end_geopose, elev_cost=1.0):
         for pixel in path_pixels:
             gp = pixel_to_geopose(pixel, transform, utm_zone)
             path_geoposes.append(gp)
+
+        # TODO: Simplify the number of waypoints we send
 
         return path_geoposes
 
