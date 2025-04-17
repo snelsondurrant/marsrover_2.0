@@ -858,9 +858,9 @@ class StateMachine(Node):
 
         # 1. Generate a path to the destination waypoint
         if self.use_terrain_path_planner:
-            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
+            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, 0.1)
         else:
-            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
+            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, 0.1)
 
         # 2. Publish the GPS positions to mapviz
         for wp in path:
@@ -1050,7 +1050,7 @@ class StateMachine(Node):
 
         # Determine the best order for the legs
         if self.use_terrain_order_planner:
-            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps)
+            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, 0.1)
         else:
             self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 

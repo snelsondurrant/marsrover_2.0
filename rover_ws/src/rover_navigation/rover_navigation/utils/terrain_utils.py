@@ -87,7 +87,7 @@ def pixel_to_geopose(pixel_coords, transform, utm_zone):
     return new_geopose
 
 
-def terrainPathPlanner(start_geopose, end_geopose, elev_cost=1.0):
+def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
     """
     Generate intermediary waypoints between two GPS coordinates with terrain consideration
 
@@ -130,7 +130,7 @@ def terrainPathPlanner(start_geopose, end_geopose, elev_cost=1.0):
         utm_zone = start_utm_zone
 
         # Initialize and run A*
-        terrain_graph = TerrainGraph(elevation_data, transform, elev_cost=1.0)
+        terrain_graph = TerrainGraph(elevation_data, transform, elev_cost)
         path_pixels = terrain_graph.astar(start_pixel, end_pixel)
         if not path_pixels:
             raise Exception("No viable terrain-based path found using AStar.")
@@ -146,7 +146,7 @@ def terrainPathPlanner(start_geopose, end_geopose, elev_cost=1.0):
         return path_geoposes
 
 
-def terrainOrderPlanner(legs, fix):
+def terrainOrderPlanner(legs, fix, elev_cost):
     """
     Brute force the optimal order to complete the task legs (based on terrain)
 
