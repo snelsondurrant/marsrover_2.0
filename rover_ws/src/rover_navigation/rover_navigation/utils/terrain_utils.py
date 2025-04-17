@@ -140,8 +140,9 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
         for pixel in path_pixels:
             gp = pixel_to_geopose(pixel, transform, utm_zone)
             path_geoposes.append(gp)
+        path_geoposes[-1] = end_geopose
 
-        # TODO: Simplify the number of waypoints we send
+        # TODO: Add this here
 
         return path_geoposes
 

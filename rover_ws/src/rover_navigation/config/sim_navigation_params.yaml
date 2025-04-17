@@ -10,7 +10,7 @@
 
 state_machine:
   ros__parameters:
-    use_terrain_path_planner: false
+    use_terrain_path_planner: true
     use_terrain_order_planner: false
     wait_time: 5  # Time to wait (flash LED) after successful arrival (in seconds)
     # The bigger the better below, as it gives Nav2 more room to navigate around obstacles.

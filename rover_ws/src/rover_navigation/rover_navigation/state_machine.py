@@ -860,7 +860,7 @@ class StateMachine(Node):
         if self.use_terrain_path_planner:
             path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, 0.1)
         else:
-            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, 0.1)
+            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
 
         # 2. Publish the GPS positions to mapviz
         for wp in path:
@@ -875,6 +875,7 @@ class StateMachine(Node):
                 self.mapviz_inter_publisher.publish(navsat_fix)
             else:
                 self.mapviz_goal_publisher.publish(navsat_fix)
+            time.sleep(0.1)  # give time to publish
 
         # 3. Follow the determined path
         asyncio.run(self.followGpsWaypoints(path))
