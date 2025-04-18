@@ -1158,7 +1158,7 @@ class StateMachine(Node):
 
         if not found_flag:
             if failure_cnt > 0:
-                self.task_warn(
+                self.task_error(
                     "Spin search completed ("
                     + str(success_cnt)
                     + "/"
