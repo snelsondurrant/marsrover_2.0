@@ -231,3 +231,7 @@ RUN pip3 install requests
 USER root
 RUN apt update && apt install -y ros-humble-tf-transformations
 USER $NAME 
+
+# Install tools for terrain path planning - Nelson Durrant, Apr 2025
+RUN pip3 install rasterio
+RUN pip3 install astar
