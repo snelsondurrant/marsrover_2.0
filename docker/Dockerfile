@@ -246,6 +246,7 @@ RUN apt-get update && \
         libproj-dev \
         wget \
         cmake \
+        swig \
         # Add other GDAL driver dependencies here if needed (e.g., libcurl4-openssl-dev)
     && \
     # Download GDAL source
