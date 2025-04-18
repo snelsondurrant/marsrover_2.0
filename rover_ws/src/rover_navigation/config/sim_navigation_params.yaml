@@ -11,12 +11,13 @@
 state_machine:
   ros__parameters:
     use_terrain_path_planner: true
-    use_terrain_order_planner: true
+    use_terrain_order_planner: false # TODO: This currently might take too long to compute
     elevation_cost: 0.1 # How much elevation affects the cost of the computed AStar path
     wait_time: 5  # Time to wait (flash LED) after successful arrival (in seconds)
     # The bigger the better below, as it gives Nav2 more room to navigate around obstacles.
-    # Make sure not to make it bigger than the size of the rolling global costmap though.
-    waypoint_distance: 20.0  # Maximum distance between waypoints (in meters)
+    # Don't make it bigger than half the size of the rolling global costmap divided by 1.5 though.
+    # For example, with a 50x50 rolling global costmap, the max distance between waypoints is 16.67m.
+    waypoint_distance: 16.0  # Maximum distance between waypoints (in meters)
     update_threshold: 0.4  # Threshold for updating tag and item locations (in meters)
     spin_stops: 4  # Number of different angles to stop at during spin search to get a good image
     spin_wait_time: 0.5  # Time to wait during each spin stop (in seconds)

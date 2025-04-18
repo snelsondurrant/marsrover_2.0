@@ -5,7 +5,7 @@ import math
 import os
 import rasterio
 from rasterio.transform import rowcol
-from rover_navigation.utils.gps_utils import latLonYaw2Geopose
+from rover_navigation.utils.gps_utils import latLonYaw2Geopose, latLon2Meters
 import utm
 
 
@@ -31,12 +31,16 @@ class TerrainGraph(AStar):
     def neighbors(self, node):
         row, col = node
         neighbors_list = []
-        # Get all viable neighbors (4 directions)
+        # Get all viable neighbors (8 directions)
         for dr, dc in [
             (0, 1),
             (0, -1),
             (1, 0),
             (-1, 0),
+            (1, 1),
+            (1, -1),
+            (-1, 1),
+            (-1, -1),
         ]:
             new_row, new_col = row + dr, col + dc
             if 0 <= new_row < self.rows and 0 <= new_col < self.cols:
@@ -64,6 +68,7 @@ def geopose_to_pixel(geopose, transform):
     lat = geopose.position.latitude
     lon = geopose.position.longitude
     east, north, zone_number, zone_letter = utm.from_latlon(lat, lon)
+    # https://rasterio.readthedocs.io/en/stable/api/rasterio.transform.html#rasterio.transform.rowcol
     row, col = rowcol(transform, east, north)
     row, col = int(round(row)), int(round(col))
     return (row, col), (zone_number, zone_letter)
@@ -87,10 +92,7 @@ def pixel_to_geopose(pixel_coords, transform, utm_zone):
 def downsample_points(num_points, des_dist):
     """
     Downsamples points such that the points are approximately evenly spaced, with the spacing being
-    less than or equal to the desired distance.
-
-    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
-    :date: Apr 2025
+    less than or equal to the desired distance (assumes points are fairly evenly spaced).
     """
 
     path_length = num_points - 1
@@ -123,6 +125,9 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
     :date: Apr 2025
     """
 
+    # NOTE: You can add a new GeoTIFF map by adding a file from this link to the maps folder:
+    # https://portal.opentopography.org/raster?opentopoID=OTNED.012021.4269.3
+
     geotiff_file = None
     geotiff_path = (
         "/home/marsrover-docker/rover_ws/src/rover_navigation/rover_navigation/maps"
@@ -131,6 +136,7 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
     # Check all of our maps to see if we have a valid one
     geotiff_files = [f for f in os.listdir(geotiff_path) if f.endswith(".tif")]
     for file in geotiff_files:
+        # https://rasterio.readthedocs.io/en/stable/quickstart.html#opening-a-dataset-in-reading-mode
         with rasterio.open(os.path.join(geotiff_path, file)) as src:
             transform = src.transform
 
@@ -146,6 +152,7 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
     if not geotiff_file:
         raise Exception("No viable map found for terrain-based planning")
 
+    # https://rasterio.readthedocs.io/en/stable/quickstart.html#opening-a-dataset-in-reading-mode
     with rasterio.open(geotiff_file) as src:
         elevation_data = src.read(1)
         transform = src.transform
@@ -176,10 +183,10 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost):
             downsampled_geoposes = [path_geoposes[i] for i in selected_indices]
             final_path_result = downsampled_geoposes
 
-        return final_path_result, len(path_geoposes)
+        return final_path_result
 
 
-def terrainOrderPlanner(legs, fix, elev_cost):
+def terrainOrderPlanner(legs, fix, wp_dist, elev_cost):
     """
     Brute force the optimal order to complete the task legs (based on terrain)
 
@@ -195,18 +202,39 @@ def terrainOrderPlanner(legs, fix, elev_cost):
     # Generate all possible permutations of the task legs
     for order in permutations(legs):
 
+        cost = 0.0
+
         fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
         order_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
 
-        cost = terrainPathPlanner(fix_geopose, order_geopose, 1.0, elev_cost)[1]
+        path = terrainPathPlanner(fix_geopose, order_geopose, wp_dist, elev_cost)
+
+        # Add up the cost of the path from the fix to the first leg
+        for stop in path:
+            cost += latLon2Meters(
+                fix_geopose.position.latitude,
+                fix_geopose.position.longitude,
+                stop.position.latitude,
+                stop.position.longitude,
+            )
+            fix_geopose = stop
 
         for i in range(len(order) - 1):
 
             order1_geopose = latLonYaw2Geopose(order[i].latitude, order[i].longitude)
             order2_geopose = latLonYaw2Geopose(order[i + 1].latitude, order[i + 1].longitude)
 
-            # We want the spacing to be 1.0 m for ease of distance calculation
-            cost = terrainPathPlanner(order1_geopose, order2_geopose, 1.0, elev_cost)[1]
+            path = terrainPathPlanner(order1_geopose, order2_geopose, wp_dist, elev_cost)
+
+            # Add up the cost of the path between the two legs
+            for stop in path:
+                cost += latLon2Meters(
+                    order1_geopose.position.latitude,
+                    order1_geopose.position.longitude,
+                    stop.position.latitude,
+                    stop.position.longitude,
+                )
+                order1_geopose = stop
 
         # Update the best order
         if cost < lowest_cost:
