@@ -232,12 +232,12 @@ USER $NAME
 # RUN apt update && apt install -y ros-humble-tf-transformations
 # USER $NAME 
 
-# # Fix for rasterio install error - Nelson Durrant, Apr 2025
-# USER root
-# RUN apt update && apt install -y \
-#     gdal-bin \
-#     libgdal-dev
-# USER $NAME
+# Fix for rasterio install error - Nelson Durrant, Apr 2025
+USER root
+RUN apt update && apt install -y \
+    gdal-bin \
+    libgdal-dev
+USER $NAME
 
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
