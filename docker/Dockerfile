@@ -121,7 +121,7 @@ RUN apt update && apt install -y \
 USER $NAME
 
 # Install plotjuggler - Nelson Durrant, Feb 2025
-# Useful for plotting and visualizing data from ROS 2 bags
+# Useful for plotting and visualizing data from ROS 2 bags and real-time tests
 USER root
 RUN apt update && apt install -y ros-humble-plotjuggler-ros
 USER $NAME
@@ -186,10 +186,6 @@ RUN pip3 install --upgrade pillow asciimatics
 # Install tmux docker-compose-esque launcher - Nelson Durrant, Mar 2025
 # Used for launching multiple tmux windows with a single command
 RUN pip3 install tmuxp
-
-# Install matplotlib - Nelson Durrant, Mar 2025
-# Used for plotting calculated path planning routes
-RUN pip3 install matplotlib
 
 # Install pyserial - Nelson Durrant, Mar 2025
 # Used for serial communication with the Arduinos
