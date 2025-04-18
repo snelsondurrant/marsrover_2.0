@@ -233,10 +233,10 @@ USER $NAME
 # USER $NAME 
 
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
+# Used for loading in and parsing GeoTIFF elevation maps
 USER root
-RUN apt update && apt install -y libgdal-dev
+RUN apt update && apt install -y libgdal-dev python3-rasterio
 USER $NAME
-RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
-    pip3 install rasterio==1.2.10 && \
-    pip3 install astar; \
-fi
+# Install an older version of rasterio for GDL version compatibility
+# RUN pip3 install rasterio==1.2.10
+RUN pip3 install astar
