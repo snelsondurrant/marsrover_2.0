@@ -1,36 +1,36 @@
 # Created by Nelson Durrant, Oct 2024
 FROM ros:humble-ros-base
 
-# # Why use ROS 2 Humble?
-# #
-# # The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older.
-# # Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer, but
-# # there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
-# # compatible L4T images (it has to match the Orin), and through a lot of trial and error we've learned
-# # that inter-Docker container FastDDS connections really only work reliably between matching distros.
-# # In addition, Iron has a sooner EOL date than Humble and less community support.
+# Why use ROS 2 Humble?
+#
+# The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older.
+# Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer, but
+# there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
+# compatible L4T images (it has to match the Orin), and through a lot of trial and error we've learned
+# that inter-Docker container FastDDS connections really only work reliably between matching distros.
+# In addition, Iron has a sooner EOL date than Humble and less community support.
 
-# ARG DEBIAN_FRONTEND=noninteractive
-# ARG TARGETARCH
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
 
-# # Define a username and password for the new user
-# ARG NAME=marsrover-docker
-# ARG PASS=thekillpack
+# Define a username and password for the new user
+ARG NAME=marsrover-docker
+ARG PASS=thekillpack
 
-# # Update and upgrade
-# RUN apt update && apt upgrade -y
+# Update and upgrade
+RUN apt update && apt upgrade -y
 
-# # Set up a new user
-# RUN useradd -ms /bin/bash $NAME
-# RUN usermod -aG sudo $NAME
-# RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-# RUN usermod -aG video $NAME
-# RUN usermod -aG dialout $NAME
-# RUN groupadd docker
-# RUN usermod -aG docker $NAME
-# RUN echo "$NAME:$PASS" | chpasswd
-# USER $NAME
-# WORKDIR /home/$NAME
+# Set up a new user
+RUN useradd -ms /bin/bash $NAME
+RUN usermod -aG sudo $NAME
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN usermod -aG video $NAME
+RUN usermod -aG dialout $NAME
+RUN groupadd docker
+RUN usermod -aG docker $NAME
+RUN echo "$NAME:$PASS" | chpasswd
+USER $NAME
+WORKDIR /home/$NAME
 
 # # Install general dependencies
 # USER root
@@ -240,5 +240,7 @@ FROM ros:humble-ros-base
 # USER $NAME
 
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
-RUN pip3 install rasterio
-RUN pip3 install astar
+RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
+    pip3 install rasterio && \
+    pip3 install astar;
+RUN fi
