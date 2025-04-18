@@ -234,14 +234,7 @@ USER $NAME
 
 # Fix for rasterio install error - Nelson Durrant, Apr 2025
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    gnupg \
-    software-properties-common \
-    wget && \
-    add-apt-repository ppa:ubuntugis/unstable && \
-    apt update && \
-    apt install -y --no-install-recommends \
+RUN apt update && apt install -y \
     gdal-bin \
     libgdal-dev
 USER $NAME
