@@ -242,5 +242,5 @@ WORKDIR /home/$NAME
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
     pip3 install rasterio && \
-    pip3 install astar;
-RUN fi
+    pip3 install astar; \
+fi
