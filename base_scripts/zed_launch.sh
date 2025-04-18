@@ -57,6 +57,7 @@ ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
 	"docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session (with mosh)
+# https://github.com/mobile-shell/mosh
 mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- docker exec -it zed-ct tmux attach -t zed_launch
 
 # Kill the tmux session on exit

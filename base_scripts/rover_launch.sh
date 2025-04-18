@@ -81,6 +81,7 @@ case $task in
 esac
 
 # Attach to the 'rover_launch' tmux session (with mosh)
+# https://github.com/mobile-shell/mosh
 mosh $ROVER_USERNAME@$ROVER_IP_ADDRESS -- docker exec -it marsrover-ct tmux attach -t rover_launch
 
 # Kill the tmux session on exit

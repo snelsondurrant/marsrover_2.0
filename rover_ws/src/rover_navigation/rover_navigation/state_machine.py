@@ -134,8 +134,10 @@ class StateMachine(Node):
         # Leg and order planner parameters
         self.declare_parameter("use_terrain_path_planner", False)
         self.declare_parameter("use_terrain_order_planner", False)
+        self.declare_parameter("elevation_cost", 0.1)
         self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
         self.use_terrain_order_planner = self.get_parameter("use_terrain_order_planner").value
+        self.elevation_cost = self.get_parameter("elevation_cost").value
 
         # Tunable values
         self.declare_parameter("wait_time", 5)
@@ -858,7 +860,7 @@ class StateMachine(Node):
 
         # 1. Generate a path to the destination waypoint
         if self.use_terrain_path_planner:
-            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
+            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, self.elevation_cost)
         else:
             path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
 
@@ -875,6 +877,7 @@ class StateMachine(Node):
                 self.mapviz_inter_publisher.publish(navsat_fix)
             else:
                 self.mapviz_goal_publisher.publish(navsat_fix)
+            time.sleep(0.1)  # give time to publish
 
         # 3. Follow the determined path
         asyncio.run(self.followGpsWaypoints(path))
@@ -1050,7 +1053,7 @@ class StateMachine(Node):
 
         # Determine the best order for the legs
         if self.use_terrain_order_planner:
-            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps)
+            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, self.waypoint_distance, self.elevation_cost)
         else:
             self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 
@@ -1155,7 +1158,7 @@ class StateMachine(Node):
 
         if not found_flag:
             if failure_cnt > 0:
-                self.task_warn(
+                self.task_error(
                     "Spin search completed ("
                     + str(success_cnt)
                     + "/"

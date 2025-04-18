@@ -1,4 +1,4 @@
-# Created by Nelson Durrant, Oct 2024 
+# Created by Nelson Durrant, Oct 2024
 FROM ros:humble-ros-base
 
 # Why use ROS 2 Humble?
@@ -98,6 +98,8 @@ ENV PATH="$PATH:/home/$NAME/.local/bin"
 #     # What do these commands do? - Full Name, Month Year
 #     # Why do we need them? Which ROS 2 nodes require them?
 #     < Add Dockerfile commands here >
+#
+# https://docs.docker.com/reference/dockerfile/
 #
 ###############################################################
 
@@ -229,3 +231,7 @@ RUN pip3 install requests
 USER root
 RUN apt update && apt install -y ros-humble-tf-transformations
 USER $NAME 
+
+# Install tools for terrain path planning - Nelson Durrant, Apr 2025
+RUN pip3 install rasterio
+RUN pip3 install astar
