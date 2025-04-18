@@ -235,7 +235,7 @@ USER $NAME
 USER root
 ARG GDAL_VERSION=3.8.4 # Use GDAL >= 3.5
 
-# Install build deps, build GDAL from source, install, and cleanup
+# Install build deps (add cmake), build GDAL using CMake, install, and cleanup
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -245,31 +245,30 @@ RUN apt-get update && \
         libsqlite3-dev \
         libproj-dev \
         wget \
+        cmake \
+        # Add other GDAL driver dependencies here if needed (e.g., libcurl4-openssl-dev)
     && \
-    # Download, build, and install GDAL
+    # Download GDAL source
     wget -q https://github.com/OSGeo/gdal/releases/download/v${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz -O gdal.tar.gz && \
-    # DEBUG: Check if download exists and is not empty
-    echo "DEBUG: Checking downloaded file..." && ls -l gdal.tar.gz && \
     tar zxf gdal.tar.gz && \
     rm gdal.tar.gz && \
-    # DEBUG: List contents to see if the directory was created
-    echo "DEBUG: Listing contents after tar..." && ls -l && \
     cd gdal-${GDAL_VERSION} && \
-    # DEBUG: List contents of GDAL directory to see if configure is present
-    echo "DEBUG: Listing contents of $(pwd)..." && ls -l && \
-    ./configure --with-python --prefix=/usr/local && \
+    # Create a build directory (standard CMake practice)
+    mkdir build && \
+    cd build && \
+    # Configure using CMake instead of ./configure
+    # Point to parent dir ("..") for source, set install path, enable Python
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_PYTHON_BINDINGS=ON -DBUILD_SHARED_LIBS=ON && \
+    # Build using make
     make -j$(nproc) && \
+    # Install using make
     make install && \
+    # Update library cache
     ldconfig && \
+    # Cleanup source directory
     cd / && \
-    rm -rf gdal-${GDAL_VERSION} && \
-    # Cleanup build dependencies and apt cache
-    apt-get purge -y --auto-remove build-essential wget && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf gdal-${GDAL_VERSION}
 USER $NAME
-
-# ... rest of Dockerfile ...
 
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
