@@ -232,6 +232,15 @@ USER root
 RUN apt update && apt install -y ros-humble-tf-transformations
 USER $NAME 
 
+# Fix for rasterio install error - Nelson Durrant, Apr 2025
+USER root
+RUN apt update && \
+    apt install -y software-properties-common && \
+    add-apt-repository ppa:ubuntugis/unstable && \
+    apt update && \
+    apt install -y gdal-bin libgdal-dev python3-gdal
+USER $NAME
+
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN pip3 install rasterio
 RUN pip3 install astar
