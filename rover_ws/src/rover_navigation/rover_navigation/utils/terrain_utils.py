@@ -190,7 +190,7 @@ def terrainOrderPlanner(legs, fix, wp_dist, elev_cost):
     """
     Brute force the optimal order to complete the task legs (based on terrain)
 
-    TODO: This might take too long for 7 points. Should we use a greedy approach?
+    TODO: This might take too long for 7 GPS points. Should we use a greedy approach?
 
     :author: Nelson Durrant
     :date: Apr 2025
