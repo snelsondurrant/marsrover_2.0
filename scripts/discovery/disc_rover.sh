@@ -1,5 +1,5 @@
 #!/bin/bash
-# Created by Braden Meyers, Mar 2025
+# Created by Braden Meyers & Nelson Durrant, Mar 2025
 # 
 # Sets up the rover environment with the ROS_DISCOVERY_SERVER environment variable
 # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
