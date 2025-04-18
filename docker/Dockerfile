@@ -218,7 +218,8 @@ USER root
 RUN apt update && apt install -y ros-humble-imu-filter-madgwick
 USER $NAME
 
-# Install mapproxy tile caching script deps - Nelson Durrant, Mar 2025
+# Install mapproxy tile caching deps - Nelson Durrant, Mar 2025
+# Used for pre-caching map tiles for rover test locations
 RUN pip3 install mercantile
 RUN pip3 install requests
 
