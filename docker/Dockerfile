@@ -235,19 +235,7 @@ USER $NAME
 ARG GDAL_VERSION=3.8.4 # Use GDAL >= 3.5 required by rasterio
 
 # Install build deps, build GDAL from source, install, and cleanup
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        ca-certificates \
-        pkg-config \
-        python3-dev \
-        libsqlite3-dev \
-        libproj-dev \
-        wget \
-        # Add other GDAL driver dependencies here if needed (e.g., libcurl4-openssl-dev)
-    && \
-    # Download, build, and install GDAL
-    wget -q https://github.com/OSGeo/gdal/releases/download/v${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz -O gdal.tar.gz && \
+RUN wget -q https://github.com/OSGeo/gdal/releases/download/v${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz -O gdal.tar.gz && \
     tar zxf gdal.tar.gz && \
     rm gdal.tar.gz && \
     cd gdal-${GDAL_VERSION} && \
@@ -256,11 +244,7 @@ RUN apt-get update && \
     make install && \
     ldconfig && \
     cd / && \
-    rm -rf gdal-${GDAL_VERSION} && \
-    # Cleanup build dependencies and apt cache
-    apt-get purge -y --auto-remove build-essential wget && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf gdal-${GDAL_VERSION}
 
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
