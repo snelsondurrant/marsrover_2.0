@@ -232,25 +232,11 @@ USER $NAME
 # RUN apt update && apt install -y ros-humble-tf-transformations
 # USER $NAME 
 
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    gnupg \
-    software-properties-common \
-    wget && \
-    # Add the ubuntugis PPA for newer GDAL versions
-    add-apt-repository ppa:ubuntugis/unstable && \
-    # Update package list again to recognize the PPA
-    apt-get update && \
-    # Install GDAL development libraries and command-line tools from the PPA
-    # This should pull in a recent version like 3.9.x if available
-    apt-get install -y --no-install-recommends \
-      libgdal-dev \
-      gdal-bin
-USER $NAME
-
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
+USER root
+RUN apt update && apt install -y libgdal-dev
+USER $NAME
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
-    pip3 install rasterio && \
+    pip3 install rasterio==1.2.10 && \
     pip3 install astar; \
 fi
