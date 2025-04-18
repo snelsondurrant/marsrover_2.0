@@ -232,47 +232,8 @@ USER $NAME
 # RUN apt update && apt install -y ros-humble-tf-transformations
 # USER $NAME 
 
-USER root
-ARG GDAL_VERSION=3.8.4 # Use GDAL >= 3.5
-
-# Install build deps (add cmake), build GDAL using CMake, install, and cleanup
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        ca-certificates \
-        pkg-config \
-        python3-dev \
-        libsqlite3-dev \
-        libproj-dev \
-        wget \
-        cmake \
-        swig \
-        # Add other GDAL driver dependencies here if needed (e.g., libcurl4-openssl-dev)
-    && \
-    # Download GDAL source
-    wget -q https://github.com/OSGeo/gdal/releases/download/v${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz -O gdal.tar.gz && \
-    tar zxf gdal.tar.gz && \
-    rm gdal.tar.gz && \
-    cd gdal-${GDAL_VERSION} && \
-    # Create a build directory (standard CMake practice)
-    mkdir build && \
-    cd build && \
-    # Configure using CMake instead of ./configure
-    # Point to parent dir ("..") for source, set install path, enable Python
-    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_PYTHON_BINDINGS=ON -DBUILD_SHARED_LIBS=ON && \
-    # Build using make
-    make -j$(nproc) && \
-    # Install using make
-    make install && \
-    # Update library cache
-    ldconfig && \
-    # Cleanup source directory
-    cd / && \
-    rm -rf gdal-${GDAL_VERSION}
-USER $NAME
-
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
-    pip3 install rasterio && \
+    pip3 install rasterio==1.2.10 && \
     pip3 install astar; \
 fi
