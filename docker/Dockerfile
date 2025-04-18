@@ -32,17 +32,17 @@ RUN echo "$NAME:$PASS" | chpasswd
 USER $NAME
 WORKDIR /home/$NAME
 
-# # Install general dependencies
-# USER root
-# RUN apt update && apt install -y \
-#     curl \
-#     wget \
-#     git \
-#     vim \
-#     nano \
-#     tmux \
-#     python3-pip
-# USER $NAME
+# Install general dependencies
+USER root
+RUN apt update && apt install -y \
+    curl \
+    wget \
+    git \
+    vim \
+    nano \
+    tmux \
+    python3-pip
+USER $NAME
 
 # # Install graphical interface dependencies
 # USER root
