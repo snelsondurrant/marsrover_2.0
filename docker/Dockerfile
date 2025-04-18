@@ -232,19 +232,44 @@ USER $NAME
 # RUN apt update && apt install -y ros-humble-tf-transformations
 # USER $NAME 
 
-ARG GDAL_VERSION=3.8.4 # Use GDAL >= 3.5 required by rasterio
+USER root
+ARG GDAL_VERSION=3.8.4 # Use GDAL >= 3.5
 
 # Install build deps, build GDAL from source, install, and cleanup
-RUN wget -q https://github.com/OSGeo/gdal/releases/download/v${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz -O gdal.tar.gz && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        pkg-config \
+        python3-dev \
+        libsqlite3-dev \
+        libproj-dev \
+        wget \
+    && \
+    # Download, build, and install GDAL
+    wget -q https://github.com/OSGeo/gdal/releases/download/v${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz -O gdal.tar.gz && \
+    # DEBUG: Check if download exists and is not empty
+    echo "DEBUG: Checking downloaded file..." && ls -l gdal.tar.gz && \
     tar zxf gdal.tar.gz && \
     rm gdal.tar.gz && \
+    # DEBUG: List contents to see if the directory was created
+    echo "DEBUG: Listing contents after tar..." && ls -l && \
     cd gdal-${GDAL_VERSION} && \
+    # DEBUG: List contents of GDAL directory to see if configure is present
+    echo "DEBUG: Listing contents of $(pwd)..." && ls -l && \
     ./configure --with-python --prefix=/usr/local && \
     make -j$(nproc) && \
     make install && \
     ldconfig && \
     cd / && \
-    rm -rf gdal-${GDAL_VERSION}
+    rm -rf gdal-${GDAL_VERSION} && \
+    # Cleanup build dependencies and apt cache
+    apt-get purge -y --auto-remove build-essential wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+USER $NAME
+
+# ... rest of Dockerfile ...
 
 # Install tools for terrain path planning - Nelson Durrant, Apr 2025
 RUN if [ ! "$TARGETARCH" = "amd64" ]; then \
