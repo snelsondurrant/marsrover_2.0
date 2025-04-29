@@ -29,7 +29,7 @@ while getopts ":u:p:" opt; do
       ROVER_USERNAME=$OPTARG
       ;;
     p)
-      ROVER_PWD=$OPTARG
+      ROVER_PASSWORD=$OPTARG
       ;;
   esac
 done
@@ -54,7 +54,7 @@ if ! command -v sshpass &> /dev/null; then
     printWarning "Please install 'sshpass' using (sudo apt install sshpass)"
     ROVER_CONNECT="ssh"
 else
-    ROVER_CONNECT="sshpass -p $ROVER_PWD ssh"
+    ROVER_CONNECT="sshpass -p $ROVER_PASSWORD ssh"
 fi
 
 # Remove old SSH key (if it exists) to prevent key mismatch issues

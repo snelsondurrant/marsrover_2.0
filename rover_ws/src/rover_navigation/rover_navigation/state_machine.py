@@ -134,10 +134,12 @@ class StateMachine(Node):
         # Leg and order planner parameters
         self.declare_parameter("use_terrain_path_planner", False)
         self.declare_parameter("use_terrain_order_planner", False)
-        self.declare_parameter("elevation_cost", 0.1)
+        self.declare_parameter("elevation_cost", 1.0)
+        self.declare_parameter("elevation_limit", 0.7)
         self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
         self.use_terrain_order_planner = self.get_parameter("use_terrain_order_planner").value
         self.elevation_cost = self.get_parameter("elevation_cost").value
+        self.elevation_limit = self.get_parameter("elevation_limit").value
 
         # Tunable values
         self.declare_parameter("wait_time", 5)
@@ -860,7 +862,7 @@ class StateMachine(Node):
 
         # 1. Generate a path to the destination waypoint
         if self.use_terrain_path_planner:
-            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, self.elevation_cost)
+            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, self.elevation_cost, self.elevation_limit)
         else:
             path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
 
@@ -1053,7 +1055,7 @@ class StateMachine(Node):
 
         # Determine the best order for the legs
         if self.use_terrain_order_planner:
-            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, self.waypoint_distance, self.elevation_cost)
+            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, self.waypoint_distance, self.elevation_cost, self.elevation_limit)
         else:
             self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 

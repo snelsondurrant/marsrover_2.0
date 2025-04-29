@@ -75,7 +75,7 @@ case $task in
         ;;
     *)
         printError "No task specified"
-        echo "Specify a task using 'bash launch.sh -t <task>' (ex. 'bash launch.sh -t autonomy')"
+        echo "Specify a task using 'bash rover_launch.sh -t <task>' (ex. 'bash rover_launch.sh -t autonomy')"
         exit 1
         ;;
 esac
