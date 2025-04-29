@@ -124,6 +124,8 @@ class AutonomyGUI(Node, QWidget):
     :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: Apr 2025
 
+    TODO: Add a way to save/load waypoints as JSON files
+
     Clients:
     - /exec_autonomy_task/_action/cancel_goal (action_msgs/CancelGoal)
     Action Clients:
