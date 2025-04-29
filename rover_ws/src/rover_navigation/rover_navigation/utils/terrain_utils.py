@@ -212,7 +212,7 @@ def terrainOrderPlanner(legs, fix, wp_dist, elev_cost, elev_limit):
         fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
         order_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
 
-        path = terrainPathPlanner(fix_geopose, order_geopose, wp_dist, elev_cost)
+        path = terrainPathPlanner(fix_geopose, order_geopose, wp_dist, elev_cost, elev_limit)
 
         # Add up the cost of the path from the fix to the first leg
         for stop in path:
