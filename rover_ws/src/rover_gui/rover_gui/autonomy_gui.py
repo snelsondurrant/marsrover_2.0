@@ -80,7 +80,7 @@ class WaypointDialog(QDialog):
         self.layout.addRow("Latitude:", self.latitude_edit)
         self.layout.addRow("Longitude:", self.longitude_edit)
         self.layout.addRow("Tag ID:", self.tag_id_combo)
-        self.layout.addRow("Object Name:", self.object_combo)
+        self.layout.addRow("Object:", self.object_combo)
 
         self.type_combo.currentIndexChanged.connect(self.update_fields_visibility)
         self.update_fields_visibility()
@@ -96,6 +96,8 @@ class WaypointDialog(QDialog):
         waypoint_type = self.type_combo.currentText()
         self.tag_id_combo.setVisible(waypoint_type == "aruco")
         self.object_combo.setVisible(waypoint_type == "obj")
+        self.layout.labelForField(self.tag_id_combo).setVisible(waypoint_type == "aruco")
+        self.layout.labelForField(self.object_combo).setVisible(waypoint_type == "obj")
 
     def get_waypoint_data(self):
         waypoint = {}
