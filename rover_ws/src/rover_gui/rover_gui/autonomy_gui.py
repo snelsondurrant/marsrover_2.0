@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QDialogButtonBox,
     QMessageBox,
-    QFileDialog,  # Added for file dialogs
+    QFileDialog,
 )
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import QThread
@@ -39,17 +39,18 @@ class ROS2Thread(QThread):
 
     def __init__(self, node):
         super().__init__()
-        self._node = node
-        self._close_flag = False
+        self.node = node
+        self.close_flag = False
 
     def run(self):
-        while not self._close_flag and rclpy.ok():
-            rclpy.spin_once(self._node, timeout_sec=0.1)
-        self._node.destroy_node()
+        # IMPORTANT! This must be run in a separate thread to avoid blocking the GUI
+        while not self.close_flag and rclpy.ok():
+            rclpy.spin_once(self.node, timeout_sec=0.1)
+        self.node.destroy_node()
         rclpy.shutdown()
 
     def stop(self):
-        self._close_flag = True
+        self.close_flag = True
 
 
 class WaypointDialog(QDialog):
@@ -65,6 +66,7 @@ class WaypointDialog(QDialog):
         self.setWindowTitle("Add/Edit Waypoint")
         self.layout = QFormLayout()
 
+        # Create form fields
         self.name_edit = QLineEdit()
         self.type_combo = QComboBox()
         self.type_combo.addItems(["gps", "aruco", "obj"])
@@ -75,6 +77,7 @@ class WaypointDialog(QDialog):
         self.object_combo = QComboBox()
         self.object_combo.addItems(["mallet", "bottle"])
 
+        # Add fields to layout
         self.layout.addRow("Name:", self.name_edit)
         self.layout.addRow("Type:", self.type_combo)
         self.layout.addRow("Latitude:", self.latitude_edit)
@@ -82,6 +85,7 @@ class WaypointDialog(QDialog):
         self.layout.addRow("Tag ID:", self.tag_id_combo)
         self.layout.addRow("Object:", self.object_combo)
 
+        # Update visibility of fields based on selected type
         self.type_combo.currentIndexChanged.connect(self.update_fields_visibility)
         self.update_fields_visibility()
 
@@ -96,11 +100,17 @@ class WaypointDialog(QDialog):
         waypoint_type = self.type_combo.currentText()
         self.latitude_edit.setVisible(waypoint_type in ["gps", "aruco", "obj"])
         self.longitude_edit.setVisible(waypoint_type in ["gps", "aruco", "obj"])
-        self.layout.labelForField(self.latitude_edit).setVisible(waypoint_type in ["gps", "aruco", "obj"])
-        self.layout.labelForField(self.longitude_edit).setVisible(waypoint_type in ["gps", "aruco", "obj"])
+        self.layout.labelForField(self.latitude_edit).setVisible(
+            waypoint_type in ["gps", "aruco", "obj"]
+        )
+        self.layout.labelForField(self.longitude_edit).setVisible(
+            waypoint_type in ["gps", "aruco", "obj"]
+        )
 
         self.tag_id_combo.setVisible(waypoint_type == "aruco")
-        self.layout.labelForField(self.tag_id_combo).setVisible(waypoint_type == "aruco")
+        self.layout.labelForField(self.tag_id_combo).setVisible(
+            waypoint_type == "aruco"
+        )
 
         self.object_combo.setVisible(waypoint_type == "obj")
         self.layout.labelForField(self.object_combo).setVisible(waypoint_type == "obj")
@@ -192,7 +202,7 @@ class AutonomyGUI(Node, QWidget):
         self.waypoint_list = QListWidget()
         self.layout.addWidget(self.waypoint_list)
 
-        # JSON Layout
+        # Save/Load Layout
         json_layout = QHBoxLayout()
         self.save_button = QPushButton("Save Waypoints")
         self.save_button.clicked.connect(self.save_waypoints_to_file)
@@ -224,7 +234,7 @@ class AutonomyGUI(Node, QWidget):
         self.clear_button.clicked.connect(self.clear_waypoints)
         buttons_layout.addWidget(self.clear_button)
 
-        # Task Layout
+        # Start/Stop Layout
         task_layout = QHBoxLayout()
         self.start_button = QPushButton("Start Task")
         self.start_button.clicked.connect(self.start_task)
@@ -251,17 +261,17 @@ class AutonomyGUI(Node, QWidget):
         self.layout.setStretch(3, 1)  # Edit/Duplicate/Remove/Clear Buttons
         self.layout.setStretch(4, 1)  # Start/Stop Buttons
         self.layout.setStretch(5, 1)  # Feedback Label
-        self.layout.setStretch(6, 20) # Feedback Display
+        self.layout.setStretch(6, 20)  # Feedback Display
 
         self.setLayout(self.layout)
 
         self.ros2_thread = ROS2Thread(self)
         self.ros2_thread.start()
 
-        self._load_default_waypoints()
-        self._update_button_states()
+        self.load_default_waypoints()
+        self.update_button_states()
 
-    def _load_default_waypoints(self):
+    def load_default_waypoints(self):
         try:
             default_waypoints_data = json.loads(self.DEFAULT_WAYPOINTS_JSON)
             for leg_data in default_waypoints_data.get("legs", []):
@@ -282,7 +292,7 @@ class AutonomyGUI(Node, QWidget):
         except Exception as e:
             self.get_logger().error(f"Error loading default waypoints: {e}")
 
-    def _format_feedback_text(self, text):
+    def format_feedback_text(self, text):
         item = QListWidgetItem(text)
         if "[SUCCESS]" in text:
             item.setForeground(QColor("green"))
@@ -299,7 +309,7 @@ class AutonomyGUI(Node, QWidget):
         self.ros2_thread.wait()
         event.accept()
 
-    def _update_button_states(self):
+    def update_button_states(self):
         task_running = (
             self.goal_handle is not None
             and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
@@ -317,7 +327,6 @@ class AutonomyGUI(Node, QWidget):
             if waypoint_data:
                 self.waypoints.append(waypoint_data)
                 self.update_waypoint_list()
-                self._update_button_states()
 
     def open_edit_waypoint_dialog(self):
         self.get_logger().info("Editing waypoint...")
@@ -334,16 +343,15 @@ class AutonomyGUI(Node, QWidget):
                 dialog.tag_id_combo.setCurrentText(str(waypoint_data.get("tag_id", 0)))
             elif waypoint_data["type"] == "obj":
                 dialog.object_combo.setCurrentText(waypoint_data.get("object", ""))
-            
-            dialog.update_fields_visibility() # Ensure correct fields are shown initially
+
+            dialog.update_fields_visibility()
 
             if dialog.exec_() == QDialog.Accepted:
                 updated_waypoint_data = dialog.get_waypoint_data()
                 if updated_waypoint_data:
                     self.waypoints[index] = updated_waypoint_data
                     self.update_waypoint_list()
-                    self.waypoint_list.setCurrentRow(index) # Re-select the edited item
-                    self._update_button_states()
+                    self.waypoint_list.setCurrentRow(index)
 
     def duplicate_waypoint(self):
         self.get_logger().info("Duplicating waypoint...")
@@ -351,12 +359,13 @@ class AutonomyGUI(Node, QWidget):
         if selected_item:
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
-            new_waypoint_data = waypoint_data.copy() # Shallow copy is fine for dict of primitives/strings
+            new_waypoint_data = waypoint_data.copy()
             new_waypoint_data["name"] += "_copy"
-            self.waypoints.insert(index + 1, new_waypoint_data) # Insert after original
+            self.waypoints.insert(index + 1, new_waypoint_data)
             self.update_waypoint_list()
-            self.waypoint_list.setCurrentRow(index + 1) # Select the new duplicated item
-            self._update_button_states()
+            self.waypoint_list.setCurrentRow(
+                index + 1
+            )
 
     def remove_waypoint(self):
         self.get_logger().info("Removing waypoint...")
@@ -365,84 +374,108 @@ class AutonomyGUI(Node, QWidget):
             index = self.waypoint_list.row(selected_item)
             del self.waypoints[index]
             self.update_waypoint_list()
-            # Try to select the next item, or the previous if it was the last
             if index < len(self.waypoints):
                 self.waypoint_list.setCurrentRow(index)
             elif len(self.waypoints) > 0:
                 self.waypoint_list.setCurrentRow(index - 1)
-            self._update_button_states()
 
     def clear_waypoints(self):
         self.get_logger().info("Clearing waypoints...")
-        reply = QMessageBox.question(self, 'Clear Waypoints', 
-                                     "Are you sure you want to clear all waypoints?", 
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        reply = QMessageBox.question(
+            self,
+            "Clear Waypoints",
+            "Are you sure you want to clear all waypoints?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
         if reply == QMessageBox.Yes:
             self.waypoints = []
             self.update_waypoint_list()
-            self._update_button_states()
 
     def update_waypoint_list(self):
         current_row = self.waypoint_list.currentRow()
         self.waypoint_list.clear()
         for waypoint in self.waypoints:
             self.waypoint_list.addItem(str(waypoint))
-        if 0 <= current_row < self.waypoint_list.count(): # Restore selection if possible
-             self.waypoint_list.setCurrentRow(current_row)
-        # self.feedback_display.scrollToBottom() # Not relevant here
-        self._update_button_states() # Update buttons as list content changes selection
+        if (
+            0 <= current_row < self.waypoint_list.count()
+        ):
+            self.waypoint_list.setCurrentRow(current_row)
 
     def save_waypoints_to_file(self):
         self.get_logger().info("Saving waypoints to file...")
         if not self.waypoints:
-            QMessageBox.information(self, "No Waypoints", "There are no waypoints to save.")
+            QMessageBox.information(
+                self, "No Waypoints", "There are no waypoints to save."
+            )
             return
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self, "Save Waypoints File", "",
-                                                  "JSON Files (*.json);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Waypoints File",
+            "",
+            "JSON Files (*.json);;All Files (*)",
+            options=options,
+        )
         if fileName:
-            if not fileName.endswith('.json'):
-                fileName += '.json'
+            if not fileName.endswith(".json"):
+                fileName += ".json"
             try:
-                with open(fileName, 'w') as f:
+                with open(fileName, "w") as f:
                     json.dump({"legs": self.waypoints}, f, indent=4)
                 self.get_logger().info(f"Waypoints saved to {fileName}")
             except Exception as e:
                 self.get_logger().error(f"Error saving waypoints: {e}")
-                QMessageBox.critical(self, "Error", f"Could not save waypoints to file: {e}")
+                QMessageBox.critical(
+                    self, "Error", f"Could not save waypoints to file: {e}"
+                )
 
     def load_waypoints_from_file(self):
         self.get_logger().info("Loading waypoints from file...")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Load Waypoints File", "",
-                                                  "JSON Files (*.json);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load Waypoints File",
+            "",
+            "JSON Files (*.json);;All Files (*)",
+            options=options,
+        )
         if fileName:
             try:
-                with open(fileName, 'r') as f:
+                with open(fileName, "r") as f:
                     data = json.load(f)
                 if "legs" in data and isinstance(data["legs"], list):
-                    # Optional: Ask user if they want to replace or append
-                    # For now, we replace
-                    self.waypoints = [] 
+                    self.waypoints = []
                     loaded_count = 0
                     for leg_data in data["legs"]:
-                        # Basic validation, could be more thorough
-                        if isinstance(leg_data, dict) and "name" in leg_data and "type" in leg_data:
+                        if (
+                            # Basic validation of waypoint data
+                            isinstance(leg_data, dict)
+                            and "name" in leg_data
+                            and "type" in leg_data
+                        ):
                             self.waypoints.append(leg_data)
-                            loaded_count +=1
+                            loaded_count += 1
                         else:
-                            self.get_logger().warn(f"Skipping invalid waypoint data: {leg_data}")
+                            self.get_logger().warn(
+                                f"Skipping invalid waypoint data: {leg_data}"
+                            )
                     self.update_waypoint_list()
-                    self._update_button_states()
-                    self.get_logger().info(f"Loaded {loaded_count} waypoints from {fileName}")
+                    self.get_logger().info(
+                        f"Loaded {loaded_count} waypoints from {fileName}"
+                    )
                 else:
-                    raise ValueError("Invalid waypoint file format. 'legs' array not found.")
+                    raise ValueError(
+                        "Invalid waypoint file format. 'legs' array not found."
+                    )
             except Exception as e:
                 self.get_logger().error(f"Error loading waypoints: {e}")
-                QMessageBox.critical(self, "Error", f"Could not load waypoints from file: {e}")
+                QMessageBox.critical(
+                    self, "Error", f"Could not load waypoints from file: {e}"
+                )
 
     def start_task(self):
         self.get_logger().info("Starting task...")
@@ -466,11 +499,11 @@ class AutonomyGUI(Node, QWidget):
 
             if leg_msg.type == "aruco":
                 leg_msg.tag_id = int(wp.get("tag_id", 0))
-                leg_msg.object = ""  # Ensure other fields are set to default or empty
+                leg_msg.object = ""
             elif leg_msg.type == "obj":
                 leg_msg.object = wp.get("object", "")
-                leg_msg.tag_id = 0  # Ensure other fields are set to default
-            else:  # gps type
+                leg_msg.tag_id = 0
+            else:
                 leg_msg.tag_id = 0
                 leg_msg.object = ""
 
@@ -481,41 +514,41 @@ class AutonomyGUI(Node, QWidget):
             goal_msg, feedback_callback=self.goal_feedback_callback
         )
         send_goal_future.add_done_callback(self.goal_response_callback)
-        self._update_button_states()
+        self.update_button_states()
 
     def goal_response_callback(self, future):
         self.goal_handle = future.result()
         if not self.goal_handle.accepted:
             self.feedback_display.addItem(
-                self._format_feedback_text(
+                self.format_feedback_text(
                     "[ERROR] [gui] Goal rejected by action server"
                 )
             )
         else:
             self.feedback_display.addItem(
-                self._format_feedback_text("[gui] Goal accepted by action server:")
+                self.format_feedback_text("[gui] Goal accepted by action server:")
             )
             for wp in self.waypoints:
                 self.feedback_display.addItem(" - " + str(wp))
             get_result_future = self.goal_handle.get_result_async()
             get_result_future.add_done_callback(self.get_result_callback)
             self.feedback_display.scrollToBottom()
-        self._update_button_states()
+        self.update_button_states()
 
     def goal_feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
-        formatted_text = self._format_feedback_text(f"{feedback.status}")
+        formatted_text = self.format_feedback_text(f"{feedback.status}")
         self.feedback_display.addItem(formatted_text)
         self.feedback_display.scrollToBottom()
-        self._update_button_states()
+        self.update_button_states()
 
     def get_result_callback(self, future):
         result = future.result()
-        formatted_text = self._format_feedback_text(f"[gui] {result.result.msg}")
+        formatted_text = self.format_feedback_text(f"[gui] {result.result.msg}")
         self.feedback_display.addItem(formatted_text)
         self.feedback_display.scrollToBottom()
         self.goal_handle = None
-        self._update_button_states()
+        self.update_button_states()
 
     def stop_task(self):
         self.get_logger().info("Stopping task...")
@@ -527,32 +560,34 @@ class AutonomyGUI(Node, QWidget):
 
         if not client.wait_for_service(timeout_sec=2.0):
             if not self.close_flag:
-                self.get_logger().error("CancelGoal service not available after 2 seconds!")
+                self.get_logger().error(
+                    "CancelGoal service not available after 2 seconds!"
+                )
                 QMessageBox.critical(self, "Error", "CancelGoal service not available!")
             else:
-                self.get_logger().warn("CancelGoal service not available after 2 seconds!")
+                self.get_logger().warn(
+                    "CancelGoal service not available after 2 seconds!"
+                )
             return
 
         request = CancelGoal.Request()
         future = client.call_async(request)
         future.add_done_callback(self.cancel_response_callback)
-        self._update_button_states()
+        self.update_button_states()
 
     def cancel_response_callback(self, future):
         response = future.result()
         if response.return_code == CancelGoal.Response.ERROR_NONE:
             self.feedback_display.addItem(
-                self._format_feedback_text("[gui] Cancel request sent successfully")
+                self.format_feedback_text("[gui] Cancel request sent successfully")
             )
             self.goal_handle = None
         else:
             self.feedback_display.addItem(
-                self._format_feedback_text(
-                    "[ERROR] [gui] Failed to send cancel request"
-                )
+                self.format_feedback_text("[ERROR] [gui] Failed to send cancel request")
             )
         self.feedback_display.scrollToBottom()
-        self._update_button_states()
+        self.update_button_states()
 
 
 def main(args=None):
