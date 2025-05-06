@@ -3,20 +3,8 @@
 #
 # Launches tasks on the base station using the 'base_launch' tmux session
 
-function printInfo {
-  # print blue
-  echo -e "\033[0m\033[36m[INFO] $1\033[0m"
-}
-
-function printWarning {
-  # print yellow
-  echo -e "\033[0m\033[33m[WARNING] $1\033[0m"
-}
-
-function printError {
-  # print red
-  echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
-}
+script_dir=$(dirname "$(readlink -f "$0")")
+source $script_dir/tools/base_common.sh
 
 # Check for a "-t <task>" argument
 while getopts ":t:" opt; do

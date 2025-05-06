@@ -3,24 +3,8 @@
 #
 # Set up a SSH key for passwordless access to the Mars Rover
 
-function printInfo {
- 	# print blue
- 	echo -e "\033[0m\033[36m[INFO] $1\033[0m"
-}
-
-function printWarning {
-  	# print yellow
-  	echo -e "\033[0m\033[33m[WARNING] $1\033[0m"
-}
-
-function printError {
-  	# print red
-  	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
-}
-
-ROVER_IP_ADDRESS=192.168.1.120
-ROVER_USERNAME=marsrover
-ROVER_PASSWORD=thekillpack
+script_dir=$(dirname "$(readlink -f "$0")")
+source $script_dir/base_common.sh
 
 # Check for a "-u <username>" argument
 while getopts ":u:p:" opt; do
@@ -64,4 +48,4 @@ remove_old_ssh_key "$ROVER_IP_ADDRESS" "22"
 $ROVER_CONNECT -o StrictHostKeyChecking=accept-new $ROVER_USERNAME@$ROVER_IP_ADDRESS "echo" &> /dev/null
 
 # Copy the SSH key to the rover (physical machine)
-ssh-copy-id marsrover@$ROVER_IP_ADDRESS
+ssh-copy-id $ROVER_USERNAME@$ROVER_IP_ADDRESS

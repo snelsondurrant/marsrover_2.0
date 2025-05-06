@@ -136,10 +136,14 @@ class StateMachine(Node):
         self.declare_parameter("use_terrain_order_planner", False)
         self.declare_parameter("elevation_cost", 1.0)
         self.declare_parameter("elevation_limit", 0.7)
+        self.declare_parameter("roll_cost", 1.0)
+        self.declare_parameter("roll_limit", 1.4)
         self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
         self.use_terrain_order_planner = self.get_parameter("use_terrain_order_planner").value
         self.elevation_cost = self.get_parameter("elevation_cost").value
         self.elevation_limit = self.get_parameter("elevation_limit").value
+        self.roll_cost = self.get_parameter("roll_cost").value
+        self.roll_limit = self.get_parameter("roll_limit").value
 
         # Tunable values
         self.declare_parameter("wait_time", 5)
@@ -862,7 +866,7 @@ class StateMachine(Node):
 
         # 1. Generate a path to the destination waypoint
         if self.use_terrain_path_planner:
-            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, self.elevation_cost, self.elevation_limit)
+            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, self.elevation_cost, self.elevation_limit, self.roll_cost, self.roll_limit)
         else:
             path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
 
@@ -1055,7 +1059,7 @@ class StateMachine(Node):
 
         # Determine the best order for the legs
         if self.use_terrain_order_planner:
-            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, self.waypoint_distance, self.elevation_cost, self.elevation_limit)
+            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, self.waypoint_distance, self.elevation_cost, self.elevation_limit, self.roll_cost, self.roll_limit)
         else:
             self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 
@@ -1220,7 +1224,7 @@ class StateMachine(Node):
 
         if nav_result == Result.SUCCEEDED:
             self.task_info("Navigated to hex " + str(self.hex_cntr))
-            self.state = State.SPIN_SEARCH
+            self.state = State.NEXT_HEX
         elif nav_result == Result.FAILED:
             self.task_error("Failed to navigate to hex " + str(self.hex_cntr))
             self.state = State.NEXT_HEX

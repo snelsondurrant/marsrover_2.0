@@ -16,6 +16,10 @@ state_machine:
     # The below distance in meters creates angle with an 1 meter AStar step on the xy plane
     # For example, if you set the distance to 0.7, the maximum traversable angle is tan^-1(0.7/1.0) = 35 degrees
     elevation_limit: 0.7 # The maximum allowable elevation difference in the AStar planner to be considered traversable
+    roll_cost: 1.0 # How much roll affects the cost of the computed AStar path
+    # The below distance in meters creates angle with two 1 meter AStar steps on the xy plane
+    # For example, if you set the distance to 0.7, the maximum traversable angle is tan^-1(1.4/2.0) = 35 degrees
+    roll_limit: 1.4 # The maximum allowable roll difference in the AStar planner to be considered traversable
     wait_time: 5  # Time to wait (flash LED) after successful arrival (in seconds)
     # The bigger the better below, as it gives Nav2 more room to navigate around obstacles.
     # Don't make it bigger than half the size of the rolling global costmap divided by 1.5 though.
