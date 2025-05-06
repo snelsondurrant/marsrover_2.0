@@ -27,6 +27,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtCore import QThread
 import sys
 import json
+import os
 
 
 class ROS2Thread(QThread):
@@ -181,6 +182,10 @@ class AutonomyGUI(Node, QWidget):
 
         self.resize(800, 800)
 
+        # Define the default directory for waypoints
+        # ~/rover_ws/src/rover_navigation/rover_navigation/waypoints
+        self.default_waypoints_dir = os.path.join(os.path.expanduser("~"), "rover_ws", "src", "rover_navigation", "rover_navigation", "waypoints")
+
         self.callback_group = ReentrantCallbackGroup()
         self._action_client = ActionClient(
             self,
@@ -254,14 +259,13 @@ class AutonomyGUI(Node, QWidget):
         self.feedback_display = QListWidget()
         self.layout.addWidget(self.feedback_display)
 
-        # Set stretch factors
         self.layout.setStretch(0, 1)  # Waypoint Label
         self.layout.setStretch(1, 6)  # Waypoint List
         self.layout.setStretch(2, 1)  # Save/Load Buttons
         self.layout.setStretch(3, 1)  # Edit/Duplicate/Remove/Clear Buttons
         self.layout.setStretch(4, 1)  # Start/Stop Buttons
         self.layout.setStretch(5, 1)  # Feedback Label
-        self.layout.setStretch(6, 20)  # Feedback Display
+        self.layout.setStretch(6, 20) # Feedback Display
 
         self.setLayout(self.layout)
 
@@ -316,8 +320,7 @@ class AutonomyGUI(Node, QWidget):
         )
         self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
         self.stop_button.setEnabled(task_running)
-        self.clear_button.setEnabled(len(self.waypoints))
-        self.save_button.setEnabled(len(self.waypoints))
+        self.save_button.setEnabled(len(self.waypoints) > 0)  # True if >0, False if 0
 
     def open_add_waypoint_dialog(self):
         self.get_logger().info("Adding waypoint...")
@@ -415,7 +418,7 @@ class AutonomyGUI(Node, QWidget):
         fileName, _ = QFileDialog.getSaveFileName(
             self,
             "Save Waypoints File",
-            "",
+            self.default_waypoints_dir,
             "JSON Files (*.json);;All Files (*)",
             options=options,
         )
@@ -426,6 +429,8 @@ class AutonomyGUI(Node, QWidget):
                 with open(fileName, "w") as f:
                     json.dump({"legs": self.waypoints}, f, indent=4)
                 self.get_logger().info(f"Waypoints saved to {fileName}")
+                # Update default_waypoints_dir to the directory where the file was saved
+                self.default_waypoints_dir = os.path.dirname(fileName)
             except Exception as e:
                 self.get_logger().error(f"Error saving waypoints: {e}")
                 QMessageBox.critical(
@@ -452,7 +457,6 @@ class AutonomyGUI(Node, QWidget):
                     loaded_count = 0
                     for leg_data in data["legs"]:
                         if (
-                            # Basic validation of waypoint data
                             isinstance(leg_data, dict)
                             and "name" in leg_data
                             and "type" in leg_data
@@ -467,6 +471,8 @@ class AutonomyGUI(Node, QWidget):
                     self.get_logger().info(
                         f"Loaded {loaded_count} waypoints from {fileName}"
                     )
+                    # Update default_waypoints_dir to the directory from where the file was loaded
+                    self.default_waypoints_dir = os.path.dirname(fileName)
                 else:
                     raise ValueError(
                         "Invalid waypoint file format. 'legs' array not found."
