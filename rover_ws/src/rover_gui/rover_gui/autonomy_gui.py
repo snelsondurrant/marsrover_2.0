@@ -149,33 +149,6 @@ class AutonomyGUI(Node, QWidget):
     - exec_autonomy_task (rover_interfaces/AutonomyTask)
     """
 
-    DEFAULT_WAYPOINTS_JSON = """
-{
-    "legs": [
-        {
-            "name": "gps1_sim",
-            "type": "gps",
-            "latitude": 38.162923,
-            "longitude": -122.454987
-        },
-        {
-            "name": "aruco1_sim",
-            "type": "aruco",
-            "latitude": 38.162958,
-            "longitude": -122.455412,
-            "tag_id": 1
-        },
-        {
-            "name": "mallet_sim",
-            "type": "obj",
-            "latitude": 38.162635,
-            "longitude": -122.454902,
-            "object": "mallet"
-        }
-    ]
-}
-"""
-
     def __init__(self):
         Node.__init__(self, "autonomy_gui")
         QWidget.__init__(self)
@@ -184,7 +157,7 @@ class AutonomyGUI(Node, QWidget):
 
         # Define the default directory for waypoints
         # ~/rover_ws/src/rover_navigation/rover_navigation/waypoints
-        self.default_waypoints_dir = os.path.join(os.path.expanduser("~"), "rover_ws", "src", "rover_navigation", "rover_navigation", "waypoints")
+        self.default_waypoints_dir = os.path.join(os.path.expanduser("~"), "rover_ws", "src", "rover_navigation", "waypoints")
 
         self.callback_group = ReentrantCallbackGroup()
         self._action_client = ActionClient(
@@ -276,25 +249,49 @@ class AutonomyGUI(Node, QWidget):
         self.update_button_states()
 
     def load_default_waypoints(self):
+        
+        # Define the specific file for default waypoints
+        default_file_path = os.path.join(self.default_waypoints_dir, "sim_waypoints.json")
+        self.get_logger().info(f"Attempting to load default waypoints from: {default_file_path}")
+
+        if not os.path.exists(default_file_path):
+            self.get_logger().warn(
+                f"Default waypoints file not found at {default_file_path}. "
+                "No default waypoints will be loaded."
+            )
+            return
+
         try:
-            default_waypoints_data = json.loads(self.DEFAULT_WAYPOINTS_JSON)
+            with open(default_file_path, "r") as f:
+                default_waypoints_data = json.load(f)
+
             for leg_data in default_waypoints_data.get("legs", []):
                 waypoint = {
-                    "name": leg_data.get("name", ""),
-                    "type": leg_data.get("type", ""),
+                    "name": leg_data.get("name", "DefaultWaypoint"),
+                    "type": leg_data.get("type", "gps"),
                     "latitude": leg_data.get("latitude", 0.0),
                     "longitude": leg_data.get("longitude", 0.0),
                 }
                 if waypoint["type"] == "aruco":
-                    waypoint["tag_id"] = leg_data.get("tag_id", 0)
+                    waypoint["tag_id"] = int(leg_data.get("tag_id", 0))
                 elif waypoint["type"] == "obj":
                     waypoint["object"] = leg_data.get("object", "")
+                
                 self.waypoints.append(waypoint)
+            
+            if self.waypoints:
+                self.get_logger().info(f"Successfully loaded {len(self.waypoints)} default waypoints from {default_file_path}.")
+            else:
+                self.get_logger().info(f"No valid 'legs' found in {default_file_path} or file was empty.")
+
             self.update_waypoint_list()
+
+        except FileNotFoundError:
+            self.get_logger().error(f"Default waypoints file disappeared: {default_file_path}")
         except json.JSONDecodeError as e:
-            self.get_logger().error(f"Error decoding default waypoints: {e}")
+            self.get_logger().error(f"Error decoding JSON from {default_file_path}: {e}")
         except Exception as e:
-            self.get_logger().error(f"Error loading default waypoints: {e}")
+            self.get_logger().error(f"Error loading default waypoints from {default_file_path}: {e}")
 
     def format_feedback_text(self, text):
         item = QListWidgetItem(text)
@@ -330,6 +327,7 @@ class AutonomyGUI(Node, QWidget):
             if waypoint_data:
                 self.waypoints.append(waypoint_data)
                 self.update_waypoint_list()
+        self.update_button_states()
 
     def open_edit_waypoint_dialog(self):
         self.get_logger().info("Editing waypoint...")
@@ -355,6 +353,7 @@ class AutonomyGUI(Node, QWidget):
                     self.waypoints[index] = updated_waypoint_data
                     self.update_waypoint_list()
                     self.waypoint_list.setCurrentRow(index)
+        self.update_button_states()
 
     def duplicate_waypoint(self):
         self.get_logger().info("Duplicating waypoint...")
@@ -369,6 +368,7 @@ class AutonomyGUI(Node, QWidget):
             self.waypoint_list.setCurrentRow(
                 index + 1
             )
+        self.update_button_states()
 
     def remove_waypoint(self):
         self.get_logger().info("Removing waypoint...")
@@ -446,7 +446,7 @@ class AutonomyGUI(Node, QWidget):
         fileName, _ = QFileDialog.getOpenFileName(
             self,
             "Load Waypoints File",
-            "",
+            self.default_waypoints_dir,
             "JSON Files (*.json);;All Files (*)",
             options=options,
         )
