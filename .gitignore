@@ -11,6 +11,8 @@
 **/models/*.onnx
 **/tutorial_ws/src/*
 !**/tutorial_ws/src/README.md
+**/rover_ws/src/rover_navigation/waypoints/*.json
+!**/rover_ws/src/rover_navigation/waypoints/sim_waypoints.json
 
 __pycache__
 .vscode

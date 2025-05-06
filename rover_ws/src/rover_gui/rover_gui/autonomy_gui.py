@@ -21,11 +21,11 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QDialogButtonBox,
     QMessageBox,
+    QFileDialog,  # Added for file dialogs
 )
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import QThread
 import sys
-import threading
 import json
 
 
@@ -62,7 +62,7 @@ class WaypointDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Add Waypoint")
+        self.setWindowTitle("Add/Edit Waypoint")
         self.layout = QFormLayout()
 
         self.name_edit = QLineEdit()
@@ -94,9 +94,15 @@ class WaypointDialog(QDialog):
 
     def update_fields_visibility(self):
         waypoint_type = self.type_combo.currentText()
+        self.latitude_edit.setVisible(waypoint_type in ["gps", "aruco", "obj"])
+        self.longitude_edit.setVisible(waypoint_type in ["gps", "aruco", "obj"])
+        self.layout.labelForField(self.latitude_edit).setVisible(waypoint_type in ["gps", "aruco", "obj"])
+        self.layout.labelForField(self.longitude_edit).setVisible(waypoint_type in ["gps", "aruco", "obj"])
+
         self.tag_id_combo.setVisible(waypoint_type == "aruco")
-        self.object_combo.setVisible(waypoint_type == "obj")
         self.layout.labelForField(self.tag_id_combo).setVisible(waypoint_type == "aruco")
+
+        self.object_combo.setVisible(waypoint_type == "obj")
         self.layout.labelForField(self.object_combo).setVisible(waypoint_type == "obj")
 
     def get_waypoint_data(self):
@@ -125,8 +131,6 @@ class AutonomyGUI(Node, QWidget):
 
     :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: Apr 2025
-
-    TODO: Add a way to save/load waypoints as JSON files
 
     Clients:
     - /exec_autonomy_task/_action/cancel_goal (action_msgs/CancelGoal)
@@ -188,6 +192,16 @@ class AutonomyGUI(Node, QWidget):
         self.waypoint_list = QListWidget()
         self.layout.addWidget(self.waypoint_list)
 
+        # JSON Layout
+        json_layout = QHBoxLayout()
+        self.save_button = QPushButton("Save Waypoints")
+        self.save_button.clicked.connect(self.save_waypoints_to_file)
+        json_layout.addWidget(self.save_button)
+
+        self.load_button = QPushButton("Load Waypoints")
+        self.load_button.clicked.connect(self.load_waypoints_from_file)
+        json_layout.addWidget(self.load_button)
+
         # Buttons Layout
         buttons_layout = QHBoxLayout()
         self.add_button = QPushButton("Add")
@@ -197,7 +211,7 @@ class AutonomyGUI(Node, QWidget):
         self.edit_button = QPushButton("Edit")
         self.edit_button.clicked.connect(self.open_edit_waypoint_dialog)
         buttons_layout.addWidget(self.edit_button)
-        
+
         self.duplicate_button = QPushButton("Duplicate")
         self.duplicate_button.clicked.connect(self.duplicate_waypoint)
         buttons_layout.addWidget(self.duplicate_button)
@@ -210,15 +224,19 @@ class AutonomyGUI(Node, QWidget):
         self.clear_button.clicked.connect(self.clear_waypoints)
         buttons_layout.addWidget(self.clear_button)
 
+        # Task Layout
+        task_layout = QHBoxLayout()
         self.start_button = QPushButton("Start Task")
         self.start_button.clicked.connect(self.start_task)
-        buttons_layout.addWidget(self.start_button)
+        task_layout.addWidget(self.start_button)
 
         self.stop_button = QPushButton("Stop Task")
         self.stop_button.clicked.connect(self.stop_task)
-        buttons_layout.addWidget(self.stop_button)
+        task_layout.addWidget(self.stop_button)
 
+        self.layout.addLayout(json_layout)
         self.layout.addLayout(buttons_layout)
+        self.layout.addLayout(task_layout)
 
         # Feedback Display
         self.feedback_label = QLabel("Task Feedback:")
@@ -229,9 +247,11 @@ class AutonomyGUI(Node, QWidget):
         # Set stretch factors
         self.layout.setStretch(0, 1)  # Waypoint Label
         self.layout.setStretch(1, 6)  # Waypoint List
-        self.layout.setStretch(2, 1)  # Buttons Container
-        self.layout.setStretch(3, 1)  # Feedback Label
-        self.layout.setStretch(4, 20)  # Feedback Display
+        self.layout.setStretch(2, 1)  # Save/Load Buttons
+        self.layout.setStretch(3, 1)  # Edit/Duplicate/Remove/Clear Buttons
+        self.layout.setStretch(4, 1)  # Start/Stop Buttons
+        self.layout.setStretch(5, 1)  # Feedback Label
+        self.layout.setStretch(6, 20) # Feedback Display
 
         self.setLayout(self.layout)
 
@@ -270,8 +290,7 @@ class AutonomyGUI(Node, QWidget):
             item.setForeground(QColor("red"))
         elif "[WARN]" in text:
             item.setForeground(QColor("orange"))
-        self.feedback_display.addItem(item)
-        self.feedback_display.scrollToBottom()
+        return item
 
     def closeEvent(self, event):
         self.close_flag = True
@@ -287,6 +306,8 @@ class AutonomyGUI(Node, QWidget):
         )
         self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
         self.stop_button.setEnabled(task_running)
+        self.clear_button.setEnabled(len(self.waypoints))
+        self.save_button.setEnabled(len(self.waypoints))
 
     def open_add_waypoint_dialog(self):
         self.get_logger().info("Adding waypoint...")
@@ -313,11 +334,15 @@ class AutonomyGUI(Node, QWidget):
                 dialog.tag_id_combo.setCurrentText(str(waypoint_data.get("tag_id", 0)))
             elif waypoint_data["type"] == "obj":
                 dialog.object_combo.setCurrentText(waypoint_data.get("object", ""))
+            
+            dialog.update_fields_visibility() # Ensure correct fields are shown initially
+
             if dialog.exec_() == QDialog.Accepted:
                 updated_waypoint_data = dialog.get_waypoint_data()
                 if updated_waypoint_data:
                     self.waypoints[index] = updated_waypoint_data
                     self.update_waypoint_list()
+                    self.waypoint_list.setCurrentRow(index) # Re-select the edited item
                     self._update_button_states()
 
     def duplicate_waypoint(self):
@@ -326,10 +351,11 @@ class AutonomyGUI(Node, QWidget):
         if selected_item:
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
-            new_waypoint_data = waypoint_data.copy()
+            new_waypoint_data = waypoint_data.copy() # Shallow copy is fine for dict of primitives/strings
             new_waypoint_data["name"] += "_copy"
-            self.waypoints.append(new_waypoint_data)
+            self.waypoints.insert(index + 1, new_waypoint_data) # Insert after original
             self.update_waypoint_list()
+            self.waypoint_list.setCurrentRow(index + 1) # Select the new duplicated item
             self._update_button_states()
 
     def remove_waypoint(self):
@@ -339,19 +365,84 @@ class AutonomyGUI(Node, QWidget):
             index = self.waypoint_list.row(selected_item)
             del self.waypoints[index]
             self.update_waypoint_list()
+            # Try to select the next item, or the previous if it was the last
+            if index < len(self.waypoints):
+                self.waypoint_list.setCurrentRow(index)
+            elif len(self.waypoints) > 0:
+                self.waypoint_list.setCurrentRow(index - 1)
             self._update_button_states()
 
     def clear_waypoints(self):
         self.get_logger().info("Clearing waypoints...")
-        self.waypoints = []
-        self.update_waypoint_list()
-        self._update_button_states()
+        reply = QMessageBox.question(self, 'Clear Waypoints', 
+                                     "Are you sure you want to clear all waypoints?", 
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.waypoints = []
+            self.update_waypoint_list()
+            self._update_button_states()
 
     def update_waypoint_list(self):
+        current_row = self.waypoint_list.currentRow()
         self.waypoint_list.clear()
         for waypoint in self.waypoints:
             self.waypoint_list.addItem(str(waypoint))
-            self.feedback_display.scrollToBottom()
+        if 0 <= current_row < self.waypoint_list.count(): # Restore selection if possible
+             self.waypoint_list.setCurrentRow(current_row)
+        # self.feedback_display.scrollToBottom() # Not relevant here
+        self._update_button_states() # Update buttons as list content changes selection
+
+    def save_waypoints_to_file(self):
+        self.get_logger().info("Saving waypoints to file...")
+        if not self.waypoints:
+            QMessageBox.information(self, "No Waypoints", "There are no waypoints to save.")
+            return
+
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save Waypoints File", "",
+                                                  "JSON Files (*.json);;All Files (*)", options=options)
+        if fileName:
+            if not fileName.endswith('.json'):
+                fileName += '.json'
+            try:
+                with open(fileName, 'w') as f:
+                    json.dump({"legs": self.waypoints}, f, indent=4)
+                self.get_logger().info(f"Waypoints saved to {fileName}")
+            except Exception as e:
+                self.get_logger().error(f"Error saving waypoints: {e}")
+                QMessageBox.critical(self, "Error", f"Could not save waypoints to file: {e}")
+
+    def load_waypoints_from_file(self):
+        self.get_logger().info("Loading waypoints from file...")
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Load Waypoints File", "",
+                                                  "JSON Files (*.json);;All Files (*)", options=options)
+        if fileName:
+            try:
+                with open(fileName, 'r') as f:
+                    data = json.load(f)
+                if "legs" in data and isinstance(data["legs"], list):
+                    # Optional: Ask user if they want to replace or append
+                    # For now, we replace
+                    self.waypoints = [] 
+                    loaded_count = 0
+                    for leg_data in data["legs"]:
+                        # Basic validation, could be more thorough
+                        if isinstance(leg_data, dict) and "name" in leg_data and "type" in leg_data:
+                            self.waypoints.append(leg_data)
+                            loaded_count +=1
+                        else:
+                            self.get_logger().warn(f"Skipping invalid waypoint data: {leg_data}")
+                    self.update_waypoint_list()
+                    self._update_button_states()
+                    self.get_logger().info(f"Loaded {loaded_count} waypoints from {fileName}")
+                else:
+                    raise ValueError("Invalid waypoint file format. 'legs' array not found.")
+            except Exception as e:
+                self.get_logger().error(f"Error loading waypoints: {e}")
+                QMessageBox.critical(self, "Error", f"Could not load waypoints from file: {e}")
 
     def start_task(self):
         self.get_logger().info("Starting task...")
@@ -436,10 +527,10 @@ class AutonomyGUI(Node, QWidget):
 
         if not client.wait_for_service(timeout_sec=2.0):
             if not self.close_flag:
-                self.get_logger().error("Service not available after 2 seconds!")
-                QMessageBox.critical(self, "Error", "Service not available!")
+                self.get_logger().error("CancelGoal service not available after 2 seconds!")
+                QMessageBox.critical(self, "Error", "CancelGoal service not available!")
             else:
-                self.get_logger().warn("Service not available after 2 seconds!")
+                self.get_logger().warn("CancelGoal service not available after 2 seconds!")
             return
 
         request = CancelGoal.Request()

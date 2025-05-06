@@ -1,0 +1,24 @@
+{
+    "legs": [
+        {
+            "name": "gps1_sim",
+            "type": "gps",
+            "latitude": 38.162923,
+            "longitude": -122.454987
+        },
+        {
+            "name": "aruco1_sim",
+            "type": "aruco",
+            "latitude": 38.162958,
+            "longitude": -122.455412,
+            "tag_id": 1
+        },
+        {
+            "name": "mallet_sim",
+            "type": "obj",
+            "latitude": 38.162635,
+            "longitude": -122.454902,
+            "object": "mallet"
+        }
+    ]
+}
