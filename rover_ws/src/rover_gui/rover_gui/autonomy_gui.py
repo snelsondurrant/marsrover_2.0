@@ -381,6 +381,7 @@ class AutonomyGUI(Node, QWidget):
                 self.waypoint_list.setCurrentRow(index)
             elif len(self.waypoints) > 0:
                 self.waypoint_list.setCurrentRow(index - 1)
+        self.update_button_states()
 
     def clear_waypoints(self):
         self.get_logger().info("Clearing waypoints...")
@@ -394,6 +395,7 @@ class AutonomyGUI(Node, QWidget):
         if reply == QMessageBox.Yes:
             self.waypoints = []
             self.update_waypoint_list()
+            self.update_button_states()
 
     def update_waypoint_list(self):
         current_row = self.waypoint_list.currentRow()
@@ -468,6 +470,7 @@ class AutonomyGUI(Node, QWidget):
                                 f"Skipping invalid waypoint data: {leg_data}"
                             )
                     self.update_waypoint_list()
+                    self.update_button_states()
                     self.get_logger().info(
                         f"Loaded {loaded_count} waypoints from {fileName}"
                     )
