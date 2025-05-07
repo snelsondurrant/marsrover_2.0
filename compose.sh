@@ -3,22 +3,8 @@
 #
 # Simple script to set up a quick Mars Rover development environment
 
-function printInfo {
- 	# print blue
- 	echo -e "\033[0m\033[36m[INFO] $1\033[0m"
-}
-
-function printWarning {
-  	# print yellow
-  	echo -e "\033[0m\033[33m[WARNING] $1\033[0m"
-}
-
-function printError {
-  	# print red
-  	echo -e "\033[0m\033[31m[ERROR] $1\033[0m"
-}
-
 script_dir=$(dirname "$(readlink -f "$0")")
+source $script_dir/base_scripts/tools/base_common.sh
 
 # Mapviz doesn't work on aarch64
 if [ ! $(uname -m) == "aarch64" ]; then
