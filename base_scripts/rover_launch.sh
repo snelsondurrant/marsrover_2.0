@@ -38,16 +38,28 @@ case $task in
           "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "servicing")
-        printWarning "Not implemented yet"
-        exit
+        printInfo "Setting up the servicing task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
+        envsubst < tmuxp/servicing/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
+        scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
+        ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
+          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "retrieval")
-        printWarning "Not implemented yet"
-        exit
+        printInfo "Setting up the retrieval task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
+        envsubst < tmuxp/retrieval/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
+        scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
+        ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
+          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "science")
-        printWarning "Not implemented yet"
-        exit
+        printInfo "Setting up the science task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
+        envsubst < tmuxp/science/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
+        scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
+        ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
+          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     *)
         printError "No task specified"

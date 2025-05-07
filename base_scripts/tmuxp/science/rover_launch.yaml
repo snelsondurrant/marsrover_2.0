@@ -1,20 +1,26 @@
-# AUTONOMY TASK
+# SCIENCE TASK
 #
 # Created by Nelson Durrant, Mar 2025
 # https://tmuxp.git-pull.com/configuration/examples.html
-session_name: zed_launch
-start_directory: "~/zed_ws" # inside the container
+session_name: rover_launch
+start_directory: "~/rover_ws" # inside the container
 environment:
   # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
   ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
 windows:
   - window_name: main
-    layout: even-horizontal
+    layout: tiled
     options:
       default-terminal: screen-256color
       mouse: "on"
     panes:
       - shell_command:
-          - source ~/zed_ws/install/setup.bash
-          - cmd: ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i serial_number:=37628625
+          - fastdds discovery --server-id 0
+      - shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: ros2 launch rover_bringup rover_startup.launch.py
+            enter: false
+      - shell_command:
+          - source ~/rover_ws/install/setup.bash
+          - cmd: add here
             enter: false

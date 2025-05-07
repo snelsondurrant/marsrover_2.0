@@ -34,16 +34,22 @@ case $task in
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "servicing")
-        printWarning "Not implemented yet"
-        exit
+        printInfo "Setting up the servicing task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
+        envsubst < tmuxp/servicing/base_launch.yaml > tmuxp/tmp/base_launch.yaml
+        docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "retrieval")
-        printWarning "Not implemented yet"
-        exit
+        printInfo "Setting up the retrieval task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
+        envsubst < tmuxp/retrieval/base_launch.yaml > tmuxp/tmp/base_launch.yaml
+        docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "science")
-        printWarning "Not implemented yet"
-        exit
+        printInfo "Setting up the science task..."
+        # This envsubst allows for the use of environment variables in the tmuxp config
+        envsubst < tmuxp/science/base_launch.yaml > tmuxp/tmp/base_launch.yaml
+        docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     *)
         printError "No task specified"

@@ -1,12 +1,12 @@
-# AUTONOMY TASK
+# SERVICING TASK
 #
 # Created by Nelson Durrant, Mar 2025
 # https://tmuxp.git-pull.com/configuration/examples.html
-session_name: zed_launch
-start_directory: "~/zed_ws" # inside the container
+session_name: base_launch
+start_directory: "~/rover_ws" # inside the container
 environment:
   # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
-  ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
+  ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
 windows:
   - window_name: main
     layout: even-horizontal
@@ -15,6 +15,6 @@ windows:
       mouse: "on"
     panes:
       - shell_command:
-          - source ~/zed_ws/install/setup.bash
-          - cmd: ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i serial_number:=37628625
+          - source ~/rover_ws/install/setup.bash
+          - cmd: add here
             enter: false
