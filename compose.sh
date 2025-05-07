@@ -4,7 +4,7 @@
 # Simple script to set up a quick Mars Rover development environment
 
 script_dir=$(dirname "$(readlink -f "$0")")
-source script_dir/base_scripts/tools/base_common.sh
+source $script_dir/base_scripts/tools/base_common.sh
 
 # Mapviz doesn't work on aarch64
 if [ ! $(uname -m) == "aarch64" ]; then
