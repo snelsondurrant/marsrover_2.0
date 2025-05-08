@@ -136,7 +136,7 @@ class StateMachine(Node):
         self.declare_parameter("use_terrain_order_planner", False)
         self.declare_parameter("elevation_cost", 1.0)
         self.declare_parameter("elevation_limit", 0.7)
-        self.declare_parameter("roll_cost", 1.0)
+        self.declare_parameter("roll_cost", 0.2)
         self.declare_parameter("roll_limit", 1.4)
         self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
         self.use_terrain_order_planner = self.get_parameter("use_terrain_order_planner").value
