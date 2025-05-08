@@ -171,6 +171,12 @@ RUN echo "$NAME:$PASS" | chpasswd
 # Allow the new user to access the ZED SDK
 RUN chown -R $NAME:$NAME /usr/local/
 
+# Setup up tmuxp for launch scripts
+USER root
+RUN apt update && apt install -y tmux
+USER $NAME
+ENV PATH="$PATH:/home/$NAME/.local/bin"
+RUN pip3 install --user tmuxp
 
 # Setup environment variables
 # COPY ros_entrypoint.sh /sbin/ros_entrypoint.sh
@@ -181,5 +187,4 @@ RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
 RUN touch ~/.hushlogin
 
-ENTRYPOINT ["/sbin/ros_entrypoint.sh"]
 CMD ["/bin/bash"]
