@@ -21,6 +21,14 @@ checkConnection # defined in base_common.sh
 # Start the Docker container if not already running
 if [ ! $(ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "docker ps" | grep -q "zed-ct") ]; then
     printWarning "Starting the zed-ct container on the rover..."
+    # Check the architecture of the rover
+    if [ $(ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "uname -m") == "aarch64" ]; then
+        printInfo "Rover is running on ARM architecture, using the arm_orin image..."
+        ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/zed_ws/docker/arm_orin && docker compose up -d"
+    else
+        printInfo "Rover is running on AMD architecture, using the amd_desktop image..."
+        ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/zed_ws/docker/amd_desktop && docker compose up -d"
+    fi
     ssh -t $ROVER_USERNAME@$ROVER_IP_ADDRESS "cd ~/marsrover_2.0/zed_ws/docker && docker compose up -d"
 fi
 

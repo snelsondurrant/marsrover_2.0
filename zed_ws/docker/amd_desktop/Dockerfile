@@ -1,3 +1,4 @@
+# Created by Braden Meyers, May 2025
 ARG UBUNTU_MAJOR=22
 ARG UBUNTU_MINOR="04"
 ARG CUDA_MAJOR=12
