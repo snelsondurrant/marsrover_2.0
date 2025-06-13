@@ -13,7 +13,9 @@
 >
 > Nelson Durrant
 >
-> May 2025 Update: We actually acquired a laptop with a GPU a couple of weeks before competition! However, we determined our team's familiarity with debugging and working with the old software was more of an asset than the advantages this new stack would offer for the 2025 competition.
+> --
+>
+> **May 2025 Update:** We actually acquired a laptop with a GPU a couple of weeks before competition! However, we determined our team's familiarity with debugging and working with the old software was more of an asset than the advantages this new stack would offer for the 2025 competition.
 
 --
 
