@@ -11,7 +11,7 @@
 >
 > I'll be starting my Master's program at BYU in Fall 2025, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant leap for roverkind!
 >
-> **Nelson Durrant**
+> Nelson Durrant
 >
 > --
 >
