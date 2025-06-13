@@ -11,11 +11,11 @@
 >
 > I'll be starting my Master's program at BYU in Fall 2025, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant leap for roverkind!
 >
-> Nelson Durrant
+> **Nelson Durrant**
 >
 > --
 >
-> **May 2025 Update:** We actually acquired a laptop with a GPU a couple of weeks before competition! However, we determined our team's familiarity with debugging and working with the old software was more of an asset than the advantages this new stack would offer for the 2025 competition.
+> **MAY 2025 UPDATE:** We actually acquired a laptop with a GPU a couple of weeks before competition! However, we determined our team's familiarity with debugging and working with the old software was more of an asset than the advantages this new stack would offer for the 2025 competition.
 
 --
 
