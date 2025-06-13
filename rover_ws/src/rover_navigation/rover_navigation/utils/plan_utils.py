@@ -63,6 +63,9 @@ def basicOrderPlanner(legs, fix):
     This is an NP-hard problem, but we deal with such small numbers of legs that we can brute force a 
     basic optimal solution in a reasonable time.
 
+    NOTE: In the future, order planning should probably be done on the base station before sending the
+    waypoints to the rover (to take advantage of more powerful computing resources).
+
     :author: Nelson Durrant
     :date: Mar 2025
     """

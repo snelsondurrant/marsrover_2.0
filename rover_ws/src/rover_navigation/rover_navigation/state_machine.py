@@ -32,12 +32,11 @@ from rover_navigation.utils.gps_utils import (
     latLon2Meters,
 )
 from rover_navigation.utils.plan_utils import (
-    basicPathPlanner,  # plan a straight line between two GPS coordinates
+    basicPathPlanner,  # plan a straight path between two GPS coordinates
     basicOrderPlanner,  # use brute force to find the best order of legs (based on distance)
 )
 from rover_navigation.utils.terrain_utils import (
-    terrainPathPlanner,
-    terrainOrderPlanner,
+    terrainPathPlanner,  # plan a path between two GPS coordinates using terrain data
 )
 
 
@@ -133,13 +132,11 @@ class StateMachine(Node):
 
         # Leg and order planner parameters
         self.declare_parameter("use_terrain_path_planner", False)
-        self.declare_parameter("use_terrain_order_planner", False)
         self.declare_parameter("elevation_cost", 1.0)
         self.declare_parameter("elevation_limit", 0.7)
         self.declare_parameter("roll_cost", 0.2)
         self.declare_parameter("roll_limit", 1.4)
         self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
-        self.use_terrain_order_planner = self.get_parameter("use_terrain_order_planner").value
         self.elevation_cost = self.get_parameter("elevation_cost").value
         self.elevation_limit = self.get_parameter("elevation_limit").value
         self.roll_cost = self.get_parameter("roll_cost").value
@@ -1048,20 +1045,14 @@ class StateMachine(Node):
                 raise Exception("Task execution canceled by action client")
 
         # Report which order and path planners are selected
-        if self.use_terrain_order_planner:
-            self.task_info("Order planner: terrainOrderPlanner")
-        else:
-            self.task_info("Order planner: basicOrderPlanner")
+        self.task_info("Order planner: basicOrderPlanner")
         if self.use_terrain_path_planner:
             self.task_info("Path planner: terrainPathPlanner")
         else:
             self.task_info("Path planner: basicPathPlanner")
 
         # Determine the best order for the legs
-        if self.use_terrain_order_planner:
-            self.legs = terrainOrderPlanner(self.legs, self.filtered_gps, self.waypoint_distance, self.elevation_cost, self.elevation_limit, self.roll_cost, self.roll_limit)
-        else:
-            self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
+        self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 
         order = [leg.name for leg in self.legs]
         self.task_info("Determined best leg order: " + str(order))

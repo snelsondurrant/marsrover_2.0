@@ -2,16 +2,15 @@
 # https://automaticaddison.com/ros-2-navigation-tuning-guide-nav2/
 
 # NOTE: As far as we've researched, it is possible to enable 3D costmaps and navigation planning in Nav2.
-# However, as of now it would take a LOT of hard, technical work (research papers, etc)
-# to set up and would use a lot more computing power (CPU usage, etc) than we have available.
+# However, as of now it would take a LOT of hard, technical work (PhD-level research papers, etc) to 
+# set up and would use a lot more computing power (CPU usage, etc) than we have available.
 #
-# Coupling 2D navigation with a terrain-based waypoint planner to ensure we have a mostly flat path 
+# Coupling 2D navigation with a terrain-based path planner to ensure we have a mostly flat path 
 # to follow and navigate in seems like the best solution for code simplicity and effectiveness.
 
 state_machine:
   ros__parameters:
     use_terrain_path_planner: false
-    use_terrain_order_planner: false # TODO: This currently might take too long to compute
     elevation_cost: 1.0 # How much elevation affects the cost of the computed AStar path
     # The below distance in meters creates angle with an 1 meter AStar step on the xy plane
     # For example, if you set the distance to 0.7, the maximum traversable angle is tan^-1(0.7/1.0) = 35 degrees
