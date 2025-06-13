@@ -4,11 +4,17 @@ FROM ros:humble-ros-base
 # Why use ROS 2 Humble?
 #
 # The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older.
-# Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer, but
-# there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
+# Unfortunately, Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer,
+# but there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
 # compatible L4T images (it has to match the Orin), and through a lot of trial and error we've learned
 # that inter-Docker container FastDDS connections really only work reliably between matching distros.
 # In addition, Iron has a sooner EOL date than Humble and less community support.
+#
+# In summary:
+# __________|_GZ Classic?___|_Nav2 GPS?_____|_ZED Docker?___|_EOL?______
+# Humble    | yes           | workaround    | yes           | May 2027
+# Iron      | yes           | yes           | no            | Dec 2024
+# Jazzy     | no            | yes           | no            | May 2029
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
@@ -128,7 +134,7 @@ USER $NAME
 
 # Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2025
 # We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
-# For some reason, these packages are not available for arm64
+# These packages are not currently available for arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \
@@ -145,7 +151,7 @@ USER $NAME
 
 # Install mapviz packages - Nelson Durrant, Feb 2025
 # Used for visualizing the robot's path and gps location
-# For some reason, these packages are not available for arm64
+# These packages are not currently available for arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt update && apt install -y \

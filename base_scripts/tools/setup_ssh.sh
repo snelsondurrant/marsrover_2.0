@@ -33,9 +33,9 @@ remove_old_ssh_key() {
     fi
 }
 
-# Check if ssh pass is installed
+# Check if sshpass is installed
 if ! command -v sshpass &> /dev/null; then
-    printWarning "Please install 'sshpass' using (sudo apt install sshpass)"
+    printWarning "Please install 'sshpass' using 'sudo apt install sshpass'"
     ROVER_CONNECT="ssh"
 else
     ROVER_CONNECT="sshpass -p $ROVER_PASSWORD ssh"
