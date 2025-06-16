@@ -11,10 +11,13 @@ FROM ros:humble-ros-base
 # In addition, Iron has a sooner EOL date than Humble and less community support.
 #
 # In summary:
-# __________|_GZ Classic?___|_Nav2 GPS?_____|_ZED Docker?___|_EOL?______
-# Humble    | yes           | workaround    | yes           | May 2027
-# Iron      | yes           | yes           | no            | Dec 2024
-# Jazzy     | no            | yes           | no            | May 2029
+# .---------.---------------.---------------.---------------.---------------.
+# |         | GZ Classic?   | Nav2 GPS?     | ZED Docker?   | EOL Support?  |
+# |-------- |---------------|---------------|---------------|---------------|
+# | Humble  | yes           | workaround    | yes           | May 2027      |
+# | Iron    | yes           | yes           | no            | Dec 2024      |
+# | Jazzy   | no            | yes           | no            | May 2029      |
+# '---------'---------------'---------------'---------------'---------------'
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
@@ -128,10 +131,11 @@ USER $NAME
 
 # Install plotjuggler - Nelson Durrant, Feb 2025
 # Useful for plotting and visualizing data from ROS 2 bags and real-time tests
-# NOTE: As of June 2025, PlotJuggler downloads seem to be broken
 # USER root
 # RUN apt update && apt install -y ros-humble-plotjuggler-ros
 # USER $NAME
+#
+# NOTE: As of June 2025, PlotJuggler downloads seem to be broken
 
 # Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2025
 # We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
@@ -229,12 +233,6 @@ USER $NAME
 # Used for pre-caching map tiles for rover test locations
 RUN pip3 install mercantile
 RUN pip3 install requests
-
-# Install tf transformations package - Braden Meyers, Mar 2025
-# Used to calibrate the ZED and lidar positions relative to the mount frame
-USER root
-RUN apt update && apt install -y ros-humble-tf-transformations
-USER $NAME 
 
 # Install tools for terrain maps - Nelson Durrant, Apr 2025
 # Used for loading in and parsing GeoTIFF elevation maps
