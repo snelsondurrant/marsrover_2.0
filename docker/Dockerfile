@@ -12,7 +12,7 @@ FROM ros:humble-ros-base
 #
 # In summary:
 # .---------.---------------.---------------.---------------.---------------.
-# |         | GZ Classic?   | Nav2 GPS?     | ZED Docker?   | EOL Support?  |
+# |         | GZ Classic?   | Nav2 GPS?     | ZED Docker?   | EOL?          |
 # |-------- |---------------|---------------|---------------|---------------|
 # | Humble  | yes           | workaround    | yes           | May 2027      |
 # | Iron    | yes           | yes           | no            | Dec 2024      |
