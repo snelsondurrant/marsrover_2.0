@@ -16,7 +16,7 @@ stateDiagram
   Path_Planner --> State_Machine:Planned Path WPs
   State_Machine --> Drive_Mux:Drive State
   Nav2 --> Drive_Mux:Drive Commands
-  XBox_Controller --> Drive_Mux:Drive_Commands
+  XBox_Controller --> Drive_Mux:Drive Commands
   Drive_Mux --> Arduino_Mega:Motor Commands
   Drive_Mux --> Arduino_Nano:LED Commands
   ZED2_Camera --> EKF:IMU Data
