@@ -1,3 +1,4 @@
+# Created by Nelson Durrant, Feb 2025
 import asyncio
 import rclpy
 import tf2_geometry_msgs
@@ -369,7 +370,7 @@ class StateMachine(Node):
         Function to follow a set of GPS waypoints, based on the nav2_simple_commander code
         NOTE: Call this with the asyncio.run() function
 
-        IMPORTANT! In ROS2 Humble the Nav2 GPS waypoint follower is not avaliable.
+        IMPORTANT! In ROS 2 Humble the Nav2 GPS waypoint follower is not avaliable.
         I've implemented a patch to use robot_localization to convert to poses Nav2 can go to.
         For versions newer than Humble you should just be able to use that server though.
 
@@ -466,7 +467,7 @@ class StateMachine(Node):
         # IMPORTANT! We ran into a lot of issues with the collision checker canceling spin goals
         # when no obstacles were present. We have implemented a custom behavior (rover_behaviors/CustomSpin)
         # that disables the collision checks, but hopefully disable_collision_checks is avaliable
-        # in future versions of ROS2 as the team moves forward.
+        # in future versions of ROS 2 as the team moves forward.
 
         self.info(f"Spinning to angle {goal_msg.target_yaw}....")
         send_goal_future = self.spin_client.send_goal_async(

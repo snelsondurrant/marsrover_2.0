@@ -1,3 +1,4 @@
+# Created by Braden Meyers, Mar 2025
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, String, UInt16MultiArray
@@ -29,7 +30,7 @@ class MegaWrapper(Node):
     :date: Mar 2025
 
     TODO: We need to add A LOT of functionality to this - elevator, speed changes, etc.
-    Like in the Autonomy-ROS2 repository.
+    Like in the Autonomy-ROS 2 repository.
 
     Subscribers:
     - cmd_vel_mux (geometry_msgs/Twist)

@@ -1,3 +1,13 @@
+[Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
+
+[Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
+
+[How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
+
+[Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
+
+--
+
 > **TO THE 2026 MARS ROVER TEAM:** I've helped with writing a decent amount of robot software from scratch here at BYU, and oftentimes have been part of a team that runs up against some architecture-based limitations later on (usually too integrated into our software at that point to change) that we really wished we would have understood better before we started. With the shift from ROS 1 to ROS 2 in the 2024-2025 Capstone year, I saw an opportunity to prevent some of those future problems and put in 30+ hours of research on robotics development best practices at the beginning of the Winter 2025 semester -- and learned A TON about the open-source tools and software structure professional robotic projects use. After a short coding spree, this repository is the synthesis of our current approach with some of those best practices, including:
 > - A Dockerized full-task simulator for rapid development and validation
 > - Industry-standard Nav2 dynamic path planning and hazard avoidance
@@ -16,16 +26,6 @@
 > --
 >
 > **MAY 2025 UPDATE:** We actually acquired a laptop with a GPU a couple of weeks before competition! However, we determined our team's familiarity with debugging and working with the previous software was more of an asset than the advantages this new stack would offer for the 2025 competition.
-
---
-
-[Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
-
-[Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
-
-[How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
-
-[Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
 
 --
 
@@ -65,15 +65,15 @@
 
 [Docker Concepts and Tutorials](https://docs.docker.com/get-started/introduction/whats-next/)
 
-[ROS2 Concepts](https://docs.ros.org/en/humble/Concepts/Basic.html)
+[ROS 2 Concepts](https://docs.ros.org/en/humble/Concepts/Basic.html)
 
-[ROS2 CLI Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)*
+[ROS 2 CLI Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)*
 
-[ROS2 Code Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)*
+[ROS 2 Code Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)*
 
-[ROS2 Discovery Server Tutorial](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)*
+[ROS 2 Discovery Server Tutorial](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)*
 
-[Robotics in ROS2 Tutorial](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+[Robotics in ROS 2 Tutorial](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
 **Autonomy:**
 
@@ -81,7 +81,7 @@
 
 [GPS Navigation w Nav2 Tutorial](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
-**All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS2 tutorial workspace.*
+**All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
 --
 

@@ -7,7 +7,7 @@
 <!-- https://docs.nav2.org/plugin_tutorials/docs/writing_new_behavior_plugin.html -->
 
 <!--
-IMPORTANT! I found that spin-disabling collisions were being detected incorrecly EVERY TIME in real life,
-and often in simulation. The entire point of this custom behavior is literally just to get rid of that check.
+IMPORTANT! I found that collisions were constantly being detected (incorrectly) in real life testing,
+and often in simulation. The entire point of this custom behavior is to disable collision detection.
 - Nelson Durrant, Apr 2025 
 -->

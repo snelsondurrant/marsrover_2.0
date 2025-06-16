@@ -1,13 +1,4 @@
-# Modified from the GPS demo - Nelson Durrant, Feb 2025
-
-# GPS WPF CHANGES: 
-# - amcl params where removed. They are not needed because global localization is provided
-#   by an ekf node on robot_localization fusing gps data with local odometry sources
-# - static layer is removed from both costmaps, in this tutorial we assume there is no map
-#   of the environment
-# - global costmap is set to be rolling to allow the robot to traverse big environment by
-#   following successive relatively close waypoints that fit in a smaller rolling costmap
-
+# Created by Nelson Durrant, Feb 2025
 state_machine:
   ros__parameters:
     use_terrain_path_planner: true
@@ -29,6 +20,14 @@ state_machine:
     spin_wait_time: 0.5  # Time to wait during each spin stop (in seconds)
     gps_nav_timeout: 210  # Maximum time to wait for GPS navigation to complete before moving on (in seconds)
     hex_nav_timeout: 45  # Maximum time to wait for hex navigation to complete before moving on (in seconds)
+
+# GPS WPF CHANGES: 
+# - amcl params where removed. They are not needed because global localization is provided
+#   by an ekf node on robot_localization fusing gps data with local odometry sources
+# - static layer is removed from both costmaps, in this tutorial we assume there is no map
+#   of the environment
+# - global costmap is set to be rolling to allow the robot to traverse big environment by
+#   following successive relatively close waypoints that fit in a smaller rolling costmap
 
 bt_navigator:
   ros__parameters:

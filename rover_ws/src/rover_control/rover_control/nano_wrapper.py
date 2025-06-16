@@ -1,16 +1,4 @@
-# Modified to listen to the nav_state Int8 message - Nelson Durrant, Mar 2025
-# TODO: I think this could be simplified and cleaned up A LOT
-
-# Also, for reference:
-# int8 AUTONOMOUS_STATE = 0
-# int8 TELEOPERATION_STATE = 1
-# int8 ARRIVAL_STATE = 2
-
-
-"""
-This wrapper allows us to merge 2 arduinos into one to allow for more USB ports
-"""
-
+# Created by ADD HERE, ADD HERE
 import rclpy
 from rclpy.node import Node
 import serial
@@ -22,6 +10,18 @@ import queue
 
 
 class NanoWrapper(Node):
+    """
+    This node acts as a middleman between the Orin and the Arduino Nano.
+
+    :author: ADD HERE
+    :date: ADD HERE
+
+    TODO: I think this could be simplified and cleaned up A LOT
+
+    Subscribers:
+    - /nav_state (std_msgs.Int8): Navigation state to control LEDs
+    """
+
     def __init__(self):
         super().__init__('nano_wrapper')
         
@@ -58,6 +58,10 @@ class NanoWrapper(Node):
 
     def led_callback(self, data):
         # Update LED based on the rover state
+        # int8 AUTONOMOUS_STATE = 0
+        # int8 TELEOPERATION_STATE = 1
+        # int8 ARRIVAL_STATE = 2
+
         data_array = f"L{data.data};"
         self.q.put(data_array)
 

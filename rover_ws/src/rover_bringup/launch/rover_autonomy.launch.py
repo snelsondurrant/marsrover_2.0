@@ -1,6 +1,5 @@
+# Created by Nelson Durrant, Jun 2025
 # AUTONOMY TASK ROVER LAUNCH FILE
-#
-# Created by Nelson Durrant, Feb 2025
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription

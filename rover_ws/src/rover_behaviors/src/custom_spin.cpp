@@ -151,8 +151,8 @@ nav2_behaviors::Status CustomSpin::onCycleUpdate()
   pose2d.theta = tf2::getYaw(current_pose.pose.orientation);
 
 /**
-IMPORTANT! I found that collisions were being detected incorrecly EVERY TIME in real life,
-and often in simulation. The entire point of this custom behavior is literally just to comment this out.
+IMPORTANT! I found that collisions were constantly being detected (incorrectly) in real life testing,
+and often in simulation. The entire point of this custom behavior is to comment the below out.
 - Nelson Durrant, Apr 2025 
 */
 

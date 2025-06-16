@@ -1,3 +1,4 @@
+# Created by Nelson Durrant, Feb 2025
 import math
 from geographic_msgs.msg import GeoPose
 from geometry_msgs.msg import Quaternion
@@ -26,7 +27,7 @@ def quaternion_from_euler(roll, pitch, yaw):
 def euler_from_quaternion(q: Quaternion):
     """
     Convert a quaternion into euler angles
-    taken from: https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
+    https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
     """
     t0 = +2.0 * (q.w * q.x + q.y * q.z)
     t1 = +1.0 - 2.0 * (q.x * q.x + q.y * q.y)
