@@ -15,3 +15,5 @@ stateDiagram
   BASE --> base_servicing.launch.py:rover_bringup
   ROVER --> rover_servicing.launch.py:rover_bringup
   ROVER --> rover_startup.launch.py:rover_bringup
+  rover_startup.launch.py --> mobility.launch.py:rover_control
+  rover_startup.launch.py --> peripherals.launch.py:rover_control
