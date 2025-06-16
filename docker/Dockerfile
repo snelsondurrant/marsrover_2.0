@@ -81,6 +81,7 @@ RUN ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggd
 USER $NAME
 
 # Dry run PlatformIO to install the necessary dependencies
+# TODO: There's definitely a more efficient way to do this
 RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git
 # '|| true' is used to ignore errors on a pio command failure
 WORKDIR /home/$NAME/marsrover_2.0/firmware/mega_pio
