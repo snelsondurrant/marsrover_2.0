@@ -93,9 +93,9 @@ class StateMachine(Node):
     """
     Class for executing the autonomy task using the Nav2 stack
 
-    Note: This is a pretty complex node. It's a hacked-together combination of the BasicNavigator
-    class and our own custom state machine with a lot of multi-threading. It's easiest to think of
-    as three sections with their own seperate threads: the state machine, the Nav2 BasicNavigator,
+    Note: This is a pretty complex node. It's a hacked-together combination of the Nav2 BasicNavigator
+    class and our own custom state machine with A LOT of multi-threading. It's easiest to think of
+    as three sections with their own separate threads: the state machine, the Nav2 BasicNavigator,
     and the ROS 2 callbacks.
 
     :author: Nelson Durrant
