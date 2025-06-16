@@ -1,0 +1,17 @@
+# SCIENCE TASK LAUNCH STRUCTURE
+#
+# Created by Nelson Durrant, Jun 2025
+# You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
+---
+config:
+  layout: elk
+  theme: neo
+  look: classic
+---
+stateDiagram
+  direction LR
+  [*] --> BASE
+  [*] --> ROVER
+  BASE --> base_science.launch.py:rover_bringup
+  ROVER --> rover_science.launch.py:rover_bringup
+  ROVER --> rover_startup.launch.py:rover_bringup

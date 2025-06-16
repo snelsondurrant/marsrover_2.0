@@ -1,0 +1,14 @@
+# SERVICING TASK SOFTWARE OVERVIEW
+#
+# Created by Nelson Durrant, Jun 2025
+# You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
+---
+config:
+  layout: elk
+  theme: neo
+  look: classic
+---
+stateDiagram
+  direction TB
+  XBox_Controller --> Drive_Mux:Drive Commands
+  Drive_Mux --> Arduino_Mega:Motor Commands

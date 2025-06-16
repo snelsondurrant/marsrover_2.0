@@ -1,4 +1,4 @@
-# RETRIEVAL TASK
+# RETRIEVAL TASK ROVER LAUNCH
 #
 # Created by Nelson Durrant, Mar 2025
 # https://tmuxp.git-pull.com/configuration/examples.html
@@ -22,5 +22,5 @@ windows:
             enter: false
       - shell_command:
           - source ~/rover_ws/install/setup.bash
-          - cmd: add here
+          - cmd: ros2 launch rover_bringup rover_retrieval.launch.py
             enter: false

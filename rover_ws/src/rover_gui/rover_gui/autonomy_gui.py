@@ -156,8 +156,8 @@ class AutonomyGUI(Node, QWidget):
         self.resize(800, 800)
 
         # Define the default directory for waypoints
-        # ~/rover_ws/src/rover_navigation/rover_navigation/waypoints
-        self.default_waypoints_dir = os.path.join(os.path.expanduser("~"), "rover_ws", "src", "rover_navigation", "waypoints")
+        # ~/rover_ws/src/rover_gui/rover_gui/waypoints
+        self.default_waypoints_dir = os.path.join(os.path.expanduser("~"), "rover_ws", "src", "rover_gui", "rover_gui", "waypoints")
 
         self.callback_group = ReentrantCallbackGroup()
         self._action_client = ActionClient(
