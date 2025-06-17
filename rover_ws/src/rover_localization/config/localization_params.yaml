@@ -1,15 +1,7 @@
 # Created by Nelson Durrant, Feb 2025
-imu_filter_madgwick: # combines IMU and magnetometer data from the ZED
-  ros__parameters:
-    use_mag: True
-    use_magnetic_field_msg: True
-    world_frame: 'enu' # to match robot_localization
-    publish_tf: False
-    publish_debug_topics: False
-
 # ekf_filter_node_odom:
-# The ZED calculates and manages the odom->zed_camera_link transform internally, and does a pretty good job
-# https://www.stereolabs.com/docs/ros2/positional-tracking
+  # The ZED calculates and manages the odom->zed_camera_link transform internally
+  # https://www.stereolabs.com/docs/ros2/positional-tracking
 
 ekf_filter_node_map: # outputs to the odometry/global topic
   # This publishes the map->odom transform
@@ -51,7 +43,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
     odom1_relative: false # We want to use the absolute GPS position
     odom1_queue_size: 2
 
-    imu0: imu/data # from the madgwick filter
+    imu0: zed/zed_node/imu/data
     imu0_config: [false, false, false,
                   false,  false,  true,
                   false, false, false,

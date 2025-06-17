@@ -72,7 +72,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[
-                    ("imu/data", "imu/data"), # from the imu_filter_madgwick
+                    ("imu/data", "zed/zed_node/imu/data"),
                     ("gps/fix", "gps/fix"),
                     ("gps/filtered", "gps/filtered"),
                     ("odometry/gps", "odometry/gps"),
@@ -109,20 +109,6 @@ def generate_launch_description():
                 executable="sync_origin",
                 output="screen",
                 parameters=[rl_params_file],
-            ),
-            # https://github.com/CCNYRoboticsLab/imu_tools/tree/humble?tab=readme-ov-file
-            launch_ros.actions.Node(
-                # This only launches in real life
-                package='imu_filter_madgwick',
-                executable='imu_filter_madgwick_node',
-                name='imu_filter_madgwick',
-                output='screen',
-                remappings=[
-                    ('imu/data_raw', 'zed/zed_node/imu/data_raw'),
-                    ('imu/mag', 'zed/zed_node/imu/mag')
-                ],
-                parameters=[rl_params_file],
-                condition=UnlessCondition(use_sim_time),
             ),
         ]
     )

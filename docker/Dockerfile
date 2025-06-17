@@ -224,12 +224,6 @@ USER root
 RUN apt update && apt install -y ros-humble-zed-msgs
 USER $NAME
 
-# Install IMU filter package - Nelson Durrant, Mar 2025
-# Used to combine the ZED's IMU data with its magnetometer data
-USER root
-RUN apt update && apt install -y ros-humble-imu-filter-madgwick
-USER $NAME
-
 # Install mapproxy tile caching deps - Nelson Durrant, Mar 2025
 # Used for pre-caching map tiles for rover test locations
 RUN pip3 install mercantile
