@@ -141,6 +141,10 @@ class AutonomyGUI(Node, QWidget):
     """
     GUI for starting, stopping, and monitoring the rover's autonomy task
 
+    NOTE: This is quite the jumble of unorganized code, but Google Gemini 2.5 Pro one-shotted
+    almost all the major functionality in under two hours, so I guess I can't complain too much
+    haha. It does seem to work really well tho.
+
     :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: Apr 2025
 
@@ -158,7 +162,14 @@ class AutonomyGUI(Node, QWidget):
 
         # Define the default directory for waypoints
         # ~/rover_ws/src/rover_gui/rover_gui/waypoints
-        self.default_waypoints_dir = os.path.join(os.path.expanduser("~"), "rover_ws", "src", "rover_gui", "rover_gui", "waypoints")
+        self.default_waypoints_dir = os.path.join(
+            os.path.expanduser("~"),
+            "rover_ws",
+            "src",
+            "rover_gui",
+            "rover_gui",
+            "waypoints",
+        )
 
         self.callback_group = ReentrantCallbackGroup()
         self._action_client = ActionClient(
@@ -183,11 +194,11 @@ class AutonomyGUI(Node, QWidget):
 
         # Save/Load Layout
         json_layout = QHBoxLayout()
-        self.save_button = QPushButton("Save Waypoints")
+        self.save_button = QPushButton("Save WPs to file")
         self.save_button.clicked.connect(self.save_waypoints_to_file)
         json_layout.addWidget(self.save_button)
 
-        self.load_button = QPushButton("Load Waypoints")
+        self.load_button = QPushButton("Load WPs from file")
         self.load_button.clicked.connect(self.load_waypoints_from_file)
         json_layout.addWidget(self.load_button)
 
@@ -215,11 +226,15 @@ class AutonomyGUI(Node, QWidget):
 
         # Start/Stop Layout
         task_layout = QHBoxLayout()
-        self.start_button = QPushButton("Start Task")
+        self.start_selected_button = QPushButton("Send WP")
+        self.start_selected_button.clicked.connect(self.start_selected_task)
+        task_layout.addWidget(self.start_selected_button)
+
+        self.start_button = QPushButton("Send all WPs")
         self.start_button.clicked.connect(self.start_task)
         task_layout.addWidget(self.start_button)
 
-        self.stop_button = QPushButton("Stop Task")
+        self.stop_button = QPushButton("Cancel WPs")
         self.stop_button.clicked.connect(self.stop_task)
         task_layout.addWidget(self.stop_button)
 
@@ -239,7 +254,7 @@ class AutonomyGUI(Node, QWidget):
         self.layout.setStretch(3, 1)  # Edit/Duplicate/Remove/Clear Buttons
         self.layout.setStretch(4, 1)  # Start/Stop Buttons
         self.layout.setStretch(5, 1)  # Feedback Label
-        self.layout.setStretch(6, 20) # Feedback Display
+        self.layout.setStretch(6, 20)  # Feedback Display
 
         self.setLayout(self.layout)
 
@@ -250,10 +265,14 @@ class AutonomyGUI(Node, QWidget):
         self.update_button_states()
 
     def load_default_waypoints(self):
-        
+
         # Define the specific file for default waypoints
-        default_file_path = os.path.join(self.default_waypoints_dir, "sim_waypoints.json")
-        self.get_logger().info(f"Attempting to load default waypoints from: {default_file_path}")
+        default_file_path = os.path.join(
+            self.default_waypoints_dir, "sim_waypoints.json"
+        )
+        self.get_logger().info(
+            f"Attempting to load default waypoints from: {default_file_path}"
+        )
 
         if not os.path.exists(default_file_path):
             self.get_logger().warn(
@@ -277,22 +296,32 @@ class AutonomyGUI(Node, QWidget):
                     waypoint["tag_id"] = int(leg_data.get("tag_id", 0))
                 elif waypoint["type"] == "obj":
                     waypoint["object"] = leg_data.get("object", "")
-                
+
                 self.waypoints.append(waypoint)
-            
+
             if self.waypoints:
-                self.get_logger().info(f"Successfully loaded {len(self.waypoints)} default waypoints from {default_file_path}.")
+                self.get_logger().info(
+                    f"Successfully loaded {len(self.waypoints)} default waypoints from {default_file_path}."
+                )
             else:
-                self.get_logger().info(f"No valid 'legs' found in {default_file_path} or file was empty.")
+                self.get_logger().info(
+                    f"No valid 'legs' found in {default_file_path} or file was empty."
+                )
 
             self.update_waypoint_list()
 
         except FileNotFoundError:
-            self.get_logger().error(f"Default waypoints file disappeared: {default_file_path}")
+            self.get_logger().error(
+                f"Default waypoints file disappeared: {default_file_path}"
+            )
         except json.JSONDecodeError as e:
-            self.get_logger().error(f"Error decoding JSON from {default_file_path}: {e}")
+            self.get_logger().error(
+                f"Error decoding JSON from {default_file_path}: {e}"
+            )
         except Exception as e:
-            self.get_logger().error(f"Error loading default waypoints from {default_file_path}: {e}")
+            self.get_logger().error(
+                f"Error loading default waypoints from {default_file_path}: {e}"
+            )
 
     def format_feedback_text(self, text):
         item = QListWidgetItem(text)
@@ -317,6 +346,9 @@ class AutonomyGUI(Node, QWidget):
             and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
         )
         self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
+        self.start_selected_button.setEnabled(
+            not task_running and len(self.waypoints) > 0
+        )
         self.stop_button.setEnabled(task_running)
         self.save_button.setEnabled(len(self.waypoints) > 0)  # True if >0, False if 0
 
@@ -366,9 +398,7 @@ class AutonomyGUI(Node, QWidget):
             new_waypoint_data["name"] += "_copy"
             self.waypoints.insert(index + 1, new_waypoint_data)
             self.update_waypoint_list()
-            self.waypoint_list.setCurrentRow(
-                index + 1
-            )
+            self.waypoint_list.setCurrentRow(index + 1)
         self.update_button_states()
 
     def remove_waypoint(self):
@@ -403,10 +433,12 @@ class AutonomyGUI(Node, QWidget):
         self.waypoint_list.clear()
         for waypoint in self.waypoints:
             self.waypoint_list.addItem(str(waypoint))
-        if (
-            0 <= current_row < self.waypoint_list.count()
-        ):
-            self.waypoint_list.setCurrentRow(current_row)
+
+        if self.waypoint_list.count() > 0:
+            if 0 <= current_row < self.waypoint_list.count():
+                self.waypoint_list.setCurrentRow(current_row)
+            else:
+                self.waypoint_list.setCurrentRow(0)
 
     def save_waypoints_to_file(self):
         self.get_logger().info("Saving waypoints to file...")
@@ -487,6 +519,47 @@ class AutonomyGUI(Node, QWidget):
                     self, "Error", f"Could not load waypoints from file: {e}"
                 )
 
+    def start_selected_task(self):
+        self.get_logger().info("Starting selected task...")
+        if not self._action_client.wait_for_server(timeout_sec=2.0):
+            self.get_logger().error("Action server not available after 2 seconds!")
+            QMessageBox.critical(self, "Error", "Action server not available!")
+            return
+
+        if not self.waypoints:
+            QMessageBox.warning(self, "Warning", "No waypoints to send.")
+            return
+
+        goal_msg = AutonomyTask.Goal()
+        goal_msg.legs = []
+        wp = self.waypoints[self.waypoint_list.currentRow()]
+        leg_msg = AutonomyLeg()
+        leg_msg.name = wp.get("name", "")
+        leg_msg.type = wp.get("type", "")
+        leg_msg.latitude = float(wp.get("latitude", 0.0))
+        leg_msg.longitude = float(wp.get("longitude", 0.0))
+
+        if leg_msg.type == "aruco":
+            leg_msg.tag_id = int(wp.get("tag_id", 0))
+            leg_msg.object = ""
+        elif leg_msg.type == "obj":
+            leg_msg.object = wp.get("object", "")
+            leg_msg.tag_id = 0
+        else:
+            leg_msg.tag_id = 0
+            leg_msg.object = ""
+
+        goal_msg.legs.append(leg_msg)
+
+        self.sent_waypoints = [self.waypoints[self.waypoint_list.currentRow()]]
+
+        self.feedback_display.clear()
+        send_goal_future = self._action_client.send_goal_async(
+            goal_msg, feedback_callback=self.goal_feedback_callback
+        )
+        send_goal_future.add_done_callback(self.goal_response_callback)
+        self.update_button_states()
+
     def start_task(self):
         self.get_logger().info("Starting task...")
         if not self._action_client.wait_for_server(timeout_sec=2.0):
@@ -519,6 +592,8 @@ class AutonomyGUI(Node, QWidget):
 
             goal_msg.legs.append(leg_msg)
 
+        self.sent_waypoints = self.waypoints.copy()  # Store sent waypoints for feedback
+
         self.feedback_display.clear()
         send_goal_future = self._action_client.send_goal_async(
             goal_msg, feedback_callback=self.goal_feedback_callback
@@ -538,7 +613,7 @@ class AutonomyGUI(Node, QWidget):
             self.feedback_display.addItem(
                 self.format_feedback_text("[gui] Goal accepted by action server:")
             )
-            for wp in self.waypoints:
+            for wp in self.sent_waypoints:
                 self.feedback_display.addItem(" - " + str(wp))
             get_result_future = self.goal_handle.get_result_async()
             get_result_future.add_done_callback(self.get_result_callback)
