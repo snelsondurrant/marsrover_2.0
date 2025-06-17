@@ -661,7 +661,7 @@ class StateMachine(Node):
 
         try:
             self.run_state_machine()
-            result.msg = "One small step for a rover, one giant leap for roverkind"
+            result.msg = "One small step for a rover, one giant leap for roverkind!"
             self.task_goal_handle.succeed()
         except Exception as e:  # catch exceptions to ensure we disable detections, return to teleop state
             self.task_fatal(str(e))
@@ -680,7 +680,7 @@ class StateMachine(Node):
                     asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
                 self.leg = None
 
-            result.msg = "It's gotta be the aliens, I'm telling you"
+            result.msg = "Okay, Houston, we've had a problem."
             self.task_goal_handle.abort()
 
         # Trigger the teleop state
