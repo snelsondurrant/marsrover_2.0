@@ -95,7 +95,7 @@
 
 ### Contributing
 
-- **Create a new branch.** Our main code branches are protected, so you'll need to create a new branch. Name your branch with a combination of your name and the feature you are working on (i.e. nelson/repo-docs).
+- **Create a new branch.** This repository's main branch is protected, so you'll need to create a new branch. Name your branch with a combination of your name and the feature you are working on (e.g. nelson/repo-docs).
 
 - **Make your changes.** Develop and debug your new feature or bug fix.
 
