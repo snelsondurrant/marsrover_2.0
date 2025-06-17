@@ -132,12 +132,10 @@ class StateMachine(Node):
         # https://github.com/ros-navigation/navigation2/tree/main/nav2_simple_commander
 
         # Leg and order planner parameters
-        self.declare_parameter("use_terrain_path_planner", False)
         self.declare_parameter("elevation_cost", 1.0)
         self.declare_parameter("elevation_limit", 0.7)
         self.declare_parameter("roll_cost", 0.2)
         self.declare_parameter("roll_limit", 1.4)
-        self.use_terrain_path_planner = self.get_parameter("use_terrain_path_planner").value
         self.elevation_cost = self.get_parameter("elevation_cost").value
         self.elevation_limit = self.get_parameter("elevation_limit").value
         self.roll_cost = self.get_parameter("roll_cost").value
@@ -213,6 +211,8 @@ class StateMachine(Node):
         self.legs = []
         self.leg = None
         self.task_goal_handle = None
+        self.use_terrain_path_planner = False
+        self.detection_enabled = False
 
         #################################
         ### ROS 2 OBJECT DECLARATIONS ###
@@ -648,14 +648,13 @@ class StateMachine(Node):
         result = AutonomyTask.Result()
         self.task_goal_handle = goal_handle
         self.cancel_flag = False
+        self.detection_enabled = False
 
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
-        if not self.legs:
-            self.task_fatal("No task legs provided")
-            result.msg = "Well that was less-than-interstellar of you"
-            self.task_goal_handle.abort()
-            return result
+        
+        # Get the task settings from the goal
+        self.use_terrain_path_planner = goal_handle.request.enable_terrain
 
         # Trigger the autonomy state
         asyncio.run(self.async_service_call(self.auto_client, self.auto_request))
@@ -668,15 +667,18 @@ class StateMachine(Node):
             self.task_fatal(str(e))
 
             # Disable aruco/object detection
-            if self.leg.type == "obj":
-                self.task_info("Disabling object detection")
-                self.obj_request.data = False
-                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-            elif self.leg.type == "aruco":
-                self.task_info("Disabling aruco detection")
-                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
-                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
-            self.leg = None
+            if self.leg is not None:
+                if self.leg.type == "obj" and self.detection_enabled:
+                    self.task_info("Disabling object detection")
+                    self.detection_enabled = False
+                    self.obj_request.data = False
+                    asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+                elif self.leg.type == "aruco" and self.detection_enabled:
+                    self.task_info("Disabling aruco detection")
+                    self.detection_enabled = False
+                    self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
+                    asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+                self.leg = None
 
             result.msg = "It's gotta be the aliens, I'm telling you"
             self.task_goal_handle.abort()
@@ -1083,10 +1085,12 @@ class StateMachine(Node):
         # Enable aruco/object detection
         if self.leg.type == "obj":
             self.task_info("Enabling object detection")
+            self.detection_enabled = True
             self.obj_request.data = True
             asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
         elif self.leg.type == "aruco":
             self.task_info("Enabling aruco detection")
+            self.detection_enabled = True
             self.aruco_request.transition.id = Transition.TRANSITION_ACTIVATE
             asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
@@ -1117,10 +1121,12 @@ class StateMachine(Node):
             # Disable aruco/object detection
             if self.leg.type == "obj":
                 self.task_info("Disabling object detection")
+                self.detection_enabled = False
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
             elif self.leg.type == "aruco":
                 self.task_info("Disabling aruco detection")
+                self.detection_enabled = False
                 self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
                 asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
@@ -1244,9 +1250,11 @@ class StateMachine(Node):
             if self.leg.type == "obj":
                 self.task_info("Disabling object detection")
                 self.obj_request.data = False
+                self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
             elif self.leg.type == "aruco":
                 self.task_info("Disabling aruco detection")
+                self.detection_enabled = False
                 self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
                 asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
@@ -1257,10 +1265,12 @@ class StateMachine(Node):
             # Disable aruco/object detection
             if self.leg.type == "obj":
                 self.task_info("Disabling object detection")
+                self.detection_enabled = False
                 self.obj_request.data = False
                 asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
             elif self.leg.type == "aruco":
                 self.task_info("Disabling aruco detection")
+                self.detection_enabled = False
                 self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
                 asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 

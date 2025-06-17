@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 capture_directory: "~"
 fixed_frame: map
 target_frame: map
@@ -10,7 +9,9 @@ show_status_bar: true
 show_capture_tools: true
 window_width: 1600
 window_height: 900
-view_scale: 0.564473748
+view_scale: 0.179858729
+offset_x: -11.2101583
+offset_y: -22.5667992
 use_latest_transforms: true
 background: "#a0a0a4"
 image_transport: raw
@@ -21,10 +22,10 @@ displays:
       visible: true
       collapsed: false
       custom_sources:
-      - base_url: http://localhost:8080/wmts/gm_layer/gm_grid/{level}/{x}/{y}.png
-        max_zoom: 19
-        name: Google Maps
-        type: wmts
+        - base_url: http://localhost:8080/wmts/gm_layer/gm_grid/{level}/{x}/{y}.png
+          max_zoom: 19
+          name: Google Maps
+          type: wmts
       bing_api_key: ""
       source: Google Maps
   - type: mapviz_plugins/tf_frame
@@ -49,8 +50,11 @@ displays:
       draw_style: points
       position_tolerance: 0
       buffer_size: 1
-# Added a way to display GPS goals - Nelson Durrant, Feb 2025
-  - type: mapviz_plugins/navsat # GPS goal waypoint display
+      qos_depth: 10
+      qos_history: 1
+      qos_reliability: 1
+      qos_durability: 2
+  - type: mapviz_plugins/navsat
     name: new display
     config:
       visible: true
@@ -60,7 +64,11 @@ displays:
       draw_style: points
       position_tolerance: 0
       buffer_size: 100
-  - type: mapviz_plugins/navsat # GPS intermediate waypoint display
+      qos_depth: 10
+      qos_history: 1
+      qos_reliability: 1
+      qos_durability: 2
+  - type: mapviz_plugins/navsat
     name: new display
     config:
       visible: true
@@ -70,3 +78,18 @@ displays:
       draw_style: points
       position_tolerance: 0
       buffer_size: 500
+      qos_depth: 10
+      qos_history: 1
+      qos_reliability: 1
+      qos_durability: 2
+  - type: mapviz_plugins/path
+    name: new display
+    config:
+      visible: false
+      collapsed: true
+      topic: /plan
+      color: "#ffffff"
+      qos_depth: 10
+      qos_history: 1
+      qos_reliability: 1
+      qos_durability: 2

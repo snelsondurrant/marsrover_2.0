@@ -1,7 +1,6 @@
 # Created by Nelson Durrant, Feb 2025
 state_machine:
   ros__parameters:
-    use_terrain_path_planner: true
     elevation_cost: 1.0 # How much elevation affects the cost of the computed AStar path
     # The below distance in meters creates angle with an 1 meter AStar step on the xy plane
     # For example, if you set the distance to 0.7, the maximum traversable angle is tan^-1(0.7/1.0) = 35 degrees

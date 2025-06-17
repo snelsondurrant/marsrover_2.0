@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QMessageBox,
     QFileDialog,
+    QCheckBox,
 )
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import QThread
@@ -226,6 +227,10 @@ class AutonomyGUI(Node, QWidget):
 
         # Start/Stop Layout
         task_layout = QHBoxLayout()
+        self.start_selected_button = QPushButton("Preview WPs")
+        self.start_selected_button.clicked.connect(self.start_selected_task)
+        task_layout.addWidget(self.start_selected_button)
+
         self.start_selected_button = QPushButton("Send WP")
         self.start_selected_button.clicked.connect(self.start_selected_task)
         task_layout.addWidget(self.start_selected_button)
@@ -234,13 +239,24 @@ class AutonomyGUI(Node, QWidget):
         self.start_button.clicked.connect(self.start_task)
         task_layout.addWidget(self.start_button)
 
-        self.stop_button = QPushButton("Cancel WPs")
+        self.stop_button = QPushButton("Cancel Task")
         self.stop_button.clicked.connect(self.stop_task)
         task_layout.addWidget(self.stop_button)
+
+        # Terrain Planning Layout
+        terrain_planning_layout = QHBoxLayout()
+        self.terrain_planning_checkbox = QCheckBox("Enable Terrain Path Planning")
+        self.terrain_planning_checkbox.setChecked(True)
+        self.terrain_planning_checkbox.setToolTip(
+            "If checked, the rover will attempt to reference a pre-loaded terrain map for path planning."
+        )
+        terrain_planning_layout.addWidget(self.terrain_planning_checkbox)
+        terrain_planning_layout.addStretch(1)
 
         self.layout.addLayout(json_layout)
         self.layout.addLayout(buttons_layout)
         self.layout.addLayout(task_layout)
+        self.layout.addLayout(terrain_planning_layout)
 
         # Feedback Display
         self.feedback_label = QLabel("Task Feedback:")
@@ -253,8 +269,9 @@ class AutonomyGUI(Node, QWidget):
         self.layout.setStretch(2, 1)  # Save/Load Buttons
         self.layout.setStretch(3, 1)  # Edit/Duplicate/Remove/Clear Buttons
         self.layout.setStretch(4, 1)  # Start/Stop Buttons
-        self.layout.setStretch(5, 1)  # Feedback Label
-        self.layout.setStretch(6, 20)  # Feedback Display
+        self.layout.setStretch(5, 1)  # Terrain Planning Layout
+        self.layout.setStretch(6, 1)  # Feedback Label
+        self.layout.setStretch(7, 20)  # Feedback Display
 
         self.setLayout(self.layout)
 
@@ -345,12 +362,16 @@ class AutonomyGUI(Node, QWidget):
             self.goal_handle is not None
             and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
         )
+        self.edit_button.setEnabled(len(self.waypoints) > 0)
+        self.duplicate_button.setEnabled(len(self.waypoints) > 0)
+        self.remove_button.setEnabled(len(self.waypoints) > 0)
+        self.clear_button.setEnabled(len(self.waypoints) > 0)
         self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
         self.start_selected_button.setEnabled(
             not task_running and len(self.waypoints) > 0
         )
         self.stop_button.setEnabled(task_running)
-        self.save_button.setEnabled(len(self.waypoints) > 0)  # True if >0, False if 0
+        self.save_button.setEnabled(len(self.waypoints) > 0)
 
     def open_add_waypoint_dialog(self):
         self.get_logger().info("Adding waypoint...")
@@ -521,18 +542,32 @@ class AutonomyGUI(Node, QWidget):
 
     def start_selected_task(self):
         self.get_logger().info("Starting selected task...")
+        selected_item = self.waypoint_list.currentItem()
+        if not selected_item:
+            QMessageBox.warning(self, "Warning", "No waypoint selected to send.")
+            return
+
+        current_selection_index = self.waypoint_list.row(selected_item)
+        if not (0 <= current_selection_index < len(self.waypoints)):
+            QMessageBox.warning(
+                self, "Warning", "Invalid waypoint selection or list out of sync."
+            )
+            self.get_logger().error(
+                f"Invalid selection index: {current_selection_index} for waypoints len: {len(self.waypoints)}. "
+                f"Selected item text: {selected_item.text()}"
+            )
+            return
+
         if not self._action_client.wait_for_server(timeout_sec=2.0):
             self.get_logger().error("Action server not available after 2 seconds!")
             QMessageBox.critical(self, "Error", "Action server not available!")
             return
 
-        if not self.waypoints:
-            QMessageBox.warning(self, "Warning", "No waypoints to send.")
-            return
-
         goal_msg = AutonomyTask.Goal()
+        goal_msg.enable_terrain = self.terrain_planning_checkbox.isChecked()
+
         goal_msg.legs = []
-        wp = self.waypoints[self.waypoint_list.currentRow()]
+        wp = self.waypoints[current_selection_index]
         leg_msg = AutonomyLeg()
         leg_msg.name = wp.get("name", "")
         leg_msg.type = wp.get("type", "")
@@ -551,7 +586,7 @@ class AutonomyGUI(Node, QWidget):
 
         goal_msg.legs.append(leg_msg)
 
-        self.sent_waypoints = [self.waypoints[self.waypoint_list.currentRow()]]
+        self.sent_waypoints = [wp]
 
         self.feedback_display.clear()
         send_goal_future = self._action_client.send_goal_async(
@@ -572,6 +607,8 @@ class AutonomyGUI(Node, QWidget):
             return
 
         goal_msg = AutonomyTask.Goal()
+        goal_msg.enable_terrain = self.terrain_planning_checkbox.isChecked()
+
         goal_msg.legs = []
         for wp in self.waypoints:
             leg_msg = AutonomyLeg()
@@ -592,7 +629,7 @@ class AutonomyGUI(Node, QWidget):
 
             goal_msg.legs.append(leg_msg)
 
-        self.sent_waypoints = self.waypoints.copy()  # Store sent waypoints for feedback
+        self.sent_waypoints = self.waypoints.copy()
 
         self.feedback_display.clear()
         send_goal_future = self._action_client.send_goal_async(
@@ -615,6 +652,12 @@ class AutonomyGUI(Node, QWidget):
             )
             for wp in self.sent_waypoints:
                 self.feedback_display.addItem(" - " + str(wp))
+            self.feedback_display.addItem(
+                self.format_feedback_text(
+                    " - Terrain Path Planning: "
+                    f"{'ENABLED' if self.terrain_planning_checkbox.isChecked() else 'DISABLED'}"
+                )
+            )
             get_result_future = self.goal_handle.get_result_async()
             get_result_future.add_done_callback(self.get_result_callback)
             self.feedback_display.scrollToBottom()
