@@ -89,6 +89,8 @@
 
 [Running the Simulation](https://www.youtube.com/watch?v=uB8YDXrGd-g)
 
+[Localization Development and Debugging](https://youtu.be/r0U6DLKrkSk)
+
 --
 
 ### Contributing
