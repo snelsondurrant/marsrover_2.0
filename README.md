@@ -87,7 +87,7 @@
 
 ### How-To Videos
 
-[Running the Simulation](https://www.youtube.com/watch?v=uB8YDXrGd-g)
+[Running the Simulation](https://youtu.be/sQmkes66p2w)
 
 [Localization Debugging](https://youtu.be/r0U6DLKrkSk)
 
