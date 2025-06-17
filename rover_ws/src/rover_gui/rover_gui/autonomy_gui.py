@@ -7,6 +7,7 @@ from action_msgs.msg import GoalStatus
 from action_msgs.srv import CancelGoal
 from rover_interfaces.action import AutonomyTask
 from rover_interfaces.msg import AutonomyLeg
+from visualization_msgs.msg import Marker, MarkerArray
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -30,6 +31,7 @@ from PyQt5.QtCore import QThread
 import sys
 import json
 import os
+import utm
 
 
 class ROS2Thread(QThread):
@@ -180,6 +182,13 @@ class AutonomyGUI(Node, QWidget):
             callback_group=self.callback_group,
         )
 
+        self.preview_pub = self.create_publisher(
+            MarkerArray,
+            "/mapviz/preview",
+            10,
+            callback_group=self.callback_group,
+        )
+
         self.waypoints = []
         self.goal_handle = None
         self.close_flag = False
@@ -195,6 +204,10 @@ class AutonomyGUI(Node, QWidget):
 
         # Save/Load Layout
         json_layout = QHBoxLayout()
+        self.preview_button = QPushButton("Preview WPs")
+        self.preview_button.clicked.connect(self.preview_wps)
+        json_layout.addWidget(self.preview_button)
+
         self.save_button = QPushButton("Save WPs to file")
         self.save_button.clicked.connect(self.save_waypoints_to_file)
         json_layout.addWidget(self.save_button)
@@ -227,10 +240,6 @@ class AutonomyGUI(Node, QWidget):
 
         # Start/Stop Layout
         task_layout = QHBoxLayout()
-        self.start_selected_button = QPushButton("Preview WPs")
-        self.start_selected_button.clicked.connect(self.start_selected_task)
-        task_layout.addWidget(self.start_selected_button)
-
         self.start_selected_button = QPushButton("Send WP")
         self.start_selected_button.clicked.connect(self.start_selected_task)
         task_layout.addWidget(self.start_selected_button)
@@ -371,6 +380,7 @@ class AutonomyGUI(Node, QWidget):
             not task_running and len(self.waypoints) > 0
         )
         self.stop_button.setEnabled(task_running)
+        self.preview_button.setEnabled(len(self.waypoints) > 0)
         self.save_button.setEnabled(len(self.waypoints) > 0)
 
     def open_add_waypoint_dialog(self):
@@ -539,6 +549,56 @@ class AutonomyGUI(Node, QWidget):
                 QMessageBox.critical(
                     self, "Error", f"Could not load waypoints from file: {e}"
                 )
+
+    def preview_wps(self):
+        self.get_logger().info("Previewing waypoints...")
+        if not self.waypoints:
+            QMessageBox.warning(self, "Warning", "No waypoints to preview.")
+            return
+        
+        # Clear previous markers
+        clear_marker_array = MarkerArray()
+        clear_marker = Marker()
+        clear_marker.header.frame_id = "utm"
+        clear_marker.header.stamp = self.get_clock().now().to_msg()
+        clear_marker.ns = "preview"
+        clear_marker.id = 0
+        clear_marker.type = Marker.CUBE
+        clear_marker.action = Marker.DELETEALL
+        clear_marker.lifetime.sec = 0
+        clear_marker.lifetime.nanosec = 0
+        clear_marker_array.markers.append(clear_marker)
+        self.preview_pub.publish(clear_marker_array)
+        
+        marker_array = MarkerArray()
+        for i, wp in enumerate(self.waypoints):
+
+            # convert from lat/lon to UTM
+            utm_coords = utm.from_latlon(wp["latitude"], wp["longitude"])
+
+            marker = Marker()
+            marker.header.frame_id = "utm"
+            marker.header.stamp = self.get_clock().now().to_msg()
+            marker.ns = "preview"
+            marker.id = i
+            marker.type = Marker.TEXT_VIEW_FACING
+            marker.action = Marker.ADD
+            marker.pose.position.x = utm_coords[0]
+            marker.pose.position.y = utm_coords[1]
+            marker.pose.position.z = 0.0
+            marker.pose.orientation.w = 1.0
+            marker.scale.x = 1.0
+            marker.scale.y = 1.0
+            marker.scale.z = 1.0
+            marker.color.r = 1.0
+            marker.color.g = 1.0
+            marker.color.b = 1.0
+            marker.color.a = 1.0
+            marker.text = f"{wp['name']}"
+            marker.lifetime.sec = 0
+            marker.lifetime.nanosec = 0
+            marker_array.markers.append(marker)
+        self.preview_pub.publish(marker_array)
 
     def start_selected_task(self):
         self.get_logger().info("Starting selected task...")

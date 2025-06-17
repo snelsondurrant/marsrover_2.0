@@ -82,13 +82,12 @@ displays:
       qos_history: 1
       qos_reliability: 1
       qos_durability: 2
-  - type: mapviz_plugins/path
+  - type: mapviz_plugins/marker
     name: new display
     config:
-      visible: false
-      collapsed: true
-      topic: /plan
-      color: "#ffffff"
+      visible: true
+      collapsed: false
+      topic: /mapviz/preview
       qos_depth: 10
       qos_history: 1
       qos_reliability: 1
