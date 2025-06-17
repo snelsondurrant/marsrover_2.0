@@ -184,7 +184,7 @@ class AutonomyGUI(Node, QWidget):
         self.goal_handle = None
         self.close_flag = False
 
-        self.setWindowTitle("Autonomy Task")
+        self.setWindowTitle("Autonomy Task GUI")
         self.layout = QVBoxLayout()
 
         # Waypoint Display
