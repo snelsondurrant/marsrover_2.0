@@ -1,7 +1,6 @@
-Add a brief description of the changes in this pull request:
+**Before merging, both the PR author and reviewer must ensure:**
 
-...
-
-- [ ] This code builds and runs correctly in the Docker container on my own computer.
-- [ ] This code builds and runs correctly in the Docker container on the rover or base station.
-- [ ] I have added any new dependencies to the Dockerfile.
+- [ ] A brief, clear summary of the changes made in this PR has been provided.
+- [ ] The changes build and run correctly in the Docker container on a development computer.
+- [ ] The changes build and run correctly in the Docker container on the rover or base station.
+- [ ] Any new dependencies have been added to the Dockerfile.
