@@ -1,4 +1,10 @@
 ```mermaid
+---
+config:
+  layout: elk
+  theme: neo
+  look: classic
+---
 stateDiagram-v2
   direction TB
   [*] --> Autonomy_GUI
