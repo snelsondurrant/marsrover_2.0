@@ -10,14 +10,15 @@ config:
 ---
 stateDiagram
   direction LR
-  [*] --> BASE
-  [*] --> ROVER
-  BASE --> base_autonomy.launch.py:rover_bringup
-  BASE --> base_launch.xml:ublox_read_2
-  ROVER --> rover_autonomy.launch.py:rover_bringup
-  ROVER --> rover_startup.launch.py:rover_bringup
-  ROVER --> rover_launch.xml:ublox_read_2
-  ROVER --> zed_camera.launch.py:zed_wrapper
+  [*] --> base_launch.sh
+  [*] --> rover_launch.sh
+  [*] --> zed_launch.sh
+  base_launch.sh --> base_autonomy.launch.py:rover_bringup
+  base_launch.sh --> base_launch.xml:ublox_read_2
+  rover_launch.sh --> rover_autonomy.launch.py:rover_bringup
+  rover_launch.sh --> rover_startup.launch.py:rover_bringup
+  rover_launch.sh --> rover_launch.xml:ublox_read_2
+  zed_launch.sh --> zed_camera.launch.py:zed_wrapper
   base_autonomy.launch.py --> rviz.launch.py:rover_gui
   base_autonomy.launch.py --> mapviz.launch.py:rover_gui
   base_autonomy.launch.py --> autonomy_gui.launch.py:rover_gui

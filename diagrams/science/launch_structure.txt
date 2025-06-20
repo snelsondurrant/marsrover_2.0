@@ -10,10 +10,10 @@ config:
 ---
 stateDiagram
   direction LR
-  [*] --> BASE
-  [*] --> ROVER
-  BASE --> base_science.launch.py:rover_bringup
-  ROVER --> rover_science.launch.py:rover_bringup
-  ROVER --> rover_startup.launch.py:rover_bringup
+  [*] --> base_launch.sh
+  [*] --> rover_launch.sh
+  base_launch.sh --> base_science.launch.py:rover_bringup
+  rover_launch.sh --> rover_science.launch.py:rover_bringup
+  rover_launch.sh --> rover_startup.launch.py:rover_bringup
   rover_startup.launch.py --> mobility.launch.py:rover_control
   rover_startup.launch.py --> peripherals.launch.py:rover_control

@@ -8,7 +8,8 @@ config:
 ---
 stateDiagram
   direction LR
-  [*] --> rover_autonomy.launch.py:rover_bringup
+  [*] --> sim_launch.sh
+  sim_launch.sh --> rover_autonomy.launch.py:rover_bringup
   rover_autonomy.launch.py --> gazebo_gps_world.launch.py:rover_gazebo
   rover_autonomy.launch.py --> rviz.launch.py:rover_gui
   rover_autonomy.launch.py --> mapviz.launch.py:rover_gui

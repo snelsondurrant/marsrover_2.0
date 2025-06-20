@@ -12,3 +12,4 @@ stateDiagram
   direction TB
   XBox_Controller --> Drive_Mux:Drive Commands
   Drive_Mux --> Arduino_Mega:Motor Commands
+  Drive_Mux --> Arduino_Nano:LED Commands
