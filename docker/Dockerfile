@@ -31,14 +31,14 @@ RUN apt update && apt upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up a new user
-RUN useradd -ms /bin/bash $NAME
-RUN usermod -aG sudo $NAME
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-RUN usermod -aG video $NAME
-RUN usermod -aG dialout $NAME
-RUN groupadd docker
-RUN usermod -aG docker $NAME
-RUN echo "$NAME:$PASS" | chpasswd
+RUN useradd -ms /bin/bash $NAME \
+    && usermod -aG sudo $NAME \
+    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && usermod -aG video $NAME \
+    && usermod -aG dialout $NAME \
+    && groupadd docker \
+    && usermod -aG docker $NAME \
+    && echo "$NAME:$PASS" | chpasswd
 USER $NAME
 WORKDIR /home/$NAME
 
