@@ -1,14 +1,5 @@
-# Created by Nelson Durrant, Jun 2025
-# AUTONOMY TASK SOFTWARE OVERVIEW
-#
-# You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
----
-config:
-  layout: elk
-  theme: neo
-  look: classic
----
-stateDiagram
+```mermaid
+stateDiagram-v2
   direction TB
   [*] --> Autonomy_GUI
   Autonomy_GUI --> State_Machine:Destination WP
@@ -31,3 +22,8 @@ stateDiagram
   EKF --> State_Machine:Position Estimate
   EKF --> Autonomy_GUI:Position Estimate
   EKF --> Nav2:Position Estimate
+```
+
+--
+
+Created by Nelson Durrant, Jun 2025

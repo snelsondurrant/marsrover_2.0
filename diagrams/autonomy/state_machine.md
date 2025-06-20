@@ -1,12 +1,5 @@
-# Created by Nelson Durrant, Apr 2025
-# You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
----
-config:
-  layout: elk
-  theme: neo
-  look: classic
----
-stateDiagram
+```mermaid
+stateDiagram-v2
   direction TB
   [*] --> INIT
   INIT --> NEXT_LEG
@@ -27,3 +20,8 @@ stateDiagram
   FOUND_NAV --> NEXT_LEG:FAILED
   FOUND_NAV --> FOUND_NAV:FOUND (updated)
   SIGNAL_SUCCESS --> NEXT_LEG
+```
+
+--
+
+Created by Nelson Durrant, Jun 2025
