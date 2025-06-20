@@ -85,6 +85,12 @@
 
 [GPS Navigation w Nav2 Tutorial](https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html)
 
+**Servicing:**
+
+[MoveIt2 Concepts](https://moveit.picknik.ai/main/doc/concepts/concepts.html)
+
+[MoveIt2 Tutorials](https://moveit.picknik.ai/main/doc/tutorials/tutorials.html)
+
 **All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
 --
