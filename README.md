@@ -87,11 +87,13 @@
 
 **Servicing:**
 
-[MoveIt2 Concepts](https://moveit.picknik.ai/main/doc/concepts/concepts.html)
+[MoveIt2 Concepts](https://moveit.picknik.ai/humble/doc/concepts/concepts.html)
 
-[MoveIt2 Tutorials](https://moveit.picknik.ai/main/doc/tutorials/tutorials.html)
+[MoveIt2 Tutorials](https://moveit.picknik.ai/humble/doc/tutorials/tutorials.html)*
 
-**All of the dependencies for these tutorials are pre-included in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
+> **NOTE:** Although all the dependencies are preinstalled, the standard MoveIt2 tutorials require removing the Docker container's MoveIt2 installation and rebuilding it from source using colcon.
+
+**All of the dependencies for these tutorials are preinstalled in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
 
 --
 
