@@ -73,7 +73,7 @@ RUN apt update && apt install -y --no-install-recommends \
 USER $NAME
 
 RUN curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py \
-    && python3 get-platformio.py
+    && python3 get-platformio.py \
     && rm get-platformio.py
 
 # Set up PlatformIO shell commands
@@ -88,7 +88,7 @@ USER $NAME
 # Dry run PlatformIO to install the necessary dependencies
 # '|| true' is used to ignore errors on a pio command failure
 # TODO: There's definitely a more efficient way to do this
-RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git
+RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git \
     && cd /home/$NAME/marsrover_2.0/firmware/mega_pio \
     && pio pkg install || true \
     && pio run -t upload || true \
@@ -99,7 +99,7 @@ RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git
 
 # Set up automatic ROS 2 sourcing and colorized output
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
-    && echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
+    && echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc \
     && touch ~/.hushlogin
 
 # Add local python binaries to the PATH
