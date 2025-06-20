@@ -4,7 +4,7 @@
 
 [How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
 
-[System Diagrams](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#diagrams)
+[Software Diagrams](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#software-diagrams)
 
 [Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
 
@@ -101,7 +101,7 @@
 
 --
 
-### System Diagrams
+### Software Diagrams
 
 > **NOTE:** To make changes to a diagram, edit the code in the corresponding `diagrams/*/*.txt` file in the repository and visit [this website](https://www.mermaidchart.com/) to generate a new PNG file.
 
