@@ -39,10 +39,10 @@ case $task in
         envsubst < tmuxp/servicing/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
-    "retrieval")
-        printInfo "Setting up the retrieval task..."
+    "delivery")
+        printInfo "Setting up the delivery task..."
         # This envsubst allows for the use of environment variables in the tmuxp config
-        envsubst < tmuxp/retrieval/base_launch.yaml > tmuxp/tmp/base_launch.yaml
+        envsubst < tmuxp/delivery/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "science")

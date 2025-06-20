@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# RETRIEVAL TASK LAUNCH STRUCTURE
+# DELIVERY TASK LAUNCH STRUCTURE
 #
 # You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
 ---
@@ -12,8 +12,8 @@ stateDiagram
   direction LR
   [*] --> BASE
   [*] --> ROVER
-  BASE --> base_retrieval.launch.py:rover_bringup
-  ROVER --> rover_retrieval.launch.py:rover_bringup
+  BASE --> base_delivery.launch.py:rover_bringup
+  ROVER --> rover_delivery.launch.py:rover_bringup
   ROVER --> rover_startup.launch.py:rover_bringup
   rover_startup.launch.py --> mobility.launch.py:rover_control
   rover_startup.launch.py --> peripherals.launch.py:rover_control

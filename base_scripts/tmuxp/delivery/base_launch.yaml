@@ -1,26 +1,20 @@
 # Created by Nelson Durrant, Mar 2025
-# RETRIEVAL TASK ROVER LAUNCH CONFIG
+# DELIVERY TASK BASE LAUNCH CONFIG
 #
 # https://tmuxp.git-pull.com/configuration/examples.html
-session_name: rover_launch
+session_name: base_launch
 start_directory: "~/rover_ws" # inside the container
 environment:
   # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
-  ROS_DISCOVERY_SERVER: localhost:11811 # we're on the rover
+  ROS_DISCOVERY_SERVER: 192.168.1.120:11811 # we're on the base station
 windows:
   - window_name: main
-    layout: tiled
+    layout: even-horizontal
     options:
       default-terminal: screen-256color
       mouse: "on"
     panes:
       - shell_command:
-          - fastdds discovery --server-id 0
-      - shell_command:
           - source ~/rover_ws/install/setup.bash
-          - cmd: ros2 launch rover_bringup rover_startup.launch.py
-            enter: false
-      - shell_command:
-          - source ~/rover_ws/install/setup.bash
-          - cmd: ros2 launch rover_bringup rover_retrieval.launch.py
+          - cmd: ros2 launch rover_bringup base_delivery.launch.py
             enter: false

@@ -22,5 +22,5 @@ windows:
             enter: false
       - shell_command:
           - source ~/rover_ws/install/setup.bash
-          - cmd: ros2 launch rover_bringup rover_retrieval.launch.py
+          - cmd: ros2 launch rover_bringup rover_servicing.launch.py
             enter: false
