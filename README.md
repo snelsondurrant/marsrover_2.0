@@ -8,6 +8,8 @@
 
 --
 
+> ![ASCII_Art](https://github.com/user-attachments/assets/b9a8e8b7-9f1c-44c6-b7b7-b2add7c5d788)
+> 
 > **TO THE 2026 MARS ROVER TEAM:** I've helped with writing a decent amount of robot software from scratch here at BYU, and oftentimes have been part of a team that runs up against some architecture-based limitations later on (usually too integrated into our software at that point to change) that we really wished we would have understood better before we started. With the shift from ROS 1 to ROS 2 in the 2024-2025 Capstone year, I saw an opportunity to prevent some of those future problems and put in 30+ hours of research on robotics development best practices at the beginning of the Winter 2025 semester -- and learned A TON about the open-source tools and software structure professional robotic projects use. After a short coding spree, this repository is the synthesis of our current approach with some of those best practices, including:
 > - A Dockerized full-task simulator for rapid development and validation
 > - Industry-standard Nav2 dynamic path planning and hazard avoidance
@@ -89,7 +91,11 @@
 
 [Running the Simulation](https://youtu.be/sQmkes66p2w)
 
+![Running_the_Simulation](https://github.com/user-attachments/assets/d8187778-da11-4283-baff-5666b0f0cbd0)
+
 [Localization Debugging](https://youtu.be/r0U6DLKrkSk)
+
+![Localization_Debugging](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
 
 --
 
