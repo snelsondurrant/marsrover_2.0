@@ -1,14 +1,7 @@
 # Created by Nelson Durrant, Jun 2025
 # AUTONOMY TASK LAUNCH STRUCTURE
-#
-# You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
----
-config:
-  layout: elk
-  theme: neo
-  look: classic
----
-stateDiagram
+```mermaid
+stateDiagram-v2
   direction LR
   [*] --> BASE
   [*] --> ROVER
@@ -27,3 +20,4 @@ stateDiagram
   rover_autonomy.launch.py --> state_machine.launch.py:rover_navigation
   rover_startup.launch.py --> mobility.launch.py:rover_control
   rover_startup.launch.py --> peripherals.launch.py:rover_control
+```
