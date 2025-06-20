@@ -4,6 +4,8 @@
 
 [How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
 
+[System Diagrams](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#diagrams)
+
 [Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
 
 --
@@ -96,6 +98,26 @@
 [Localization Debugging](https://youtu.be/r0U6DLKrkSk)
 
 ![Localization_Debugging](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
+
+--
+
+### System Diagrams
+
+> **NOTE:** These diagrams are auto-generated using mermaid, and you can easily change them by editing the corresponding `diagrams/*/*.md` file in the repository.
+
+**Autonomy:**
+
+[Software Overview](diagrams/autonomy/software_overview.md)
+
+[Launch Structure](diagrams/autonomy/launch_structure.md)
+
+[State Machine](diagrams/autonomy/state_machine.md)
+
+**Simulation:**
+
+[Software Overview](diagrams/simulation/software_overview.md)
+
+[Launch Structure](diagrams/simulation/launch_structure.md)
 
 --
 
