@@ -103,21 +103,21 @@
 
 ### System Diagrams
 
-> **NOTE:** These diagrams are auto-generated using mermaid, and you can easily change them by editing the corresponding `diagrams/*/*.md` file in the repository.
+> **NOTE:** To make changes to a diagram, edit the code in the corresponding `diagrams/*/*.txt` file in the repository and visit [this website](https://www.mermaidchart.com/) to generate a new PNG file.
 
 **Autonomy:**
 
-[Software Overview](diagrams/autonomy/software_overview.md)
+[Software Overview](diagrams/autonomy/software_overview.png)
 
-[Launch Structure](diagrams/autonomy/launch_structure.md)
+[Launch Structure](diagrams/autonomy/launch_structure.png)
 
-[State Machine](diagrams/autonomy/state_machine.md)
+[State Machine](diagrams/autonomy/state_machine.png)
 
 **Simulation:**
 
-[Software Overview](diagrams/simulation/software_overview.md)
+[Software Overview](diagrams/simulation/software_overview.png)
 
-[Launch Structure](diagrams/simulation/launch_structure.md)
+[Launch Structure](diagrams/simulation/launch_structure.png)
 
 --
 
