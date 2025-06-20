@@ -27,7 +27,8 @@ ARG NAME=marsrover-docker
 ARG PASS=thekillpack
 
 # Update and upgrade
-RUN apt update && apt upgrade -y
+RUN apt update && apt upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set up a new user
 RUN useradd -ms /bin/bash $NAME
@@ -43,60 +44,63 @@ WORKDIR /home/$NAME
 
 # Install general dependencies
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     curl \
     wget \
     git \
     vim \
     nano \
     tmux \
-    python3-pip
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install graphical interface dependencies
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     x11-apps \
     x11-utils \
     x11-xserver-utils \
-    xauth 
+    xauth \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install PlatformIO
 USER root
-RUN apt install -y python3-venv
+RUN apt update && apt install -y --no-install-recommends \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
-RUN curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
-RUN python3 get-platformio.py
-RUN rm get-platformio.py
+RUN curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py \
+    && python3 get-platformio.py
+    && rm get-platformio.py
 
 # Set up PlatformIO shell commands
 RUN mkdir -p /usr/local/bin
 
 USER root
-RUN ln -s /home/$NAME/.platformio/penv/bin/platformio /usr/local/bin/platformio
-RUN ln -s /home/$NAME/.platformio/penv/bin/pio /usr/local/bin/pio
-RUN ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
+RUN ln -s /home/$NAME/.platformio/penv/bin/platformio /usr/local/bin/platformio \
+    && ln -s /home/$NAME/.platformio/penv/bin/pio /usr/local/bin/pio \
+    && ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
 USER $NAME
 
 # Dry run PlatformIO to install the necessary dependencies
+# '|| true' is used to ignore errors on a pio command failure
 # TODO: There's definitely a more efficient way to do this
 RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git
-# '|| true' is used to ignore errors on a pio command failure
-WORKDIR /home/$NAME/marsrover_2.0/firmware/mega_pio
-RUN pio pkg install || true
-RUN pio run -t upload || true
-WORKDIR /home/$NAME/marsrover_2.0/firmware/nano_pio
-RUN pio pkg install || true
-RUN pio run -t upload || true
-WORKDIR /home/$NAME
-RUN rm -rf /home/$NAME/marsrover_2.0
+    && cd /home/$NAME/marsrover_2.0/firmware/mega_pio \
+    && pio pkg install || true \
+    && pio run -t upload || true \
+    && cd /home/$NAME/marsrover_2.0/firmware/nano_pio \
+    && pio pkg install || true \
+    && pio run -t upload || true \
+    && rm -rf /home/$NAME/marsrover_2.0
 
 # Set up automatic ROS 2 sourcing and colorized output
-RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
-RUN touch ~/.hushlogin
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
+    && echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
+    && touch ~/.hushlogin
 
 # Add local python binaries to the PATH
 ENV PATH="$PATH:/home/$NAME/.local/bin"
@@ -116,24 +120,28 @@ ENV PATH="$PATH:/home/$NAME/.local/bin"
 # Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2025
 # Pre-built full navigation stack for GPS navigation and localization
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     ros-humble-navigation2 \
-    ros-humble-robot-localization
+    ros-humble-robot-localization \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install graphical interface packages - Nelson Durrant, Feb 2025
 # We use RViz2, RQT, and Python3-tk for GUIs
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     ros-humble-rviz2 \
     ros-humble-rqt* \
-    python3-tk
+    python3-tk \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install plotjuggler - Nelson Durrant, Feb 2025
 # Useful for plotting and visualizing data from ROS 2 bags and real-time tests
 # USER root
-# RUN apt update && apt install -y ros-humble-plotjuggler-ros
+# RUN apt update && apt install -y \
+#     ros-humble-plotjuggler-ros \
+#     && rm -rf /var/lib/apt/lists/*
 # USER $NAME
 #
 # NOTE: As of June 2025, PlotJuggler downloads seem to be broken
@@ -143,16 +151,19 @@ USER $NAME
 # These packages are not currently available for arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    apt update && apt install -y \
+    apt update && apt install -y --no-install-recommends \
     ros-humble-nav2-bringup \
-    ros-humble-turtlebot3-gazebo; \
+    ros-humble-turtlebot3-gazebo \
+    && rm -rf /var/lib/apt/lists/*; \
 fi
 USER $NAME
 
 # Install the aruco_opencv packages - Nelson Durrant, Feb 2025
 # Used for detecting ArUco markers in the simulation and real world
 USER root
-RUN apt update && apt install -y ros-humble-aruco-opencv
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-aruco-opencv \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install mapviz packages - Nelson Durrant, Feb 2025
@@ -160,21 +171,23 @@ USER $NAME
 # These packages are not currently available for arm64
 USER root
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    apt update && apt install -y \
+    apt update && apt install -y --no-install-recommends \
     ros-humble-mapviz \
     ros-humble-mapviz-plugins \
-    ros-humble-tile-map; \
+    ros-humble-tile-map \
+    && rm -rf /var/lib/apt/lists/*; \
 fi
 USER $NAME
 
 # Install mobility packages - Nelson Durrant, Feb 2025
 # Used for controlling the robot's movement through a joystick or keyboard
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     ros-humble-joy \
     ros-humble-teleop-twist-joy \
     ros-humble-teleop-twist-keyboard \
-    ros-humble-topic-tools
+    ros-humble-topic-tools \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install python UTM library - Nelson Durrant, Feb 2025
@@ -184,11 +197,12 @@ RUN pip3 install utm
 # Install turtlesim tf2 packages - Nelson Durrant, Feb 2025
 # Used in the ROS 2 and tf2 tutorials
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     ros-humble-turtle-tf2-py \
     ros-humble-tf2-ros \
     ros-humble-tf2-tools \
-    ros-humble-turtlesim
+    ros-humble-turtlesim \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install ascii art packages - Nelson Durrant, Mar 2025
@@ -206,37 +220,53 @@ RUN pip3 install pyserial
 # Install pcl_conversions - Nelson Durrant, Mar 2025
 # Used for point cloud conversion in the unitree lidar package
 USER root
-RUN apt update && apt install -y ros-humble-pcl-conversions
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-pcl-conversions \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install xacro convertor package - Nelson Durrant, Mar 2025
 # Used for converting the rover's xacro files to urdf files
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     ros-humble-xacro \
     ros-humble-joint-state-publisher-gui \
-    ros-humble-urdf-launch
+    ros-humble-urdf-launch \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install zed_msgs package - Nelson Durrant, Mar 2025
 # Official ROS 2 interfaces for the ZED camera
 USER root
-RUN apt update && apt install -y ros-humble-zed-msgs
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-zed-msgs \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install mapproxy tile caching deps - Nelson Durrant, Mar 2025
 # Used for pre-caching map tiles for rover test locations
-RUN pip3 install mercantile
-RUN pip3 install requests
+RUN pip3 install mercantile requests
 
 # Install tools for terrain maps - Nelson Durrant, Apr 2025
 # Used for loading in and parsing GeoTIFF elevation maps
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     libgdal-dev \
-    python3-rasterio
+    python3-rasterio \
+    && rm -rf /var/lib/apt/lists/*
 USER $NAME
 
 # Install AStar planning package - Nelson Durrant, Apr 2025
 # Simple A* path planning algorithm implementation for 2D maps
 RUN pip3 install astar
+
+# Install MoveIt2 and dependencies - Nelson Durrant, Jun 2025
+# Open-source robotic arm manipulation platform (for use on the rover?)
+USER root
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-ros-testing \
+    ros-humble-graph-msgs \
+    ros-humble-rviz-visual-tools \
+    ros-humble-moveit \
+    && rm -rf /var/lib/apt/lists/*
+USER $NAME
