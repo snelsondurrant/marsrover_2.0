@@ -113,6 +113,10 @@
 
 [State Machine](diagrams/autonomy/state_machine.png)
 
+[Sim Software Overview](diagrams/autonomy/simulation/sim_software_overview.png)
+
+[Sim Launch Structure](diagrams/autonomy/simulation/sim_launch_structure.png)
+
 **Servicing:**
 
 [Software Overview](diagrams/servicing/software_overview.png)
@@ -130,12 +134,6 @@
 [Software Overview](diagrams/science/software_overview.png)
 
 [Launch Structure](diagrams/science/launch_structure.png)
-
-**Simulation:**
-
-[Software Overview](diagrams/simulation/software_overview.png)
-
-[Launch Structure](diagrams/simulation/launch_structure.png)
 
 --
 
