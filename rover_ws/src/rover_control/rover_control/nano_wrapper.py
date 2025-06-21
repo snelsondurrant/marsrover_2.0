@@ -16,7 +16,7 @@ class NanoWrapper(Node):
     :author: ADD HERE
     :date: ADD HERE
 
-    TODO: I think this could be simplified and cleaned up A LOT
+    TODO: I think this could be simplified and cleaned up A LOT.
 
     NOTE: It might be worth considering using a more robust control system based on the 
     'ros2_control' and 'ros2_controllers' packages, which are designed for robust performance
