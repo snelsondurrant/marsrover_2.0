@@ -7,8 +7,10 @@
     since the ZED publishes the odom->zed_camera_link transform instead of odom->base_link.
     https://docs.nav2.org/setup_guides/urdf/setup_urdf.html#writing-the-urdf -->
 
-  <!-- TODO: For resources on getting this model hooked better into our system (other
-    than just providing static transforms) and simulating it in Gazebo, see:
+  <!-- NOTE: Future teams might decide to try and get this custom model running in the Gazebo
+    simulation instead of the modified turtlebot3. We think the turtlebot3 is pretty great, but 
+    for resources on getting this model hooked better into our control system (other than just
+    providing static transforms) and simulating it in Gazebo, see:
     https://docs.nav2.org/setup_guides/urdf/setup_urdf.html
     https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html
     https://docs.nav2.org/setup_guides/sensors/setup_sensors_gz_classic.html -->
