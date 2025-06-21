@@ -125,7 +125,7 @@ USER $NAME
 ENV PATH="$PATH:/home/$NAME/.local/bin"
 RUN pip3 install --user tmuxp
 
-# Set up automatic ROS 2 sourcing and colorized output
+# Set up automatic ROS2 sourcing and colorized output
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
 RUN touch ~/.hushlogin

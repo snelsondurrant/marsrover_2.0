@@ -96,7 +96,7 @@ class StateMachine(Node):
     Note: This is a pretty complex node. It's a hacked-together combination of the Nav2 BasicNavigator
     class and our own custom state machine with A LOT of multi-threading. It's easiest to think of
     as three sections with their own separate threads: the state machine, the Nav2 BasicNavigator,
-    and the ROS 2 callbacks.
+    and the ROS2 callbacks.
 
     :author: Nelson Durrant
     :date: Mar 2025
@@ -215,7 +215,7 @@ class StateMachine(Node):
         self.detection_enabled = False
 
         #################################
-        ### ROS 2 OBJECT DECLARATIONS ###
+        ### ROS2 OBJECT DECLARATIONS ###
         #################################
 
         # Set up a Tf2 buffer for pose to GPS transforms (aruco, object)
@@ -332,7 +332,7 @@ class StateMachine(Node):
         )
 
         #####################################
-        ### END ROS 2 OBJECT DECLARATIONS ###
+        ### END ROS2 OBJECT DECLARATIONS ###
         #####################################
 
         #######################################
@@ -370,7 +370,7 @@ class StateMachine(Node):
         Function to follow a set of GPS waypoints, based on the nav2_simple_commander code
         NOTE: Call this with the asyncio.run() function
 
-        IMPORTANT! In ROS 2 Humble the Nav2 GPS waypoint follower is not avaliable.
+        IMPORTANT! In ROS2 Humble the Nav2 GPS waypoint follower is not avaliable.
         I've implemented a patch to use robot_localization to convert to poses Nav2 can go to.
         For versions newer than Humble you should just be able to use that server though.
 
@@ -467,7 +467,7 @@ class StateMachine(Node):
         # IMPORTANT! We ran into a lot of issues with the collision checker canceling spin goals
         # when no obstacles were present. We have implemented a custom behavior (rover_behaviors/CustomSpin)
         # that disables the collision checks, but hopefully disable_collision_checks is avaliable
-        # in future versions of ROS 2 as the team moves forward.
+        # in future versions of ROS2 as the team moves forward.
 
         self.info(f"Spinning to angle {goal_msg.target_yaw}....")
         send_goal_future = self.spin_client.send_goal_async(
@@ -620,7 +620,7 @@ class StateMachine(Node):
     ###########################################
 
     #######################
-    ### ROS 2 CALLBACKS ###
+    ### ROS2 CALLBACKS ###
     #######################
 
     def cancel_callback(self, goal_handle):
@@ -789,7 +789,7 @@ class StateMachine(Node):
                         self.found_poses[self.leg.name] = geopose
 
     ###########################
-    ### END ROS 2 CALLBACKS ###
+    ### END ROS2 CALLBACKS ###
     ###########################
 
     ###############################

@@ -12,7 +12,7 @@
 
 > ![ASCII Art](https://github.com/user-attachments/assets/b9a8e8b7-9f1c-44c6-b7b7-b2add7c5d788)
 > 
-> **TO THE 2026 MARS ROVER TEAM:** I've helped with writing a decent amount of robot software from scratch here at BYU, and oftentimes have been part of a team that runs up against some architecture-based limitations later on (usually too integrated into our software at that point to change) that we really wished we would have understood better before we started. With the shift from ROS 1 to ROS 2 in the 2024-2025 Capstone year, I saw an opportunity to prevent some of those future problems and put in 30+ hours of research on robotics development best practices at the beginning of the Winter 2025 semester -- and learned A TON about the open-source tools and software structure professional robotic projects use. After a short coding spree, this repository is the synthesis of our current approach with some of those best practices, including:
+> **TO THE 2026 MARS ROVER TEAM:** I've helped with writing a decent amount of robot software from scratch here at BYU, and oftentimes have been part of a team that runs up against some architecture-based limitations later on (usually too integrated into our software at that point to change) that we really wished we would have understood better before we started. With the shift from ROS1 to ROS2 in the 2024-2025 Capstone year, I saw an opportunity to prevent some of those future problems and put in 30+ hours of research on robotics development best practices at the beginning of the Winter 2025 semester -- and learned A TON about the open-source tools and software structure professional robotic projects use. After a short coding spree, this repository is the synthesis of our current approach with some of those best practices, including:
 > - A Dockerized full-task simulator for rapid development and validation
 > - Industry-standard Nav2 dynamic path planning and hazard avoidance
 > - Tuned and tested EKF for fusing odometry sources with GPS data
@@ -69,15 +69,15 @@
 
 [Docker Concepts and Tutorials](https://docs.docker.com/get-started/introduction/whats-next/)
 
-[ROS 2 Concepts](https://docs.ros.org/en/humble/Concepts/Basic.html)
+[ROS2 Concepts](https://docs.ros.org/en/humble/Concepts/Basic.html)
 
-[ROS 2 CLI Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)*
+[ROS2 CLI Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html)*
 
-[ROS 2 Code Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)*
+[ROS2 Code Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)*
 
-[ROS 2 Discovery Server Tutorial](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)*
+[ROS2 Discovery Server Tutorial](https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html)*
 
-[Robotics in ROS 2 Tutorial](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
+[Robotics in ROS2 Tutorial](https://github.com/henki-robotics/robotics_essentials_ros2/tree/main)
 
 **Autonomy:**
 
@@ -89,11 +89,11 @@
 
 [MoveIt2 Concepts](https://moveit.picknik.ai/humble/doc/concepts/concepts.html)
 
-[MoveIt2 Tutorials](https://moveit.picknik.ai/humble/doc/tutorials/tutorials.html)*
+[MoveIt2 Tutorials](https://moveit.picknik.ai/humble/doc/tutorials/tutorials.html)
 
-> **NOTE:** Although all the dependencies are preinstalled, the standard MoveIt2 tutorials require removing the Docker container's MoveIt2 installation and rebuilding it from source using colcon.
+> **NOTE:** Although MoveIt2 is preinstalled, the standard MoveIt2 tutorials require removing the Docker container's MoveIt2 installation and rebuilding it from source using colcon.
 
-**All of the dependencies for these tutorials are preinstalled in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS 2 tutorial workspace.*
+**All of the dependencies for these tutorials are preinstalled in the Docker container, and we've mounted 'tutorial_ws' as a dedicated ROS2 tutorial workspace.*
 
 --
 

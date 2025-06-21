@@ -11,10 +11,10 @@ services:
       - DISPLAY=$DISPLAY # Required for GUI applications
       - QT_X11_NO_MITSHM=1 # Required for GUI applications
     volumes:
-      - ../rover_ws:/home/marsrover-docker/rover_ws # Rover ROS 2 workspace
+      - ../rover_ws:/home/marsrover-docker/rover_ws # Rover ROS2 workspace
       - ../firmware:/home/marsrover-docker/firmware # PIO microcontroller projects
       - ../scripts:/home/marsrover-docker/scripts # Helpful scripts
-      - ../tutorial_ws:/home/marsrover-docker/tutorial_ws # Tutorial ROS 2 workspace
+      - ../tutorial_ws:/home/marsrover-docker/tutorial_ws # Tutorial ROS2 workspace
       - ../base_scripts/tmuxp/tmp:/home/marsrover-docker/.tmuxp # Temporary tmuxp config files
       - ./startup:/startup # Startup scripts
       - /dev:/dev:rw

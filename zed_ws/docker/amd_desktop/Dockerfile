@@ -78,7 +78,7 @@ RUN apt-get update || true && \
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
   rm -rf /var/lib/apt/lists/*
 
-# Install ROS 2 Base packages and Python dependencies
+# Install ROS2 Base packages and Python dependencies
 RUN apt update &&\
   apt install --no-install-recommends -y \
   ros-${ROS2_DIST}-ros-base \
@@ -183,7 +183,7 @@ RUN pip3 install --user tmuxp
 # COPY ros_entrypoint.sh /sbin/ros_entrypoint.sh
 # RUN sudo chmod 755 /sbin/ros_entrypoint.sh
 
-# Set up automatic ROS 2 sourcing and colorized output
+# Set up automatic ROS2 sourcing and colorized output
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
 RUN touch ~/.hushlogin

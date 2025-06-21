@@ -1,11 +1,11 @@
 # Created by Nelson Durrant, Oct 2024
 FROM ros:humble-ros-base
 
-# Why use ROS 2 Humble?
+# Why use ROS2 Humble?
 #
-# The simulator is built using Gazebo Classic, which is only supported in ROS 2 Iron and older.
-# Unfortunately, Nav2's simple GPS navigation functions are only supported in ROS 2 Iron and newer,
-# but there's a simple workaround on ROS 2 Humble. The ZED's container is locked to ROS 2 Humble by
+# The simulator is built using Gazebo Classic, which is only supported in ROS2 Iron and older.
+# Unfortunately, Nav2's simple GPS navigation functions are only supported in ROS2 Iron and newer,
+# but there's a simple workaround on ROS2 Humble. The ZED's container is locked to ROS2 Humble by
 # compatible L4T images (it has to match the Orin), and through a lot of trial and error we've learned
 # that inter-Docker container FastDDS connections really only work reliably between matching distros.
 # In addition, Iron has a sooner EOL date than Humble and less community support.
@@ -97,7 +97,7 @@ RUN git clone https://github.com/BYUMarsRover/marsrover_2.0.git \
     && pio run -t upload || true \
     && rm -rf /home/$NAME/marsrover_2.0
 
-# Set up automatic ROS 2 sourcing and colorized output
+# Set up automatic ROS2 sourcing and colorized output
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
     && echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc \
     && touch ~/.hushlogin
@@ -110,7 +110,7 @@ ENV PATH="$PATH:/home/$NAME/.local/bin"
 # below, please document your changes following this format:
 #     
 #     # What do these commands do? - Full Name, Month Year
-#     # Why do we need them? Which ROS 2 nodes require them?
+#     # Why do we need them? Which ROS2 nodes require them?
 #     < Add Dockerfile commands here >
 #
 # https://docs.docker.com/reference/dockerfile/
@@ -137,7 +137,7 @@ RUN apt update && apt install -y --no-install-recommends \
 USER $NAME
 
 # Install plotjuggler - Nelson Durrant, Feb 2025
-# Useful for plotting and visualizing data from ROS 2 bags and real-time tests
+# Useful for plotting and visualizing data from ROS2 bags and real-time tests
 # USER root
 # RUN apt update && apt install -y \
 #     ros-humble-plotjuggler-ros \
@@ -195,7 +195,7 @@ USER $NAME
 RUN pip3 install utm
 
 # Install turtlesim tf2 packages - Nelson Durrant, Feb 2025
-# Used in the ROS 2 and tf2 tutorials
+# Used in the ROS2 and tf2 tutorials
 USER root
 RUN apt update && apt install -y --no-install-recommends \
     ros-humble-turtle-tf2-py \
@@ -236,7 +236,7 @@ RUN apt update && apt install -y --no-install-recommends \
 USER $NAME
 
 # Install zed_msgs package - Nelson Durrant, Mar 2025
-# Official ROS 2 interfaces for the ZED camera
+# Official ROS2 interfaces for the ZED camera
 USER root
 RUN apt update && apt install -y --no-install-recommends \
     ros-humble-zed-msgs \
@@ -260,13 +260,10 @@ USER $NAME
 # Simple A* path planning algorithm implementation for 2D maps
 RUN pip3 install astar
 
-# Install MoveIt2 and dependencies - Nelson Durrant, Jun 2025
+# Install MoveIt2 package - Nelson Durrant, Jun 2025
 # Open-source robotic arm manipulation platform (for use on the rover?)
 USER root
 RUN apt update && apt install -y --no-install-recommends \
-    ros-humble-ros-testing \
-    ros-humble-graph-msgs \
-    ros-humble-rviz-visual-tools \
     ros-humble-moveit \
     && rm -rf /var/lib/apt/lists/*
 USER $NAME

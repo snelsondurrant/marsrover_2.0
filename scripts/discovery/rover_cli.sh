@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Braden Meyers & Nelson Durrant, Mar 2025
 # 
-# Sets up the rover environment for using the ROS 2 CLI tools with Fast DDS
+# Sets up the rover environment for using the ROS2 CLI tools with Fast DDS
 # https://docs.ros.org/en/humble/Tutorials/Advanced/Discovery-Server/Discovery-Server.html
 
 function printError {
