@@ -18,6 +18,14 @@ class NanoWrapper(Node):
 
     TODO: I think this could be simplified and cleaned up A LOT
 
+    NOTE: It might be worth considering using a more robust control system based on the 
+    'ros2_control' and 'ros2_controllers' packages, which are designed for robust performance
+    and provide easy hookups to Gazebo. See these links for more information:
+    https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html#setting-up-odometry-on-your-robot
+    https://articulatedrobotics.xyz/tutorials/mobile-robot/applications/ros2_control-concepts
+    https://control.ros.org/humble/index.html
+    https://github.com/ros-controls/ros2_controllers/tree/humble/diff_drive_controller
+
     Subscribers:
     - /nav_state (std_msgs.Int8): Navigation state to control LEDs
     """

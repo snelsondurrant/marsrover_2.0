@@ -30,7 +30,14 @@ class MegaWrapper(Node):
     :date: Mar 2025
 
     TODO: We need to add A LOT of functionality to this - elevator, speed changes, etc.
-    Like in the Autonomy-ROS2 repository.
+
+    NOTE: It might be worth considering using a more robust control system based on the 
+    'ros2_control' and 'ros2_controllers' packages, which are designed for robust performance
+    and provide easy hookups to Gazebo. See these links for more information:
+    https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html#setting-up-odometry-on-your-robot
+    https://articulatedrobotics.xyz/tutorials/mobile-robot/applications/ros2_control-concepts
+    https://control.ros.org/humble/index.html
+    https://github.com/ros-controls/ros2_controllers/tree/humble/diff_drive_controller
 
     Subscribers:
     - cmd_vel_mux (geometry_msgs/Twist)

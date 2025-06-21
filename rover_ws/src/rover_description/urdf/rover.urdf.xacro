@@ -2,9 +2,16 @@
 <robot name="rover" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Created by Nelson Durrant, Mar 2025 -->
-  <!-- This model uses zed_camera_link as the top-level frame instead of base_link -->
-  <!-- This is because the ZED publishes the odom->zed_camera_link transform instead of odom->base_link -->
-  <!-- https://docs.nav2.org/setup_guides/urdf/setup_urdf.html#writing-the-urdf -->
+
+  <!-- This model uses zed_camera_link as the top-level frame instead of base_link,
+    since the ZED publishes the odom->zed_camera_link transform instead of odom->base_link.
+    https://docs.nav2.org/setup_guides/urdf/setup_urdf.html#writing-the-urdf -->
+
+  <!-- TODO: For resources on getting this model hooked better into our system (other
+    than just providing static transforms) and simulating it in Gazebo, see:
+    https://docs.nav2.org/setup_guides/urdf/setup_urdf.html
+    https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html
+    https://docs.nav2.org/setup_guides/sensors/setup_sensors_gz_classic.html -->
 
   <!-- Rover constants -->
   <xacro:property name="base_width" value="0.5"/>
