@@ -9,10 +9,8 @@
 
   <!-- NOTE: Future teams might decide to try and get this custom model running in the Gazebo
     simulation instead of the modified turtlebot3. We think the turtlebot3 is pretty great stand-in
-    for our rover sensor-wise, and would recommend using it for simulation and spending the time
-    you would have spent on duplicate development doing more testing on the real rover. However, for 
-    resources on getting this model hooked better into our control system (other than just providing
-    static transforms) and simulating it in Gazebo, see:
+    for our rover sensor-wise, but for resources on getting this model hooked better into our control 
+    system (other than just providing static transforms) and simulating it in Gazebo, see:
     https://docs.nav2.org/setup_guides/urdf/setup_urdf.html
     https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html
     https://docs.nav2.org/setup_guides/sensors/setup_sensors_gz_classic.html -->
