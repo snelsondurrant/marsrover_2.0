@@ -127,23 +127,7 @@
 
 [Sim Launch Structure](diagrams/autonomy/simulation/sim_launch_structure.png)
 
-**Servicing:**
-
-[Software Overview](diagrams/servicing/software_overview.png)
-
-[Launch Structure](diagrams/servicing/launch_structure.png)
-
-**Delivery:**
-
-[Software Overview](diagrams/delivery/software_overview.png)
-
-[Launch Structure](diagrams/delivery/launch_structure.png)
-
-**Science:**
-
-[Software Overview](diagrams/science/software_overview.png)
-
-[Launch Structure](diagrams/science/launch_structure.png)
+> **TODO:** Add Servicing, Delivery, and Science software diagrams here.
 
 --
 
