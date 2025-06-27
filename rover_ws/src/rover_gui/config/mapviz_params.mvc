@@ -82,6 +82,13 @@ displays:
       qos_history: 1
       qos_reliability: 1
       qos_durability: 2
+  - type: mapviz_plugins/point_click_publisher
+    name: new display
+    config:
+      visible: true
+      collapsed: true
+      topic: mapviz/clicked_point
+      output_frame: wgs84
   - type: mapviz_plugins/marker
     name: new display
     config:

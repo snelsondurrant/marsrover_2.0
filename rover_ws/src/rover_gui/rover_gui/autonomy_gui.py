@@ -8,6 +8,7 @@ from action_msgs.srv import CancelGoal
 from rover_interfaces.action import AutonomyTask
 from rover_interfaces.msg import AutonomyLeg
 from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import PointStamped
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -27,7 +28,7 @@ from PyQt5.QtWidgets import (
     QCheckBox,
 )
 from PyQt5.QtGui import QColor
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 import sys
 import json
 import os
@@ -157,6 +158,10 @@ class AutonomyGUI(Node, QWidget):
     - exec_autonomy_task (rover_interfaces/AutonomyTask)
     """
 
+    # Signal to safely update the GUI from the ROS2 thread.
+    # It will emit a callable (e.g., a lambda) to be executed in the GUI thread.
+    ui_update_signal = pyqtSignal(object)
+
     def __init__(self):
         Node.__init__(self, "autonomy_gui")
         QWidget.__init__(self)
@@ -185,6 +190,15 @@ class AutonomyGUI(Node, QWidget):
         self.preview_pub = self.create_publisher(
             MarkerArray,
             "/mapviz/preview",
+            10,
+            callback_group=self.callback_group,
+        )
+
+        self.mapviz_wp_count = 1
+        self.clicked_point_sub = self.create_subscription(
+            PointStamped,
+            "/mapviz/clicked_point",
+            self.mapviz_clicked_point_callback,
             10,
             callback_group=self.callback_group,
         )
@@ -283,12 +297,23 @@ class AutonomyGUI(Node, QWidget):
         self.layout.setStretch(7, 20)  # Feedback Display
 
         self.setLayout(self.layout)
+        
+        # Connect the UI update signal to its slot
+        self.ui_update_signal.connect(self.do_ui_update)
 
         self.ros2_thread = ROS2Thread(self)
         self.ros2_thread.start()
 
         self.load_default_waypoints()
         self.update_button_states()
+    
+    @pyqtSlot(object)
+    def do_ui_update(self, func):
+        """
+        This slot executes a function passed from the ROS2 thread,
+        ensuring it runs safely in the main GUI thread.
+        """
+        func()
 
     def load_default_waypoints(self):
 
@@ -471,6 +496,9 @@ class AutonomyGUI(Node, QWidget):
             else:
                 self.waypoint_list.setCurrentRow(0)
 
+        # scroll to the bottom of the list
+        self.waypoint_list.scrollToBottom()
+
     def save_waypoints_to_file(self):
         self.get_logger().info("Saving waypoints to file...")
         if not self.waypoints:
@@ -600,6 +628,30 @@ class AutonomyGUI(Node, QWidget):
             marker_array.markers.append(marker)
         self.preview_pub.publish(marker_array)
 
+    def mapviz_clicked_point_callback(self, msg):
+        """
+        ROS2 Callback: Handles a clicked point from mapviz.
+        This runs in the ROS2 thread. It emits a signal to update the GUI safely.
+        """
+        self.get_logger().info(f"Received clicked point from mapviz: {msg.point.x}, {msg.point.y}")
+        lat, lon = msg.point.y, msg.point.x  # wgs84 lat/lon
+        
+        # Emit a signal to have the GUI thread handle the update
+        self.ui_update_signal.emit(lambda: self.add_mapviz_waypoint(lat, lon))
+
+    def add_mapviz_waypoint(self, lat, lon):
+        """Helper method to add a waypoint, called from the GUI thread."""
+        waypoint_data = {
+            "name": f"mapviz{self.mapviz_wp_count}",
+            "type": "gps",
+            "latitude": lat,
+            "longitude": lon,
+        }
+        self.waypoints.append(waypoint_data)
+        self.update_waypoint_list()
+        self.mapviz_wp_count += 1
+        self.update_button_states()
+
     def start_selected_task(self):
         self.get_logger().info("Starting selected task...")
         selected_item = self.waypoint_list.currentItem()
@@ -699,13 +751,15 @@ class AutonomyGUI(Node, QWidget):
         self.update_button_states()
 
     def goal_response_callback(self, future):
+        """ROS2 Callback: Handles the server's response to the goal request."""
         self.goal_handle = future.result()
+        self.ui_update_signal.emit(lambda: self.handle_goal_response())
+
+    def handle_goal_response(self):
+        """Helper method to update GUI after goal response. Runs in GUI thread."""
         if not self.goal_handle.accepted:
-            self.feedback_display.addItem(
-                self.format_feedback_text(
-                    "[ERROR] [gui] Goal rejected by action server"
-                )
-            )
+            item = self.format_feedback_text("[ERROR] [gui] Goal rejected by action server")
+            self.feedback_display.addItem(item)
         else:
             self.feedback_display.addItem(
                 self.format_feedback_text("[gui] Goal accepted by action server:")
@@ -720,19 +774,29 @@ class AutonomyGUI(Node, QWidget):
             )
             get_result_future = self.goal_handle.get_result_async()
             get_result_future.add_done_callback(self.get_result_callback)
-            self.feedback_display.scrollToBottom()
+        self.feedback_display.scrollToBottom()
         self.update_button_states()
 
     def goal_feedback_callback(self, feedback_msg):
-        feedback = feedback_msg.feedback
-        formatted_text = self.format_feedback_text(f"{feedback.status}")
+        """ROS2 Callback: Handles feedback during goal execution."""
+        feedback = feedback_msg.feedback.status
+        self.ui_update_signal.emit(lambda: self.handle_goal_feedback(feedback))
+
+    def handle_goal_feedback(self, feedback):
+        """Helper method to display feedback. Runs in GUI thread."""
+        formatted_text = self.format_feedback_text(f"{feedback}")
         self.feedback_display.addItem(formatted_text)
         self.feedback_display.scrollToBottom()
         self.update_button_states()
 
     def get_result_callback(self, future):
-        result = future.result()
-        formatted_text = self.format_feedback_text(f"[gui] {result.result.msg}")
+        """ROS2 Callback: Handles the final result of the action."""
+        result_msg = future.result().result.msg
+        self.ui_update_signal.emit(lambda: self.handle_get_result(result_msg))
+
+    def handle_get_result(self, result_msg):
+        """Helper method to display the final result. Runs in GUI thread."""
+        formatted_text = self.format_feedback_text(f"[gui] {result_msg}")
         self.feedback_display.addItem(formatted_text)
         self.feedback_display.scrollToBottom()
         self.goal_handle = None
@@ -764,7 +828,12 @@ class AutonomyGUI(Node, QWidget):
         self.update_button_states()
 
     def cancel_response_callback(self, future):
+        """ROS2 Callback: Handles the response from a cancel request."""
         response = future.result()
+        self.ui_update_signal.emit(lambda: self.handle_cancel_response(response))
+    
+    def handle_cancel_response(self, response):
+        """Helper method to display cancel response. Runs in GUI thread."""
         if response.return_code == CancelGoal.Response.ERROR_NONE:
             self.feedback_display.addItem(
                 self.format_feedback_text("[gui] Cancel request sent successfully")
@@ -784,8 +853,8 @@ def main(args=None):
     gui = AutonomyGUI()
     gui.show()
     exit_code = app.exec_()
-    gui.destroy_node()
-    rclpy.shutdown()
+    # No need to call gui.destroy_node() or rclpy.shutdown() here,
+    # it is handled in the ROS2Thread now.
     sys.exit(exit_code)
 
 
