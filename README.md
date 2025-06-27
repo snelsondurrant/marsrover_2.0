@@ -91,7 +91,7 @@
 
 [MoveIt2 Concepts](https://moveit.picknik.ai/humble/doc/concepts/concepts.html)
 
-[MoveIt2 Tutorials](https://moveit.picknik.ai/humble/doc/tutorials/tutorials.html)
+[MoveIt2 Tutorials](https://moveit.picknik.ai/humble/doc/tutorials/tutorials.html)*
 
 > **NOTE:** Although MoveIt2 is preinstalled, the standard MoveIt2 tutorials require removing the Docker container's MoveIt2 installation and rebuilding it from source using colcon.
 
