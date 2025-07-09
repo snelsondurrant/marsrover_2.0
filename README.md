@@ -1,12 +1,12 @@
-[Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
+[Get Started](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#get-started)
 
-[Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
+[Essential Tutorials](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
 
-[How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
+[How-To Videos](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#how-to-videos)
 
-[Software Diagrams](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#software-diagrams)
+[Software Diagrams](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#software-diagrams)
 
-[Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
+[Contributing](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#contributing)
 
 --
 
