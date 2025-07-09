@@ -267,3 +267,7 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-moveit \
     && rm -rf /var/lib/apt/lists/*
 USER $NAME
+
+# Install fastmcp - Nelson Durrant, July 2025
+# Fast MCP server for hooking the rover controls into an LLM (experimental)
+RUN pip3 install fastmcp
