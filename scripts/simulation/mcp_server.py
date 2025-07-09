@@ -164,7 +164,8 @@ def move_rover(linear_x: float, angular_z: float, timeout_sec: int = 10) -> str:
     sent. To stop the rover, call this function with both linear_x and
     angular_z set to 0.
 
-    Call this tool twice to ensure the rover gets the command.
+    Call this tool twice to ensure the rover gets the command, and check the rover's odometry
+    afterwards to ensure it was correctly received.
 
     Args:
         linear_x (float): The forward (positive) or backward (negative)
