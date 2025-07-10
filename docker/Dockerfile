@@ -139,7 +139,7 @@ USER $NAME
 # Install plotjuggler - Nelson Durrant, Feb 2025
 # Useful for plotting and visualizing data from ROS2 bags and real-time tests
 USER root
-RUN apt update && apt install -y \
+RUN apt update && apt install -y --no-install-recommends \
     ros-humble-plotjuggler-ros \
     && rm -rf /var/lib/apt/lists/*
 USER $NAME
