@@ -138,13 +138,11 @@ USER $NAME
 
 # Install plotjuggler - Nelson Durrant, Feb 2025
 # Useful for plotting and visualizing data from ROS2 bags and real-time tests
-# USER root
-# RUN apt update && apt install -y \
-#     ros-humble-plotjuggler-ros \
-#     && rm -rf /var/lib/apt/lists/*
-# USER $NAME
-#
-# NOTE: As of June 2025, PlotJuggler downloads seem to be broken
+USER root
+RUN apt update && apt install -y \
+    ros-humble-plotjuggler-ros \
+    && rm -rf /var/lib/apt/lists/*
+USER $NAME
 
 # Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2025
 # We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
