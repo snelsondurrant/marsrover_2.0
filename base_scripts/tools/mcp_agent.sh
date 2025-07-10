@@ -2,7 +2,7 @@
 # Created by Nelson Durrant, July 2025
 #
 # EXPERIMENTAL! See 'scripts/simulation/mcp_server.py' for more details.
-# Super-simple AI agent that queries the rover's exposed MCP server for a status report.
+# Super-simple AI agent to test the perceive -> decide -> act loop.
 
 echo "Starting MCP Agent..."
 echo ""
