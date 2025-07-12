@@ -50,21 +50,22 @@ from typing import Any, Dict, Literal, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import rclpy
+from aruco_opencv_msgs.msg import ArucoDetection
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Vector3
 from mcp.server.fastmcp import FastMCP, Image
 from nav_msgs.msg import OccupancyGrid, Odometry
+from PIL import Image as PILImage
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.task import Future
 from rover_interfaces.action import AutonomyTask
+from rover_interfaces.msg import AutonomyLeg
 from sensor_msgs.msg import Image as RosImage
 from sensor_msgs.msg import Imu, NavSatFix
 from zed_msgs.msg import ObjectsStamped
-from aruco_opencv_msgs.msg import ArucoDetection
-from PIL import Image as PILImage
 
 # --- MCP Server Initialization ---
 mcp = FastMCP("rover-mcp-server-unified")
@@ -166,8 +167,8 @@ class MCP_ROS_Gateway_Node(Node):
             pil_image = PILImage.fromarray(cv_image)
             buffered = io.BytesIO()
             pil_image.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-            return Image(data=img_str, format="jpeg")
+            img_bytes = base64.b64encode(buffered.getvalue())
+            return Image(data=img_bytes, format="jpeg")
         except Exception as e:
             return f"ERROR: Failed to convert image. Details: {e}"
 
@@ -206,15 +207,17 @@ class MCP_ROS_Gateway_Node(Node):
         img = PILImage.fromarray(np.flipud(pixels), mode="RGB")
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return Image(data=img_str, format="png")
+        img_bytes = base64.b64encode(buffered.getvalue())
+        return Image(data=img_bytes, format="png")
 
     def publish_move_command(self, topic_name: str, linear_x: float, angular_z: float):
         """
         Publishes a Twist message multiple times for reliability.
         """
         publisher = self._get_publisher(topic_name)
-        twist_msg = Twist(linear={"x": linear_x}, angular={"z": angular_z})
+        linear_vec = Vector3(x=linear_x, y=0.0, z=0.0)
+        angular_vec = Vector3(x=0.0, y=0.0, z=angular_z)
+        twist_msg = Twist(linear=linear_vec, angular=angular_vec)
         for _ in range(3):
             publisher.publish(twist_msg)
             time.sleep(0.05)
@@ -553,14 +556,14 @@ def start_autonomy_task(
     if type == "aruco" and tag_id not in VALID_ARUCO_TAG_IDS:
         return f"ERROR: Invalid tag ID '{tag_id}'."
 
-    leg = {
-        "name": name,
-        "type": type,
-        "latitude": latitude,
-        "longitude": longitude,
-        "tag_id": tag_id,
-        "object": object_name,
-    }
+    leg = AutonomyLeg(
+        name=name,
+        type=type,
+        latitude=latitude,
+        longitude=longitude,
+        tag_id=tag_id,
+        object=object_name,
+    )
     goal_msg = AutonomyTask.Goal(enable_terrain=enable_terrain, legs=[leg])
     return ROS_NODE.start_task("/exec_autonomy_task", goal_msg)
 
