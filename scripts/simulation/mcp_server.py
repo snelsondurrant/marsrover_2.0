@@ -32,9 +32,9 @@ or testing, here's the steps to get started:
 4.  Try out some commands! Here's a few suggestions to get started:
     - "What city is the rover in? What is it doing there?"
     - "Describe to me what the rover is seeing right now."
-    - "Enable aruco detection and tell me if you see any tags."
+    - "Enable aruco detection on the rover and tell me if you see any tags."
     - "Drive the rover in a circle and report what obstacles it identifies."
-    - "Look for anything that could be a water bottle and navigate towards it."
+    - "Look for anything that could pass for a water bottle and navigate the rover towards it."
 
 5.  Add some functionality? I tried to make the MCP server as flexible as possible, so you should
     be able to add new tools or modify existing ones pretty easily -- just follow the
@@ -219,6 +219,8 @@ def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     """
     Enables or disables the ArUco marker detection node.
 
+    **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
+
     This function controls a lifecycle node. Enabling activates it, and disabling
     deactivates it. This is necessary before using get_rover_aruco_detections.
 
@@ -240,20 +242,25 @@ def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
         req.transition.id = Transition.TRANSITION_DEACTIVATE
         action = "disable"
 
-    result = ROS_NODE.call_service(
+    response = ROS_NODE.call_service(
         "/aruco_tracker/change_state", ChangeState, req, timeout_sec
     )
 
-    if result and result.success:
+    if response is None:
+        return f"ERROR: Failed to {action} ArUco detection. Service call timed out or service is not available."
+
+    if response.success:
         return f"Successfully sent request to {action} ArUco detection."
     else:
-        return f"ERROR: Failed to {action} ArUco detection. Service call failed or timed out."
+        return f"ERROR: Service reported failure on request to {action} ArUco detection."
 
 
 @mcp.tool(name="rover_sensors_enableObjectDetection")
 def enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     """
     Enables or disables the ZED camera's object detection module.
+
+    **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
 
     This must be enabled before using get_rover_obj_detections.
 
@@ -271,14 +278,17 @@ def enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     req.data = enable
     action = "enable" if enable else "disable"
 
-    result = ROS_NODE.call_service(
+    response = ROS_NODE.call_service(
         "/zed/zed_node/enable_obj_det", SetBool, req, timeout_sec
     )
 
-    if result and result.success:
-        return f"Successfully sent request to {action} object detection. Message: {result.message}"
+    if response is None:
+        return f"ERROR: Failed to {action} object detection. Service call timed out or service is not available."
+
+    if response.success:
+        return f"Successfully sent request to {action} object detection."
     else:
-        return f"ERROR: Failed to {action} object detection. Service call failed or timed out."
+        return f"ERROR: Service reported failure on request to {action} object detection."
 
 
 @mcp.tool(name="rover_sensors_getGpsFix")

@@ -93,6 +93,7 @@ class SimObjDetect(Node):
 
     def enable_service_callback(self, request, response):
         self.enable_flag = request.data
+        response.success = True
         return response
 
     def timer_callback(self):
