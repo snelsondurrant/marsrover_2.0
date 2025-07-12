@@ -315,9 +315,51 @@ class AutonomyGUI(Node, QWidget):
         """
         func()
 
-    def load_default_waypoints(self):
+    def is_waypoint_valid(self, leg_data):
+        """Checks if a waypoint dictionary has all the required fields and valid types."""
+        if not isinstance(leg_data, dict):
+            return False, "Waypoint entry is not a valid dictionary."
 
-        # Define the specific file for default waypoints
+        base_fields = ["name", "type", "latitude", "longitude"]
+        for field in base_fields:
+            if field not in leg_data:
+                return (
+                    False,
+                    f"Waypoint '{leg_data.get('name', 'N/A')}' is missing required field: '{field}'.",
+                )
+
+        wp_type = leg_data.get("type")
+        wp_name = leg_data.get("name")
+
+        if wp_type == "aruco":
+            if "tag_id" not in leg_data:
+                return (
+                    False,
+                    f"Aruco waypoint '{wp_name}' is missing required field: 'tag_id'.",
+                )
+        elif wp_type == "obj":
+            if "object" not in leg_data:
+                return (
+                    False,
+                    f"Object waypoint '{wp_name}' is missing required field: 'object'.",
+                )
+        elif wp_type != "gps":
+            return False, f"Waypoint '{wp_name}' has an unknown type: '{wp_type}'."
+
+        try:
+            float(leg_data["latitude"])
+            float(leg_data["longitude"])
+            if wp_type == "aruco":
+                int(leg_data["tag_id"])
+        except (ValueError, TypeError):
+            return (
+                False,
+                f"Waypoint '{wp_name}' has invalid data types for its fields (e.g., latitude/longitude should be numbers).",
+            )
+
+        return True, ""
+
+    def load_default_waypoints(self):
         default_file_path = os.path.join(
             self.default_waypoints_dir, "sim_waypoints.json"
         )
@@ -327,8 +369,7 @@ class AutonomyGUI(Node, QWidget):
 
         if not os.path.exists(default_file_path):
             self.get_logger().warn(
-                f"Default waypoints file not found at {default_file_path}. "
-                "No default waypoints will be loaded."
+                f"Default waypoints file not found at {default_file_path}. No default waypoints will be loaded."
             )
             return
 
@@ -336,39 +377,33 @@ class AutonomyGUI(Node, QWidget):
             with open(default_file_path, "r") as f:
                 default_waypoints_data = json.load(f)
 
-            for leg_data in default_waypoints_data.get("legs", []):
-                waypoint = {
-                    "name": leg_data.get("name", "DefaultWaypoint"),
-                    "type": leg_data.get("type", "gps"),
-                    "latitude": leg_data.get("latitude", 0.0),
-                    "longitude": leg_data.get("longitude", 0.0),
-                }
-                if waypoint["type"] == "aruco":
-                    waypoint["tag_id"] = int(leg_data.get("tag_id", 0))
-                elif waypoint["type"] == "obj":
-                    waypoint["object"] = leg_data.get("object", "")
+            legs_data = default_waypoints_data.get("legs", [])
 
-                self.waypoints.append(waypoint)
+            # Validate each waypoint before proceeding
+            for leg in legs_data:
+                is_valid, error_msg = self.is_waypoint_valid(leg)
+                if not is_valid:
+                    self.get_logger().error(
+                        f"Invalid data in default waypoints file: {error_msg}. Aborting load."
+                    )
+                    return
 
+            # Check for duplicate names
+            names_in_file = [leg.get("name") for leg in legs_data if leg.get("name")]
+            if len(names_in_file) != len(set(names_in_file)):
+                self.get_logger().error(
+                    f"Default waypoints file '{default_file_path}' contains duplicate names. Aborting load."
+                )
+                return
+
+            self.waypoints = legs_data
             if self.waypoints:
                 self.get_logger().info(
                     f"Successfully loaded {len(self.waypoints)} default waypoints from {default_file_path}."
                 )
-            else:
-                self.get_logger().info(
-                    f"No valid 'legs' found in {default_file_path} or file was empty."
-                )
 
             self.update_waypoint_list()
 
-        except FileNotFoundError:
-            self.get_logger().error(
-                f"Default waypoints file disappeared: {default_file_path}"
-            )
-        except json.JSONDecodeError as e:
-            self.get_logger().error(
-                f"Error decoding JSON from {default_file_path}: {e}"
-            )
         except Exception as e:
             self.get_logger().error(
                 f"Error loading default waypoints from {default_file_path}: {e}"
@@ -414,6 +449,14 @@ class AutonomyGUI(Node, QWidget):
         if dialog.exec_() == QDialog.Accepted:
             waypoint_data = dialog.get_waypoint_data()
             if waypoint_data:
+                existing_names = {wp["name"] for wp in self.waypoints}
+                if waypoint_data["name"] in existing_names:
+                    QMessageBox.critical(
+                        self,
+                        "Error",
+                        f"A waypoint with the name '{waypoint_data['name']}' already exists.",
+                    )
+                    return
                 self.waypoints.append(waypoint_data)
                 self.update_waypoint_list()
         self.update_button_states()
@@ -439,6 +482,18 @@ class AutonomyGUI(Node, QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 updated_waypoint_data = dialog.get_waypoint_data()
                 if updated_waypoint_data:
+                    existing_names = {
+                        wp["name"]
+                        for i, wp in enumerate(self.waypoints)
+                        if i != index
+                    }
+                    if updated_waypoint_data["name"] in existing_names:
+                        QMessageBox.critical(
+                            self,
+                            "Error",
+                            f"A waypoint with the name '{updated_waypoint_data['name']}' already exists.",
+                        )
+                        return
                     self.waypoints[index] = updated_waypoint_data
                     self.update_waypoint_list()
                     self.waypoint_list.setCurrentRow(index)
@@ -451,7 +506,17 @@ class AutonomyGUI(Node, QWidget):
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
             new_waypoint_data = waypoint_data.copy()
-            new_waypoint_data["name"] += "_copy"
+
+            # Find a unique name
+            base_name = waypoint_data["name"]
+            new_name_candidate = f"{base_name}_copy"
+            counter = 1
+            existing_names = {wp["name"] for wp in self.waypoints}
+            while new_name_candidate in existing_names:
+                counter += 1
+                new_name_candidate = f"{base_name}_copy_{counter}"
+            new_waypoint_data["name"] = new_name_candidate
+
             self.waypoints.insert(index + 1, new_waypoint_data)
             self.update_waypoint_list()
             self.waypoint_list.setCurrentRow(index + 1)
@@ -547,26 +612,36 @@ class AutonomyGUI(Node, QWidget):
                 with open(fileName, "r") as f:
                     data = json.load(f)
                 if "legs" in data and isinstance(data["legs"], list):
-                    self.waypoints = []
-                    loaded_count = 0
-                    for leg_data in data["legs"]:
-                        if (
-                            isinstance(leg_data, dict)
-                            and "name" in leg_data
-                            and "type" in leg_data
-                        ):
-                            self.waypoints.append(leg_data)
-                            loaded_count += 1
-                        else:
-                            self.get_logger().warn(
-                                f"Skipping invalid waypoint data: {leg_data}"
+                    # Validate each waypoint in the file before proceeding
+                    for leg in data["legs"]:
+                        is_valid, error_msg = self.is_waypoint_valid(leg)
+                        if not is_valid:
+                            QMessageBox.critical(
+                                self,
+                                "Invalid Waypoint Data",
+                                f"Error in file '{os.path.basename(fileName)}':\n\n{error_msg}",
                             )
+                            return  # Abort loading
+
+                    # Check for duplicate names within the file
+                    names_in_file = [
+                        leg.get("name") for leg in data["legs"] if leg.get("name")
+                    ]
+                    if len(names_in_file) != len(set(names_in_file)):
+                        QMessageBox.critical(
+                            self,
+                            "Error",
+                            "The selected file contains duplicate waypoint names. Please fix the file and try again.",
+                        )
+                        return
+
+                    # If all checks pass, load the data
+                    self.waypoints = data["legs"]
                     self.update_waypoint_list()
                     self.update_button_states()
                     self.get_logger().info(
-                        f"Loaded {loaded_count} waypoints from {fileName}"
+                        f"Loaded {len(self.waypoints)} waypoints from {fileName}"
                     )
-                    # Update default_waypoints_dir to the directory from where the file was loaded
                     self.default_waypoints_dir = os.path.dirname(fileName)
                 else:
                     raise ValueError(
@@ -641,8 +716,15 @@ class AutonomyGUI(Node, QWidget):
 
     def add_mapviz_waypoint(self, lat, lon):
         """Helper method to add a waypoint, called from the GUI thread."""
+        existing_names = {wp["name"] for wp in self.waypoints}
+        # Find a unique name
+        name_candidate = f"mapviz{self.mapviz_wp_count}"
+        while name_candidate in existing_names:
+            self.mapviz_wp_count += 1
+            name_candidate = f"mapviz{self.mapviz_wp_count}"
+
         waypoint_data = {
-            "name": f"mapviz{self.mapviz_wp_count}",
+            "name": name_candidate,
             "type": "gps",
             "latitude": lat,
             "longitude": lon,
