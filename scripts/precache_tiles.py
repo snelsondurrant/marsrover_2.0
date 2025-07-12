@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Created by Nelson Durrant (w Google Gemini 2.5 Pro), Mar 2025
+# Created by Nelson Durrant (w Gemini 2.5 Pro), Mar 2025
 import requests
 import mercantile
 import time

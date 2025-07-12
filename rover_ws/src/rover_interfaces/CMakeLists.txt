@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -28,6 +29,13 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/AutonomyTask.action"
   "msg/AutonomyLeg.msg"
+  "srv/AddWaypoint.srv"
+  "srv/GetFeedback.srv"
+  "srv/GetWaypoints.srv"
+  "srv/IsTaskRunning.srv"
+  "srv/RemoveWaypoint.srv"
+  "srv/SendWaypoint.srv"
+  DEPENDENCIES std_msgs
 )
 
 ament_package()

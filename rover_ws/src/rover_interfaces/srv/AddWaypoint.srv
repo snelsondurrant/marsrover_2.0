@@ -1,0 +1,7 @@
+# GetWaypoints.srv - Nelson Durrant, July 2025
+# Used to retrieve the list of waypoints stored in the GUI
+
+rover_interfaces/AutonomyLeg leg    # input, the leg to be added
+---
+bool success                        # output, whether the leg was added successfully
+string message                      # output, message to be displayed

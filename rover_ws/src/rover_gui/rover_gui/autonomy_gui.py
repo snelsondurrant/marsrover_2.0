@@ -28,18 +28,29 @@ from PyQt5.QtWidgets import (
     QCheckBox,
 )
 from PyQt5.QtGui import QColor
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QMetaObject, Qt, Q_ARG
 import sys
 import json
 import os
 import utm
+import threading
+
+from std_srvs.srv import SetBool, Trigger
+from rover_interfaces.srv import (
+    GetWaypoints,
+    AddWaypoint,
+    RemoveWaypoint,
+    IsTaskRunning,
+    SendWaypoint,
+    GetFeedback,
+)
 
 
 class ROS2Thread(QThread):
     """
     Fix for occasional threading crashes
 
-    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
+    :author: Nelson Durrant (w Gemini 2.5 Pro)
     :date: Apr 2025
     """
 
@@ -63,7 +74,7 @@ class WaypointDialog(QDialog):
     """
     Interactive dialog for adding or editing a waypoint
 
-    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
+    :author: Nelson Durrant (w Gemini 2.5 Pro)
     :date: Apr 2025
     """
 
@@ -145,11 +156,11 @@ class AutonomyGUI(Node, QWidget):
     """
     GUI for starting, stopping, and monitoring the rover's autonomy task
 
-    NOTE: This is quite the jumble of unorganized code, but Google Gemini 2.5 Pro one-shotted
+    NOTE: This is quite the jumble of unorganized code, but Gemini 2.5 Pro one-shotted
     almost all the major functionality in under an hour, so I guess I can't complain too much
     haha. It does seem to work really well tho, and I've tested it a lot.
 
-    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
+    :author: Nelson Durrant (w Gemini 2.5 Pro)
     :date: Apr 2025
 
     Clients:
@@ -167,6 +178,9 @@ class AutonomyGUI(Node, QWidget):
         QWidget.__init__(self)
 
         self.resize(800, 800)
+        
+        # Lock for thread-safe access to shared data (waypoints, goal_handle, etc.)
+        self.lock = threading.Lock()
 
         # Define the default directory for waypoints
         # ~/rover_ws/src/rover_gui/rover_gui/waypoints
@@ -300,6 +314,25 @@ class AutonomyGUI(Node, QWidget):
         
         # Connect the UI update signal to its slot
         self.ui_update_signal.connect(self.do_ui_update)
+        
+        ########################
+        # MCP GUI INTEGRATIONS #
+        ########################
+
+        self.create_service(GetWaypoints, "~/get_waypoints", self.get_waypoints_callback, callback_group=self.callback_group)
+        self.create_service(AddWaypoint, "~/add_waypoint", self.add_waypoint_callback, callback_group=self.callback_group)
+        self.create_service(RemoveWaypoint, "~/remove_waypoint", self.remove_waypoint_callback, callback_group=self.callback_group)
+        self.create_service(IsTaskRunning, "~/is_task_running", self.is_task_running_callback, callback_group=self.callback_group)
+        self.create_service(SetBool, "~/set_terrain_planning", self.set_terrain_planning_callback, callback_group=self.callback_group)
+        self.create_service(SendWaypoint, "~/send_waypoint", self.send_waypoint_callback, callback_group=self.callback_group)
+        self.create_service(Trigger, "~/send_all_waypoints", self.send_all_waypoints_callback, callback_group=self.callback_group)
+        self.create_service(GetFeedback, "~/get_feedback", self.get_feedback_callback, callback_group=self.callback_group)
+        self.create_service(Trigger, "~/cancel_task", self.cancel_task_callback, callback_group=self.callback_group)
+        self.get_logger().info("MCP GUI integration services are running.")
+
+        ############################
+        # END MCP GUI INTEGRATIONS #
+        ############################
 
         self.ros2_thread = ROS2Thread(self)
         self.ros2_thread.start()
@@ -315,9 +348,57 @@ class AutonomyGUI(Node, QWidget):
         """
         func()
 
-    def load_default_waypoints(self):
+    def is_waypoint_valid(self, leg_data):
+        """Checks if a waypoint dictionary has all the required fields and valid types/bounds."""
+        if not isinstance(leg_data, dict):
+            return False, "Waypoint entry is not a valid dictionary."
 
-        # Define the specific file for default waypoints
+        # Check for presence of base fields
+        base_fields = ["name", "type", "latitude", "longitude"]
+        for field in base_fields:
+            if field not in leg_data:
+                return False, f"Waypoint '{leg_data.get('name', 'N/A')}' is missing required field: '{field}'."
+
+        # Check name
+        wp_name = leg_data.get("name", "").strip()
+        if not wp_name:
+            return False, "Waypoint name cannot be empty."
+
+        # Check latitude and longitude bounds
+        try:
+            lat = float(leg_data["latitude"])
+            if not -90.0 <= lat <= 90.0:
+                return False, f"Latitude for '{wp_name}' ({lat}) is out of bounds [-90, 90]."
+            
+            lon = float(leg_data["longitude"])
+            if not -180.0 <= lon <= 180.0:
+                return False, f"Longitude for '{wp_name}' ({lon}) is out of bounds [-180, 180]."
+        except (ValueError, TypeError):
+             return False, f"Waypoint '{wp_name}' has invalid latitude/longitude. They must be numbers."
+
+        # Check type-specific fields and bounds
+        wp_type = leg_data.get("type")
+        if wp_type == "aruco":
+            if "tag_id" not in leg_data:
+                return False, f"Aruco waypoint '{wp_name}' is missing required field: 'tag_id'."
+            try:
+                tag_id = int(leg_data["tag_id"])
+                if tag_id not in [1, 2, 3]:
+                    return False, f"Tag ID for '{wp_name}' must be 1, 2, or 3, but was {tag_id}."
+            except (ValueError, TypeError):
+                return False, f"Tag ID for '{wp_name}' must be an integer."
+        elif wp_type == "obj":
+            if "object" not in leg_data:
+                return False, f"Object waypoint '{wp_name}' is missing required field: 'object'."
+            obj_name = leg_data.get("object", "").strip()
+            if obj_name not in ['mallet', 'bottle']:
+                return False, f"Object for '{wp_name}' must be 'mallet' or 'bottle', but was '{obj_name}'."
+        elif wp_type != "gps":
+            return False, f"Waypoint '{wp_name}' has an unknown type: '{wp_type}'."
+
+        return True, ""
+
+    def load_default_waypoints(self):
         default_file_path = os.path.join(
             self.default_waypoints_dir, "sim_waypoints.json"
         )
@@ -327,8 +408,7 @@ class AutonomyGUI(Node, QWidget):
 
         if not os.path.exists(default_file_path):
             self.get_logger().warn(
-                f"Default waypoints file not found at {default_file_path}. "
-                "No default waypoints will be loaded."
+                f"Default waypoints file not found at {default_file_path}. No default waypoints will be loaded."
             )
             return
 
@@ -336,39 +416,34 @@ class AutonomyGUI(Node, QWidget):
             with open(default_file_path, "r") as f:
                 default_waypoints_data = json.load(f)
 
-            for leg_data in default_waypoints_data.get("legs", []):
-                waypoint = {
-                    "name": leg_data.get("name", "DefaultWaypoint"),
-                    "type": leg_data.get("type", "gps"),
-                    "latitude": leg_data.get("latitude", 0.0),
-                    "longitude": leg_data.get("longitude", 0.0),
-                }
-                if waypoint["type"] == "aruco":
-                    waypoint["tag_id"] = int(leg_data.get("tag_id", 0))
-                elif waypoint["type"] == "obj":
-                    waypoint["object"] = leg_data.get("object", "")
+            with self.lock:
+                legs_data = default_waypoints_data.get("legs", [])
 
-                self.waypoints.append(waypoint)
+                # Validate each waypoint before proceeding
+                for leg in legs_data:
+                    is_valid, error_msg = self.is_waypoint_valid(leg)
+                    if not is_valid:
+                        self.get_logger().error(
+                            f"Invalid data in default waypoints file: {error_msg}. Aborting load."
+                        )
+                        return
 
-            if self.waypoints:
-                self.get_logger().info(
-                    f"Successfully loaded {len(self.waypoints)} default waypoints from {default_file_path}."
-                )
-            else:
-                self.get_logger().info(
-                    f"No valid 'legs' found in {default_file_path} or file was empty."
-                )
+                # Check for duplicate names
+                names_in_file = [leg.get("name") for leg in legs_data if leg.get("name")]
+                if len(names_in_file) != len(set(names_in_file)):
+                    self.get_logger().error(
+                        f"Default waypoints file '{default_file_path}' contains duplicate names. Aborting load."
+                    )
+                    return
 
-            self.update_waypoint_list()
+                self.waypoints = legs_data
+                if self.waypoints:
+                    self.get_logger().info(
+                        f"Successfully loaded {len(self.waypoints)} default waypoints from {default_file_path}."
+                    )
 
-        except FileNotFoundError:
-            self.get_logger().error(
-                f"Default waypoints file disappeared: {default_file_path}"
-            )
-        except json.JSONDecodeError as e:
-            self.get_logger().error(
-                f"Error decoding JSON from {default_file_path}: {e}"
-            )
+            self.ui_update_signal.emit(self.update_waypoint_list)
+
         except Exception as e:
             self.get_logger().error(
                 f"Error loading default waypoints from {default_file_path}: {e}"
@@ -392,21 +467,22 @@ class AutonomyGUI(Node, QWidget):
         event.accept()
 
     def update_button_states(self):
-        task_running = (
-            self.goal_handle is not None
-            and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
-        )
-        self.edit_button.setEnabled(len(self.waypoints) > 0)
-        self.duplicate_button.setEnabled(len(self.waypoints) > 0)
-        self.remove_button.setEnabled(len(self.waypoints) > 0)
-        self.clear_button.setEnabled(len(self.waypoints) > 0)
-        self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
-        self.start_selected_button.setEnabled(
-            not task_running and len(self.waypoints) > 0
-        )
-        self.stop_button.setEnabled(task_running)
-        self.preview_button.setEnabled(len(self.waypoints) > 0)
-        self.save_button.setEnabled(len(self.waypoints) > 0)
+        with self.lock:
+            task_running = (
+                self.goal_handle is not None
+                and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
+            )
+            self.edit_button.setEnabled(len(self.waypoints) > 0)
+            self.duplicate_button.setEnabled(len(self.waypoints) > 0)
+            self.remove_button.setEnabled(len(self.waypoints) > 0)
+            self.clear_button.setEnabled(len(self.waypoints) > 0)
+            self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
+            self.start_selected_button.setEnabled(
+                not task_running and len(self.waypoints) > 0
+            )
+            self.stop_button.setEnabled(task_running)
+            self.preview_button.setEnabled(len(self.waypoints) > 0)
+            self.save_button.setEnabled(len(self.waypoints) > 0)
 
     def open_add_waypoint_dialog(self):
         self.get_logger().info("Adding waypoint...")
@@ -414,60 +490,117 @@ class AutonomyGUI(Node, QWidget):
         if dialog.exec_() == QDialog.Accepted:
             waypoint_data = dialog.get_waypoint_data()
             if waypoint_data:
-                self.waypoints.append(waypoint_data)
+                is_valid, error_msg = self.is_waypoint_valid(waypoint_data)
+                if not is_valid:
+                    QMessageBox.critical(self, "Invalid Waypoint Data", error_msg)
+                    return
+
+                with self.lock:
+                    existing_names = {wp["name"] for wp in self.waypoints}
+                    if waypoint_data["name"] in existing_names:
+                        QMessageBox.critical(
+                            self,
+                            "Error",
+                            f"A waypoint with the name '{waypoint_data['name']}' already exists.",
+                        )
+                        return
+                    self.waypoints.append(waypoint_data)
                 self.update_waypoint_list()
         self.update_button_states()
 
     def open_edit_waypoint_dialog(self):
         self.get_logger().info("Editing waypoint...")
-        selected_item = self.waypoint_list.currentItem()
-        if selected_item:
+        with self.lock:
+            selected_item = self.waypoint_list.currentItem()
+            if not selected_item:
+                return
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
-            dialog = WaypointDialog(self)
-            dialog.name_edit.setText(waypoint_data["name"])
-            dialog.type_combo.setCurrentText(waypoint_data["type"])
-            dialog.latitude_edit.setText(str(waypoint_data["latitude"]))
-            dialog.longitude_edit.setText(str(waypoint_data["longitude"]))
-            if waypoint_data["type"] == "aruco":
-                dialog.tag_id_combo.setCurrentText(str(waypoint_data.get("tag_id", 0)))
-            elif waypoint_data["type"] == "obj":
-                dialog.object_combo.setCurrentText(waypoint_data.get("object", ""))
+        
+        dialog = WaypointDialog(self)
+        dialog.name_edit.setText(waypoint_data["name"])
+        dialog.type_combo.setCurrentText(waypoint_data["type"])
+        dialog.latitude_edit.setText(str(waypoint_data["latitude"]))
+        dialog.longitude_edit.setText(str(waypoint_data["longitude"]))
+        if waypoint_data["type"] == "aruco":
+            dialog.tag_id_combo.setCurrentText(str(waypoint_data.get("tag_id", 0)))
+        elif waypoint_data["type"] == "obj":
+            dialog.object_combo.setCurrentText(waypoint_data.get("object", ""))
 
-            dialog.update_fields_visibility()
+        dialog.update_fields_visibility()
 
-            if dialog.exec_() == QDialog.Accepted:
-                updated_waypoint_data = dialog.get_waypoint_data()
-                if updated_waypoint_data:
+        if dialog.exec_() == QDialog.Accepted:
+            updated_waypoint_data = dialog.get_waypoint_data()
+            if updated_waypoint_data:
+                is_valid, error_msg = self.is_waypoint_valid(updated_waypoint_data)
+                if not is_valid:
+                    QMessageBox.critical(self, "Invalid Waypoint Data", error_msg)
+                    return
+
+                with self.lock:
+                    existing_names = {
+                        wp["name"]
+                        for i, wp in enumerate(self.waypoints)
+                        if i != index
+                    }
+                    if updated_waypoint_data["name"] in existing_names:
+                        QMessageBox.critical(
+                            self,
+                            "Error",
+                            f"A waypoint with the name '{updated_waypoint_data['name']}' already exists.",
+                        )
+                        return
                     self.waypoints[index] = updated_waypoint_data
-                    self.update_waypoint_list()
-                    self.waypoint_list.setCurrentRow(index)
+                self.update_waypoint_list()
+                self.waypoint_list.setCurrentRow(index)
         self.update_button_states()
 
     def duplicate_waypoint(self):
         self.get_logger().info("Duplicating waypoint...")
-        selected_item = self.waypoint_list.currentItem()
-        if selected_item:
+        with self.lock:
+            selected_item = self.waypoint_list.currentItem()
+            if not selected_item:
+                return
+            
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
             new_waypoint_data = waypoint_data.copy()
-            new_waypoint_data["name"] += "_copy"
+
+            # Find a unique name
+            base_name = waypoint_data["name"]
+            new_name_candidate = f"{base_name}_copy"
+            counter = 1
+            existing_names = {wp["name"] for wp in self.waypoints}
+            while new_name_candidate in existing_names:
+                counter += 1
+                new_name_candidate = f"{base_name}_copy_{counter}"
+            new_waypoint_data["name"] = new_name_candidate
+
             self.waypoints.insert(index + 1, new_waypoint_data)
-            self.update_waypoint_list()
-            self.waypoint_list.setCurrentRow(index + 1)
+        
+        self.update_waypoint_list()
+        self.waypoint_list.setCurrentRow(index + 1)
         self.update_button_states()
 
     def remove_waypoint(self):
         self.get_logger().info("Removing waypoint...")
-        selected_item = self.waypoint_list.currentItem()
-        if selected_item:
+        with self.lock:
+            selected_item = self.waypoint_list.currentItem()
+            if not selected_item:
+                return
+            
             index = self.waypoint_list.row(selected_item)
             del self.waypoints[index]
-            self.update_waypoint_list()
+            
+            new_index = -1
             if index < len(self.waypoints):
-                self.waypoint_list.setCurrentRow(index)
+                new_index = index
             elif len(self.waypoints) > 0:
-                self.waypoint_list.setCurrentRow(index - 1)
+                new_index = index - 1
+
+        self.update_waypoint_list()
+        if new_index != -1:
+            self.waypoint_list.setCurrentRow(new_index)
         self.update_button_states()
 
     def clear_waypoints(self):
@@ -480,32 +613,34 @@ class AutonomyGUI(Node, QWidget):
             QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
-            self.waypoints = []
+            with self.lock:
+                self.waypoints = []
             self.update_waypoint_list()
             self.update_button_states()
 
     def update_waypoint_list(self):
-        current_row = self.waypoint_list.currentRow()
-        self.waypoint_list.clear()
-        for waypoint in self.waypoints:
-            self.waypoint_list.addItem(str(waypoint))
+        with self.lock:
+            current_row = self.waypoint_list.currentRow()
+            self.waypoint_list.clear()
+            for waypoint in self.waypoints:
+                self.waypoint_list.addItem(str(waypoint))
 
-        if self.waypoint_list.count() > 0:
-            if 0 <= current_row < self.waypoint_list.count():
-                self.waypoint_list.setCurrentRow(current_row)
-            else:
-                self.waypoint_list.setCurrentRow(0)
-
-        # scroll to the bottom of the list
-        self.waypoint_list.scrollToBottom()
+            if self.waypoint_list.count() > 0:
+                if 0 <= current_row < self.waypoint_list.count():
+                    self.waypoint_list.setCurrentRow(current_row)
+                else:
+                    self.waypoint_list.setCurrentRow(0)
+            self.waypoint_list.scrollToBottom()
 
     def save_waypoints_to_file(self):
         self.get_logger().info("Saving waypoints to file...")
-        if not self.waypoints:
-            QMessageBox.information(
-                self, "No Waypoints", "There are no waypoints to save."
-            )
-            return
+        with self.lock:
+            if not self.waypoints:
+                QMessageBox.information(
+                    self, "No Waypoints", "There are no waypoints to save."
+                )
+                return
+            waypoints_copy = self.waypoints.copy()
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -521,9 +656,8 @@ class AutonomyGUI(Node, QWidget):
                 fileName += ".json"
             try:
                 with open(fileName, "w") as f:
-                    json.dump({"legs": self.waypoints}, f, indent=4)
+                    json.dump({"legs": waypoints_copy}, f, indent=4)
                 self.get_logger().info(f"Waypoints saved to {fileName}")
-                # Update default_waypoints_dir to the directory where the file was saved
                 self.default_waypoints_dir = os.path.dirname(fileName)
             except Exception as e:
                 self.get_logger().error(f"Error saving waypoints: {e}")
@@ -546,32 +680,44 @@ class AutonomyGUI(Node, QWidget):
             try:
                 with open(fileName, "r") as f:
                     data = json.load(f)
-                if "legs" in data and isinstance(data["legs"], list):
-                    self.waypoints = []
-                    loaded_count = 0
-                    for leg_data in data["legs"]:
-                        if (
-                            isinstance(leg_data, dict)
-                            and "name" in leg_data
-                            and "type" in leg_data
-                        ):
-                            self.waypoints.append(leg_data)
-                            loaded_count += 1
-                        else:
-                            self.get_logger().warn(
-                                f"Skipping invalid waypoint data: {leg_data}"
+
+                with self.lock:
+                    if "legs" in data and isinstance(data["legs"], list):
+                        # Validate each waypoint in the file before proceeding
+                        for leg in data["legs"]:
+                            is_valid, error_msg = self.is_waypoint_valid(leg)
+                            if not is_valid:
+                                QMessageBox.critical(
+                                    self,
+                                    "Invalid Waypoint Data",
+                                    f"Error in file '{os.path.basename(fileName)}':\n\n{error_msg}",
+                                )
+                                return
+
+                        names_in_file = [
+                            leg.get("name") for leg in data["legs"] if leg.get("name")
+                        ]
+                        if len(names_in_file) != len(set(names_in_file)):
+                            QMessageBox.critical(
+                                self,
+                                "Error",
+                                "The selected file contains duplicate waypoint names. Please fix the file and try again.",
                             )
-                    self.update_waypoint_list()
-                    self.update_button_states()
-                    self.get_logger().info(
-                        f"Loaded {loaded_count} waypoints from {fileName}"
-                    )
-                    # Update default_waypoints_dir to the directory from where the file was loaded
-                    self.default_waypoints_dir = os.path.dirname(fileName)
-                else:
-                    raise ValueError(
-                        "Invalid waypoint file format. 'legs' array not found."
-                    )
+                            return
+
+                        self.waypoints = data["legs"]
+                        self.get_logger().info(
+                            f"Loaded {len(self.waypoints)} waypoints from {fileName}"
+                        )
+                        self.default_waypoints_dir = os.path.dirname(fileName)
+                    else:
+                        raise ValueError(
+                            "Invalid waypoint file format. 'legs' array not found."
+                        )
+                
+                self.ui_update_signal.emit(self.update_waypoint_list)
+                self.ui_update_signal.emit(self.update_button_states)
+
             except Exception as e:
                 self.get_logger().error(f"Error loading waypoints: {e}")
                 QMessageBox.critical(
@@ -580,10 +726,12 @@ class AutonomyGUI(Node, QWidget):
 
     def preview_wps(self):
         self.get_logger().info("Previewing waypoints...")
-        if not self.waypoints:
-            QMessageBox.warning(self, "Warning", "No waypoints to preview.")
-            return
-        
+        with self.lock:
+            if not self.waypoints:
+                QMessageBox.warning(self, "Warning", "No waypoints to preview.")
+                return
+            waypoints_copy = self.waypoints.copy()
+
         # Clear previous markers
         clear_marker_array = MarkerArray()
         clear_marker = Marker()
@@ -597,10 +745,9 @@ class AutonomyGUI(Node, QWidget):
         clear_marker.lifetime.nanosec = 0
         clear_marker_array.markers.append(clear_marker)
         self.preview_pub.publish(clear_marker_array)
-        
-        marker_array = MarkerArray()
-        for i, wp in enumerate(self.waypoints):
 
+        marker_array = MarkerArray()
+        for i, wp in enumerate(waypoints_copy):
             # convert from lat/lon to UTM
             utm_coords = utm.from_latlon(wp["latitude"], wp["longitude"])
 
@@ -629,177 +776,148 @@ class AutonomyGUI(Node, QWidget):
         self.preview_pub.publish(marker_array)
 
     def mapviz_clicked_point_callback(self, msg):
-        """
-        ROS2 Callback: Handles a clicked point from mapviz.
-        This runs in the ROS2 thread. It emits a signal to update the GUI safely.
-        """
         self.get_logger().info(f"Received clicked point from mapviz: {msg.point.x}, {msg.point.y}")
-        lat, lon = msg.point.y, msg.point.x  # wgs84 lat/lon
-        
-        # Emit a signal to have the GUI thread handle the update
+        lat, lon = msg.point.y, msg.point.x
         self.ui_update_signal.emit(lambda: self.add_mapviz_waypoint(lat, lon))
 
     def add_mapviz_waypoint(self, lat, lon):
-        """Helper method to add a waypoint, called from the GUI thread."""
-        waypoint_data = {
-            "name": f"mapviz{self.mapviz_wp_count}",
-            "type": "gps",
-            "latitude": lat,
-            "longitude": lon,
-        }
-        self.waypoints.append(waypoint_data)
+        with self.lock:
+            existing_names = {wp["name"] for wp in self.waypoints}
+            name_candidate = f"mapviz{self.mapviz_wp_count}"
+            while name_candidate in existing_names:
+                self.mapviz_wp_count += 1
+                name_candidate = f"mapviz{self.mapviz_wp_count}"
+
+            waypoint_data = {
+                "name": name_candidate,
+                "type": "gps",
+                "latitude": lat,
+                "longitude": lon,
+            }
+            self.waypoints.append(waypoint_data)
+            self.mapviz_wp_count += 1
+        
         self.update_waypoint_list()
-        self.mapviz_wp_count += 1
         self.update_button_states()
 
     def start_selected_task(self):
         self.get_logger().info("Starting selected task...")
-        selected_item = self.waypoint_list.currentItem()
-        if not selected_item:
-            QMessageBox.warning(self, "Warning", "No waypoint selected to send.")
-            return
+        with self.lock:
+            selected_item = self.waypoint_list.currentItem()
+            if not selected_item:
+                QMessageBox.warning(self, "Warning", "No waypoint selected to send.")
+                return
 
-        current_selection_index = self.waypoint_list.row(selected_item)
-        if not (0 <= current_selection_index < len(self.waypoints)):
-            QMessageBox.warning(
-                self, "Warning", "Invalid waypoint selection or list out of sync."
-            )
-            self.get_logger().error(
-                f"Invalid selection index: {current_selection_index} for waypoints len: {len(self.waypoints)}. "
-                f"Selected item text: {selected_item.text()}"
-            )
-            return
+            current_selection_index = self.waypoint_list.row(selected_item)
+            if not (0 <= current_selection_index < len(self.waypoints)):
+                QMessageBox.warning(
+                    self, "Warning", "Invalid waypoint selection or list out of sync."
+                )
+                self.get_logger().error(
+                    f"Invalid selection index: {current_selection_index} for waypoints len: {len(self.waypoints)}. "
+                    f"Selected item text: {selected_item.text()}"
+                )
+                return
 
-        if not self._action_client.wait_for_server(timeout_sec=2.0):
-            self.get_logger().error("Action server not available after 2 seconds!")
-            QMessageBox.critical(self, "Error", "Action server not available!")
-            return
-
-        goal_msg = AutonomyTask.Goal()
-        goal_msg.enable_terrain = self.terrain_planning_checkbox.isChecked()
-
-        goal_msg.legs = []
-        wp = self.waypoints[current_selection_index]
-        leg_msg = AutonomyLeg()
-        leg_msg.name = wp.get("name", "")
-        leg_msg.type = wp.get("type", "")
-        leg_msg.latitude = float(wp.get("latitude", 0.0))
-        leg_msg.longitude = float(wp.get("longitude", 0.0))
-
-        if leg_msg.type == "aruco":
-            leg_msg.tag_id = int(wp.get("tag_id", 0))
-            leg_msg.object = ""
-        elif leg_msg.type == "obj":
-            leg_msg.object = wp.get("object", "")
-            leg_msg.tag_id = 0
-        else:
-            leg_msg.tag_id = 0
-            leg_msg.object = ""
-
-        goal_msg.legs.append(leg_msg)
-
-        self.sent_waypoints = [wp]
-
-        self.feedback_display.clear()
-        send_goal_future = self._action_client.send_goal_async(
-            goal_msg, feedback_callback=self.goal_feedback_callback
-        )
-        send_goal_future.add_done_callback(self.goal_response_callback)
-        self.update_button_states()
+            waypoints_to_send = [self.waypoints[current_selection_index]]
+        
+        self._send_task(waypoints_to_send)
 
     def start_task(self):
         self.get_logger().info("Starting task...")
+        with self.lock:
+            if not self.waypoints:
+                QMessageBox.warning(self, "Warning", "No waypoints to send.")
+                return
+            waypoints_to_send = self.waypoints.copy()
+            
+        self._send_task(waypoints_to_send)
+
+    def _send_task(self, waypoints_to_send):
+        """Internal method to send a task with a given list of waypoints."""
         if not self._action_client.wait_for_server(timeout_sec=2.0):
             self.get_logger().error("Action server not available after 2 seconds!")
-            QMessageBox.critical(self, "Error", "Action server not available!")
+            self.ui_update_signal.emit(lambda: QMessageBox.critical(self, "Error", "Action server not available!"))
             return
 
-        if not self.waypoints:
-            QMessageBox.warning(self, "Warning", "No waypoints to send.")
-            return
+        with self.lock:
+            goal_msg = AutonomyTask.Goal()
+            goal_msg.enable_terrain = self.terrain_planning_checkbox.isChecked()
+            goal_msg.legs = []
+            for wp in waypoints_to_send:
+                leg_msg = AutonomyLeg()
+                leg_msg.name = wp.get("name", "")
+                leg_msg.type = wp.get("type", "")
+                leg_msg.latitude = float(wp.get("latitude", 0.0))
+                leg_msg.longitude = float(wp.get("longitude", 0.0))
 
-        goal_msg = AutonomyTask.Goal()
-        goal_msg.enable_terrain = self.terrain_planning_checkbox.isChecked()
+                if leg_msg.type == "aruco":
+                    leg_msg.tag_id = int(wp.get("tag_id", 0))
+                    leg_msg.object = ""
+                elif leg_msg.type == "obj":
+                    leg_msg.object = wp.get("object", "")
+                    leg_msg.tag_id = 0
+                else:
+                    leg_msg.tag_id = 0
+                    leg_msg.object = ""
+                goal_msg.legs.append(leg_msg)
+            
+            self.sent_waypoints = waypoints_to_send
 
-        goal_msg.legs = []
-        for wp in self.waypoints:
-            leg_msg = AutonomyLeg()
-            leg_msg.name = wp.get("name", "")
-            leg_msg.type = wp.get("type", "")
-            leg_msg.latitude = float(wp.get("latitude", 0.0))
-            leg_msg.longitude = float(wp.get("longitude", 0.0))
-
-            if leg_msg.type == "aruco":
-                leg_msg.tag_id = int(wp.get("tag_id", 0))
-                leg_msg.object = ""
-            elif leg_msg.type == "obj":
-                leg_msg.object = wp.get("object", "")
-                leg_msg.tag_id = 0
-            else:
-                leg_msg.tag_id = 0
-                leg_msg.object = ""
-
-            goal_msg.legs.append(leg_msg)
-
-        self.sent_waypoints = self.waypoints.copy()
-
-        self.feedback_display.clear()
+        self.ui_update_signal.emit(lambda: self.feedback_display.clear())
         send_goal_future = self._action_client.send_goal_async(
             goal_msg, feedback_callback=self.goal_feedback_callback
         )
         send_goal_future.add_done_callback(self.goal_response_callback)
-        self.update_button_states()
+        self.ui_update_signal.emit(self.update_button_states)
 
     def goal_response_callback(self, future):
-        """ROS2 Callback: Handles the server's response to the goal request."""
-        self.goal_handle = future.result()
-        self.ui_update_signal.emit(lambda: self.handle_goal_response())
+        with self.lock:
+            self.goal_handle = future.result()
+        self.ui_update_signal.emit(self.handle_goal_response)
 
     def handle_goal_response(self):
-        """Helper method to update GUI after goal response. Runs in GUI thread."""
-        if not self.goal_handle.accepted:
-            item = self.format_feedback_text("[ERROR] [gui] Goal rejected by action server")
-            self.feedback_display.addItem(item)
-        else:
-            self.feedback_display.addItem(
-                self.format_feedback_text("[gui] Goal accepted by action server:")
-            )
-            for wp in self.sent_waypoints:
-                self.feedback_display.addItem(" - " + str(wp))
-            self.feedback_display.addItem(
-                self.format_feedback_text(
-                    " - Terrain Path Planning: "
-                    f"{'ENABLED' if self.terrain_planning_checkbox.isChecked() else 'DISABLED'}"
+        with self.lock:
+            if not self.goal_handle.accepted:
+                item = self.format_feedback_text("[ERROR] [gui] Goal rejected by action server")
+                self.feedback_display.addItem(item)
+            else:
+                self.feedback_display.addItem(
+                    self.format_feedback_text("[gui] Goal accepted by action server:")
                 )
-            )
-            get_result_future = self.goal_handle.get_result_async()
-            get_result_future.add_done_callback(self.get_result_callback)
+                for wp in self.sent_waypoints:
+                    self.feedback_display.addItem(" - " + str(wp))
+                self.feedback_display.addItem(
+                    self.format_feedback_text(
+                        " - Terrain Path Planning: "
+                        f"{'ENABLED' if self.terrain_planning_checkbox.isChecked() else 'DISABLED'}"
+                    )
+                )
+                get_result_future = self.goal_handle.get_result_async()
+                get_result_future.add_done_callback(self.get_result_callback)
         self.feedback_display.scrollToBottom()
         self.update_button_states()
 
     def goal_feedback_callback(self, feedback_msg):
-        """ROS2 Callback: Handles feedback during goal execution."""
         feedback = feedback_msg.feedback.status
         self.ui_update_signal.emit(lambda: self.handle_goal_feedback(feedback))
 
     def handle_goal_feedback(self, feedback):
-        """Helper method to display feedback. Runs in GUI thread."""
         formatted_text = self.format_feedback_text(f"{feedback}")
         self.feedback_display.addItem(formatted_text)
         self.feedback_display.scrollToBottom()
         self.update_button_states()
 
     def get_result_callback(self, future):
-        """ROS2 Callback: Handles the final result of the action."""
         result_msg = future.result().result.msg
         self.ui_update_signal.emit(lambda: self.handle_get_result(result_msg))
 
     def handle_get_result(self, result_msg):
-        """Helper method to display the final result. Runs in GUI thread."""
-        formatted_text = self.format_feedback_text(f"[gui] {result_msg}")
-        self.feedback_display.addItem(formatted_text)
+        with self.lock:
+            formatted_text = self.format_feedback_text(f"[gui] {result_msg}")
+            self.feedback_display.addItem(formatted_text)
+            self.goal_handle = None
         self.feedback_display.scrollToBottom()
-        self.goal_handle = None
         self.update_button_states()
 
     def stop_task(self):
@@ -815,7 +933,7 @@ class AutonomyGUI(Node, QWidget):
                 self.get_logger().error(
                     "CancelGoal service not available after 2 seconds!"
                 )
-                QMessageBox.critical(self, "Error", "CancelGoal service not available!")
+                self.ui_update_signal.emit(lambda: QMessageBox.critical(self, "Error", "CancelGoal service not available!"))
             else:
                 self.get_logger().warn(
                     "CancelGoal service not available after 2 seconds!"
@@ -825,7 +943,7 @@ class AutonomyGUI(Node, QWidget):
         request = CancelGoal.Request()
         future = client.call_async(request)
         future.add_done_callback(self.cancel_response_callback)
-        self.update_button_states()
+        self.ui_update_signal.emit(self.update_button_states)
 
     def cancel_response_callback(self, future):
         """ROS2 Callback: Handles the response from a cancel request."""
@@ -838,7 +956,8 @@ class AutonomyGUI(Node, QWidget):
             self.feedback_display.addItem(
                 self.format_feedback_text("[gui] Cancel request sent successfully")
             )
-            self.goal_handle = None
+            with self.lock:
+                self.goal_handle = None
         else:
             self.feedback_display.addItem(
                 self.format_feedback_text("[ERROR] [gui] Failed to send cancel request")
@@ -846,6 +965,174 @@ class AutonomyGUI(Node, QWidget):
         self.feedback_display.scrollToBottom()
         self.update_button_states()
 
+    ########################
+    # MCP GUI INTEGRATIONS #
+    ########################
+
+    def get_waypoints_callback(self, request, response):
+        with self.lock:
+            self.get_logger().info("Servicing request for all waypoints...")
+            for wp_dict in self.waypoints:
+                leg = AutonomyLeg()
+                leg.name = wp_dict.get('name', '')
+                leg.type = wp_dict.get('type', '')
+                leg.latitude = float(wp_dict.get('latitude', 0.0))
+                leg.longitude = float(wp_dict.get('longitude', 0.0))
+                if leg.type == 'aruco':
+                    leg.tag_id = int(wp_dict.get('tag_id', 0))
+                elif leg.type == 'obj':
+                    leg.object = wp_dict.get('object', '')
+                response.legs.append(leg)
+        return response
+
+    def add_waypoint_callback(self, request, response):
+        self.get_logger().info(f"Servicing request to add waypoint: {request.leg.name}")
+        wp_data = {
+            "name": request.leg.name,
+            "type": request.leg.type,
+            "latitude": request.leg.latitude,
+            "longitude": request.leg.longitude,
+        }
+        if request.leg.type == "aruco":
+            wp_data["tag_id"] = request.leg.tag_id
+        elif request.leg.type == "obj":
+            wp_data["object"] = request.leg.object
+
+        is_valid, error_msg = self.is_waypoint_valid(wp_data)
+        if not is_valid:
+            response.success = False
+            response.message = error_msg
+            self.get_logger().warn(f"Invalid waypoint data from service: {error_msg}")
+            return response
+
+        with self.lock:
+            existing_names = {wp["name"] for wp in self.waypoints}
+            if wp_data["name"] in existing_names:
+                response.success = False
+                response.message = f"Waypoint with name '{wp_data['name']}' already exists."
+                self.get_logger().warn(response.message)
+                return response
+
+            self.waypoints.append(wp_data)
+        
+        self.ui_update_signal.emit(self.update_waypoint_list)
+        self.ui_update_signal.emit(self.update_button_states)
+        response.success = True
+        response.message = "Waypoint added successfully."
+        return response
+
+    def remove_waypoint_callback(self, request, response):
+        self.get_logger().info(f"Servicing request to remove waypoint: {request.name}")
+        with self.lock:
+            original_len = len(self.waypoints)
+            self.waypoints = [wp for wp in self.waypoints if wp.get("name") != request.name]
+            if len(self.waypoints) < original_len:
+                response.success = True
+                response.message = f"Waypoint '{request.name}' removed."
+                self.get_logger().info(response.message)
+                self.ui_update_signal.emit(self.update_waypoint_list)
+                self.ui_update_signal.emit(self.update_button_states)
+            else:
+                response.success = False
+                response.message = f"Waypoint '{request.name}' not found."
+                self.get_logger().warn(response.message)
+        return response
+
+    def is_task_running_callback(self, request, response):
+        with self.lock:
+            response.is_running = (self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING)
+        return response
+
+    def set_terrain_planning_callback(self, request, response):
+        self.get_logger().info(f"Servicing request to set terrain planning to: {request.data}")
+        # This must be run in the GUI thread.
+        self.ui_update_signal.emit(lambda: self.terrain_planning_checkbox.setChecked(request.data))
+        response.success = True
+        response.message = f"Terrain planning set to {request.data}"
+        return response
+
+    def send_waypoint_callback(self, request, response):
+        self.get_logger().info(f"Servicing request to send waypoint by name: {request.name}")
+        with self.lock:
+            if self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING:
+                response.success = False
+                response.message = "A task is already running."
+                self.get_logger().warn(response.message)
+                return response
+            
+            waypoint_to_send = None
+            for wp in self.waypoints:
+                if wp.get("name") == request.name:
+                    waypoint_to_send = wp
+                    break
+            
+            if waypoint_to_send is None:
+                response.success = False
+                response.message = f"Waypoint '{request.name}' not found."
+                self.get_logger().warn(response.message)
+                return response
+            
+            waypoints_to_send_list = [waypoint_to_send]
+
+        self._send_task(waypoints_to_send_list)
+        response.success = True
+        response.message = "Task sent successfully."
+        return response
+
+    def send_all_waypoints_callback(self, request, response):
+        self.get_logger().info("Servicing request to send all waypoints.")
+        with self.lock:
+            if self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING:
+                response.success = False
+                response.message = "A task is already running."
+                self.get_logger().warn(response.message)
+                return response
+            
+            if not self.waypoints:
+                response.success = False
+                response.message = "No waypoints to send."
+                self.get_logger().warn(response.message)
+                return response
+            
+            waypoints_to_send = self.waypoints.copy()
+        
+        self._send_task(waypoints_to_send)
+        response.success = True
+        response.message = "Task sent successfully."
+        return response
+
+    def get_feedback_callback(self, request, response):
+        self.get_logger().info("Servicing request to get feedback log.")
+        feedback_list = []
+
+        def get_text_from_gui():
+            nonlocal feedback_list
+            for i in range(self.feedback_display.count()):
+                feedback_list.append(self.feedback_display.item(i).text())
+
+        # Blocking call to safely get data from the GUI thread
+        QMetaObject.invokeMethod(self, "do_ui_update", Qt.BlockingQueuedConnection, Q_ARG(object, get_text_from_gui))
+        
+        response.feedback_log = feedback_list
+        return response
+
+    def cancel_task_callback(self, request, response):
+        self.get_logger().info("Servicing request to cancel current task.")
+        with self.lock:
+            if self.goal_handle is None or self.goal_handle.status != GoalStatus.STATUS_EXECUTING:
+                response.success = False
+                response.message = "No task is currently running to cancel."
+                self.get_logger().warn(response.message)
+                return response
+
+        self.stop_task()
+        response.success = True
+        response.message = "Cancel request sent."
+        return response
+
+    ############################
+    # END MCP GUI INTEGRATIONS #
+    ############################
 
 def main(args=None):
     rclpy.init(args=args)
@@ -853,8 +1140,6 @@ def main(args=None):
     gui = AutonomyGUI()
     gui.show()
     exit_code = app.exec_()
-    # No need to call gui.destroy_node() or rclpy.shutdown() here,
-    # it is handled in the ROS2Thread now.
     sys.exit(exit_code)
 
 
