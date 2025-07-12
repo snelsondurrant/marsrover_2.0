@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Created by Nelson Durrant (w Gemini 2.5 Pro), July 2025
+# Revised by Gemini, July 2025, to remove all tasking functionality.
 
 """
 I created this MCP server as an quick experiment for a summer internship project I was working on,
@@ -13,13 +14,13 @@ or testing, here's the steps to get started:
    MCP connection using this link: https://modelcontextprotocol.io/quickstart/user. Instead
    of the filesystem tools, add the following config to 'claude_desktop_config.json':
 
-    "mcpServers": {
+   "mcpServers": {
         "roverExperimental": {
             "type": "command",
             "command": "docker",
             "args": ["exec", "-i", "marsrover-ct", "bash", "-c", "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py && pkill -f mcp_server.py"]
         }
-    }
+   }
 
 3. Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
    It should now automatically connect to the MCP server when the container is running, although
@@ -33,7 +34,6 @@ or testing, here's the steps to get started:
    - "What city is the rover in? What is it doing there?"
    - "Describe to me what the rover is seeing right now."
    - "Drive the rover in a circle and report what obstacles it identifies."
-   - "Send a GPS waypoint task to the rover within 40 meters of its current position"
    - "Look for anything that could be an ArUco tag and navigate towards it."
 
 5. Add some functionality? I tried to make the MCP server as flexible as possible, so you should
@@ -49,10 +49,7 @@ https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#quickstart
 
 import base64
 import io
-import threading
-import time
-import uuid
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,87 +60,37 @@ from geometry_msgs.msg import Twist, Vector3
 from mcp.server.fastmcp import FastMCP, Image
 from nav_msgs.msg import OccupancyGrid, Odometry
 from PIL import Image as PILImage
-from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.task import Future
-from rover_interfaces.action import AutonomyTask
-from rover_interfaces.msg import AutonomyLeg
 from sensor_msgs.msg import Image as RosImage
 from sensor_msgs.msg import Imu, NavSatFix
 from zed_msgs.msg import ObjectsStamped
 
-# --- MCP Server Initialization ---
 mcp = FastMCP("rover-mcp-server-unified")
 
-# --- Constants ---
-VALID_AUTONOMY_TASK_TYPES = ["gps", "aruco", "obj"]
-VALID_OBJECT_NAMES = ["mallet", "bottle"]
-VALID_ARUCO_TAG_IDS = [1, 2, 3]
 
-
-# --- Unified ROS Gateway Node ---
+# --- ROS 2 Gateway Node ---
 class MCP_ROS_Gateway_Node(Node):
     """
-    Acts as a singleton gateway to the ROS2 ecosystem.
+    A simple ROS node that acts as a gateway for MCP commands.
 
     Author: Nelson Durrant (w Gemini 2.5 Pro)
     Date: July 2025
-
-    This persistent node runs in a background thread and handles all of the
-    ROS 2 communication for the MCP server. It provides a unified interface
-    for all MCP tools, allowing them to access ROS topics, services, and actions
-    without needing to manage the ROS node lifecycle or communication details.
     """
 
     def __init__(self):
         super().__init__("mcp_ros_gateway_node")
-        # --- State and Communication Clients (initialized on demand) ---
-        self.active_task_id: Optional[str] = None
-        self.active_tasks: Dict[str, Dict[str, Any]] = {}
-        self.lock = threading.Lock()
         self.bridge = CvBridge()
         self.publisher_cache: Dict[str, Publisher] = {}
-        self._action_client: Optional[ActionClient] = None
-        self._action_server_name: Optional[str] = None
 
-    # --- Internal Communication Client Getters ---
-    def _get_publisher(self, topic_name: str) -> Publisher:
-        """
-        Internal: Retrieves a publisher from cache or creates a new one.
-        This caching avoids the performance cost of repeatedly creating publishers.
-        """
-        if topic_name not in self.publisher_cache:
-            self.publisher_cache[topic_name] = self.create_publisher(
-                Twist, topic_name, 10
-            )
-        return self.publisher_cache[topic_name]
+    def _spin_for_future(self, future: Future, timeout_sec: Optional[float] = None):
+        rclpy.spin_until_future_complete(self, future, timeout_sec=timeout_sec)
 
-    def _get_action_client(self, server_name: str) -> ActionClient:
-        """
-        Internal: Initializes the action client on its first use (lazy initialization).
-        Enforces a single action server name for the node's lifetime to simplify state.
-        """
-        with self.lock:
-            if self._action_client is None:
-                self.get_logger().info(f"Creating action client for '{server_name}'")
-                self._action_client = ActionClient(self, AutonomyTask, server_name)
-                self._action_server_name = server_name
-            elif self._action_server_name != server_name:
-                self.get_logger().error(
-                    f"Node is already bound to action server '{self._action_server_name}'!"
-                )
-        return self._action_client
-
-    def _wait_for_message(
-        self, topic: str, msg_type: Any, qos: QoSProfile, timeout: float
+    def _get_raw_message(
+        self, topic: str, qos: QoSProfile, msg_type: Any, timeout_sec: float
     ) -> Optional[Any]:
-        """
-        Internal: Creates a temporary subscriber to wait for a single message.
-        This is the core of on-demand data fetching; it is non-blocking for the
-        main background spin loop.
-        """
         future = Future()
         sub = self.create_subscription(
             msg_type,
@@ -152,19 +99,22 @@ class MCP_ROS_Gateway_Node(Node):
             qos,
         )
         try:
-            rclpy.spin_until_future_complete(self, future, timeout_sec=timeout)
-            return future.result()
+            self._spin_for_future(future, timeout_sec=timeout_sec)
+            return future.result() if future.done() else None
         finally:
             self.destroy_subscription(sub)
 
-    # --- Public Methods for MCP Tools ---
-    def get_single_message(self, topic: str, msg_type: Any, timeout_sec: float) -> str:
-        msg = self._wait_for_message(topic, msg_type, QoSProfile(depth=1), timeout_sec)
-        return str(msg) if msg else f"ERROR: Timed out waiting for message on '{topic}'."
+    def get_single_message_as_str(
+        self, topic: str, msg_type: Any, timeout_sec: float
+    ) -> str:
+        msg = self._get_raw_message(topic, QoSProfile(depth=1), msg_type, timeout_sec)
+        return (
+            str(msg) if msg else f"ERROR: Timed out waiting for message on '{topic}'."
+        )
 
-    def get_camera_image(self, topic: str, timeout_sec: float) -> Image:
-        ros_image = self._wait_for_message(
-            topic, RosImage, QoSProfile(depth=1), timeout_sec
+    def get_camera_image(self, topic: str, timeout_sec: float) -> Union[Image, str]:
+        ros_image = self._get_raw_message(
+            topic, QoSProfile(depth=1), RosImage, timeout_sec
         )
         if not ros_image:
             return f"ERROR: Timed out waiting for an image on '{topic}'."
@@ -174,20 +124,25 @@ class MCP_ROS_Gateway_Node(Node):
             buffered = io.BytesIO()
             pil_image.save(buffered, format="JPEG")
             img_bytes = base64.b64encode(buffered.getvalue())
+
+            # Save the image to a file for debugging purposes with the topic in the filename
+            img = PILImage.open(io.BytesIO(base64.b64decode(img_bytes)))
+            img.save("/home/marsrover-docker/scripts/simulation/image_{}.png".format(topic.replace('/', '_')))
             return Image(data=img_bytes, format="jpeg")
         except Exception as e:
             return f"ERROR: Failed to convert image. Details: {e}"
 
-    def get_costmap_image(self, topic: str, timeout_sec: float) -> Image:
+    def get_costmap_image(self, topic: str, timeout_sec: float) -> Union[Image, str]:
         qos = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
-        msg = self._wait_for_message(topic, OccupancyGrid, qos, timeout_sec)
+        msg = self._get_raw_message(topic, qos, OccupancyGrid, timeout_sec)
         if not msg:
             return f"ERROR: Timed out waiting for costmap data on '{topic}'."
 
+        # Convert OccupancyGrid to an image
         width, height = msg.info.width, msg.info.height
         costmap_data = np.array(msg.data, dtype=np.int8).reshape((height, width))
         pixels = np.zeros((height, width, 3), dtype=np.uint8)
@@ -200,107 +155,33 @@ class MCP_ROS_Gateway_Node(Node):
         pixels[mask_cost] = colors
         center_x, center_y = width // 2, height // 2
         cross_size = 3
-        pixels[center_y - cross_size : center_y + cross_size, center_x] = [
-            0,
-            255,
-            0,
-        ]  # Green vertical line
-        pixels[center_y, center_x - cross_size : center_x + cross_size] = [
-            0,
-            255,
-            0,
-        ]  # Green horizontal line
+        pixels[center_y - cross_size : center_y + cross_size, center_x] = [0, 255, 0]
+        pixels[center_y, center_x - cross_size : center_x + cross_size] = [0, 255, 0]
         img = PILImage.fromarray(np.flipud(pixels), mode="RGB")
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
         img_bytes = base64.b64encode(buffered.getvalue())
+
+        # save the image to a file for debugging purposes with the topic in the filename
+        img.save("/home/marsrover-docker/scripts/simulation/costmap_image_{}.png".format(topic.replace('/', '_')))
         return Image(data=img_bytes, format="png")
 
     def publish_move_command(self, topic_name: str, linear_x: float, angular_z: float):
-        """
-        Publishes a Twist message multiple times for reliability.
-        """
-        publisher = self._get_publisher(topic_name)
-        linear_vec = Vector3(x=linear_x, y=0.0, z=0.0)
-        angular_vec = Vector3(x=0.0, y=0.0, z=angular_z)
-        twist_msg = Twist(linear=linear_vec, angular=angular_vec)
+        publisher = self.publisher_cache.get(topic_name)
+        if not publisher:
+            publisher = self.create_publisher(Twist, topic_name, 10)
+            self.publisher_cache[topic_name] = publisher
+
+        twist_msg = Twist(linear=Vector3(x=linear_x), angular=Vector3(z=angular_z))
         for _ in range(3):
             publisher.publish(twist_msg)
-            time.sleep(0.05)
-
-    def _feedback_callback(self, task_id: str):
-        def feedback_cb(feedback_msg):
-            with self.lock:
-                if task_id in self.active_tasks:
-                    self.active_tasks[task_id]["feedback"] = feedback_msg.feedback
-
-        return feedback_cb
-
-    def start_task(self, server_name: str, goal_msg):
-        client = self._get_action_client(server_name)
-        with self.lock:
-            if self.active_task_id:
-                return "ERROR: Another task is already in progress. Wait or cancel it."
-        if not client.wait_for_server(timeout_sec=5.0):
-            return f"ERROR: Action server '{server_name}' not available."
-        task_id = str(uuid.uuid4())
-        send_goal_future = client.send_goal_async(
-            goal_msg, feedback_callback=self._feedback_callback(task_id)
-        )
-        rclpy.spin_until_future_complete(self, send_goal_future)
-        goal_handle = send_goal_future.result()
-        if not goal_handle.accepted:
-            return "ERROR: Goal was rejected by the server."
-        with self.lock:
-            self.active_task_id = task_id
-            self.active_tasks[task_id] = {
-                "goal_handle": goal_handle,
-                "feedback": None,
-                "result_future": goal_handle.get_result_async(),
-            }
-        return "Task started successfully."
-
-    def get_feedback(self):
-        with self.lock:
-            if not self.active_task_id:
-                return "ERROR: No active task."
-            return self.active_tasks[self.active_task_id].get(
-                "feedback", "No feedback yet."
-            )
-
-    def get_result(self):
-        with self.lock:
-            if not self.active_task_id:
-                return "ERROR: No active task."
-            task_id = self.active_task_id
-            result_future = self.active_tasks[task_id]["result_future"]
-        if result_future.done():
-            result = result_future.result().result
-            with self.lock:
-                del self.active_tasks[task_id]
-                self.active_task_id = None
-            return f"Task completed with result: {result}"
-        return "Task is still in progress."
-
-    def cancel_task(self):
-        with self.lock:
-            if not self.active_task_id:
-                return "ERROR: No active task."
-            task_id = self.active_task_id
-            goal_handle = self.active_tasks[task_id]["goal_handle"]
-        cancel_future = goal_handle.cancel_goal_async()
-        rclpy.spin_until_future_complete(self, cancel_future)
-        with self.lock:
-            del self.active_tasks[task_id]
-            self.active_task_id = None
-        return f"Cancel request sent. The system is ready for a new task."
+            rclpy.spin_once(self, timeout_sec=0.05)
 
 
-# --- Global Node Instance ---
 ROS_NODE: Optional[MCP_ROS_Gateway_Node] = None
 
 
-# --- Sensor Data Tools ---
+# --- Mars Rover MCP Tools ---
 @mcp.tool(name="rover_sensors_getGpsFix")
 def get_rover_gps_fix(timeout_sec: float = 5.0) -> str:
     """
@@ -317,7 +198,7 @@ def get_rover_gps_fix(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_single_message("/gps/fix", NavSatFix, timeout_sec)
+    return ROS_NODE.get_single_message_as_str("/gps/fix", NavSatFix, timeout_sec)
 
 
 @mcp.tool(name="rover_sensors_getImuData")
@@ -337,7 +218,7 @@ def get_rover_imu_data(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_single_message("/imu", Imu, timeout_sec)
+    return ROS_NODE.get_single_message_as_str("/imu", Imu, timeout_sec)
 
 
 @mcp.tool(name="rover_sensors_getCameraImage")
@@ -378,7 +259,7 @@ def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_single_message("/odometry/local", Odometry, timeout_sec)
+    return ROS_NODE.get_single_message_as_str("/odometry/local", Odometry, timeout_sec)
 
 
 @mcp.tool(name="rover_sensors_getGlobalOdometry")
@@ -398,7 +279,7 @@ def get_rover_odometry_global(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_single_message("/odometry/global", Odometry, timeout_sec)
+    return ROS_NODE.get_single_message_as_str("/odometry/global", Odometry, timeout_sec)
 
 
 @mcp.tool(name="rover_sensors_getArucoDetections")
@@ -416,7 +297,9 @@ def get_rover_aruco_detections(timeout_sec: int = 5) -> str:
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_single_message("/aruco_detections", ArucoDetection, timeout_sec)
+    return ROS_NODE.get_single_message_as_str(
+        "/aruco_detections", ArucoDetection, timeout_sec
+    )
 
 
 @mcp.tool(name="rover_sensors_getObjectDetections")
@@ -434,7 +317,7 @@ def get_rover_obj_detections(timeout_sec: int = 5) -> str:
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_single_message(
+    return ROS_NODE.get_single_message_as_str(
         "/zed/zed_node/obj_det/objects", ObjectsStamped, timeout_sec
     )
 
@@ -485,8 +368,7 @@ def get_rover_costmap_global_image(timeout_sec: int = 10) -> Image:
     return ROS_NODE.get_costmap_image("/global_costmap/costmap", timeout_sec)
 
 
-# --- Rover Movement Tool ---
-@mcp.tool(name="rover_motion_move")
+@mcp.tool(name="rover_actuators_driveRover")
 def move_rover(linear_x: float, angular_z: float) -> str:
     """
     Sends a non-blocking velocity command to the rover.
@@ -509,133 +391,19 @@ def move_rover(linear_x: float, angular_z: float) -> str:
     return f"Published Twist command: linear_x={linear_x}, angular_z={angular_z}"
 
 
-# --- Autonomy Tasking Tools ---
-@mcp.tool(name="rover_autonomy_startTask")
-def start_autonomy_task(
-    name: str,
-    type: Literal["gps", "aruco", "obj"],
-    latitude: float,
-    longitude: float,
-    enable_terrain: bool = True,
-    tag_id: int = 1,
-    object_name: str = "mallet",
-) -> str:
-    """
-    Starts an autonomy task. This will navigate the rover to a specified waypoint
-    or search for a specific object or ArUco tag.
-
-    IMPORTANT! Ask the user for clarification on the task type and parameters if
-    they are not clear.
-
-    This call is non-blocking and reserves the action client for the task. It will
-    fail if another task is already in progress. After calling this, use
-    `getTaskFeedback` to monitor progress and `getTaskResult` to confirm
-    completion, which frees the client for a new task.
-
-    Args:
-        name: A descriptive name for the task leg (e.g., "Navigate to science area").
-        type: The type of waypoint. Must be 'gps', 'aruco', or 'obj'.
-        latitude: The latitude coordinate for the goal.
-        longitude: The longitude coordinate for the goal.
-        enable_terrain: If True, use terrain-aware path planning.
-        tag_id: The ArUco tag ID to search for. Only used if type is 'aruco'.
-        object_name: The object to search for. Only used if type is 'obj'.
-
-    Returns:
-        A success or error message.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-    if type not in VALID_AUTONOMY_TASK_TYPES:
-        return f"ERROR: Invalid type '{type}'."
-    if type == "obj" and object_name not in VALID_OBJECT_NAMES:
-        return f"ERROR: Invalid object '{object_name}'."
-    if type == "aruco" and tag_id not in VALID_ARUCO_TAG_IDS:
-        return f"ERROR: Invalid tag ID '{tag_id}'."
-
-    leg = AutonomyLeg(
-        name=name,
-        type=type,
-        latitude=latitude,
-        longitude=longitude,
-        tag_id=tag_id,
-        object=object_name,
-    )
-    goal_msg = AutonomyTask.Goal(enable_terrain=enable_terrain, legs=[leg])
-    return ROS_NODE.start_task("/exec_autonomy_task", goal_msg)
-
-
-@mcp.tool(name="rover_autonomy_getTaskFeedback")
-def get_task_feedback() -> str:
-    """
-    Gets the latest feedback for the currently active autonomy task.
-
-    Feedback includes progress updates, status messages, and any
-    intermediate results. This is useful for monitoring the task's progress.
-
-    Returns:
-        A string containing the latest feedback or an error if no task is active.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-    return str(ROS_NODE.get_feedback())
-
-
-@mcp.tool(name="rover_autonomy_getTaskResult")
-def get_task_result() -> str:
-    """
-    Requests the final result of the currently active autonomy task.
-
-    If the task is complete, this returns the final outcome and releases the
-    system lock, allowing a new task to be started. If the task is still running,
-    it will return a status update.
-
-    Returns:
-        A string indicating the final result, a progress update, or an error.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_result()
-
-
-@mcp.tool(name="rover_autonomy_cancelTask")
-def cancel_task() -> str:
-    """
-    Cancels the currently active autonomy task.
-
-    This immediately terminates the active task and makes the system available
-    for a new task.
-
-    Returns:
-        A confirmation or error message.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-    return ROS_NODE.cancel_task()
-
-
 # --- Main Execution ---
 def main():
-    """
-    Initializes the unified ROS Gateway Node and starts the MCP server.
-    """
     global ROS_NODE
     rclpy.init()
     ROS_NODE = MCP_ROS_Gateway_Node()
-    ros_thread = threading.Thread(target=rclpy.spin, args=(ROS_NODE,), daemon=True)
-    ros_thread.start()
-    ROS_NODE.get_logger().info(
-        "Unified ROS Gateway Node started and spinning in background."
-    )
-
+    print("Starting Experimental Mars Rover MCP server...")
     try:
         mcp.run(transport="stdio")
     except KeyboardInterrupt:
         pass
     finally:
-        ROS_NODE.get_logger().info("Shutting down MCP server.")
+        ROS_NODE.destroy_node()
         rclpy.shutdown()
-        ros_thread.join()
 
 
 if __name__ == "__main__":
