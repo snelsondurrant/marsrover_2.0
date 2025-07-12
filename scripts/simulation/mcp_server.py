@@ -80,7 +80,7 @@ class MCP_ROS_Gateway_Node(Node):
     """
     A simple ROS node that acts as a gateway for MCP commands.
 
-    :author: Nelson Durrant (w Google Gemini)
+    :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: July 2025
     """
 
