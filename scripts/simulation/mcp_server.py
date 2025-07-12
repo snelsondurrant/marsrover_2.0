@@ -111,9 +111,6 @@ class MCP_ROS_Gateway_Node(Node):
     def call_service(
         self, srv_name: str, srv_type: Any, request: Any, timeout_sec: float = 5.0
     ) -> Optional[Any]:
-        """
-        Calls a ROS service and waits for the result.
-        """
         client = self.create_client(srv_type, srv_name)
         try:
             if not client.wait_for_service(timeout_sec=timeout_sec):
