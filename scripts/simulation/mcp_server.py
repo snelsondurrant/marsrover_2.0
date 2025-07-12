@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Created by Nelson Durrant (w Gemini 2.5 Pro), July 2025
-# Revised by Gemini, July 2025, to remove all tasking functionality.
 
 """
 I created this MCP server as an quick experiment for a summer internship project I was working on,
@@ -10,36 +9,36 @@ model work). Not sure how much of our task performance we trust offloading to an
 teams are curious or just want to play around with a simple way to hook up an LLM to our workflow
 or testing, here's the steps to get started:
 
-1. On a Windows computer, install Claude Desktop and follow the instructions to set up a
-   MCP connection using this link: https://modelcontextprotocol.io/quickstart/user. Instead
-   of the filesystem tools, add the following config to 'claude_desktop_config.json':
+1.  On a Windows computer, install Claude Desktop and follow the instructions to set up a
+    MCP connection using this link: https://modelcontextprotocol.io/quickstart/user. Instead
+    of the filesystem tools, add the following config to 'claude_desktop_config.json':
 
-   "mcpServers": {
+    "mcpServers": {
         "roverExperimental": {
             "type": "command",
             "command": "docker",
             "args": ["exec", "-i", "marsrover-ct", "bash", "-c", "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py && pkill -f mcp_server.py"]
         }
-   }
+    }
 
-3. Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
-   It should now automatically connect to the MCP server when the container is running, although
-   the exposed tools currently really won't do much unless the simulation is running as well.
+3.  Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
+    It should now automatically connect to the MCP server when the container is running, although
+    the exposed tools currently really won't do much unless the simulation is running as well.
 
-   NOTE: As of now, Claude Desktop only attempts to reconnect to the MCP server when it is first
-   launched. If you kill the server somehow, close Claude Desktop (maybe check task manager to make
-   sure it's really closed!), ensure the container is running, and relaunch it again.
+    NOTE: As of now, Claude Desktop only attempts to reconnect to the MCP server when it is first
+    launched. If you kill the server somehow, close Claude Desktop (maybe check task manager to make
+    sure it's really closed!), ensure the container is running, and relaunch it again.
 
-4. Try out some commands! Here's a few suggestions to get started:
-   - "What city is the rover in? What is it doing there?"
-   - "Describe to me what the rover is seeing right now."
-   - "Drive the rover in a circle and report what obstacles it identifies."
-   - "Look for anything that could be an ArUco tag and navigate towards it."
+4.  Try out some commands! Here's a few suggestions to get started:
+    - "What city is the rover in? What is it doing there?"
+    - "Describe to me what the rover is seeing right now."
+    - "Drive the rover in a circle and report what obstacles it identifies."
+    - "Look for anything that could be an ArUco tag and navigate towards it."
 
-5. Add some functionality? I tried to make the MCP server as flexible as possible, so you should
-   be able to add new tools or modify existing ones pretty easily -- just follow the
-   pattern of the existing code structure in this file. Here's the docs tho:
-   https://modelcontextprotocol.io/introduction
+5.  Add some functionality? I tried to make the MCP server as flexible as possible, so you should
+    be able to add new tools or modify existing ones pretty easily -- just follow the
+    pattern of the existing code structure in this file. Here's the docs tho:
+    https://modelcontextprotocol.io/introduction
 
 NOTE: As of now this also works (besides the image-based tools) with Gemini CLI as well, and I'm
 sure other multi-modal LLM providers will add MCP support in the near future -- it's a pretty
@@ -71,7 +70,6 @@ from zed_msgs.msg import ObjectsStamped
 mcp = FastMCP("rover-mcp-server-unified")
 
 
-# --- ROS 2 Gateway Node ---
 class MCP_ROS_Gateway_Node(Node):
     """
     A simple ROS node that acts as a gateway for MCP commands.
@@ -124,10 +122,6 @@ class MCP_ROS_Gateway_Node(Node):
             buffered = io.BytesIO()
             pil_image.save(buffered, format="JPEG")
             img_bytes = base64.b64encode(buffered.getvalue())
-
-            # Save the image to a file for debugging purposes with the topic in the filename
-            img = PILImage.open(io.BytesIO(base64.b64decode(img_bytes)))
-            img.save("/home/marsrover-docker/scripts/simulation/image_{}.png".format(topic.replace('/', '_')))
             return Image(data=img_bytes, format="jpeg")
         except Exception as e:
             return f"ERROR: Failed to convert image. Details: {e}"
@@ -155,15 +149,20 @@ class MCP_ROS_Gateway_Node(Node):
         pixels[mask_cost] = colors
         center_x, center_y = width // 2, height // 2
         cross_size = 3
-        pixels[center_y - cross_size : center_y + cross_size, center_x] = [0, 255, 0]
-        pixels[center_y, center_x - cross_size : center_x + cross_size] = [0, 255, 0]
+        pixels[center_y - cross_size : center_y + cross_size + 1, center_x] = [
+            0,
+            255,
+            0,
+        ]
+        pixels[center_y, center_x - cross_size : center_x + cross_size + 1] = [
+            0,
+            255,
+            0,
+        ]
         img = PILImage.fromarray(np.flipud(pixels), mode="RGB")
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
         img_bytes = base64.b64encode(buffered.getvalue())
-
-        # save the image to a file for debugging purposes with the topic in the filename
-        img.save("/home/marsrover-docker/scripts/simulation/costmap_image_{}.png".format(topic.replace('/', '_')))
         return Image(data=img_bytes, format="png")
 
     def publish_move_command(self, topic_name: str, linear_x: float, angular_z: float):
@@ -181,7 +180,10 @@ class MCP_ROS_Gateway_Node(Node):
 ROS_NODE: Optional[MCP_ROS_Gateway_Node] = None
 
 
-# --- Mars Rover MCP Tools ---
+########################
+# Mars Rover MCP Tools #
+########################
+
 @mcp.tool(name="rover_sensors_getGpsFix")
 def get_rover_gps_fix(timeout_sec: float = 5.0) -> str:
     """
@@ -391,12 +393,10 @@ def move_rover(linear_x: float, angular_z: float) -> str:
     return f"Published Twist command: linear_x={linear_x}, angular_z={angular_z}"
 
 
-# --- Main Execution ---
 def main():
     global ROS_NODE
     rclpy.init()
     ROS_NODE = MCP_ROS_Gateway_Node()
-    print("Starting Experimental Mars Rover MCP server...")
     try:
         mcp.run(transport="stdio")
     except KeyboardInterrupt:
