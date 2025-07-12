@@ -5,9 +5,10 @@
 I created this MCP server as an quick experiment for a summer internship project I was working on,
 but it's actually turned out pretty well haha. Right now it's configured to just work with the
 simulator, but could be adapted to run on the base station (with an internet connection or some local
-model work). Not sure how much of our task performance we trust offloading to an LLM, but if future
-teams are curious or just want to play around with a simple way to hook up an LLM to our workflow
-or testing, here's the steps to get started:
+model work -- ollama?). It does incur a significant amount of processing overhead. Not sure how much 
+of our real competition performance we trust off-loading to an LLM, but if future teams are curious
+or just want to play around with a simple way to hook up an LLM to our workflow or testing, here's
+the steps to get started:
 
 1.  On a Windows computer, install Claude Desktop and follow the instructions to set up a
     MCP connection using this link: https://modelcontextprotocol.io/quickstart/user. Instead
@@ -30,11 +31,11 @@ or testing, here's the steps to get started:
     sure it's really closed!), ensure the container is running, and relaunch it again.
 
 4.  Launch the simulation and try out some commands! Here's a few suggestions to get started:
-    - "What city is the rover in? What is it doing there?"
-    - "Describe to me what the rover is seeing right now."
-    - "Enable aruco detection on the rover and tell me if you see any tags."
-    - "Drive the rover in a circle and report what obstacles it identifies."
-    - "Look for anything that could pass for a water bottle and navigate the rover towards it."
+    - "What city is the rover in? What is it doing rn?"
+    - "Describe to me what the rover is seeing right now. What's around it?"
+    - "Add a new GPS waypoint to the GUI. Is a task running already?"
+    - "Navigate to a waypoint 20m north of the rover and look for an ArUco tag."
+    - "Drive around and look for anything that could vaguely be a water bottle."
 
 5.  Add some functionality! I tried to make the MCP server structure as flexible as possible, so 
     you should be able to add new tools or modify existing ones pretty easily -- just follow the
@@ -70,8 +71,18 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.task import Future
 from sensor_msgs.msg import Image as RosImage
 from sensor_msgs.msg import Imu, NavSatFix
-from std_srvs.srv import SetBool
+from std_srvs.srv import SetBool, Trigger
 from zed_msgs.msg import ObjectsStamped
+from rover_interfaces.msg import AutonomyLeg
+from rover_interfaces.srv import (
+    GetWaypoints,
+    AddWaypoint,
+    RemoveWaypoint,
+    IsTaskRunning,
+    SendWaypoint,
+    GetFeedback,
+)
+
 
 mcp = FastMCP("rover-mcp-server-unified")
 
@@ -210,83 +221,7 @@ ROS_NODE: Optional[MCP_ROS_Gateway_Node] = None
 # Mars Rover MCP Tools #
 ########################
 
-
-@mcp.tool(name="rover_mode_enableArucoDetection")
-def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
-    """
-    Enables or disables the ArUco marker detection node.
-
-    **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
-
-    This function controls a lifecycle node. Enabling activates it, and disabling
-    deactivates it. This is necessary before using get_rover_aruco_detections.
-
-    Args:
-        enable: Set to True to enable detection, False to disable.
-        timeout_sec: Max time to wait for the service response.
-
-    Returns:
-        A success or error message string.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-
-    req = ChangeState.Request()
-    if enable:
-        req.transition.id = Transition.TRANSITION_ACTIVATE
-        action = "enable"
-    else:
-        req.transition.id = Transition.TRANSITION_DEACTIVATE
-        action = "disable"
-
-    response = ROS_NODE.call_service(
-        "/aruco_tracker/change_state", ChangeState, req, timeout_sec
-    )
-
-    if response is None:
-        return f"ERROR: Failed to {action} ArUco detection. Service call timed out or service is not available."
-
-    if response.success:
-        return f"Successfully sent request to {action} ArUco detection."
-    else:
-        return f"ERROR: Service reported failure on request to {action} ArUco detection."
-
-
-@mcp.tool(name="rover_mode_enableObjectDetection")
-def enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
-    """
-    Enables or disables the ZED camera's object detection module.
-
-    **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
-
-    This must be enabled before using get_rover_obj_detections.
-
-    Args:
-        enable: Set to True to enable detection, False to disable.
-        timeout_sec: Max time to wait for the service response.
-
-    Returns:
-        A success or error message string.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-
-    req = SetBool.Request()
-    req.data = enable
-    action = "enable" if enable else "disable"
-
-    response = ROS_NODE.call_service(
-        "/zed/zed_node/enable_obj_det", SetBool, req, timeout_sec
-    )
-
-    if response is None:
-        return f"ERROR: Failed to {action} object detection. Service call timed out or service is not available."
-
-    if response.success:
-        return f"Successfully sent request to {action} object detection."
-    else:
-        return f"ERROR: Service reported failure on request to {action} object detection."
-
+# Rover Sensor Tools
 
 @mcp.tool(name="rover_sensors_getGpsFix")
 def get_rover_gps_fix(timeout_sec: float = 5.0) -> str:
@@ -367,6 +302,7 @@ def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
         return "ERROR: ROS Node not initialized."
     return ROS_NODE.get_single_message_as_str("/odometry/local", Odometry, timeout_sec)
 
+# Rover Data Tools
 
 @mcp.tool(name="rover_data_getGlobalOdometry")
 def get_rover_odometry_global(timeout_sec: float = 5.0) -> str:
@@ -473,6 +409,85 @@ def get_rover_costmap_global_image(timeout_sec: int = 10) -> Image:
         return "ERROR: ROS Node not initialized."
     return ROS_NODE.get_costmap_image("/global_costmap/costmap", timeout_sec)
 
+# Rover Mode Tools
+
+@mcp.tool(name="rover_mode_enableArucoDetection")
+def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
+    """
+    Enables or disables the ArUco marker detection node.
+
+    **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
+
+    This function controls a lifecycle node. Enabling activates it, and disabling
+    deactivates it. This is necessary before using get_rover_aruco_detections.
+
+    Args:
+        enable: Set to True to enable detection, False to disable.
+        timeout_sec: Max time to wait for the service response.
+
+    Returns:
+        A success or error message string.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+
+    req = ChangeState.Request()
+    if enable:
+        req.transition.id = Transition.TRANSITION_ACTIVATE
+        action = "enable"
+    else:
+        req.transition.id = Transition.TRANSITION_DEACTIVATE
+        action = "disable"
+
+    response = ROS_NODE.call_service(
+        "/aruco_tracker/change_state", ChangeState, req, timeout_sec
+    )
+
+    if response is None:
+        return f"ERROR: Failed to {action} ArUco detection. Service call timed out or service is not available."
+
+    if response.success:
+        return f"Successfully sent request to {action} ArUco detection."
+    else:
+        return f"ERROR: Service reported failure on request to {action} ArUco detection."
+
+
+@mcp.tool(name="rover_mode_enableObjectDetection")
+def enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
+    """
+    Enables or disables the ZED camera's object detection module.
+
+    **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
+
+    This must be enabled before using get_rover_obj_detections.
+
+    Args:
+        enable: Set to True to enable detection, False to disable.
+        timeout_sec: Max time to wait for the service response.
+
+    Returns:
+        A success or error message string.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+
+    req = SetBool.Request()
+    req.data = enable
+    action = "enable" if enable else "disable"
+
+    response = ROS_NODE.call_service(
+        "/zed/zed_node/enable_obj_det", SetBool, req, timeout_sec
+    )
+
+    if response is None:
+        return f"ERROR: Failed to {action} object detection. Service call timed out or service is not available."
+
+    if response.success:
+        return f"Successfully sent request to {action} object detection."
+    else:
+        return f"ERROR: Service reported failure on request to {action} object detection."
+
+# Rover Actuator Tools
 
 @mcp.tool(name="rover_actuators_driveRover")
 def move_rover(linear_x: float, angular_z: float) -> str:
@@ -482,6 +497,10 @@ def move_rover(linear_x: float, angular_z: float) -> str:
     This command is published multiple times for reliability. It will run until a
     new command is published or explicitly stopped. To stop the rover, you MUST call this
     function again with both linear_x and angular_z set to 0.
+
+    **IMPORTANT!** This will not execute as planned if the rover is currently
+    executing an autonomy task. You must cancel the task first using the
+    autonomy_cancel_task tool.
 
     Args:
         linear_x: The forward (positive) or backward (negative) velocity in m/s.
@@ -495,6 +514,217 @@ def move_rover(linear_x: float, angular_z: float) -> str:
         return "ERROR: ROS Node not initialized."
     ROS_NODE.publish_move_command("/cmd_vel", linear_x, angular_z)
     return f"Published Twist command: linear_x={linear_x}, angular_z={angular_z}"
+
+# Rover GUI Tools
+
+@mcp.tool(name="rover_gui_getAllWaypoints")
+def gui_get_all_waypoints() -> str:
+    """
+    Retrieves a list of all waypoints currently loaded in the Autonomy GUI.
+
+    Use this tool to inspect the current mission plan before execution.
+
+    Returns:
+        A string representation of the list of waypoints, or an error message.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = GetWaypoints.Request()
+    response = ROS_NODE.call_service("/autonomy_gui/get_waypoints", GetWaypoints, req)
+    if response:
+        return str(response.legs)
+    return "ERROR: Service call to get waypoints failed or timed out."
+
+
+@mcp.tool(name="rover_gui_addWaypoint")
+def gui_add_waypoint(
+    name: str,
+    waypoint_type: str,
+    latitude: float,
+    longitude: float,
+    tag_id: Optional[int] = None,
+    object_name: Optional[str] = None,
+) -> str:
+    """
+    Adds a new waypoint to the mission plan in the Autonomy GUI.
+
+    This allows for building a sequence of tasks for the rover to execute.
+    Waypoints must have a unique name.
+
+    Args:
+        name: The unique name for the waypoint (e.g., 'crater_edge_1').
+        waypoint_type: The type of waypoint. Must be one of 'gps', 'aruco', or 'obj'.
+        latitude: The latitude coordinate for the waypoint.
+        longitude: The longitude coordinate for the waypoint.
+        tag_id: Required if waypoint_type is 'aruco'. The ID of the ArUco tag (1, 2, or 3).
+        object_name: Required if waypoint_type is 'obj'. The name of the object ('mallet' or 'bottle').
+
+    Returns:
+        A success or error message from the service.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+
+    req = AddWaypoint.Request()
+    req.leg.name = name
+    req.leg.type = waypoint_type
+    req.leg.latitude = latitude
+    req.leg.longitude = longitude
+
+    if waypoint_type == "aruco":
+        if tag_id is None:
+            return "ERROR: 'tag_id' is required for 'aruco' waypoint type."
+        req.leg.tag_id = tag_id
+    elif waypoint_type == "obj":
+        if object_name is None:
+            return "ERROR: 'object_name' is required for 'obj' waypoint type."
+        req.leg.object = object_name
+
+    response = ROS_NODE.call_service("/autonomy_gui/add_waypoint", AddWaypoint, req)
+    if response:
+        return response.message
+    return "ERROR: Service call to add waypoint failed or timed out."
+
+
+@mcp.tool(name="rover_gui_removeWaypoint")
+def gui_remove_waypoint(name: str) -> str:
+    """
+    Removes a waypoint from the mission plan by its unique name.
+
+    Args:
+        name: The name of the waypoint to remove.
+
+    Returns:
+        A success or error message from the service.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = RemoveWaypoint.Request(name=name)
+    response = ROS_NODE.call_service("/autonomy_gui/remove_waypoint", RemoveWaypoint, req)
+    if response:
+        return response.message
+    return "ERROR: Service call to remove waypoint failed or timed out."
+
+
+@mcp.tool(name="rover_gui_setTerrainPlanning")
+def gui_set_terrain_planning(enable: bool) -> str:
+    """
+    Enables or disables terrain-aided path planning for autonomy tasks.
+
+    When enabled, the rover uses a pre-loaded terrain map to plan more efficient paths.
+
+    Args:
+        enable: Set to True to enable, False to disable.
+
+    Returns:
+        A success or error message.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = SetBool.Request(data=enable)
+    response = ROS_NODE.call_service("/autonomy_gui/set_terrain_planning", SetBool, req)
+    if response and response.success:
+        return response.message
+    return "ERROR: Service call to set terrain planning failed or timed out."
+
+# Rover Autonomy Tools
+
+@mcp.tool(name="rover_autonomy_isTaskRunning")
+def autonomy_is_task_running() -> str:
+    """
+    Checks if an autonomy task (a mission plan) is currently being executed by the rover.
+
+    Returns:
+        'True' if a task is running, 'False' otherwise, or an error message.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = IsTaskRunning.Request()
+    response = ROS_NODE.call_service("/autonomy_gui/is_task_running", IsTaskRunning, req)
+    if response:
+        return str(response.is_running)
+    return "ERROR: Service call to check task status failed or timed out."
+
+
+@mcp.tool(name="rover_autonomy_sendWaypoint")
+def autonomy_send_waypoint(name: str) -> str:
+    """
+    Commands the rover to execute a single waypoint from the mission plan.
+
+    This will fail if a task is already running.
+
+    Args:
+        name: The unique name of the waypoint to execute.
+
+    Returns:
+        A success or error message.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = SendWaypoint.Request(name=name)
+    response = ROS_NODE.call_service(
+        "/autonomy_gui/send_waypoint", SendWaypoint, req
+    )
+    if response:
+        return response.message
+    return "ERROR: Service call to send waypoint by name failed or timed out."
+
+
+@mcp.tool(name="rover_autonomy_sendAllWaypoints")
+def autonomy_send_all_waypoints() -> str:
+    """
+    Commands the rover to execute the entire mission plan (all loaded waypoints).
+
+    This will fail if a task is already running.
+
+    Returns:
+        A success or error message.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = Trigger.Request()
+    response = ROS_NODE.call_service("/autonomy_gui/send_all_waypoints", Trigger, req)
+    if response:
+        return response.message
+    return "ERROR: Service call to send all waypoints failed or timed out."
+
+
+@mcp.tool(name="rover_autonomy_getFeedback")
+def autonomy_get_feedback() -> str:
+    """
+    Retrieves the full text log from the Autonomy GUI's 'Task Feedback' display.
+
+    This is useful for debugging or monitoring the step-by-step progress of a task.
+
+    Returns:
+        A string containing the entire feedback log, with each entry on a new line.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = GetFeedback.Request()
+    response = ROS_NODE.call_service("/autonomy_gui/get_feedback", GetFeedback, req)
+    if response:
+        return "\n".join(response.feedback_log)
+    return "ERROR: Service call to get feedback failed or timed out."
+
+
+@mcp.tool(name="rover_autonomy_cancelTask")
+def autonomy_cancel_task() -> str:
+    """
+    Immediately cancels any autonomy task that is currently running.
+
+    If no task is running, this will report a failure.
+
+    Returns:
+        A success or error message.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+    req = Trigger.Request()
+    response = ROS_NODE.call_service("/autonomy_gui/cancel_task", Trigger, req)
+    if response:
+        return response.message
+    return "ERROR: Service call to cancel task failed or timed out."
 
 
 def main():
