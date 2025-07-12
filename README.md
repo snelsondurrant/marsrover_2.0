@@ -112,7 +112,7 @@
 
 [LLM Control with MCP](https://youtu.be/itFrfAUPw_0)
 
-![LLM Control with MCP](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
+![LLM_Control_with_MCP](https://github.com/user-attachments/assets/2d8b87f5-8cdd-4bf0-903f-97f98ee1a754)
 
 --
 
