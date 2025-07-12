@@ -50,13 +50,13 @@ Below is a brief overview of the elements in the main `marsrover_2.0` directory:
 - **`compose.sh`**: A script to launch the mapproxy and `marsrover-ct` containers.
 - **`update.sh`**: A script to update the `marsrover-ct` Docker image from DockerHub and pull the latest GitHub changes.
 
----
+--
 
 ### Fast DDS Discovery Server
 
 The rover and base station computers use a Fast DDS discovery server to communicate over the resource-constrained antenna network during competition. This server is configured to run on the rover's computer. THIS IS NOT USED ON DEVELOPMENT MACHINES, and is not needed for the Gazebo simulation environment. The discovery server is launched when a user runs the `rover_launch.sh` script from the base station's computer to ssh into the rover's computer and launch the rover's software stack. Helpful scripts for enabling ROS 2 command line tools in this situation are found in `scripts/discovery/`. These scripts set the necessary environment variables to allow the ROS 2 command line tools to communicate with the joint ROS 2 network using the discovery server.
 
----
+--
 
 ### Contributing
 
@@ -64,7 +64,7 @@ Don't just write a ridiculous amount of code by yourself at once. Instead, build
 
 Leave clean, well-documented code that is easy to read and understand. Use comments to explain complex logic and provide context for future developers. Follow the existing coding style and conventions used in the repository -- check a few existing files before writing new code to ensure documentation consistency. If you are unsure about the coding style, ask for clarification.
 
----
+--
 
 ### Testing
 
@@ -76,6 +76,6 @@ Most of the testing of new code functionality will be done in the Gazebo simulat
 
 Have the user run the launch scripts like `base_launch.sh`, `rover_launch.sh`, `zed_launch.sh`, and `sim_launch.sh` themselves. They launch important GUI tools that you as a LLM will not be able to interact with yourself. You MUST prompt the user to run these when needed instead of trying to run them yourself.
 
----
+--
 
 Created by Nelson Durrant, July 2025.
