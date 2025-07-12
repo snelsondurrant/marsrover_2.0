@@ -3,7 +3,7 @@
 
 """
 I created this MCP server as an quick experiment for a summer internship project I was working on,
-but it's actually turned out pretty cool haha. Right now it's configured to just work with the
+but it's actually turned out pretty well haha. Right now it's configured to just work with the
 simulator, but could be adapted to run on the base station (with an internet connection or some local
 model work). Not sure how much of our task performance we trust offloading to an LLM, but if future
 teams are curious or just want to play around with a simple way to hook up an LLM to our workflow
@@ -36,14 +36,14 @@ or testing, here's the steps to get started:
     - "Drive the rover in a circle and report what obstacles it identifies."
     - "Look for anything that could pass for a water bottle and navigate the rover towards it."
 
-5.  Add some functionality? I tried to make the MCP server as flexible as possible, so you should
-    be able to add new tools or modify existing ones pretty easily -- just follow the
-    pattern of the existing code structure in this file. Here's the docs tho:
+5.  Add some functionality! I tried to make the MCP server structure as flexible as possible, so 
+    you should be able to add new tools or modify existing ones pretty easily -- just follow the
+    pattern and flow of the existing code in this file. Here's the docs tho:
     https://modelcontextprotocol.io/introduction
 
 NOTE: As of now this also works (besides the image-based tools) with Gemini CLI as well, and I'm
 sure other multi-modal LLM providers will add MCP support in the near future -- it's a pretty
-quickly-growing standard.
+quickly-growing standard. Claude Desktop is the best I've found so far tho.
 https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#quickstart
 
 Nelson Durrant, July 2025
