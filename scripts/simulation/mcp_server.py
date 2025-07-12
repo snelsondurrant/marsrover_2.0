@@ -214,7 +214,7 @@ ROS_NODE: Optional[MCP_ROS_Gateway_Node] = None
 ########################
 
 
-@mcp.tool(name="rover_sensors_enableArucoDetection")
+@mcp.tool(name="rover_mode_enableArucoDetection")
 def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     """
     Enables or disables the ArUco marker detection node.
@@ -255,7 +255,7 @@ def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
         return f"ERROR: Service reported failure on request to {action} ArUco detection."
 
 
-@mcp.tool(name="rover_sensors_enableObjectDetection")
+@mcp.tool(name="rover_mode_enableObjectDetection")
 def enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     """
     Enables or disables the ZED camera's object detection module.
@@ -351,7 +351,7 @@ def get_rover_camera_image(timeout_sec: float = 10.0) -> Image:
     )
 
 
-@mcp.tool(name="rover_sensors_getLocalOdometry")
+@mcp.tool(name="rover_data_getLocalOdometry")
 def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
     """
     Retrieves the rover's local odometry data.
@@ -371,7 +371,7 @@ def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
     return ROS_NODE.get_single_message_as_str("/odometry/local", Odometry, timeout_sec)
 
 
-@mcp.tool(name="rover_sensors_getGlobalOdometry")
+@mcp.tool(name="rover_data_getGlobalOdometry")
 def get_rover_odometry_global(timeout_sec: float = 5.0) -> str:
     """
     Retrieves the rover's global odometry data.
@@ -391,7 +391,7 @@ def get_rover_odometry_global(timeout_sec: float = 5.0) -> str:
     return ROS_NODE.get_single_message_as_str("/odometry/global", Odometry, timeout_sec)
 
 
-@mcp.tool(name="rover_sensors_getArucoDetections")
+@mcp.tool(name="rover_data_getArucoDetections")
 def get_rover_aruco_detections(timeout_sec: int = 5) -> str:
     """
     Retrieves the latest detected ArUco (visual fiducial) markers.
@@ -411,7 +411,7 @@ def get_rover_aruco_detections(timeout_sec: int = 5) -> str:
     )
 
 
-@mcp.tool(name="rover_sensors_getObjectDetections")
+@mcp.tool(name="rover_data_getObjectDetections")
 def get_rover_obj_detections(timeout_sec: int = 5) -> str:
     """
     Retrieves the latest object detections from the camera's neural network.
@@ -431,7 +431,7 @@ def get_rover_obj_detections(timeout_sec: int = 5) -> str:
     )
 
 
-@mcp.tool(name="rover_sensors_getLocalCostmapImage")
+@mcp.tool(name="rover_data_getLocalCostmapImage")
 def get_rover_costmap_local_image(timeout_sec: int = 10) -> Image:
     """
     Generates an image of the rover's local costmap for immediate obstacle avoidance.
@@ -454,7 +454,7 @@ def get_rover_costmap_local_image(timeout_sec: int = 10) -> Image:
     return ROS_NODE.get_costmap_image("/local_costmap/costmap", timeout_sec)
 
 
-@mcp.tool(name="rover_sensors_getGlobalCostmapImage")
+@mcp.tool(name="rover_data_getGlobalCostmapImage")
 def get_rover_costmap_global_image(timeout_sec: int = 10) -> Image:
     """
     Generates an image of the rover's global costmap for long-range path planning.
