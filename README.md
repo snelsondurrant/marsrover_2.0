@@ -15,7 +15,7 @@
 > - Industry-standard Nav2 dynamic path planning and hazard avoidance
 > - Tuned and tested EKF for fusing odometry sources with GPS data
 > - A fully-defined map->odom->robot TF tree and rover URDF
-> - LLM integration with MCP for natural language control of the rover
+> - LLM integration using MCP for natural language control of the rover
 > - Lots and lots of QOL and scripting updates
 > 
 > I've successfully completed GPS, aruco, and object detection legs with this code running on the rover just behind the EB (even navigating between and around the trees and posts!). I've probably completed hundreds more in simulation, testing outlier cases like blocked hex points. However, when I've tried to increase the rover speed on our physical hardware to as quick as we'd need to run it at competition, the CPU can't keep up with the depth cloud processing from the ZED camera for object avoidance and we don't recognize obstacles in time before crashing into them. Even with CPU cost-cutting measures, it's clear that we simply just don't have the processing power on the Jetson Orin to run Nav2 hazard avoidance at the speed we need to to compete. We need a more powerful computer -- a laptop with a GPU or similar -- or another SBC in addition to the Orin. (Admittedly, I haven't had enough rover time to test using less-dense LiDAR data instead or mapping the point cloud to a laser scan to lower the costmap computation load, but I don't think we should be so close to the CPU limit regardless.)
@@ -110,9 +110,9 @@
 
 ![Localization Debugging](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
 
-[LLM Integration with MCP](https://youtu.be/r0U6DLKrkSk)
+[LLM Control with MCP](https://youtu.be/itFrfAUPw_0)
 
-![LLM Integration with MCP](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
+![LLM Control with MCP](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
 
 --
 
