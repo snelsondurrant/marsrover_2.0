@@ -1,0 +1,7 @@
+# SendWaypoint.srv - Nelson Durrant, July 2025
+# Used to send a waypoint from the GUI by its name to the rover for execution
+
+string name         # input, the name of the waypoint to be sent
+---
+bool success        # output, whether the waypoint was sent successfully
+string message      # output, message to be displayed

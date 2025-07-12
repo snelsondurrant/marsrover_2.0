@@ -1,0 +1,5 @@
+# IsTaskRunning.srv - Nelson Durrant, July 2025
+# Used to check if a task is currently running in the GUI
+
+---
+bool is_running     # output, whether a task is currently running

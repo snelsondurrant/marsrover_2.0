@@ -1,0 +1,5 @@
+# GetWaypoints.srv - Nelson Durrant, July 2025
+# Used to retrieve the list of waypoints stored in the GUI
+
+---
+rover_interfaces/AutonomyLeg[] legs   # output, the list of waypoints stored in the GUI

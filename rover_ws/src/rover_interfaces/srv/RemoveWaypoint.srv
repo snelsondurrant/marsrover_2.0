@@ -1,0 +1,7 @@
+# RemoveWaypoint.srv - Nelson Durrant, July 2025
+# Used to remove a waypoint from the list of waypoints stored in the GUI
+
+string name         # input, the name of the waypoint to be removed
+---
+bool success        # output, whether the waypoint was removed successfully
+string message      # output, message to be displayed
