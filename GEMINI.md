@@ -64,6 +64,18 @@ Don't just write a ridiculous amount of code by yourself at once. Instead, build
 
 Leave clean, well-documented code that is easy to read and understand. Use comments to explain complex logic and provide context for future developers. Follow the existing coding style and conventions used in the repository -- check a few existing files before writing new code to ensure documentation consistency. If you are unsure about the coding style, ask for clarification.
 
+Team members might be new to Git and GitHub, so when adding code functionality and helping with existing workflows, ensure and offer suggestions on how team members can follow the contributing guidelines in `README.md`. I'll copy them here as reference:
+
+- **Create a new branch.** This repository's main branch is protected, so you'll need to create a new branch. Name your branch with a combination of your name and the feature you are working on (e.g. nelson/repo-docs).
+
+- **Make your changes.** Develop and debug your new feature or bug fix. Add good documentation.
+
+  > **NOTE:** If you need to add dependencies, add them to the Dockerfile in your branch and test building the image locally. Once your pull request is merged into main, GitHub CI will automatically build and push the new Docker image to DockerHub.
+
+- **Rebase your branch often.** Keep your branch up-to-date with main by rebasing. This will help prevent merge conflicts down the road.
+
+- **Submit a pull request.** Once you have made and tested your changes, create a new pull request. Get another member of the team to review and approve it, and you can merge your new code into the main branch.
+
 --
 
 ### Testing
