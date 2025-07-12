@@ -2,41 +2,48 @@
 # Created by Nelson Durrant (w Gemini 2.5 Pro), July 2025
 
 """
-I created this MCP server mostly as an experiment for another project I was working on and
-wouldn't recommend it for real competition usage. Right now it's configured to just work
-with the simulation (mostly). If future teams are curious tho or just want to play around
-with a simple way to hook up an LLM to our workflow, here's the steps to get started:
+I created this MCP server as an quick experiment for a summer internship project I was working on,
+but it's actually turned out pretty cool haha. Right now it's configured to just work with the
+simulator, but could be adapted to run on the base station (with an internet connection or some local
+model work). Not sure how much of our task performance we trust offloading to an LLM, but if future
+teams are curious or just want to play around with a simple way to hook up an LLM to our workflow
+or testing, here's the steps to get started:
 
 1. On a Windows computer, install Claude Desktop and follow the instructions to set up a
    MCP connection using this link: https://modelcontextprotocol.io/quickstart/user. Instead
    of the filesystem tools, add the following config to 'claude_desktop_config.json':
 
-   "mcpServers": {
-     "roverExperimental": {
-       "type": "command",
-       "command": "docker",
-       "args": ["exec", "-i", "marsrover-ct", "bash", "-c",
-         "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py && pkill -f mcp_server.py"
-       ]
-     }
-   }
+    "mcpServers": {
+        "roverExperimental": {
+            "type": "command",
+            "command": "docker",
+            "args": ["exec", "-i", "marsrover-ct", "bash", "-c", "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py && pkill -f mcp_server.py"]
+        }
+    }
 
 3. Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
    It should now automatically connect to the MCP server when the container is running, although
-   the exposed tools really won't do much unless the simulation is running as well.
+   the exposed tools currently really won't do much unless the simulation is running as well.
 
    NOTE: As of now, Claude Desktop only attempts to reconnect to the MCP server when it is first
-   launched. If you lose connection, close Claude Desktop (maybe check task manager to make
+   launched. If you kill the server somehow, close Claude Desktop (maybe check task manager to make
    sure it's really closed!), ensure the container is running, and relaunch it again.
 
 4. Try out some commands! Here's a few suggestions to get started:
    - "What city is the rover in? What is it doing there?"
-   - "Describe to me what the rover is seeing right now"
-   - "Drive the rover in a circle with a radius of 5 meters"
+   - "Describe to me what the rover is seeing right now."
+   - "Drive the rover in a circle and report what obstacles it identifies."
    - "Send a GPS waypoint task to the rover within 40 meters of its current position"
+   - "Look for anything that could be an ArUco tag and navigate towards it."
 
-NOTE: This also works (besides the image-based tools) with Gemini CLI currently, and I'm sure
-other multi-modal LLM providers will add MCP support in the future.
+5. Add some functionality? I tried to make the MCP server as flexible as possible, so you should
+   be able to add new tools or modify existing ones pretty easily -- just follow the
+   pattern of the existing code structure in this file. Here's the docs tho:
+   https://modelcontextprotocol.io/introduction
+
+NOTE: As of now this also works (besides the image-based tools) with Gemini CLI as well, and I'm
+sure other multi-modal LLM providers will add MCP support in the near future -- it's a pretty
+quickly-growing standard.
 https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#quickstart
 """
 
@@ -84,11 +91,10 @@ class MCP_ROS_Gateway_Node(Node):
     Author: Nelson Durrant (w Gemini 2.5 Pro)
     Date: July 2025
 
-    This single, persistent node runs in a background thread and handles all
-    ROS2 communications. It manages stateful operations, such as the single-task
-    autonomy client, and caches communication clients (e.g., publishers) for
-    performance. This architecture prevents ROS context conflicts and provides an
-    efficient, centralized point of interaction for all MCP tools.
+    This persistent node runs in a background thread and handles all of the
+    ROS 2 communication for the MCP server. It provides a unified interface
+    for all MCP tools, allowing them to access ROS topics, services, and actions
+    without needing to manage the ROS node lifecycle or communication details.
     """
 
     def __init__(self):
@@ -154,14 +160,14 @@ class MCP_ROS_Gateway_Node(Node):
     # --- Public Methods for MCP Tools ---
     def get_single_message(self, topic: str, msg_type: Any, timeout_sec: float) -> str:
         msg = self._wait_for_message(topic, msg_type, QoSProfile(depth=1), timeout_sec)
-        return str(msg) if msg else f"ERROR: Timed out waiting for message on {topic}."
+        return str(msg) if msg else f"ERROR: Timed out waiting for message on '{topic}'."
 
     def get_camera_image(self, topic: str, timeout_sec: float) -> Image:
         ros_image = self._wait_for_message(
             topic, RosImage, QoSProfile(depth=1), timeout_sec
         )
         if not ros_image:
-            return f"ERROR: Timed out waiting for an image on {topic}. The camera may not be publishing."
+            return f"ERROR: Timed out waiting for an image on '{topic}'."
         try:
             cv_image = self.bridge.imgmsg_to_cv2(ros_image, desired_encoding="bgr8")
             pil_image = PILImage.fromarray(cv_image)
@@ -172,15 +178,15 @@ class MCP_ROS_Gateway_Node(Node):
         except Exception as e:
             return f"ERROR: Failed to convert image. Details: {e}"
 
-    def get_costmap_image(self, topic_name: str, timeout_sec: float) -> Image:
+    def get_costmap_image(self, topic: str, timeout_sec: float) -> Image:
         qos = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
-        msg = self._wait_for_message(topic_name, OccupancyGrid, qos, timeout_sec)
+        msg = self._wait_for_message(topic, OccupancyGrid, qos, timeout_sec)
         if not msg:
-            return f"ERROR: Timed out waiting for costmap data on '{topic_name}'."
+            return f"ERROR: Timed out waiting for costmap data on '{topic}'."
 
         width, height = msg.info.width, msg.info.height
         costmap_data = np.array(msg.data, dtype=np.int8).reshape((height, width))
@@ -355,27 +361,6 @@ def get_rover_camera_image(timeout_sec: float = 10.0) -> Image:
     )
 
 
-@mcp.tool(name="rover_sensors_getDepthCameraImage")
-def get_rover_depth_camera_image(timeout_sec: float = 10.0) -> Image:
-    """
-    Retrieves a single depth image from the rover's forward-facing camera.
-
-    This provides a 3D view of the scene. The result is a grayscale image where
-    pixel intensity corresponds to distance (brighter pixels are closer).
-
-    Args:
-        timeout_sec: Time to wait for a single image frame to be published.
-
-    Returns:
-        An MCP Image object containing the captured depth image.
-    """
-    if not ROS_NODE:
-        return "ERROR: ROS Node not initialized."
-    return ROS_NODE.get_camera_image(
-        "/intel_realsense_r200_depth/depth/image_raw", timeout_sec
-    )
-
-
 @mcp.tool(name="rover_sensors_getLocalOdometry")
 def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
     """
@@ -465,6 +450,12 @@ def get_rover_costmap_local_image(timeout_sec: int = 10) -> Image:
     - **Yellow to Blue**: Inflated obstacle cost (Yellow=High Cost, Blue=Low Cost).
     - **White**: Free space (safe to traverse).
     - **Gray**: Unknown space.
+
+    Args:
+        timeout_sec: Time to wait for the costmap data to be published.
+
+    Returns:
+        An MCP Image object containing the costmap image, or an error message if it times out.
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
@@ -482,6 +473,12 @@ def get_rover_costmap_global_image(timeout_sec: int = 10) -> Image:
     - **Yellow to Blue**: Inflated obstacle cost (Yellow=High Cost, Blue=Low Cost).
     - **White**: Free space (safe to traverse).
     - **Gray**: Unknown space.
+
+    Args:
+        timeout_sec: Time to wait for the costmap data to be published.
+
+    Returns:
+        An MCP Image object containing the costmap image, or an error message if it times out.
     """
     if not ROS_NODE:
         return "ERROR: ROS Node not initialized."
@@ -619,7 +616,9 @@ def cancel_task() -> str:
 
 # --- Main Execution ---
 def main():
-    """Initializes the unified ROS Gateway Node and starts the MCP server."""
+    """
+    Initializes the unified ROS Gateway Node and starts the MCP server.
+    """
     global ROS_NODE
     rclpy.init()
     ROS_NODE = MCP_ROS_Gateway_Node()
