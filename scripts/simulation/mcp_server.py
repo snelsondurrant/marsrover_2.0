@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Created by Nelson Durrant (w Gemini 2.5 Pro), July 2025
+# Created by Nelson Durrant, July 2025
 
 """
 I created this MCP server as an quick experiment for a summer internship project I was working on,
@@ -32,8 +32,9 @@ or testing, here's the steps to get started:
 4.  Try out some commands! Here's a few suggestions to get started:
     - "What city is the rover in? What is it doing there?"
     - "Describe to me what the rover is seeing right now."
+    - "Enable aruco detection and tell me if you see any tags."
     - "Drive the rover in a circle and report what obstacles it identifies."
-    - "Look for anything that could be an ArUco tag and navigate towards it."
+    - "Look for anything that could be a water bottle and navigate towards it."
 
 5.  Add some functionality? I tried to make the MCP server as flexible as possible, so you should
     be able to add new tools or modify existing ones pretty easily -- just follow the
@@ -44,6 +45,8 @@ NOTE: As of now this also works (besides the image-based tools) with Gemini CLI 
 sure other multi-modal LLM providers will add MCP support in the near future -- it's a pretty
 quickly-growing standard.
 https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#quickstart
+
+Nelson Durrant, July 2025
 """
 
 import base64
@@ -56,6 +59,8 @@ import rclpy
 from aruco_opencv_msgs.msg import ArucoDetection
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist, Vector3
+from lifecycle_msgs.msg import Transition
+from lifecycle_msgs.srv import ChangeState
 from mcp.server.fastmcp import FastMCP, Image
 from nav_msgs.msg import OccupancyGrid, Odometry
 from PIL import Image as PILImage
@@ -65,6 +70,7 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.task import Future
 from sensor_msgs.msg import Image as RosImage
 from sensor_msgs.msg import Imu, NavSatFix
+from std_srvs.srv import SetBool
 from zed_msgs.msg import ObjectsStamped
 
 mcp = FastMCP("rover-mcp-server-unified")
@@ -74,8 +80,8 @@ class MCP_ROS_Gateway_Node(Node):
     """
     A simple ROS node that acts as a gateway for MCP commands.
 
-    Author: Nelson Durrant (w Gemini 2.5 Pro)
-    Date: July 2025
+    :author: Nelson Durrant (w Google Gemini)
+    :date: July 2025
     """
 
     def __init__(self):
@@ -101,6 +107,29 @@ class MCP_ROS_Gateway_Node(Node):
             return future.result() if future.done() else None
         finally:
             self.destroy_subscription(sub)
+
+    def call_service(
+        self, srv_name: str, srv_type: Any, request: Any, timeout_sec: float = 5.0
+    ) -> Optional[Any]:
+        """
+        Calls a ROS service and waits for the result.
+        """
+        client = self.create_client(srv_type, srv_name)
+        try:
+            if not client.wait_for_service(timeout_sec=timeout_sec):
+                self.get_logger().error(f"Service '{srv_name}' not available.")
+                return None
+
+            future = client.call_async(request)
+            self._spin_for_future(future, timeout_sec=timeout_sec)
+
+            if future.done():
+                return future.result()
+            else:
+                self.get_logger().error(f"Service call to '{srv_name}' timed out.")
+                return None
+        finally:
+            self.destroy_client(client)
 
     def get_single_message_as_str(
         self, topic: str, msg_type: Any, timeout_sec: float
@@ -183,6 +212,74 @@ ROS_NODE: Optional[MCP_ROS_Gateway_Node] = None
 ########################
 # Mars Rover MCP Tools #
 ########################
+
+
+@mcp.tool(name="rover_sensors_enableArucoDetection")
+def enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
+    """
+    Enables or disables the ArUco marker detection node.
+
+    This function controls a lifecycle node. Enabling activates it, and disabling
+    deactivates it. This is necessary before using get_rover_aruco_detections.
+
+    Args:
+        enable: Set to True to enable detection, False to disable.
+        timeout_sec: Max time to wait for the service response.
+
+    Returns:
+        A success or error message string.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+
+    req = ChangeState.Request()
+    if enable:
+        req.transition.id = Transition.TRANSITION_ACTIVATE
+        action = "enable"
+    else:
+        req.transition.id = Transition.TRANSITION_DEACTIVATE
+        action = "disable"
+
+    result = ROS_NODE.call_service(
+        "/aruco_tracker/change_state", ChangeState, req, timeout_sec
+    )
+
+    if result and result.success:
+        return f"Successfully sent request to {action} ArUco detection."
+    else:
+        return f"ERROR: Failed to {action} ArUco detection. Service call failed or timed out."
+
+
+@mcp.tool(name="rover_sensors_enableObjectDetection")
+def enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
+    """
+    Enables or disables the ZED camera's object detection module.
+
+    This must be enabled before using get_rover_obj_detections.
+
+    Args:
+        enable: Set to True to enable detection, False to disable.
+        timeout_sec: Max time to wait for the service response.
+
+    Returns:
+        A success or error message string.
+    """
+    if not ROS_NODE:
+        return "ERROR: ROS Node not initialized."
+
+    req = SetBool.Request()
+    req.data = enable
+    action = "enable" if enable else "disable"
+
+    result = ROS_NODE.call_service(
+        "/zed/zed_node/enable_obj_det", SetBool, req, timeout_sec
+    )
+
+    if result and result.success:
+        return f"Successfully sent request to {action} object detection. Message: {result.message}"
+    else:
+        return f"ERROR: Failed to {action} object detection. Service call failed or timed out."
+
 
 @mcp.tool(name="rover_sensors_getGpsFix")
 def get_rover_gps_fix(timeout_sec: float = 5.0) -> str:
