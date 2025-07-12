@@ -146,8 +146,8 @@ class AutonomyGUI(Node, QWidget):
     GUI for starting, stopping, and monitoring the rover's autonomy task
 
     NOTE: This is quite the jumble of unorganized code, but Google Gemini 2.5 Pro one-shotted
-    almost all the major functionality in under two hours, so I guess I can't complain too much
-    haha. It does seem to work really well tho.
+    almost all the major functionality in under an hour, so I guess I can't complain too much
+    haha. It does seem to work really well tho, and I've tested it a lot.
 
     :author: Nelson Durrant (w Google Gemini 2.5 Pro)
     :date: Apr 2025
