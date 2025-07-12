@@ -29,7 +29,7 @@ or testing, here's the steps to get started:
     launched. If you kill the server somehow, close Claude Desktop (maybe check task manager to make
     sure it's really closed!), ensure the container is running, and relaunch it again.
 
-4.  Try out some commands! Here's a few suggestions to get started:
+4.  Launch the simulation and try out some commands! Here's a few suggestions to get started:
     - "What city is the rover in? What is it doing there?"
     - "Describe to me what the rover is seeing right now."
     - "Enable aruco detection on the rover and tell me if you see any tags."
