@@ -10,7 +10,7 @@ When possible, point team members to the existing documentation, tutorials, and 
 
 ### Project Setup
 
-The rover's software stack is built around several Dockerized ROS 2 environments. The `marsrover-ct` container runs the vast majority of the rover's software. The relevant `Dockerfile` and `docker-compose.yaml` files for this container are found in `marsrover_2.0/docker/`. If it is not running already, launch the `marsrover-ct` container by running `compose.sh` in the main directory. To interact with the ROS 2 environment, you (the Large Language Model) will need to use `docker exec` to run CLI tools inside of the `marsrover-ct` container. The user will be able to use an provided tmux terminal inside of the container to interact with it themselves.
+The rover's software stack is built around several Dockerized ROS2 environments. The `marsrover-ct` container runs the vast majority of the rover's software. The relevant `Dockerfile` and `docker-compose.yaml` files for this container are found in `marsrover_2.0/docker/`. If it is not running already, launch the `marsrover-ct` container by running `compose.sh` in the main directory. To interact with the ROS2 environment, you (the Large Language Model) will need to use `docker exec` to run CLI tools inside of the `marsrover-ct` container. The user will be able to use an provided tmux terminal inside of the container to interact with it themselves.
 
 --
 
@@ -22,10 +22,10 @@ Below is a brief overview of the elements in the main `marsrover_2.0` directory:
 - **`diagrams/`**: Contains diagrams of the rover's software architecture, including hierarchical launch file charts, system overviews, and state machine and simulation details.
 - **`docker/`**: Contains the `Dockerfile` and `docker-compose.yaml` for the main rover container, `marsrover-ct`.
 - **`firmware/`**: Contains the PlatformIO firmware workspaces for the rover's microcontrollers, including the Arduino Mega and the Arduino Nano. These are used to control the rover's hardware components, such as motors and LEDs.
-- **`rover_ws/`**: Contains the main ROS 2 workspace for majority the rover's software, including the `src/` directory with the ROS 2 packages. Consult this directory often to understand how the system works. This is where most of the rover's software development takes place.
+- **`rover_ws/`**: Contains the main ROS2 workspace for majority the rover's software, including the `src/` directory with the ROS2 packages. Consult this directory often to understand how the system works. This is where most of the rover's software development takes place.
 - **`scripts/`**: Contains scripts and tools intended to be run from inside the `marsrover-ct` container, including `sim_launch.sh` for launching the full Gazebo simulation environment. This is mounted into the home directory of the `marsrover-ct` container.
-- **`tutorial_ws/`**: Contains an empty ROS 2 workspace intended to be used for the tutorials listed in the `README.md`.
-- **`zed_ws/`**: Contains the ROS 2 workspace for the ZED 2 camera software and its ROS 2 wrapper, as well as the `Dockerfile` and `docker-compose.yaml` for the `zed-ct` container.
+- **`tutorial_ws/`**: Contains an empty ROS2 workspace intended to be used for the tutorials listed in the `README.md`.
+- **`zed_ws/`**: Contains the ROS2 workspace for the ZED 2 camera software and its ROS2 wrapper, as well as the `Dockerfile` and `docker-compose.yaml` for the `zed-ct` container.
 - **`README.md`**: The main README file for the repository, which contains an overview of the project, how to get started, and links to essential tutorials and resources.
 - **`compose.sh`**: A script to launch the mapproxy and `marsrover-ct` containers.
 - **`update.sh`**: A script to update the `marsrover-ct` Docker image from DockerHub and pull the latest GitHub changes.
