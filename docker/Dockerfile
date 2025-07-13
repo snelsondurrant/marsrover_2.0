@@ -64,6 +64,14 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     x11-utils \
     x11-xserver-utils \
     xauth \
+    # Install tools for terrain maps - Nelson Durrant, Apr 2025
+    # Used for loading in and parsing GeoTIFF elevation maps
+    libgdal-dev \
+    python3-rasterio
+
+# Install ROS packages
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     # Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2025
     # Pre-built full navigation stack for GPS navigation and localization
     ros-humble-navigation2 \
@@ -102,10 +110,6 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     # Install zed_msgs package - Nelson Durrant, Mar 2025
     # Official ROS2 interfaces for the ZED camera
     ros-humble-zed-msgs \
-    # Install tools for terrain maps - Nelson Durrant, Apr 2025
-    # Used for loading in and parsing GeoTIFF elevation maps
-    libgdal-dev \
-    python3-rasterio \
     # Install MoveIt2 package - Nelson Durrant, Jun 2025
     # Open-source robotic arm manipulation platform (for use on the rover?)
     ros-humble-moveit \
