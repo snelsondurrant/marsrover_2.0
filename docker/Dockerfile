@@ -67,7 +67,8 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     # Install tools for terrain maps - Nelson Durrant, Apr 2025
     # Used for loading in and parsing GeoTIFF elevation maps
     libgdal-dev \
-    python3-rasterio
+    python3-rasterio \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install ROS packages
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
@@ -113,7 +114,6 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     # Install MoveIt2 package - Nelson Durrant, Jun 2025
     # Open-source robotic arm manipulation platform (for use on the rover?)
     ros-humble-moveit \
-    # Clean up apt lists
     && rm -rf /var/lib/apt/lists/*
 
 # Install architecture-specific system dependencies
