@@ -71,8 +71,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ROS packages
-RUN apt-get update && apt-get upgrade -y --no-install-recommends \
-    && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
     # Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2025
     # Pre-built full navigation stack for GPS navigation and localization
     ros-humble-navigation2 \
