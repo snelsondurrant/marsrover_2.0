@@ -282,6 +282,7 @@ def get_rover_camera_image(timeout_sec: float = 10.0) -> Image:
         "/intel_realsense_r200_depth/image_raw", timeout_sec
     )
 
+# Rover Data Tools
 
 @mcp.tool(name="rover_data_getLocalOdometry")
 def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
@@ -302,7 +303,6 @@ def get_rover_odometry_local(timeout_sec: float = 5.0) -> str:
         return "ERROR: ROS Node not initialized."
     return ROS_NODE.get_single_message_as_str("/odometry/local", Odometry, timeout_sec)
 
-# Rover Data Tools
 
 @mcp.tool(name="rover_data_getGlobalOdometry")
 def get_rover_odometry_global(timeout_sec: float = 5.0) -> str:
