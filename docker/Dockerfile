@@ -270,10 +270,10 @@ USER $NAME
 # Fast MCP server and launch system for hooking the rover controls into an LLM (experimental)
 RUN pip3 install fastmcp uv
 
-# Install image_view command line utility - Nelson Durrant, July 2025
-# Used for image processing workaround for the MCP server pipeline
+# Install gtsam - Nelson Durrant, July 2026
+# Needed for experimental localization using factor-graph optimization
 USER root
 RUN apt update && apt install -y --no-install-recommends \
-    ros-humble-image-view \
+    ros-humble-gtsam \
     && rm -rf /var/lib/apt/lists/*
 USER $NAME
