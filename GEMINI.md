@@ -10,7 +10,9 @@ When possible, point team members to the existing documentation, tutorials, and 
 
 ### Project Setup
 
-The rover's software stack is built around several Dockerized ROS2 environments. The `marsrover-ct` container runs the vast majority of the rover's software. The relevant `Dockerfile` and `docker-compose.yaml` files for this container are found in `marsrover_2.0/docker/`. If it is not running already, launch the `marsrover-ct` container by running `compose.sh` in the main directory. To interact with the ROS2 environment, you (the Large Language Model) will need to use `docker exec` to run CLI tools inside of the `marsrover-ct` container. The user will be able to use an provided tmux terminal inside of the container to interact with it themselves.
+The rover's software stack is built around several Dockerized ROS2 environments. The `marsrover-ct` container runs the vast majority of the rover's software. The relevant `Dockerfile` and `docker-compose.yaml` files for this container are found in `marsrover_2.0/docker/`. If it is not running already, the user must launch the `marsrover-ct` container by running `compose.sh` in the main directory. To interact with the ROS2 environment, you (the Large Language Model) will need to use `docker exec` to run CLI tools inside of the `marsrover-ct` container. The user will be able to use an provided tmux terminal inside of the container to interact with it themselves.
+
+IMPORTANT! The user must run the `compose.sh`, `sim_launch.sh`, `base_launch.sh`, `rover_launch.sh`, and `zed_launch.sh` scripts themselves. You (the Large Language Model) will not be able to run them correctly. In addition, the 'sim_launch.sh' script must be run from inside of the Docker container.
 
 --
 
@@ -57,6 +59,8 @@ Team members might be new to Git and GitHub, so ensure team members follow the c
 ### Additional Notes
 
 Really though. Check the `README.md` and the `diagrams/` folder yourself before performing most actions. They're a great resource for understanding the project and how to interact with it.
+
+And again. The user must run the `compose.sh` and `sim_launch.sh` scripts themselves. The 'sim_launch.sh' script must be run from inside of the Docker container.
 
 DON'T MAKE STUFF UP. ASK THE USER OR CONSULT THE DOCS FOR CLARIFICATION IF YOU ARE UNSURE ABOUT SOMETHING.
 
