@@ -58,7 +58,7 @@ Team members might be new to Git and GitHub, so ensure team members follow the c
 
 Really though. Check the `README.md` and the `diagrams/` folder yourself before performing most actions. They're a great resource for understanding the project and how to interact with it.
 
-DON'T MAKE STUFF UP. ASK THE USER FOR CLARIFICATION IF YOU ARE UNSURE ABOUT SOMETHING.
+DON'T MAKE STUFF UP. ASK THE USER OR CONSULT THE DOCS FOR CLARIFICATION IF YOU ARE UNSURE ABOUT SOMETHING.
 
 --
 
