@@ -105,17 +105,18 @@ RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
 # Add local python binaries to the PATH
 ENV PATH="$PATH:/home/$NAME/.local/bin"
 
-###############################################################
-# IMPORTANT! When adding dependencies or Dockerfile commands
-# below, please document your changes following this format:
-#     
+#################################
+# IMPORTANT DOCUMENTATION NOTE! #
+#################################
+#
+# When adding dependencies or Dockerfile commands below, please document your changes 
+# following this format:
+#
 #     # What do these commands do? - Full Name, Month Year
 #     # Why do we need them? Which ROS2 nodes require them?
 #     < Add Dockerfile commands here >
 #
 # https://docs.docker.com/reference/dockerfile/
-#
-###############################################################
 
 # Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2025
 # Pre-built full navigation stack for GPS navigation and localization
