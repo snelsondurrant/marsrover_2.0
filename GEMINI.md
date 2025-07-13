@@ -34,7 +34,7 @@ Below is a brief overview of the elements in the main `marsrover_2.0` directory:
 
 ### Contributing
 
-Don't write large amounts of code yourself (as a Large Language Model), but rather build it up incrementally and interact often with the user for human guidance and feedback. The BYU Mars Rover Capstone team is highly collaborative team that also experiences a exremely high turnover rate, so it's important to write code that is easy for others to understand and maintain. Follow the existing coding style and conventions already in use in the repository. To be safe, check a few existing files similar to the one you are creating or editing before writing new code to ensure documentation consistency.
+Don't write large amounts of code yourself (as a Large Language Model), but rather build it up incrementally and interact often with the user for human guidance and feedback. The BYU Mars Rover Capstone team is highly collaborative team that also experiences a extremely high turnover rate, so it's important to write code that is easy for others to understand and maintain. Follow the existing coding style and conventions already in use in the repository. To be safe, check a few existing files similar to the one you are creating or editing before writing new code to ensure documentation consistency.
 
 --
 
