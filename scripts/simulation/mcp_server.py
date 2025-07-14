@@ -19,9 +19,9 @@ the steps to get started:
             "type": "command",
             "command": "docker",
             "args": [
-              "exec", "-i", "marsrover-ct", "bash", "-c", 
-              "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py"
-              ]
+                "exec", "-i", "marsrover-ct", "bash", "-c", 
+                "source /home/marsrover-docker/rover_ws/install/setup.bash && uv run /home/marsrover-docker/scripts/simulation/mcp_server.py"
+            ]
         }
     }
 
