@@ -117,7 +117,7 @@ RUN curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio
     && python3 get-platformio.py \
     && rm get-platformio.py
 
-# Set up PlatformIO shell command symlinks - Nelson Durrant, Mar 2025
+# Set up PlatformIO CLI command symlinks - Nelson Durrant, Mar 2025
 USER root
 RUN mkdir -p /home/$NAME/.platformio/penv/bin \
     && ln -s /home/$NAME/.platformio/penv/bin/platformio /usr/local/bin/platformio \

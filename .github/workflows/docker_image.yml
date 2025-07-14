@@ -38,10 +38,9 @@ jobs:
     - name: Build and push to DockerHub
       uses: docker/build-push-action@v6
       with:
-       context: .
-       file: ./docker/Dockerfile
+       context: "{{defaultContext}}"
+       file: docker/Dockerfile
        # https://docs.docker.com/build/ci/github-actions/multi-platform/
        platforms: linux/amd64,linux/arm64
        push: true
        tags: ${{ secrets.DOCKERHUB_USERNAME }}/marsrover_2.0:latest
-
