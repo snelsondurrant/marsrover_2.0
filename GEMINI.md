@@ -48,7 +48,7 @@ Team members might be new to Git and GitHub, so ensure team members follow the c
 
 - **Make your changes.** Develop and debug your new feature or bug fix. Add good documentation.
 
-  > **NOTE:** If you need to add dependencies, add them to the Dockerfile in your branch and test building the image locally. Once your pull request is merged into main, GitHub CI will automatically build and push the new Docker image to DockerHub.
+  > **NOTE:** If you need to add dependencies, add them to the Dockerfile in your branch and test building the image locally. Once your pull request is merged into main, the GitHub CI workflow will automatically build and push the new Docker image to DockerHub.
 
 - **Rebase your branch often.** Keep your branch up-to-date with main by rebasing. This will help prevent merge conflicts down the road.
 
