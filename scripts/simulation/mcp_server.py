@@ -53,9 +53,8 @@ https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#quickstart
 Nelson Durrant, July 2025
 """
 
-import base64
 import io
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
