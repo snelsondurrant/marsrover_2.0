@@ -18,11 +18,14 @@ the steps to get started:
         "roverMcpServerExperimental": {
             "type": "command",
             "command": "docker",
-            "args": ["exec", "-i", "marsrover-ct", "bash", "-c", "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py && pkill -f mcp_server.py"]
+            "args": [
+              "exec", "-i", "marsrover-ct", "bash", "-c", 
+              "cd /home/marsrover-docker/scripts/simulation/ && source /home/marsrover-docker/rover_ws/install/setup.bash && uv run mcp_server.py"
+              ]
         }
     }
 
-3.  Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
+2.  Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
     It should now automatically connect to the MCP server when the container is running, although
     the exposed tools currently really won't do much unless the simulation is running as well.
 
@@ -30,14 +33,14 @@ the steps to get started:
     launched. If you kill the server somehow, close Claude Desktop (maybe check task manager to make
     sure it's really closed!), ensure the container is running, and relaunch it again.
 
-4.  Launch the simulation and try out some commands! Here's a few suggestions to get started:
+3.  Launch the simulation and try out some commands! Here's a few suggestions to get started:
     - "What city is the rover in? What is it doing rn?"
     - "Describe to me what the rover is seeing right now. What's around it?"
     - "Add a new GPS waypoint to the GUI. Is a task running already?"
     - "Navigate to a waypoint 20m north of the rover and look for an ArUco tag."
     - "Drive around and look for anything that could vaguely be a water bottle."
 
-5.  Add some functionality! I tried to make the MCP server structure as flexible as possible, so
+4.  Add some functionality! I tried to make the MCP server structure as flexible as possible, so
     you should be able to add new tools or modify existing ones pretty easily -- just follow the
     pattern and flow of the existing code in this file. Here's the docs tho:
     https://modelcontextprotocol.io/introduction
@@ -73,7 +76,6 @@ from sensor_msgs.msg import Image as RosImage
 from sensor_msgs.msg import Imu, NavSatFix
 from std_srvs.srv import SetBool, Trigger
 from zed_msgs.msg import ObjectsStamped
-from rover_interfaces.msg import AutonomyLeg
 from rover_interfaces.srv import (
     GetWaypoints,
     AddWaypoint,
