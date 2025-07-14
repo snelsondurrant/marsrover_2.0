@@ -7,6 +7,18 @@
   <maintainer email="snelsondurrant@gmail.com">Nelson Durrant</maintainer>
   <license>Apache-2.0</license>
 
+  <depend>rover_gui</depend>
+  <depend>ublox_read_2</depend>
+  <depend>joy</depend>
+  <depend>nav2_bringup</depend>
+  <depend>rover_navigation</depend>
+  <depend>rover_localization</depend>
+  <depend>rover_perception</depend>
+  <depend>rover_gazebo</depend>
+  <depend>rover_description</depend>
+  <depend>unitree_lidar_ros2</depend>
+  <depend>rover_control</depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>
