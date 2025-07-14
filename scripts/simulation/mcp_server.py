@@ -97,12 +97,12 @@ mcp = FastMCP("rover-mcp-server-experimental")
 def _ros_image_to_mcp_image(ros_image: RosImage, bridge: CvBridge) -> Image:
     """Converts a sensor_msgs/Image to an MCP Image."""
     try:
-        cv_image = bridge.imgmsg_to_cv2(ros_image, desired_encoding="bgr8")
+        cv_image = bridge.imgmsg_to_cv2(ros_image, desired_encoding="rgb8")
         pil_image = PILImage.fromarray(cv_image)
         buffered = io.BytesIO()
         pil_image.save(buffered, format="JPEG")
-        img_bytes = base64.b64encode(buffered.getvalue())
-        return Image(data=img_bytes, format="jpeg")
+        raw_image_bytes = buffered.getvalue() 
+        return Image(data=raw_image_bytes, format="jpeg")
     except Exception as e:
         return f"[ERROR: Image Conversion] Failed to convert ROS Image to MCP Image. Details: {e}"
 
@@ -124,15 +124,15 @@ def _occupancy_grid_to_mcp_image(grid_msg: OccupancyGrid) -> Image:
 
     # Draw green cross at the center to represent the rover
     center_x, center_y = width // 2, height // 2
-    cross_size = 3
+    cross_size = 1
     pixels[center_y - cross_size : center_y + cross_size + 1, center_x] = [0, 255, 0]
     pixels[center_y, center_x - cross_size : center_x + cross_size + 1] = [0, 255, 0]
 
     img = PILImage.fromarray(np.flipud(pixels), mode="RGB")
     buffered = io.BytesIO()
     img.save(buffered, format="PNG")
-    img_bytes = base64.b64encode(buffered.getvalue())
-    return Image(data=img_bytes, format="png")
+    raw_image_bytes = buffered.getvalue()
+    return Image(data=raw_image_bytes, format="png")
 
 
 class Simple_ROS2_MCP_Node(Node):
