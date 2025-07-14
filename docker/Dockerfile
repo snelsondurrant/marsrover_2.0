@@ -125,8 +125,8 @@ RUN mkdir -p /home/$NAME/.platformio/penv/bin \
     && ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
 USER $NAME
 
-# Install PlatformIO libraries - Nelson Durrant, Mar 2025
-COPY firmware /home/$NAME/firmware
+# Install PlatformIO code dependencies - Nelson Durrant, Mar 2025
+COPY --chown=$NAME:$NAME firmware /home/$NAME/firmware
 RUN pio pkg install --project-dir /home/$NAME/firmware/mega_pio \
     && pio pkg install --project-dir /home/$NAME/firmware/nano_pio \
     && rm -rf /home/$NAME/firmware
