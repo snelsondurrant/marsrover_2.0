@@ -41,92 +41,53 @@ RUN useradd -ms /bin/bash "$NAME" \
 # When adding dependencies or Dockerfile commands below, please document your changes
 # following this format:
 #
-#     # What do these commands do? - Full Name, Month Year
-#     # Why do we need them? Which ROS2 nodes require them?
+#     # Why do we need this dependency or command? - Full Name, Month Year
 #     < Add system dependencies here >
 #
 # https://docs.docker.com/reference/dockerfile/
 
 # Install system dependencies
-RUN apt-get update && apt-get upgrade -y --no-install-recommends \
-    && apt-get install -y --no-install-recommends \
-    # Install basic system utilities
-    curl \
-    wget \
-    git \
-    vim \
-    nano \
-    tmux \
-    python3-pip \
-    python3-venv \
-    # Install graphical utilities
-    x11-apps \
-    x11-utils \
-    x11-xserver-utils \
-    xauth \
-    # Install tools for terrain maps - Nelson Durrant, Apr 2025
-    # Used for loading in and parsing GeoTIFF elevation maps
-    libgdal-dev \
-    python3-rasterio \
+RUN apt update && apt upgrade -y --no-install-recommends \
+    && apt install -y --no-install-recommends \
+    # Install basic system utilities - Nelson Durrant, Oct 2024
+    curl wget git vim nano tmux python3-pip python3-venv \
+    # Install graphical utilities - Nelson Durrant, Oct 2024
+    x11-apps x11-utils x11-xserver-utils xauth \
+    # Terrain loading and processing packages - Nelson Durrant, July 2025
+    libgdal-dev python3-rasterio \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ROS packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Install the navigation2 and robot_localization packages - Nelson Durrant, Feb 2025
-    # Pre-built full navigation stack for GPS navigation and localization
-    ros-humble-navigation2 \
-    ros-humble-robot-localization \
-    # Install graphical interface packages - Nelson Durrant, Feb 2025
-    # We use RViz2, RQT, and Python3-tk for GUIs
-    ros-humble-rviz2 \
-    ros-humble-rqt* \
-    python3-tk \
-    # Install plotjuggler - Nelson Durrant, Feb 2025
-    # Useful for plotting and visualizing data from ROS2 bags and real-time tests
+    # Pre-built full navigation and localization stack - Nelson Durrant, Feb 2025
+    ros-humble-navigation2 ros-humble-robot-localization \
+    # Used for GUIs - Nelson Durrant, Feb 2025
+    ros-humble-rviz2 ros-humble-rqt* python3-tk \
+    # Tool for plotting and visualizing data from ROS2 bags - Nelson Durrant, Feb 2025
     ros-humble-plotjuggler-ros \
-    # Install the aruco_opencv packages - Nelson Durrant, Feb 2025
-    # Used for detecting ArUco markers in the simulation and real world
+    # Used for detecting ArUco markers in sim and real world - Nelson Durrant, Feb 2025
     ros-humble-aruco-opencv \
-    # Install mobility packages - Nelson Durrant, Feb 2025
-    # Used for controlling the robot's movement through a joystick or keyboard
-    ros-humble-joy \
-    ros-humble-teleop-twist-joy \
-    ros-humble-teleop-twist-keyboard \
-    ros-humble-topic-tools \
-    # Install turtlesim tf2 packages - Nelson Durrant, Feb 2025
-    # Used in the ROS2 and tf2 tutorials
-    ros-humble-turtle-tf2-py \
-    ros-humble-tf2-ros \
-    ros-humble-tf2-tools \
-    ros-humble-turtlesim \
-    # Install pcl_conversions - Nelson Durrant, Mar 2025
-    # Used for point cloud conversion in the unitree lidar package
+    # Controlling the robot's movement through a joystick or keyboard - Nelson Durrant, Feb 2025
+    ros-humble-joy ros-humble-teleop-twist-joy ros-humble-teleop-twist-keyboard ros-humble-topic-tools \
+    # ROS2 and tf2 tutorial installs - Nelson Durrant, Feb 2025
+    ros-humble-turtle-tf2-py ros-humble-tf2-ros ros-humble-tf2-tools ros-humble-turtlesim \
+    # Required by the unitree lidar package - Nelson Durrant, Mar 2025
     ros-humble-pcl-conversions \
-    # Install xacro convertor package - Nelson Durrant, Mar 2025
-    # Used for converting the rover's xacro files to urdf files
-    ros-humble-xacro \
-    ros-humble-joint-state-publisher-gui \
-    ros-humble-urdf-launch \
-    # Install zed_msgs package - Nelson Durrant, Mar 2025
-    # Official ROS2 interfaces for the ZED camera
+    # URDF tools and launch configs - Nelson Durrant, Mar 2025
+    ros-humble-xacro ros-humble-joint-state-publisher-gui ros-humble-urdf-launch \
+    # Official ROS2 interfaces for the ZED camera - Nelson Durrant, Mar 2025
     ros-humble-zed-msgs \
-    # Install MoveIt2 package - Nelson Durrant, Jun 2025
-    # Open-source robotic arm manipulation platform (for use on the rover?)
+    # Open-source robotic arm manipulation platform - Nelson Durrant, Jun 2025
     ros-humble-moveit \
     && rm -rf /var/lib/apt/lists/*
 
-# Install architecture-specific system dependencies
+# Install architecture-specific ROS packages
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     apt-get update && apt-get install -y --no-install-recommends \
-    # Install gazebo and turtlebot3 packages - Nelson Durrant, Feb 2025
-    # We use Gazebo Classic for the simulator and TurtleBot3 for the robot model
-    ros-humble-nav2-bringup \
-    ros-humble-turtlebot3-gazebo \
-    # Install mapviz packages - Nelson Durrant, Feb 2025
-    # Used for visualizing the robot's path and gps location
-    ros-humble-mapviz \
-    ros-humble-mapviz-plugins \
-    ros-humble-tile-map \
+    # Simulation packages - Nelson Durrant, Feb 2025
+    ros-humble-nav2-bringup ros-humble-turtlebot3-gazebo \
+    # Tools for visualizing the robot's location - Nelson Durrant, Feb 2025
+    ros-humble-mapviz ros-humble-mapviz-plugins ros-humble-tile-map \
     && rm -rf /var/lib/apt/lists/*; \
 fi
 
@@ -135,37 +96,28 @@ WORKDIR /home/$NAME
 
 # Install python dependencies
 RUN pip3 install --no-cache-dir \
-    # Install python UTM library - Nelson Durrant, Feb 2025
-    # Used for converting object and aruco poses to GPS coordinates
+    # Tool for converting GPS coordinates to UTM and vice versa - Nelson Durrant, Feb 2025
     utm \
-    # Install ascii art packages - Nelson Durrant, Mar 2025
-    # Used for the Mars Rover ASCII art display on startup
-    --upgrade pillow \
-    asciimatics \
-    # Install tmux docker-compose-esque launcher - Nelson Durrant, Mar 2025
-    # Used for launching multiple tmux windows with a single command
+    # Used for the Mars Rover ASCII art display on startup - Nelson Durrant, Mar 2025
+    --upgrade pillow asciimatics \
+    # Used for launch script tmux window management - Nelson Durrant, Mar 2025
     tmuxp \
-    # Install pyserial - Nelson Durrant, Mar 2025
-    # Used for serial communication with the Arduinos
+    # Used for serial communication with the Arduinos - Nelson Durrant, Mar 2025
     pyserial \
-    # Install mapproxy tile caching deps - Nelson Durrant, Mar 2025
-    # Used for pre-caching map tiles for rover test locations
-    mercantile \
-    requests \
-    # Install AStar planning package - Nelson Durrant, Apr 2025
-    # Simple A* path planning algorithm implementation for 2D maps
+    # Used for pre-caching map tiles for rover test locations - Nelson Durrant, Mar 2025
+    mercantile requests \
+    # Simple A* path planning algorithm implementation - Nelson Durrant, Apr 2025
     astar \
-    # Install fastmcp and uv - Nelson Durrant, July 2025
-    # Fast MCP server and launch system for hooking the rover controls into an LLM (experimental)
-    fastmcp \
-    uv
+    # Used for experimental MCP server hookup - Nelson Durrant, July 2025
+    fastmcp uv
+ENV PATH="$PATH:/home/$NAME/.local/bin"
 
-# Install PlatformIO
+# Install PlatformIO for firmware development - Nelson Durrant, Mar 2025
 RUN curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py \
     && python3 get-platformio.py \
     && rm get-platformio.py
 
-# Set up PlatformIO shell command symlinks
+# Set up PlatformIO shell command symlinks - Nelson Durrant, Mar 2025
 USER root
 RUN mkdir -p /home/$NAME/.platformio/penv/bin \
     && ln -s /home/$NAME/.platformio/penv/bin/platformio /usr/local/bin/platformio \
@@ -173,8 +125,15 @@ RUN mkdir -p /home/$NAME/.platformio/penv/bin \
     && ln -s /home/$NAME/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
 USER $NAME
 
-# Set up automatic ROS2 sourcing, colorized output, and add local python binaries to PATH
+# Install PlatformIO code dependencies - Nelson Durrant, Mar 2025
+COPY --chown=$NAME:$NAME firmware /home/$NAME/firmware
+RUN pio pkg install --project-dir /home/$NAME/firmware/mega_pio \
+    && pio pkg install --project-dir /home/$NAME/firmware/nano_pio \
+    && rm -rf /home/$NAME/firmware
+
+# Set up automatic ROS2 sourcing and colorized output - Nelson Durrant, Oct 2024
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
     && echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc \
     && touch ~/.hushlogin
-ENV PATH="$PATH:/home/$NAME/.local/bin"
+
+CMD ["bash"]
