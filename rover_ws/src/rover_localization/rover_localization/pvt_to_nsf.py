@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Mar 2025
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix

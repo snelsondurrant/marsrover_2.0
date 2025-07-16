@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Mar 2025
 import math
 from itertools import permutations
 from rover_navigation.utils.gps_utils import (
