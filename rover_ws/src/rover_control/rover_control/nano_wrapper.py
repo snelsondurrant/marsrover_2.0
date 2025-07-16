@@ -1,4 +1,3 @@
-# Created by ADD HERE, ADD HERE
 import rclpy
 from rclpy.node import Node
 import serial

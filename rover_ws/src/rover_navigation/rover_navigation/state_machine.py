@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 import asyncio
 import rclpy
 import tf2_geometry_msgs
@@ -14,6 +13,8 @@ from lifecycle_msgs.srv import ChangeState, GetState
 from lifecycle_msgs.msg import Transition
 from nav2_msgs.action import FollowWaypoints, Spin
 from nav2_simple_commander.robot_navigator import TaskResult
+from rcl_interfaces.msg import Parameter, ParameterValue
+from rcl_interfaces.srv import SetParameters
 from rclpy.action import ActionServer, ActionClient, CancelResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -114,6 +115,7 @@ class StateMachine(Node):
     - trigger_arrival (std_srvs/Trigger) [norm_callback_group]
     - zed/zed_node/enable_obj_det (std_srvs/SetBool) [norm_callback_group]
     - aruco_tracker/change_state (lifecycle_msgs/ChangeState) [norm_callback_group]
+    - controller_server/set_parameters (rcl_interfaces/SetParameters) [norm_callback_group]
     Action Clients:
     - follow_waypoints (nav2_msgs/FollowWaypoints) [basic_nav_callback_group]
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
@@ -149,6 +151,8 @@ class StateMachine(Node):
         self.declare_parameter("spin_wait_time", 0.5)
         self.declare_parameter("gps_nav_timeout", 210)
         self.declare_parameter("hex_nav_timeout", 45)
+        self.declare_parameter("intermediate_xy_goal_tolerance", 2.0)
+        self.declare_parameter("final_xy_goal_tolerance", 1.0)
         self.wait_time = self.get_parameter("wait_time").value
         self.update_threshold = self.get_parameter("update_threshold").value
         self.waypoint_distance = self.get_parameter("waypoint_distance").value
@@ -156,6 +160,12 @@ class StateMachine(Node):
         self.spin_wait_time = self.get_parameter("spin_wait_time").value
         self.gps_nav_timeout = self.get_parameter("gps_nav_timeout").value
         self.hex_nav_timeout = self.get_parameter("hex_nav_timeout").value
+        self.intermediate_xy_goal_tolerance = self.get_parameter(
+            "intermediate_xy_goal_tolerance"
+        ).value
+        self.final_xy_goal_tolerance = self.get_parameter(
+            "final_xy_goal_tolerance"
+        ).value
 
         # Assuming we can detect aruco tags up to 5m away, we've determined this is the best
         # search pattern for covering the 20m radius (fastest traversal, least overlap, most coverage).
@@ -297,13 +307,11 @@ class StateMachine(Node):
         # Client to enable/disable aruco detection
         self.aruco_client = self.create_client(
             ChangeState,
-            'aruco_tracker/change_state',
-            callback_group=norm_callback_group
+            "aruco_tracker/change_state",
+            callback_group=norm_callback_group,
         )
         while not self.aruco_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info(
-                'Aruco detection service not available, waiting...'
-            )
+            self.get_logger().info("Aruco detection service not available, waiting...")
         self.aruco_request = ChangeState.Request()
 
         # Set the aruco detection node state to CONFIGURE
@@ -320,6 +328,16 @@ class StateMachine(Node):
                 "Object detection service not available, waiting again..."
             )
         self.obj_request = SetBool.Request()
+
+        # Client to change the Nav2 goal tolerance
+        self.param_client = self.create_client(
+            SetParameters,
+            "controller_server/set_parameters",
+            callback_group=norm_callback_group,
+        )
+        while not self.param_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Parameter service not available, waiting again...")
+        self.param_request = SetParameters.Request()
 
         # Action server to run the task executor
         self.action_server = ActionServer(
@@ -583,7 +601,7 @@ class StateMachine(Node):
         req = GetState.Request()
         state = "unknown"
         while state != "active":
-            if (node_name == "navigator"):
+            if node_name == "navigator":
                 self.task_warn("Waiting for Nav2 to activate...")
             self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
@@ -652,7 +670,7 @@ class StateMachine(Node):
 
         # Get the task legs from the goal
         self.legs = goal_handle.request.legs
-        
+
         # Get the task settings from the goal
         self.use_terrain_path_planner = goal_handle.request.enable_terrain
 
@@ -663,21 +681,14 @@ class StateMachine(Node):
             self.run_state_machine()
             result.msg = "One small step for a rover, one giant leap for roverkind!"
             self.task_goal_handle.succeed()
-        except Exception as e:  # catch exceptions to ensure we disable detections, return to teleop state
+        except (
+            Exception
+        ) as e:  # catch exceptions to ensure we disable detections, return to teleop state
             self.task_fatal(str(e))
 
             # Disable aruco/object detection
             if self.leg is not None:
-                if self.leg.type == "obj" and self.detection_enabled:
-                    self.task_info("Disabling object detection")
-                    self.detection_enabled = False
-                    self.obj_request.data = False
-                    asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-                elif self.leg.type == "aruco" and self.detection_enabled:
-                    self.task_info("Disabling aruco detection")
-                    self.detection_enabled = False
-                    self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
-                    asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+                self.set_detection_enabled(False)
                 self.leg = None
 
             result.msg = "Okay, Houston, we've had a problem."
@@ -708,8 +719,12 @@ class StateMachine(Node):
 
         # Look up and use the transform to convert the pose to UTM
         try:
-            wait_timeout = rclpy.duration.Duration(seconds=1.0) # bug fix for future extrapolation error
-            tf = self.tf_buffer.lookup_transform("utm", frame_id, stamp, timeout=wait_timeout)
+            wait_timeout = rclpy.duration.Duration(
+                seconds=1.0
+            )  # bug fix for future extrapolation error
+            tf = self.tf_buffer.lookup_transform(
+                "utm", frame_id, stamp, timeout=wait_timeout
+            )
             utm_pose = tf2_geometry_msgs.do_transform_pose(pose, tf)
         except Exception as e:
             self.get_logger().warn(f"Could not transform pose: {e}")
@@ -864,81 +879,100 @@ class StateMachine(Node):
         Helper waypoint navigation function that integrates with Nav2
         """
 
-        # 1. Generate a path to the destination waypoint
-        if self.use_terrain_path_planner:
-            path = terrainPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance, self.elevation_cost, self.elevation_limit, self.roll_cost, self.roll_limit)
-        else:
-            path = basicPathPlanner(self.filtered_gps, dest_wp, self.waypoint_distance)
+        try:
+            # 1. Set the goal tolerance to the intermediate value
+            self.set_xy_goal_tolerance(self.intermediate_xy_goal_tolerance)
 
-        # 2. Publish the GPS positions to mapviz
-        for wp in path:
-            navsat_fix = NavSatFix()
-            navsat_fix.header.frame_id = "map"
-            navsat_fix.header.stamp = self.get_clock().now().to_msg()
-            navsat_fix.latitude = wp.position.latitude
-            navsat_fix.longitude = wp.position.longitude
-
-            # 2.1 Publish to different topics based on type
-            if wp != dest_wp:
-                self.mapviz_inter_publisher.publish(navsat_fix)
+            # 2. Generate a path to the destination waypoint
+            if self.use_terrain_path_planner:
+                path = terrainPathPlanner(
+                    self.filtered_gps,
+                    dest_wp,
+                    self.waypoint_distance,
+                    self.elevation_cost,
+                    self.elevation_limit,
+                    self.roll_cost,
+                    self.roll_limit,
+                )
             else:
-                self.mapviz_goal_publisher.publish(navsat_fix)
-            time.sleep(0.1)  # give time to publish
+                path = basicPathPlanner(
+                    self.filtered_gps, dest_wp, self.waypoint_distance
+                )
 
-        # 3. Follow the determined path
-        asyncio.run(self.followGpsWaypoints(path))
-        start_time = self.get_clock().now().to_msg()
-        while not asyncio.run(self.isTaskComplete()):
-            time.sleep(0.1)
+            # 3. Publish the GPS positions to mapviz
+            for wp in path:
+                navsat_fix = NavSatFix()
+                navsat_fix.header.frame_id = "map"
+                navsat_fix.header.stamp = self.get_clock().now().to_msg()
+                navsat_fix.latitude = wp.position.latitude
+                navsat_fix.longitude = wp.position.longitude
 
-            # 3.1 Check if the goal has been canceled
-            if self.task_goal_handle.is_cancel_requested:
-                asyncio.run(self.cancelTask())
-                raise Exception("Task execution canceled by action client")
+                # 3.1 Publish to different topics based on type
+                if wp != dest_wp:
+                    self.mapviz_inter_publisher.publish(navsat_fix)
+                else:
+                    self.mapviz_goal_publisher.publish(navsat_fix)
+                time.sleep(0.1)  # give time to publish
 
-            # 3.2 Check if we've spent too long on this waypoint and should move on
-            if not hex_mode and not found_mode:  # we're navigating to a GPS waypoint
+            # 4. Follow the determined path
+            asyncio.run(self.followGpsWaypoints(path))
+            start_time = self.get_clock().now().to_msg()
+            while not asyncio.run(self.isTaskComplete()):
+                time.sleep(0.1)
+
+                # 4.1 Check if the goal has been canceled
+                if self.task_goal_handle.is_cancel_requested:
+                    asyncio.run(self.cancelTask())
+                    raise Exception("Task execution canceled by action client")
+
+                # 4.2 Check if we've spent too long on this waypoint and should move on
                 if (
-                    self.get_clock().now().to_msg().sec - start_time.sec
-                    > self.gps_nav_timeout
-                ):
-                    self.task_warn("GPS navigation timed out")
-                    asyncio.run(self.cancelTask())
-                    return Result.FAILED
-            elif hex_mode:  # we're navigating to a hex waypoint
-                if (
-                    self.get_clock().now().to_msg().sec - start_time.sec
-                    > self.hex_nav_timeout
-                ):
-                    self.task_warn("Hex navigation timed out")
-                    asyncio.run(self.cancelTask())
-                    return Result.FAILED
+                    not hex_mode and not found_mode
+                ):  # we're navigating to a GPS waypoint
+                    if (
+                        self.get_clock().now().to_msg().sec - start_time.sec
+                        > self.gps_nav_timeout
+                    ):
+                        self.task_warn("GPS navigation timed out")
+                        asyncio.run(self.cancelTask())
+                        return Result.FAILED
+                elif hex_mode:  # we're navigating to a hex waypoint
+                    if (
+                        self.get_clock().now().to_msg().sec - start_time.sec
+                        > self.hex_nav_timeout
+                    ):
+                        self.task_warn("Hex navigation timed out")
+                        asyncio.run(self.cancelTask())
+                        return Result.FAILED
 
-            # 3.3 Check for the object or aruco tag while navigating
-            if found_mode:  # we're navigating to a found object
-                # Check if we get a better object or tag location as we get closer
-                if (
-                    latLon2Meters(
-                        self.found_poses[self.leg.name].position.latitude,
-                        self.found_poses[self.leg.name].position.longitude,
-                        dest_wp.position.latitude,
-                        dest_wp.position.longitude,
-                    )
-                    > self.update_threshold
-                ):
-                    asyncio.run(self.cancelTask())
-                    return Result.FOUND
-            else:  # we're navigating to a GPS or hex waypoint
-                # Check for the aruco tag or object while navigating
-                if self.found_helper():
-                    asyncio.run(self.cancelTask())
-                    return Result.FOUND
+                # 4.3 Check for the object or aruco tag while navigating
+                if found_mode:  # we're navigating to a found object
+                    # Check if we get a better object or tag location as we get closer
+                    if (
+                        latLon2Meters(
+                            self.found_poses[self.leg.name].position.latitude,
+                            self.found_poses[self.leg.name].position.longitude,
+                            dest_wp.position.latitude,
+                            dest_wp.position.longitude,
+                        )
+                        > self.update_threshold
+                    ):
+                        asyncio.run(self.cancelTask())
+                        return Result.FOUND
+                else:  # we're navigating to a GPS or hex waypoint
+                    # Check for the aruco tag or object while navigating
+                    if self.found_helper():
+                        asyncio.run(self.cancelTask())
+                        return Result.FOUND
 
-        result = self.getResult()
-        if result == TaskResult.SUCCEEDED:
-            return Result.SUCCEEDED
-        else:
-            return Result.FAILED
+            result = self.getResult()
+            if result == TaskResult.SUCCEEDED:
+                return Result.SUCCEEDED
+            else:
+                return Result.FAILED
+        finally:
+            # 5. Reset the goal tolerance to the final value
+            self.set_xy_goal_tolerance(self.final_xy_goal_tolerance)
 
     def spin_helper(self):
         """
@@ -985,6 +1019,38 @@ class StateMachine(Node):
             except KeyError:  # if the leg name is not in the found_poses dict
                 return False
         return False
+
+    def set_xy_goal_tolerance(self, tolerance):
+        """
+        Helper function to set the xy goal tolerance on the controller_server
+        """
+
+        self.param_request.parameters = [
+            Parameter(
+                name="general_goal_checker.xy_goal_tolerance",
+                value=ParameterValue(double_value=tolerance, type=3),
+            )
+        ]
+        asyncio.run(self.async_service_call(self.param_client, self.param_request))
+
+    def set_detection_enabled(self, enabled):
+        """
+        Helper function to enable/disable aruco and object detection
+        """
+
+        if self.leg.type == "obj":
+            self.task_info(f"{'Enabling' if enabled else 'Disabling'} object detection")
+            self.detection_enabled = enabled
+            self.obj_request.data = enabled
+            asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
+        elif self.leg.type == "aruco":
+            self.task_info(f"{'Enabling' if enabled else 'Disabling'} aruco detection")
+            self.detection_enabled = enabled
+            if enabled:
+                self.aruco_request.transition.id = Transition.TRANSITION_ACTIVATE
+            else:
+                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
+            asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
 
     ############################
     ### END HELPER FUNCTIONS ###
@@ -1083,16 +1149,7 @@ class StateMachine(Node):
         self.hex_cntr = 0  # reset the hex counter
 
         # Enable aruco/object detection
-        if self.leg.type == "obj":
-            self.task_info("Enabling object detection")
-            self.detection_enabled = True
-            self.obj_request.data = True
-            asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-        elif self.leg.type == "aruco":
-            self.task_info("Enabling aruco detection")
-            self.detection_enabled = True
-            self.aruco_request.transition.id = Transition.TRANSITION_ACTIVATE
-            asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+        self.set_detection_enabled(True)
 
         self.state = State.GPS_NAV
 
@@ -1119,16 +1176,7 @@ class StateMachine(Node):
             self.task_error("Failed to navigate to GPS waypoint")
 
             # Disable aruco/object detection
-            if self.leg.type == "obj":
-                self.task_info("Disabling object detection")
-                self.detection_enabled = False
-                self.obj_request.data = False
-                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-            elif self.leg.type == "aruco":
-                self.task_info("Disabling aruco detection")
-                self.detection_enabled = False
-                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
-                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+            self.set_detection_enabled(False)
 
             self.state = State.NEXT_LEG
         elif nav_result == Result.FOUND:
@@ -1247,32 +1295,14 @@ class StateMachine(Node):
             self.task_success("Navigated to object/tag")
 
             # Disable aruco/object detection
-            if self.leg.type == "obj":
-                self.task_info("Disabling object detection")
-                self.obj_request.data = False
-                self.obj_request.data = False
-                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-            elif self.leg.type == "aruco":
-                self.task_info("Disabling aruco detection")
-                self.detection_enabled = False
-                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
-                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+            self.set_detection_enabled(False)
 
             self.state = State.SIGNAL_SUCCESS
         elif nav_result == Result.FAILED:
             self.task_error("Failed to navigate to object/tag")
 
             # Disable aruco/object detection
-            if self.leg.type == "obj":
-                self.task_info("Disabling object detection")
-                self.detection_enabled = False
-                self.obj_request.data = False
-                asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
-            elif self.leg.type == "aruco":
-                self.task_info("Disabling aruco detection")
-                self.detection_enabled = False
-                self.aruco_request.transition.id = Transition.TRANSITION_DEACTIVATE
-                asyncio.run(self.async_service_call(self.aruco_client, self.aruco_request))
+            self.set_detection_enabled(False)
 
             self.state = State.NEXT_LEG
         elif nav_result == Result.FOUND:

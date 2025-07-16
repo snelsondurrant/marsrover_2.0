@@ -1,4 +1,3 @@
-# Created by Nelson Durrant, Feb 2025
 import math
 from geographic_msgs.msg import GeoPose
 from geometry_msgs.msg import Quaternion
