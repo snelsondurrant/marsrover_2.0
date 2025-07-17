@@ -150,7 +150,7 @@
     </sensor>
   </gazebo>
 
-  <!-- LiDAR Sensor (only in sim) -->
+  <!-- LiDAR Sensor (from turtlebot3, only in sim) -->
   <gazebo reference="lidar_link">
     <sensor name="hls_lfcd_lds" type="ray">
       <always_on>true</always_on>
@@ -187,7 +187,7 @@
     </sensor>
   </gazebo>
 
-  <!-- Depth Camera Sensor (only in sim)-->
+  <!-- Depth Camera Sensor (from turtlebot3, only in sim)-->
   <!-- In real life, we'll use the ZED 2 camera, not the Intel Realsense -->
   <gazebo reference="zed_camera_link">
     <sensor name="intel_realsense_r200_depth" type="depth">

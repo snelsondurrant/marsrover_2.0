@@ -282,6 +282,7 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     )
 
 
+# NOTE: The below is mapped to work in simulation right now
 @mcp.tool(name="rover_sensors_getCameraImage")
 def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
     """
