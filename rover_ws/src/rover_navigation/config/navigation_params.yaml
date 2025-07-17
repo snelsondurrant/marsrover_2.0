@@ -24,7 +24,7 @@ state_machine:
     # For example, with a 50x50 rolling global costmap, the max distance between waypoints is 16.67m.
     waypoint_distance: 16.0  # Maximum distance between waypoints (in meters)
     intermediate_xy_goal_tolerance: 2.0  # The xy goal tolerance for intermediate waypoints (in meters)
-    final_xy_goal_tolerance: 1.0  # The xy goal tolerance for the final waypoint (in meters)
+    final_xy_goal_tolerance: 0.5  # The xy goal tolerance for the final waypoint (in meters)
     update_threshold: 0.4  # Threshold for updating tag and item locations (in meters)
     spin_stops: 4  # Number of different angles to stop at during spin search to get a good image
     spin_wait_time: 0.5  # Time to wait during each spin stop (in seconds)
@@ -123,7 +123,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 1.0 # This is dynamically managed by the state machine
+      xy_goal_tolerance: 0.5 # This is dynamically managed by the state machine
       yaw_goal_tolerance: 3.14 # We don't have to meet a yaw criteria
     # DWB parameters
     FollowPath:

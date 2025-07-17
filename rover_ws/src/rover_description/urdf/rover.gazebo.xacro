@@ -198,7 +198,7 @@
       </camera>
       <plugin name="intel_realsense_r200_depth_driver" filename="libgazebo_ros_camera.so">
         <camera_name>intel_realsense_r200_depth</camera_name>
-        <frame_name>zed_camera_link</frame_name> <!-- TODO: Figure this out -->
+        <frame_name>intel_realsense_link</frame_name>
       </plugin>
     </sensor>
   </gazebo>

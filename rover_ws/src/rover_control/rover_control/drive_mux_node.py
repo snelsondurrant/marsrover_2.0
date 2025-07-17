@@ -15,8 +15,8 @@ class DriveMux(Node):
 
     States:
     - Teleop (cmd_vel_teleop, blue LED)
-    - Auto (cmd_vel_nav, flashing green LED)
-    - Arrival (cmd_vel_nav, red LED)
+    - Auto (cmd_vel, flashing green LED)
+    - Arrival (cmd_vel, red LED)
 
     Subscribers:
     - cmd_vel (geometry_msgs/Twist) - from Nav2
@@ -62,13 +62,13 @@ class DriveMux(Node):
 
     def nav_callback(self, msg):
         """
-        Callback for cmd_vel_nav subscription
+        Callback for cmd_vel subscription
         """
 
         if self.state == "auto":
             self.cmd_vel_mux_pub.publish(msg)
         else:
-            self.get_logger().warn("Received cmd_vel_nav while not in auto state")
+            self.get_logger().warn("Received cmd_vel while not in auto state")
 
     def teleop_callback(self, msg):
         """
