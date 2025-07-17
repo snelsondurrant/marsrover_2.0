@@ -4,7 +4,7 @@ from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 from action_msgs.msg import GoalStatus
 from action_msgs.srv import CancelGoal
-from rover_interfaces.action import AutonomyTask
+from rover_interfaces.action import AutonomyMission
 from rover_interfaces.msg import AutonomyLeg
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import PointStamped
@@ -39,7 +39,7 @@ from rover_interfaces.srv import (
     GetWaypoints,
     AddWaypoint,
     RemoveWaypoint,
-    IsTaskRunning,
+    IsMissionRunning,
     SendWaypoint,
     GetFeedback,
 )
@@ -153,7 +153,7 @@ class WaypointDialog(QDialog):
 
 class AutonomyGUI(Node, QWidget):
     """
-    GUI for starting, stopping, and monitoring the rover's autonomy task
+    GUI for starting, stopping, and monitoring the rover's autonomy mission
 
     NOTE: This is quite the jumble of unorganized code, but Gemini 2.5 Pro one-shotted
     almost all the major functionality in under an hour, so I guess I can't complain too much
@@ -163,11 +163,11 @@ class AutonomyGUI(Node, QWidget):
     :date: Apr 2025
 
     Clients:
-    - /exec_autonomy_task/_action/cancel_goal (action_msgs/CancelGoal)
+    - /exec_autonomy_mission/_action/cancel_goal (action_msgs/CancelGoal)
     Services:
     - TODO: ADD HERE
     Action Clients:
-    - exec_autonomy_task (rover_interfaces/AutonomyTask)
+    - exec_autonomy_mission (rover_interfaces/AutonomyMission)
     """
 
     # Signal to safely update the GUI from the ROS2 thread.
@@ -197,8 +197,8 @@ class AutonomyGUI(Node, QWidget):
         self.callback_group = ReentrantCallbackGroup()
         self._action_client = ActionClient(
             self,
-            AutonomyTask,
-            "/exec_autonomy_task",
+            AutonomyMission,
+            "/exec_autonomy_mission",
             callback_group=self.callback_group,
         )
 
@@ -222,7 +222,7 @@ class AutonomyGUI(Node, QWidget):
         self.goal_handle = None
         self.close_flag = False
 
-        self.setWindowTitle("Autonomy Task GUI")
+        self.setWindowTitle("Autonomy Mission GUI")
         self.layout = QVBoxLayout()
 
         # Waypoint Display
@@ -268,18 +268,18 @@ class AutonomyGUI(Node, QWidget):
         buttons_layout.addWidget(self.clear_button)
 
         # Start/Stop Layout
-        task_layout = QHBoxLayout()
+        mission_layout = QHBoxLayout()
         self.start_selected_button = QPushButton("Send WP")
-        self.start_selected_button.clicked.connect(self.start_selected_task)
-        task_layout.addWidget(self.start_selected_button)
+        self.start_selected_button.clicked.connect(self.start_selected_mission)
+        mission_layout.addWidget(self.start_selected_button)
 
         self.start_button = QPushButton("Send all WPs")
-        self.start_button.clicked.connect(self.start_task)
-        task_layout.addWidget(self.start_button)
+        self.start_button.clicked.connect(self.start_mission)
+        mission_layout.addWidget(self.start_button)
 
-        self.stop_button = QPushButton("Cancel Task")
-        self.stop_button.clicked.connect(self.stop_task)
-        task_layout.addWidget(self.stop_button)
+        self.stop_button = QPushButton("Cancel Mission")
+        self.stop_button.clicked.connect(self.stop_mission)
+        mission_layout.addWidget(self.stop_button)
 
         # Terrain Planning Layout
         terrain_planning_layout = QHBoxLayout()
@@ -293,11 +293,11 @@ class AutonomyGUI(Node, QWidget):
 
         self.layout.addLayout(json_layout)
         self.layout.addLayout(buttons_layout)
-        self.layout.addLayout(task_layout)
+        self.layout.addLayout(mission_layout)
         self.layout.addLayout(terrain_planning_layout)
 
         # Feedback Display
-        self.feedback_label = QLabel("Task Feedback:")
+        self.feedback_label = QLabel("Mission Feedback:")
         self.layout.addWidget(self.feedback_label)
         self.feedback_display = QListWidget()
         self.layout.addWidget(self.feedback_display)
@@ -323,12 +323,12 @@ class AutonomyGUI(Node, QWidget):
         self.create_service(GetWaypoints, "~/get_waypoints", self.get_waypoints_callback, callback_group=self.callback_group)
         self.create_service(AddWaypoint, "~/add_waypoint", self.add_waypoint_callback, callback_group=self.callback_group)
         self.create_service(RemoveWaypoint, "~/remove_waypoint", self.remove_waypoint_callback, callback_group=self.callback_group)
-        self.create_service(IsTaskRunning, "~/is_task_running", self.is_task_running_callback, callback_group=self.callback_group)
+        self.create_service(IsMissionRunning, "~/is_mission_running", self.is_mission_running_callback, callback_group=self.callback_group)
         self.create_service(SetBool, "~/set_terrain_planning", self.set_terrain_planning_callback, callback_group=self.callback_group)
         self.create_service(SendWaypoint, "~/send_waypoint", self.send_waypoint_callback, callback_group=self.callback_group)
         self.create_service(Trigger, "~/send_all_waypoints", self.send_all_waypoints_callback, callback_group=self.callback_group)
         self.create_service(GetFeedback, "~/get_feedback", self.get_feedback_callback, callback_group=self.callback_group)
-        self.create_service(Trigger, "~/cancel_task", self.cancel_task_callback, callback_group=self.callback_group)
+        self.create_service(Trigger, "~/cancel_mission", self.cancel_mission_callback, callback_group=self.callback_group)
         self.get_logger().info("MCP GUI integration services are running.")
 
         ############################
@@ -458,18 +458,20 @@ class AutonomyGUI(Node, QWidget):
             item.setForeground(QColor("red"))
         elif "[WARN]" in text:
             item.setForeground(QColor("orange"))
+        elif "One small step" in text:
+            item.setForeground(QColor("blue"))
         return item
 
     def closeEvent(self, event):
         self.close_flag = True
-        self.stop_task()
+        self.stop_mission()
         self.ros2_thread.stop()
         self.ros2_thread.wait()
         event.accept()
 
     def update_button_states(self):
         with self.lock:
-            task_running = (
+            mission_running = (
                 self.goal_handle is not None
                 and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
             )
@@ -477,11 +479,11 @@ class AutonomyGUI(Node, QWidget):
             self.duplicate_button.setEnabled(len(self.waypoints) > 0)
             self.remove_button.setEnabled(len(self.waypoints) > 0)
             self.clear_button.setEnabled(len(self.waypoints) > 0)
-            self.start_button.setEnabled(not task_running and len(self.waypoints) > 0)
+            self.start_button.setEnabled(not mission_running and len(self.waypoints) > 0)
             self.start_selected_button.setEnabled(
-                not task_running and len(self.waypoints) > 0
+                not mission_running and len(self.waypoints) > 0
             )
-            self.stop_button.setEnabled(task_running)
+            self.stop_button.setEnabled(mission_running)
             self.preview_button.setEnabled(len(self.waypoints) > 0)
             self.save_button.setEnabled(len(self.waypoints) > 0)
 
@@ -801,8 +803,8 @@ class AutonomyGUI(Node, QWidget):
         self.update_waypoint_list()
         self.update_button_states()
 
-    def start_selected_task(self):
-        self.get_logger().info("Starting selected task...")
+    def start_selected_mission(self):
+        self.get_logger().info("Starting selected mission...")
         with self.lock:
             selected_item = self.waypoint_list.currentItem()
             if not selected_item:
@@ -822,27 +824,27 @@ class AutonomyGUI(Node, QWidget):
 
             waypoints_to_send = [self.waypoints[current_selection_index]]
         
-        self._send_task(waypoints_to_send)
+        self._send_mission(waypoints_to_send)
 
-    def start_task(self):
-        self.get_logger().info("Starting task...")
+    def start_mission(self):
+        self.get_logger().info("Starting mission...")
         with self.lock:
             if not self.waypoints:
                 QMessageBox.warning(self, "Warning", "No waypoints to send.")
                 return
             waypoints_to_send = self.waypoints.copy()
             
-        self._send_task(waypoints_to_send)
+        self._send_mission(waypoints_to_send)
 
-    def _send_task(self, waypoints_to_send):
-        """Internal method to send a task with a given list of waypoints."""
+    def _send_mission(self, waypoints_to_send):
+        """Internal method to send a mission with a given list of waypoints."""
         if not self._action_client.wait_for_server(timeout_sec=2.0):
             self.get_logger().error("Action server not available after 2 seconds!")
             self.ui_update_signal.emit(lambda: QMessageBox.critical(self, "Error", "Action server not available!"))
             return
 
         with self.lock:
-            goal_msg = AutonomyTask.Goal()
+            goal_msg = AutonomyMission.Goal()
             goal_msg.enable_terrain = self.terrain_planning_checkbox.isChecked()
             goal_msg.legs = []
             for wp in waypoints_to_send:
@@ -921,11 +923,11 @@ class AutonomyGUI(Node, QWidget):
         self.feedback_display.scrollToBottom()
         self.update_button_states()
 
-    def stop_task(self):
-        self.get_logger().info("Stopping task...")
+    def stop_mission(self):
+        self.get_logger().info("Stopping mission...")
         client = self.create_client(
             CancelGoal,
-            "/exec_autonomy_task/_action/cancel_goal",
+            "/exec_autonomy_mission/_action/cancel_goal",
             callback_group=self.callback_group,
         )
 
@@ -1039,7 +1041,7 @@ class AutonomyGUI(Node, QWidget):
                 self.get_logger().warn(response.message)
         return response
 
-    def is_task_running_callback(self, request, response):
+    def is_mission_running_callback(self, request, response):
         with self.lock:
             response.is_running = (self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING)
         return response
@@ -1057,7 +1059,7 @@ class AutonomyGUI(Node, QWidget):
         with self.lock:
             if self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING:
                 response.success = False
-                response.message = "A task is already running."
+                response.message = "A mission is already running."
                 self.get_logger().warn(response.message)
                 return response
             
@@ -1075,9 +1077,9 @@ class AutonomyGUI(Node, QWidget):
             
             waypoints_to_send_list = [waypoint_to_send]
 
-        self._send_task(waypoints_to_send_list)
+        self._send_mission(waypoints_to_send_list)
         response.success = True
-        response.message = "Task sent successfully."
+        response.message = "Mission sent successfully."
         return response
 
     def send_all_waypoints_callback(self, request, response):
@@ -1085,7 +1087,7 @@ class AutonomyGUI(Node, QWidget):
         with self.lock:
             if self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING:
                 response.success = False
-                response.message = "A task is already running."
+                response.message = "A mission is already running."
                 self.get_logger().warn(response.message)
                 return response
             
@@ -1097,9 +1099,9 @@ class AutonomyGUI(Node, QWidget):
             
             waypoints_to_send = self.waypoints.copy()
         
-        self._send_task(waypoints_to_send)
+        self._send_mission(waypoints_to_send)
         response.success = True
-        response.message = "Task sent successfully."
+        response.message = "Mission sent successfully."
         return response
 
     def get_feedback_callback(self, request, response):
@@ -1117,16 +1119,16 @@ class AutonomyGUI(Node, QWidget):
         response.feedback_log = feedback_list
         return response
 
-    def cancel_task_callback(self, request, response):
-        self.get_logger().info("Servicing request to cancel current task.")
+    def cancel_mission_callback(self, request, response):
+        self.get_logger().info("Servicing request to cancel current mission.")
         with self.lock:
             if self.goal_handle is None or self.goal_handle.status != GoalStatus.STATUS_EXECUTING:
                 response.success = False
-                response.message = "No task is currently running to cancel."
+                response.message = "No mission is currently running to cancel."
                 self.get_logger().warn(response.message)
                 return response
 
-        self.stop_task()
+        self.stop_mission()
         response.success = True
         response.message = "Cancel request sent."
         return response

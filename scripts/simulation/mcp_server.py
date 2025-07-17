@@ -36,7 +36,7 @@ the steps to get started:
 3.  Launch the simulation and try out some commands! Here's a few suggestions to get started:
     - "What city is the rover in? What is it doing rn?"
     - "Describe to me what the rover is seeing right now. What's around it?"
-    - "Add a new GPS waypoint to the GUI. Is a task running already?"
+    - "Add a new GPS waypoint to the GUI. Is a mission running already?"
     - "Navigate to a waypoint 20m north of the rover and look for an ArUco tag."
     - "Drive around and look for anything that could vaguely be a water bottle."
 
@@ -79,7 +79,7 @@ from rover_interfaces.srv import (
     GetWaypoints,
     AddWaypoint,
     RemoveWaypoint,
-    IsTaskRunning,
+    IsMissionRunning,
     SendWaypoint,
     GetFeedback,
 )
@@ -566,8 +566,8 @@ def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
     function again with both linear_x and angular_z set to 0.
 
     **IMPORTANT!** This will not execute as planned if the rover is currently
-    executing an autonomy task. You must cancel the task first using the
-    rover_autonomy_cancelTask tool.
+    executing an autonomy mission. You must cancel the mission first using the
+    rover_autonomy_cancelMission tool.
 
     Args:
         linear_x: The forward (positive) or backward (negative) velocity in m/s.
@@ -624,7 +624,7 @@ def rover_gui_addWaypoint(
     """
     Adds a new waypoint to the mission plan in the Autonomy GUI.
 
-    This allows for building a sequence of tasks for the rover to execute.
+    This allows for building a sequence of missions for the rover to execute.
     Waypoints must have a unique name.
 
     Args:
@@ -687,7 +687,7 @@ def rover_gui_removeWaypoint(name: str) -> str:
 @mcp.tool(name="rover_gui_setTerrainPlanning")
 def rover_gui_setTerrainPlanning(enable: bool) -> str:
     """
-    Enables or disables terrain-aided path planning for autonomy tasks.
+    Enables or disables terrain-aided path planning for autonomy missions.
 
     When enabled, the rover uses a pre-loaded terrain map to plan more efficient paths.
 
@@ -709,23 +709,23 @@ def rover_gui_setTerrainPlanning(enable: bool) -> str:
 # Rover Autonomy Tools
 
 
-@mcp.tool(name="rover_autonomy_isTaskRunning")
-def rover_autonomy_isTaskRunning() -> str:
+@mcp.tool(name="rover_autonomy_isMissionRunning")
+def rover_autonomy_isMissionRunning() -> str:
     """
-    Checks if an autonomy task (a mission plan) is currently being executed by the rover.
+    Checks if an autonomy mission plan is currently being executed by the rover.
 
     Returns:
         The full service response as a string.
     """
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
-    req = IsTaskRunning.Request()
+    req = IsMissionRunning.Request()
     response = ROS_NODE.call_service(
-        "/autonomy_gui/is_task_running", IsTaskRunning, req
+        "/autonomy_gui/is_mission_running", IsMissionRunning, req
     )
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_isTaskRunning] Service call to '/autonomy_gui/is_task_running' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_autonomy_isMissionRunning] Service call to '/autonomy_gui/is_mission_running' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
 @mcp.tool(name="rover_autonomy_sendWaypoint")
@@ -733,7 +733,7 @@ def rover_autonomy_sendWaypoint(name: str) -> str:
     """
     Commands the rover to execute a single waypoint from the mission plan.
 
-    This will fail if a task is already running.
+    This will fail if a mission is already running.
 
     Args:
         name: The unique name of the waypoint to execute.
@@ -755,7 +755,7 @@ def rover_autonomy_sendAllWaypoints() -> str:
     """
     Commands the rover to execute the entire mission plan (all loaded waypoints).
 
-    This will fail if a task is already running.
+    This will fail if a mission is already running.
 
     Returns:
         The full service response as a string.
@@ -772,7 +772,7 @@ def rover_autonomy_sendAllWaypoints() -> str:
 @mcp.tool(name="rover_autonomy_getFeedback")
 def rover_autonomy_getFeedback() -> str:
     """
-    Retrieves the full text log from the Autonomy GUI's 'Task Feedback' display.
+    Retrieves the full text log from the Autonomy GUI's 'Mission Feedback' display.
 
     Returns:
         The full service response as a string.
@@ -786,12 +786,12 @@ def rover_autonomy_getFeedback() -> str:
     return "[ERROR: rover_autonomy_getFeedback] Service call to '/autonomy_gui/get_feedback' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_autonomy_cancelTask")
-def rover_autonomy_cancelTask() -> str:
+@mcp.tool(name="rover_autonomy_cancelMission")
+def rover_autonomy_cancelMission() -> str:
     """
-    Immediately cancels any autonomy task that is currently running.
+    Immediately cancels any autonomy mission that is currently running.
 
-    If no task is running, this will report a failure.
+    If no mission is running, this will report a failure.
 
     Returns:
         The full service response as a string.
@@ -799,10 +799,10 @@ def rover_autonomy_cancelTask() -> str:
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
     req = Trigger.Request()
-    response = ROS_NODE.call_service("/autonomy_gui/cancel_task", Trigger, req)
+    response = ROS_NODE.call_service("/autonomy_gui/cancel_mission", Trigger, req)
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_cancelTask] Service call to '/autonomy_gui/cancel_task' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_autonomy_cancelMission] Service call to '/autonomy_gui/cancel_mission' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
 def main():

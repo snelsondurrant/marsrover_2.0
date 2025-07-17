@@ -20,7 +20,7 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.task import Future
-from rover_interfaces.action import AutonomyTask
+from rover_interfaces.action import AutonomyMission
 from sensor_msgs.msg import NavSatFix
 from std_srvs.srv import Trigger, SetBool
 from threading import RLock
@@ -92,7 +92,7 @@ class PatchRclpyIssue1123(ActionClient):
 
 class StateMachine(Node):
     """
-    Class for executing the autonomy task using the Nav2 stack
+    Class for executing the autonomy mission using the Nav2 stack
 
     NOTE: This is a pretty complex node. It's a hacked-together combination of the Nav2 BasicNavigator
     class and our own custom state machine with A LOT of multi-threading. It's easiest to think of
@@ -121,7 +121,7 @@ class StateMachine(Node):
     - spin (nav2_msgs/Spin) [basic_nav_callback_group]
     - {node_name}/get_state (lifecycle_msgs/GetState) [basic_nav_callback_group] (temporary)
     Action Servers:
-    - exec_autonomy_task (rover_interfaces/AutonomyTask) [action_callback_group]
+    - exec_autonomy_mission (rover_interfaces/AutonomyMission) [action_callback_group]
     *And a tf2 buffer and listener for pose to GPS transforms
     """
 
@@ -220,7 +220,7 @@ class StateMachine(Node):
         # Initialize variables
         self.legs = []
         self.leg = None
-        self.task_goal_handle = None
+        self.mission_goal_handle = None
         self.use_terrain_path_planner = False
         self.detection_enabled = False
 
@@ -339,11 +339,11 @@ class StateMachine(Node):
             self.get_logger().info("Parameter service not available, waiting again...")
         self.param_request = SetParameters.Request()
 
-        # Action server to run the task executor
+        # Action server to run the mission executor
         self.action_server = ActionServer(
             self,
-            AutonomyTask,
-            "exec_autonomy_task",
+            AutonomyMission,
+            "exec_autonomy_mission",
             self.action_server_callback,
             callback_group=action_callback_group,
             cancel_callback=self.cancel_callback,
@@ -377,7 +377,7 @@ class StateMachine(Node):
         ### END NAV2 BASIC NAVIGATOR BASED CODE ###
         ###########################################
 
-        self.get_logger().info("Autonomy task executor node initialized")
+        self.get_logger().info("Autonomy mission executor node initialized")
 
     #######################################
     ### NAV2 BASIC NAVIGATOR BASED CODE ###
@@ -581,7 +581,7 @@ class StateMachine(Node):
         state = "unknown"
         while state != "active":
             if node_name == "navigator":
-                self.task_warn("Waiting for Nav2 to activate...")
+                self.mission_warn("Waiting for Nav2 to activate...")
             self.debug(f"Getting {node_name} state...")
             future = state_client.call_async(req)
             await future  # fix for iron/humble threading bug
@@ -642,15 +642,15 @@ class StateMachine(Node):
         Callback function for the action server
         """
 
-        result = AutonomyTask.Result()
-        self.task_goal_handle = goal_handle
+        result = AutonomyMission.Result()
+        self.mission_goal_handle = goal_handle
         self.cancel_flag = False
         self.detection_enabled = False
 
-        # Get the task legs from the goal
+        # Get the mission legs from the goal
         self.legs = goal_handle.request.legs
 
-        # Get the task settings from the goal
+        # Get the mission settings from the goal
         self.use_terrain_path_planner = goal_handle.request.enable_terrain
 
         # Trigger the autonomy state
@@ -659,11 +659,11 @@ class StateMachine(Node):
         try:
             self.run_state_machine()
             result.msg = "One small step for a rover, one giant leap for roverkind!"
-            self.task_goal_handle.succeed()
+            self.mission_goal_handle.succeed()
         except (
             Exception
         ) as e:  # catch exceptions to ensure we disable detections, return to teleop state
-            self.task_fatal(str(e))
+            self.mission_fatal(str(e))
 
             # Disable aruco/object detection
             if self.leg is not None:
@@ -671,12 +671,12 @@ class StateMachine(Node):
                 self.leg = None
 
             result.msg = "Okay, Houston, we've had a problem."
-            self.task_goal_handle.abort()
+            self.mission_goal_handle.abort()
 
         # Trigger the teleop state
         asyncio.run(self.async_service_call(self.teleop_client, self.teleop_request))
 
-        self.task_goal_handle = None
+        self.mission_goal_handle = None
         return result
 
     def gps_callback(self, msg):
@@ -790,60 +790,60 @@ class StateMachine(Node):
     ### TASK FEEDBACK FUNCTIONS ###
     ###############################
 
-    def task_info(self, string):
+    def mission_info(self, string):
         """
-        Function to write info back to the AutonomyTask action client
+        Function to write info back to the AutonomyMission action client
         """
 
-        name = "task" if self.leg is None else self.leg.name
+        name = "rover" if self.leg is None else self.leg.name
         self.get_logger().info("[" + name + "] " + string)
-        task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[" + name + "] " + string
-        self.task_goal_handle.publish_feedback(task_feedback)
+        mission_feedback = AutonomyMission.Feedback()
+        mission_feedback.status = "[" + name + "] " + string
+        self.mission_goal_handle.publish_feedback(mission_feedback)
 
-    def task_warn(self, string):
+    def mission_warn(self, string):
         """
-        Function to write warnings back to the AutonomyTask action client
+        Function to write warnings back to the AutonomyMission action client
         """
 
-        name = "task" if self.leg is None else self.leg.name
+        name = "rover" if self.leg is None else self.leg.name
         self.get_logger().warn("[" + name + "] " + string)
-        task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[WARN] [" + name + "] " + string
-        self.task_goal_handle.publish_feedback(task_feedback)
+        mission_feedback = AutonomyMission.Feedback()
+        mission_feedback.status = "[WARN] [" + name + "] " + string
+        self.mission_goal_handle.publish_feedback(mission_feedback)
 
-    def task_error(self, string):
+    def mission_error(self, string):
         """
-        Function to write errors back to the AutonomyTask action client
+        Function to write errors back to the AutonomyMission action client
         """
 
-        name = "task" if self.leg is None else self.leg.name
+        name = "rover" if self.leg is None else self.leg.name
         self.get_logger().error("[" + name + "] " + string)
-        task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[ERROR] [" + name + "] " + string
-        self.task_goal_handle.publish_feedback(task_feedback)
+        mission_feedback = AutonomyMission.Feedback()
+        mission_feedback.status = "[ERROR] [" + name + "] " + string
+        self.mission_goal_handle.publish_feedback(mission_feedback)
 
-    def task_fatal(self, string):
+    def mission_fatal(self, string):
         """
-        Function to write fatal errors back to the AutonomyTask action client
+        Function to write fatal errors back to the AutonomyMission action client
         """
 
-        name = "task" if self.leg is None else self.leg.name
+        name = "rover" if self.leg is None else self.leg.name
         self.get_logger().fatal("[" + name + "] " + string)
-        task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[FATAL] [" + name + "] " + string
-        self.task_goal_handle.publish_feedback(task_feedback)
+        mission_feedback = AutonomyMission.Feedback()
+        mission_feedback.status = "[FATAL] [" + name + "] " + string
+        self.mission_goal_handle.publish_feedback(mission_feedback)
 
-    def task_success(self, string):
+    def mission_success(self, string):
         """
-        Function to write success back to the AutonomyTask action client
+        Function to write success back to the AutonomyMission action client
         """
 
-        name = "task" if self.leg is None else self.leg.name
+        name = "rover" if self.leg is None else self.leg.name
         self.get_logger().info("[" + name + "] " + string)
-        task_feedback = AutonomyTask.Feedback()
-        task_feedback.status = "[SUCCESS] [" + name + "] " + string
-        self.task_goal_handle.publish_feedback(task_feedback)
+        mission_feedback = AutonomyMission.Feedback()
+        mission_feedback.status = "[SUCCESS] [" + name + "] " + string
+        self.mission_goal_handle.publish_feedback(mission_feedback)
 
     ###################################
     ### END TASK FEEDBACK FUNCTIONS ###
@@ -900,9 +900,9 @@ class StateMachine(Node):
                 time.sleep(0.1)
 
                 # 4.1 Check if the goal has been canceled
-                if self.task_goal_handle.is_cancel_requested:
+                if self.mission_goal_handle.is_cancel_requested:
                     asyncio.run(self.cancelTask())
-                    raise Exception("Task execution canceled by action client")
+                    raise Exception("Mission execution canceled by action client")
 
                 # 4.2 Check if we've spent too long on this waypoint and should move on
                 if (
@@ -912,7 +912,7 @@ class StateMachine(Node):
                         self.get_clock().now().to_msg().sec - start_time.sec
                         > self.gps_nav_timeout
                     ):
-                        self.task_warn("GPS navigation timed out")
+                        self.mission_warn("GPS navigation timed out")
                         asyncio.run(self.cancelTask())
                         return Result.FAILED
                 elif hex_mode:  # we're navigating to a hex waypoint
@@ -920,7 +920,7 @@ class StateMachine(Node):
                         self.get_clock().now().to_msg().sec - start_time.sec
                         > self.hex_nav_timeout
                     ):
-                        self.task_warn("Hex navigation timed out")
+                        self.mission_warn("Hex navigation timed out")
                         asyncio.run(self.cancelTask())
                         return Result.FAILED
 
@@ -967,9 +967,9 @@ class StateMachine(Node):
             time.sleep(0.1)
 
             # 2.1 Check if the goal has been canceled
-            if self.task_goal_handle.is_cancel_requested:
+            if self.mission_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
-                raise Exception("Task execution canceled by action client")
+                raise Exception("Mission execution canceled by action client")
 
             # 2.2 Check for the aruco tag or object while spinning
             if self.found_helper():
@@ -1018,12 +1018,12 @@ class StateMachine(Node):
         """
 
         if self.leg.type == "obj":
-            self.task_info(f"{'Enabling' if enabled else 'Disabling'} object detection")
+            self.mission_info(f"{'Enabling' if enabled else 'Disabling'} object detection")
             self.detection_enabled = enabled
             self.obj_request.data = enabled
             asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
         elif self.leg.type == "aruco":
-            self.task_info(f"{'Enabling' if enabled else 'Disabling'} aruco detection")
+            self.mission_info(f"{'Enabling' if enabled else 'Disabling'} aruco detection")
             self.detection_enabled = enabled
             if enabled:
                 self.aruco_request.transition.id = Transition.TRANSITION_ACTIVATE
@@ -1074,7 +1074,7 @@ class StateMachine(Node):
         Function to handle the initialization state
         """
 
-        self.task_info("Autonomy task started")
+        self.mission_info("Autonomy mission started")
 
         # Initialize variables
         self.found_poses = {}
@@ -1085,25 +1085,25 @@ class StateMachine(Node):
         # Check for the first GPS fix
         while self.filtered_gps is None:
             time.sleep(1)
-            self.task_warn("Waiting on a GPS fix...")
+            self.mission_warn("Waiting on a GPS fix...")
 
             # Check if the goal has been canceled
-            if self.task_goal_handle.is_cancel_requested:
+            if self.mission_goal_handle.is_cancel_requested:
                 asyncio.run(self.cancelTask())
-                raise Exception("Task execution canceled by action client")
+                raise Exception("Mission execution canceled by action client")
 
         # Report which order and path planners are selected
-        self.task_info("Order planner: basicOrderPlanner")
+        self.mission_info("Order planner: basicOrderPlanner")
         if self.use_terrain_path_planner:
-            self.task_info("Path planner: terrainPathPlanner")
+            self.mission_info("Path planner: terrainPathPlanner")
         else:
-            self.task_info("Path planner: basicPathPlanner")
+            self.mission_info("Path planner: basicPathPlanner")
 
         # Determine the best order for the legs
         self.legs = basicOrderPlanner(self.legs, self.filtered_gps)
 
         order = [leg.name for leg in self.legs]
-        self.task_info("Determined best leg order: " + str(order))
+        self.mission_info("Determined best leg order: " + str(order))
 
         # Make sure the navigation stack is up and running
         self.waitUntilNav2Active(localizer="robot_localization")
@@ -1118,7 +1118,7 @@ class StateMachine(Node):
         # Have we completed all the legs?
         if self.leg_cntr >= len(self.legs):
             self.leg = None
-            self.task_info("Autonomy task completed")
+            self.mission_info("Autonomy mission completed")
             self.complete_flag = True
             return
 
@@ -1137,7 +1137,7 @@ class StateMachine(Node):
         Function to handle the GPS navigation state
         """
 
-        self.task_info("Starting GPS navigation")
+        self.mission_info("Starting GPS navigation")
 
         leg_wp = latLonYaw2Geopose(self.leg.latitude, self.leg.longitude)
         nav_result = self.navigate_helper(leg_wp)
@@ -1145,21 +1145,21 @@ class StateMachine(Node):
         if nav_result == Result.SUCCEEDED:
 
             if self.leg.type == "gps":
-                self.task_success("Navigated to GPS waypoint")
+                self.mission_success("Navigated to GPS waypoint")
                 self.state = State.SIGNAL_SUCCESS
             else:
-                self.task_info("Navigated to GPS waypoint")
+                self.mission_info("Navigated to GPS waypoint")
                 self.state = State.SPIN_SEARCH
 
         elif nav_result == Result.FAILED:
-            self.task_error("Failed to navigate to GPS waypoint")
+            self.mission_error("Failed to navigate to GPS waypoint")
 
             # Disable aruco/object detection
             self.set_detection_enabled(False)
 
             self.state = State.NEXT_LEG
         elif nav_result == Result.FOUND:
-            self.task_info("Found the object/tag")
+            self.mission_info("Found the object/tag")
             self.state = State.FOUND_NAV
 
     def handle_spin_search(self):
@@ -1167,7 +1167,7 @@ class StateMachine(Node):
         Function to handle the spin search state
         """
 
-        self.task_info("Starting spin search")
+        self.mission_info("Starting spin search")
 
         success_cnt = 0
         failure_cnt = 0
@@ -1189,7 +1189,7 @@ class StateMachine(Node):
 
         if not found_flag:
             if failure_cnt > 0:
-                self.task_error(
+                self.mission_error(
                     "Spin search completed ("
                     + str(success_cnt)
                     + "/"
@@ -1197,7 +1197,7 @@ class StateMachine(Node):
                     + ")"
                 )
             else:
-                self.task_info(
+                self.mission_info(
                     "Spin search completed ("
                     + str(success_cnt)
                     + "/"
@@ -1206,7 +1206,7 @@ class StateMachine(Node):
                 )
             self.state = State.NEXT_HEX
         else:
-            self.task_info("Found the object/tag")
+            self.mission_info("Found the object/tag")
             self.state = State.FOUND_NAV
 
     def handle_next_hex(self):
@@ -1221,8 +1221,8 @@ class StateMachine(Node):
 
         # Have we completed all the hex points?
         if self.hex_cntr >= len(self.hex_coord):
-            self.task_info("Hex search completed")
-            self.task_error("Failed to find the object/tag")
+            self.mission_info("Hex search completed")
+            self.mission_error("Failed to find the object/tag")
             self.state = State.NEXT_LEG
             return
 
@@ -1236,7 +1236,7 @@ class StateMachine(Node):
         Function to handle the hex navigation state
         """
 
-        self.task_info("Starting hex " + str(self.hex_cntr) + " navigation")
+        self.mission_info("Starting hex " + str(self.hex_cntr) + " navigation")
 
         hex_lat, hex_lon = meters2LatLon(
             self.leg.latitude,
@@ -1248,13 +1248,13 @@ class StateMachine(Node):
         nav_result = self.navigate_helper(hex_wp, hex_mode=True)
 
         if nav_result == Result.SUCCEEDED:
-            self.task_info("Navigated to hex " + str(self.hex_cntr))
+            self.mission_info("Navigated to hex " + str(self.hex_cntr))
             self.state = State.NEXT_HEX
         elif nav_result == Result.FAILED:
-            self.task_error("Failed to navigate to hex " + str(self.hex_cntr))
+            self.mission_error("Failed to navigate to hex " + str(self.hex_cntr))
             self.state = State.NEXT_HEX
         elif nav_result == Result.FOUND:
-            self.task_info("Found the object/tag")
+            self.mission_info("Found the object/tag")
             self.state = State.FOUND_NAV
 
     def handle_found_nav(self):
@@ -1262,7 +1262,7 @@ class StateMachine(Node):
         Function to handle the found navigation state
         """
 
-        self.task_info("Starting object/tag navigation")
+        self.mission_info("Starting object/tag navigation")
 
         found_wp = latLonYaw2Geopose(
             self.found_poses[self.leg.name].position.latitude,
@@ -1271,21 +1271,21 @@ class StateMachine(Node):
         nav_result = self.navigate_helper(found_wp, found_mode=True)
 
         if nav_result == Result.SUCCEEDED:
-            self.task_success("Navigated to object/tag")
+            self.mission_success("Navigated to object/tag")
 
             # Disable aruco/object detection
             self.set_detection_enabled(False)
 
             self.state = State.SIGNAL_SUCCESS
         elif nav_result == Result.FAILED:
-            self.task_error("Failed to navigate to object/tag")
+            self.mission_error("Failed to navigate to object/tag")
 
             # Disable aruco/object detection
             self.set_detection_enabled(False)
 
             self.state = State.NEXT_LEG
         elif nav_result == Result.FOUND:
-            self.task_info("Updated location for object/tag")
+            self.mission_info("Updated location for object/tag")
             self.state = State.FOUND_NAV
 
     def handle_signal_success(self):
@@ -1293,7 +1293,7 @@ class StateMachine(Node):
         Function to handle the signal success state
         """
 
-        self.task_info("Flashing LED to indicate arrival")
+        self.mission_info("Flashing LED to indicate arrival")
 
         # Trigger the arrival state
         asyncio.run(self.async_service_call(self.arrival_client, self.arrival_request))
