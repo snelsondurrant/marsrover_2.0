@@ -162,10 +162,22 @@ class AutonomyGUI(Node, QWidget):
     :author: Nelson Durrant (w Gemini 2.5 Pro)
     :date: Apr 2025
 
+    Subscribers:
+    - /mapviz/clicked_point (geometry_msgs/PointStamped)
+    Publishers:
+    - /mapviz/preview (visualization_msgs/MarkerArray)
     Clients:
     - /exec_autonomy_mission/_action/cancel_goal (action_msgs/CancelGoal)
     Services:
-    - TODO: ADD HERE
+    - /get_waypoints (rover_interfaces/GetWaypoints)
+    - /add_waypoint (rover_interfaces/AddWaypoint)
+    - /remove_waypoint (rover_interfaces/RemoveWaypoint)
+    - /is_mission_running (rover_interfaces/IsMissionRunning)
+    - /send_waypoint (rover_interfaces/SendWaypoint)
+    - /send_all_waypoints (std_srvs/Trigger)
+    - /get_feedback (rover_interfaces/GetFeedback)
+    - /cancel_mission (std_srvs/Trigger)
+    - /set_terrain_planning (std_srvs/SetBool)
     Action Clients:
     - exec_autonomy_mission (rover_interfaces/AutonomyMission)
     """
