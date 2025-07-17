@@ -94,7 +94,9 @@ mcp = FastMCP("rover-mcp-server-experimental")
 
 
 def _ros_image_to_mcp_image(ros_image: RosImage, bridge: CvBridge) -> Image:
-    """Converts a sensor_msgs/Image to an MCP Image."""
+    """
+    Converts a sensor_msgs/Image to an MCP Image.
+    """
     try:
         cv_image = bridge.imgmsg_to_cv2(ros_image, desired_encoding="rgb8")
         pil_image = PILImage.fromarray(cv_image)
@@ -107,7 +109,9 @@ def _ros_image_to_mcp_image(ros_image: RosImage, bridge: CvBridge) -> Image:
 
 
 def _occupancy_grid_to_mcp_image(grid_msg: OccupancyGrid) -> Image:
-    """Converts a nav_msgs/OccupancyGrid to an MCP Image."""
+    """
+    Converts a nav_msgs/OccupancyGrid to an MCP Image.
+    """
     width, height = grid_msg.info.width, grid_msg.info.height
     costmap_data = np.array(grid_msg.data, dtype=np.int8).reshape((height, width))
     pixels = np.zeros((height, width, 3), dtype=np.uint8)
@@ -148,13 +152,17 @@ class Simple_ROS2_MCP_Node(Node):
         self.publisher_cache: Dict[str, Publisher] = {}
 
     def _spin_for_future(self, future: Future, timeout_sec: Optional[float] = None):
-        """Spins the node until a future is complete."""
+        """
+        Spins the node until a future is complete.
+        """
         rclpy.spin_until_future_complete(self, future, timeout_sec=timeout_sec)
 
     def get_message(
         self, topic: str, msg_type: Any, qos: QoSProfile, timeout_sec: float
     ) -> Optional[Any]:
-        """Subscribes to a topic and retrieves a single message."""
+        """
+        Subscribes to a topic and retrieves a single message.
+        """
         future = Future()
         sub = self.create_subscription(
             msg_type,
@@ -176,7 +184,9 @@ class Simple_ROS2_MCP_Node(Node):
         publish_count: int = 3,
         qos_profile: QoSProfile = QoSProfile(depth=10),
     ) -> str:
-        """Publishes a pre-made message to a topic a specified number of times."""
+        """
+        Publishes a pre-made message to a topic a specified number of times.
+        """
         publisher = self.publisher_cache.get(topic_name)
         if not publisher:
             publisher = self.create_publisher(msg_type, topic_name, qos_profile)
@@ -193,7 +203,9 @@ class Simple_ROS2_MCP_Node(Node):
     def call_service(
         self, srv_name: str, srv_type: Any, request: Any, timeout_sec: float = 5.0
     ) -> Optional[Any]:
-        """Calls a ROS2 service and waits for the response."""
+        """
+        Calls a ROS2 service and waits for the response.
+        """
         client = self.create_client(srv_type, srv_name)
         try:
             if not client.wait_for_service(timeout_sec=timeout_sec):
@@ -220,7 +232,6 @@ ROS_NODE: Optional[Simple_ROS2_MCP_Node] = None
 ########################
 
 # Rover Sensor Tools
-
 
 @mcp.tool(name="rover_sensors_getGpsFix")
 def rover_sensors_getGpsFix(timeout_sec: float = 5.0) -> str:
@@ -299,7 +310,6 @@ def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
 
 
 # Rover Data Tools
-
 
 @mcp.tool(name="rover_data_getLocalOdometry")
 def rover_data_getLocalOdometry(timeout_sec: float = 5.0) -> str:

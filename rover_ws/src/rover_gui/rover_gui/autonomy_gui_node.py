@@ -164,6 +164,8 @@ class AutonomyGUI(Node, QWidget):
 
     Clients:
     - /exec_autonomy_task/_action/cancel_goal (action_msgs/CancelGoal)
+    Services:
+    - TODO: ADD HERE
     Action Clients:
     - exec_autonomy_task (rover_interfaces/AutonomyTask)
     """

@@ -1,7 +1,6 @@
 # Created by Nelson Durrant, Feb 2025
 import launch
 import launch_ros.actions
-import launch_ros.descriptions
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -9,7 +8,7 @@ import os
 def generate_launch_description():
 
     control_dir = get_package_share_directory("rover_control")
-    teleop_config = os.path.join(control_dir, "config/teleop_twist.yaml")
+    teleop_config = os.path.join(control_dir, "config/teleop_twist_params.yaml")
 
     return launch.LaunchDescription(
         [
@@ -38,6 +37,11 @@ def generate_launch_description():
             launch_ros.actions.Node(
                 package="rover_control",
                 executable="mega_wrapper",
+                output="screen",
+            ),
+            launch_ros.actions.Node(
+                package="rover_control",
+                executable="nano_wrapper",
                 output="screen",
             ),
         ]

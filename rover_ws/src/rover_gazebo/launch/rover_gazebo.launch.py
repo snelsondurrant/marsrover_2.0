@@ -7,25 +7,21 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # Get the launch directory
-    gazebo_dir = get_package_share_directory("rover_gazebo")
-    launch_dir = os.path.join(gazebo_dir, "launch")
-    world = os.path.join(gazebo_dir, "worlds", "sonoma_raceway.world")
+    
+    gz_dir = get_package_share_directory("rover_gazebo")
+    gz_launch_dir = os.path.join(gz_dir, "launch")
 
-    models_dir = os.path.join(gazebo_dir, "models")
-    models_dir += (
-        os.pathsep
-        + f"/opt/ros/{os.getenv('ROS_DISTRO')}/share/turtlebot3_gazebo/models"
-    )
-    set_gazebo_model_path_cmd = None
+    world = os.path.join(gz_dir, "worlds", "sonoma_raceway.world")
+    models_dir = os.path.join(gz_dir, "models")
+    models_dir += os.pathsep
 
     if "GAZEBO_MODEL_PATH" in os.environ:
-        gazebo_model_path = os.environ["GAZEBO_MODEL_PATH"] + os.pathsep + models_dir
-        set_gazebo_model_path_cmd = SetEnvironmentVariable(
-            "GAZEBO_MODEL_PATH", gazebo_model_path
+        gz_model_path = os.environ["GAZEBO_MODEL_PATH"] + os.pathsep + models_dir
+        set_gz_model_path_cmd = SetEnvironmentVariable(
+            "GAZEBO_MODEL_PATH", gz_model_path
         )
     else:
-        set_gazebo_model_path_cmd = SetEnvironmentVariable(
+        set_gz_model_path_cmd = SetEnvironmentVariable(
             "GAZEBO_MODEL_PATH", models_dir
         )
 
@@ -43,7 +39,7 @@ def generate_launch_description():
                    "-Y", "0.0"]
     )
 
-    # Specify the actions
+    # Start the Gazebo server
     start_gazebo_server_cmd = ExecuteProcess(
         cmd=[
             "gzserver",
@@ -53,15 +49,15 @@ def generate_launch_description():
             "libgazebo_ros_factory.so",
             world,
         ],
-        cwd=[launch_dir],
+        cwd=[gz_launch_dir],
         output="both",
     )
 
+    # Start the Gazebo client
     start_gazebo_client_cmd = ExecuteProcess(
-        cmd=["gzclient"], cwd=[launch_dir], output="both"
+        cmd=["gzclient"], cwd=[gz_launch_dir], output="both"
     )
 
-    # Create the launch description and populate
     ld = LaunchDescription(
         [
             Node(
@@ -79,10 +75,7 @@ def generate_launch_description():
         ]
     )
 
-    # Set gazebo up to find models properly
-    ld.add_action(set_gazebo_model_path_cmd)
-
-    # simulator launch
+    ld.add_action(set_gz_model_path_cmd)
     ld.add_action(start_gazebo_server_cmd)
     ld.add_action(start_gazebo_client_cmd)
     ld.add_action(spawn_rover_cmd)

@@ -1,7 +1,6 @@
 # Created by Nelson Durrant, Apr 2025
 import launch
 import launch_ros.actions
-import launch_ros.descriptions
 
 
 def generate_launch_description():

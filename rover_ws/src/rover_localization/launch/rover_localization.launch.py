@@ -10,13 +10,14 @@ from launch.conditions import UnlessCondition, IfCondition
 
 
 def generate_launch_description():
+
     use_sim_time = LaunchConfiguration("use_sim_time")
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         "use_sim_time", default_value="False", description="Use simulation time"
     )
 
     loc_dir = get_package_share_directory("rover_localization")
-    rl_params_file = os.path.join(loc_dir, "config", "localization_params.yaml")
+    loc_params_file = os.path.join(loc_dir, "config", "localization_params.yaml")
 
     return LaunchDescription(
         [
@@ -33,7 +34,7 @@ def generate_launch_description():
                 executable="ekf_node",
                 name="ekf_filter_node_odom",
                 output="screen",
-                parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
+                parameters=[loc_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[("odometry/filtered", "odometry/local")],
                 condition=IfCondition(use_sim_time),
             ),
@@ -43,7 +44,7 @@ def generate_launch_description():
                 executable="ekf_node",
                 name="ekf_filter_node_map",
                 output="screen",
-                parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
+                parameters=[loc_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[("odometry/filtered", "odometry/global")],
             ),
             # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
@@ -52,7 +53,7 @@ def generate_launch_description():
                 executable="navsat_transform_node",
                 name="navsat_transform",
                 output="screen",
-                parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
+                parameters=[loc_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[
                     ("imu/data", "zed/zed_node/imu/data"),
                     ("gps/fix", "gps/fix"),
@@ -67,13 +68,13 @@ def generate_launch_description():
                 executable="pvt_to_nsf",
                 output="screen",
                 condition=UnlessCondition(use_sim_time),
-                parameters=[rl_params_file],
+                parameters=[loc_params_file],
             ),
             launch_ros.actions.Node(
                 package="rover_localization",
                 executable="sync_origin",
                 output="screen",
-                parameters=[rl_params_file],
+                parameters=[loc_params_file],
             ),
         ]
     )

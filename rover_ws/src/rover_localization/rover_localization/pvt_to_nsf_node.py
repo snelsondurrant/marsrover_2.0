@@ -27,15 +27,12 @@ class PVT2NSF(Node):
 
         h_var = (msg.h_acc)**2
         v_var = (msg.v_acc)**2
-
-        # Create covariance matrix
         pos_covariance = [
             h_var, 0, 0,
             0, h_var, 0,
             0, 0, v_var,
         ]
 
-        # Creates navsat message
         nsf_msg = NavSatFix(
             header=msg.header,
             latitude=msg.lla[0],
@@ -50,11 +47,8 @@ class PVT2NSF(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     pvt_to_nsf = PVT2NSF()
-
     rclpy.spin(pvt_to_nsf)
-
     pvt_to_nsf.destroy_node()
     rclpy.shutdown()
 

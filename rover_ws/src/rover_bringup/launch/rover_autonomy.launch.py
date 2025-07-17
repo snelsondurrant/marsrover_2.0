@@ -17,50 +17,44 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration("use_rviz")
     use_mapviz = LaunchConfiguration("use_mapviz")
     sim_mode = LaunchConfiguration("sim_mode")
-
     declare_use_rviz_cmd = DeclareLaunchArgument(
         "use_rviz", default_value="False", description="Whether to start RVIZ"
     )
-
     declare_use_mapviz_cmd = DeclareLaunchArgument(
         "use_mapviz", default_value="False", description="Whether to start mapviz"
     )
-
     declare_sim_mode_cmd = DeclareLaunchArgument(
         "sim_mode",
         default_value="False",
         description="Whether to start in simulation mode",
     )
 
-    # Get the package directories
     bringup_dir = get_package_share_directory("nav2_bringup")
     nav_dir = get_package_share_directory("rover_navigation")
     gui_dir = get_package_share_directory("rover_gui")
     loc_dir = get_package_share_directory("rover_localization")
-    perception_dir = get_package_share_directory("rover_perception")
+    per_dir = get_package_share_directory("rover_perception")
     gz_dir = get_package_share_directory("rover_gazebo")
-    description_dir = get_package_share_directory("rover_description")
+    des_dir = get_package_share_directory("rover_description")
     ublox_dir = get_package_share_directory("ublox_read_2")
 
-    # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, "launch")
     loc_launch_dir = os.path.join(loc_dir, "launch")
     gui_launch_dir = os.path.join(gui_dir, "launch")
-    perception_launch_dir = os.path.join(perception_dir, "launch")
+    per_launch_dir = os.path.join(per_dir, "launch")
     gz_launch_dir = os.path.join(gz_dir, "launch")
-    description_launch_dir = os.path.join(description_dir, "launch")
+    des_launch_dir = os.path.join(des_dir, "launch")
     ublox_launch_dir = os.path.join(ublox_dir, "launch")
 
-    # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
     nav2_params = os.path.join(nav_params_dir, "navigation_params.yaml")
-    configured_params = RewrittenYaml(
+    configured_nav2_params = RewrittenYaml(
         source_file=nav2_params, root_key="", param_rewrites="", convert_types=True
     )
 
     description_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(description_launch_dir, "robot_state_publisher.launch.py")
+            os.path.join(des_launch_dir, "rover_description.launch.py")
         ),
         launch_arguments={
             "use_sim_time": sim_mode,
@@ -70,14 +64,14 @@ def generate_launch_description():
     gazebo_cmd = IncludeLaunchDescription(
         # This only launches in simulation
         PythonLaunchDescriptionSource(
-            os.path.join(gz_launch_dir, "gazebo_gps_world.launch.py")
+            os.path.join(gz_launch_dir, "rover_gazebo.launch.py")
         ),
         condition=IfCondition(sim_mode),
     )
 
-    robot_localization_cmd = IncludeLaunchDescription(
+    localization_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(loc_launch_dir, "dual_ekf_navsat.launch.py")
+            os.path.join(loc_launch_dir, "rover_localization.launch.py")
         ),
         launch_arguments={
             "use_sim_time": sim_mode,
@@ -90,7 +84,7 @@ def generate_launch_description():
         ),
         launch_arguments={
             "use_sim_time": sim_mode,
-            "params_file": configured_params,
+            "params_file": configured_nav2_params,
             "autostart": "True",
         }.items(),
     )
@@ -124,14 +118,14 @@ def generate_launch_description():
 
     aruco_opencv_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(perception_launch_dir, "aruco_opencv.launch.py")
+            os.path.join(per_launch_dir, "rover_perception.launch.py")
         ),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
     )
 
-    gps_cmd = IncludeLaunchDescription(
+    ublox_cmd = IncludeLaunchDescription(
         # This only launches in real life
         XMLLaunchDescriptionSource(os.path.join(ublox_launch_dir, "rover_launch.xml")),
         condition=UnlessCondition(sim_mode),
@@ -139,39 +133,32 @@ def generate_launch_description():
 
     state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(nav_launch_dir, "state_machine.launch.py")
+            os.path.join(nav_launch_dir, "rover_navigation.launch.py")
         ),
         launch_arguments={
             "use_sim_time": sim_mode,
         }.items(),
     )
 
-    # Create the launch description and populate
     ld = LaunchDescription()
     ld.add_action(declare_sim_mode_cmd)
-
-    # simulation launch
-    ld.add_action(gazebo_cmd)
-
-    # robot state publisher launch
-    ld.add_action(description_cmd)
-
-    # robot localization launch
-    ld.add_action(robot_localization_cmd)
-
-    # navigation2 launch
-    ld.add_action(navigation2_cmd)
-
-    # viz launch
     ld.add_action(declare_use_rviz_cmd)
-    ld.add_action(rviz_cmd)
     ld.add_action(declare_use_mapviz_cmd)
-    ld.add_action(mapviz_cmd)
+
+    # Only launched in simulation
+    ld.add_action(gazebo_cmd)
     ld.add_action(gui_cmd)
 
-    # custom launch
-    ld.add_action(aruco_opencv_cmd)
+    # Only launched in real life
     # ld.add_action(gps_cmd) # We launch the GPS individually right now
+
+    # Both sim and real
+    ld.add_action(description_cmd)
+    ld.add_action(localization_cmd)
+    ld.add_action(navigation2_cmd)
+    ld.add_action(aruco_opencv_cmd)
     ld.add_action(state_machine_cmd)
+    ld.add_action(rviz_cmd)
+    ld.add_action(mapviz_cmd)
 
     return ld

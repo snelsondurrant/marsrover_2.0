@@ -10,11 +10,11 @@ stateDiagram
   direction LR
   [*] --> sim_launch.sh
   sim_launch.sh --> rover_autonomy.launch.py:rover_bringup
-  rover_autonomy.launch.py --> gazebo_gps_world.launch.py:rover_gazebo
+  rover_autonomy.launch.py --> rover_gazebo.launch.py:rover_gazebo
   rover_autonomy.launch.py --> rviz.launch.py:rover_gui
   rover_autonomy.launch.py --> mapviz.launch.py:rover_gui
   rover_autonomy.launch.py --> autonomy_gui.launch.py:rover_gui
-  rover_autonomy.launch.py --> robot_state_publisher.launch.py:rover_description
-  rover_autonomy.launch.py --> dual_ekf_navsat.launch.py:rover_localization
-  rover_autonomy.launch.py --> aruco_opencv.launch.py:rover_perception
-  rover_autonomy.launch.py --> state_machine.launch.py:rover_navigation
+  rover_autonomy.launch.py --> rover_description.launch.py:rover_description
+  rover_autonomy.launch.py --> rover_localization.launch.py:rover_localization
+  rover_autonomy.launch.py --> rover_perception.launch.py:rover_perception
+  rover_autonomy.launch.py --> rover_navigation.launch.py:rover_navigation

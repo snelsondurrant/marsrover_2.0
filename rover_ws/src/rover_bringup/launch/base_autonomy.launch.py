@@ -7,8 +7,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-from launch.conditions import IfCondition, UnlessCondition
-from nav2_common.launch import RewrittenYaml
+from launch.conditions import IfCondition
 from launch_ros.actions import Node
 
 
@@ -16,7 +15,6 @@ def generate_launch_description():
 
     use_rviz = LaunchConfiguration("use_rviz")
     use_mapviz = LaunchConfiguration("use_mapviz")
-
     declare_use_rviz_cmd = DeclareLaunchArgument(
         "use_rviz", default_value="False", description="Whether to start RVIZ"
     )
@@ -25,7 +23,6 @@ def generate_launch_description():
         "use_mapviz", default_value="False", description="Whether to start mapviz"
     )
 
-    # Get the launch directories
     gui_dir = get_package_share_directory("rover_gui")
     gui_launch_dir = os.path.join(gui_dir, "launch")
     ublox_dir = get_package_share_directory("ublox_read_2")
@@ -45,7 +42,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "autonomy_gui.launch.py")),
     )
 
-    gps_cmd = IncludeLaunchDescription(
+    ublox_cmd = IncludeLaunchDescription(
         XMLLaunchDescriptionSource(os.path.join(ublox_launch_dir, "base_launch.xml")),
     )
 
@@ -65,7 +62,7 @@ def generate_launch_description():
     ld.add_action(declare_use_mapviz_cmd)
     ld.add_action(mapviz_cmd)
     ld.add_action(gui_cmd)
-    # ld.add_action(gps_cmd) # We launch the GPS individually right now
+    # ld.add_action(ublox_cmd) # We launch the GPS individually right now
     ld.add_action(joy_node_cmd)
 
     return ld

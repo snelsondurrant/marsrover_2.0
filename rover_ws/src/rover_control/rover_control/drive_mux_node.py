@@ -19,8 +19,8 @@ class DriveMux(Node):
     - Arrival (cmd_vel_nav, red LED)
 
     Subscribers:
-    - cmd_vel_nav (geometry_msgs/Twist)
-    - cmd_vel_teleop (geometry_msgs/Twist)
+    - cmd_vel (geometry_msgs/Twist) - from Nav2
+    - cmd_vel_teleop (geometry_msgs/Twist) - from user operation
     Publishers:
     - cmd_vel_mux (geometry_msgs/Twist)
     - cmd_led (std_msgs/Int8)
@@ -33,40 +33,27 @@ class DriveMux(Node):
     def __init__(self):
         super().__init__("drive_mux")
 
-        # Autonomy cmd_vel subscription (Nav2)
         self.nav_sub = self.create_subscription(
-            Twist, "cmd_vel_nav", self.nav_callback, 10
+            Twist, "cmd_vel", self.nav_callback, 10
         )
         self.nav_sub  # prevent unused variable warning
-
-        # Teleop cmd_vel subscription
         self.teleop_sub = self.create_subscription(
             Twist, "cmd_vel_teleop", self.teleop_callback, 10
         )
         self.teleop_sub  # prevent unused variable warning
 
-        # Service to trigger teleop state
         self.teleop_service = self.create_service(
             Trigger, "trigger_teleop", self.teleop_service_callback
         )
-
-        # Service to trigger autonomy state
         self.nav_service = self.create_service(
             Trigger, "trigger_auto", self.nav_service_callback
         )
-
-        # Service to trigger arrival state
         self.arrival_service = self.create_service(
             Trigger, "trigger_arrival", self.arrival_service_callback
         )
 
-        # Publisher for cmd_vel_mux
         self.cmd_vel_mux_pub = self.create_publisher(Twist, "cmd_vel_mux", 10)
-
-        # Publisher for cmd_led
         self.cmd_led_pub = self.create_publisher(Int8, "cmd_led", 10)
-
-        # Timer for publishing to cmd_led
         self.create_timer(0.5, self.led_timer_callback)
 
         self.state = "teleop"
@@ -149,14 +136,8 @@ class DriveMux(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     drive_mux = DriveMux()
-
     rclpy.spin(drive_mux)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
     drive_mux.destroy_node()
     rclpy.shutdown()
 

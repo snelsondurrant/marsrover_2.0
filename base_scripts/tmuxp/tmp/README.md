@@ -1,1 +1,1 @@
-Temporary tmuxp yaml files with substituted environment variables will be saved here.
+Temporary tmuxp YAML files with substituted environment variables will be saved here.

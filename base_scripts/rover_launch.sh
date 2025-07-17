@@ -6,12 +6,9 @@
 script_dir=$(dirname "$(readlink -f "$0")")
 source $script_dir/tools/base_common.sh
 
-# Check for a "-t <task>" or "-u <username>" argument
-while getopts ":t:u:" opt; do
+# Check for a "-t <task>" argument
+while getopts ":t:" opt; do
   case $opt in
-    u)
-      ROVER_USERNAME=$OPTARG
-      ;;
     t)
       task=$OPTARG
       ;;

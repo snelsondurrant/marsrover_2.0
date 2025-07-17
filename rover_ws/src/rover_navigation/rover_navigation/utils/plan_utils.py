@@ -73,10 +73,8 @@ def basicOrderPlanner(legs, fix):
     lowest_cost = float("inf")
     best_order = []
 
-    # Generate all possible permutations of the task legs
     for order in permutations(legs):
 
-        # Calculate the cost of the current order
         fix_geopose = latLonYaw2Geopose(fix.position.latitude, fix.position.longitude)
         leg_geopose = latLonYaw2Geopose(order[0].latitude, order[0].longitude)
         cost = latLon2Meters(
@@ -99,7 +97,6 @@ def basicOrderPlanner(legs, fix):
                 leg2_geopose.position.longitude,
             )
 
-        # Update the best order
         if cost < lowest_cost:
             lowest_cost = cost
             best_order = order

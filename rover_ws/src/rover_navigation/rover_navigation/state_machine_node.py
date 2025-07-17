@@ -94,7 +94,7 @@ class StateMachine(Node):
     """
     Class for executing the autonomy task using the Nav2 stack
 
-    Note: This is a pretty complex node. It's a hacked-together combination of the Nav2 BasicNavigator
+    NOTE: This is a pretty complex node. It's a hacked-together combination of the Nav2 BasicNavigator
     class and our own custom state machine with A LOT of multi-threading. It's easiest to think of
     as three sections with their own separate threads: the state machine, the Nav2 BasicNavigator,
     and the ROS2 callbacks.
@@ -414,27 +414,6 @@ class StateMachine(Node):
             f"Converted {len(gps_poses)} GPS waypoints to poses for Nav2"
         )
         await self.followWaypoints(converted_poses)
-
-        # self.debug("Waiting for 'FollowGPSWaypoints' action server")
-        # while not self.follow_gps_waypoints_client.wait_for_server(timeout_sec=1.0):
-        #     self.info("'FollowGPSWaypoints' action server not available, waiting...")
-
-        # goal_msg = FollowGPSWaypoints.Goal()
-        # goal_msg.gps_poses = gps_poses
-
-        # self.info(f"Following {len(goal_msg.gps_poses)} gps goals....")
-        # send_goal_future = self.follow_gps_waypoints_client.send_goal_async(
-        #     goal_msg, self._feedbackCallback
-        # )
-        # await send_goal_future  # fix for iron/humble threading bug
-        # self.goal_handle = send_goal_future.result()
-
-        # if not self.goal_handle.accepted:
-        #     self.error("FollowGPSWaypoints request was rejected!")
-        #     return False
-
-        # self.result_future = self.goal_handle.get_result_async()
-        # return True
 
     async def followWaypoints(self, poses):
         """
@@ -1333,12 +1312,10 @@ class StateMachine(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     state_machine = StateMachine()
     # Create a multi-threaded node executor for callback-in-callback threading
     executor = MultiThreadedExecutor()
     executor.add_node(state_machine)
-
     executor.spin()
 
 

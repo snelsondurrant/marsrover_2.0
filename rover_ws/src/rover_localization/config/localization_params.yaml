@@ -1,9 +1,17 @@
 # Created by Nelson Durrant, Feb 2025
+
+# https://vimeo.com/142624091
+# https://docs.ros.org/en/lunar/api/robot_localization/html/_downloads/robot_localization_ias13_revised.pdf
+# https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
+# https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
+
 ekf_filter_node_odom: # outputs to the odometry/local topic
   # This publishes the odom->zed_camera_link transform
+
   # THIS ONLY RUNS IN SIMULATION!
   # - When not in sim, the ZED calculates and manages the odom->zed_camera_link transform 
   #   internally: https://www.stereolabs.com/docs/ros2/positional-tracking
+
   ros__parameters:
     frequency: 20.0
     two_d_mode: true
@@ -41,13 +49,9 @@ ekf_filter_node_odom: # outputs to the odometry/local topic
 
 ekf_filter_node_map: # outputs to the odometry/global topic
   # This publishes the map->odom transform
-  # https://vimeo.com/142624091
-  # https://docs.ros.org/en/lunar/api/robot_localization/html/_downloads/robot_localization_ias13_revised.pdf
-  # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
-  # https://robotics.stackexchange.com/questions/109942/odometry-with-robot-localization-using-gps-and-imu-not-encoders
   ros__parameters:
-    frequency: 20.0 # The Jetson struggles to run faster than this
-    two_d_mode: true  # Recommended to use 2d mode for nav2 in mostly planar environments
+    frequency: 20.0
+    two_d_mode: true
     print_diagnostics: false
     debug: false
     publish_tf: true
@@ -91,12 +95,10 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 
     use_control: false # we could fuse in cmd_vel commands, but they are not very accurate
 
-    # NOTE: We just use the built-in process noise covariance, and it seems to work well
-
 navsat_transform:
   # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
   ros__parameters:
-    frequency: 20.0 # The Jetson struggles to run faster than this
+    frequency: 20.0
     delay: 3.0
     # IMPORTANT! We must already be correcting for the magnetic declination somewhere else.
     # When we add it here it adds a compounding, incorrect odometry/gps frame shift.
