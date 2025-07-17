@@ -100,6 +100,7 @@ class DriveMux(Node):
 
         self.state = "teleop"
         self.get_logger().info("Switched to teleop state")
+        response.success = True
         return response
 
     def nav_service_callback(self, request, response):
@@ -109,6 +110,7 @@ class DriveMux(Node):
 
         self.state = "auto"
         self.get_logger().info("Switched to auto state")
+        response.success = True
         return response
 
     def arrival_service_callback(self, request, response):
@@ -118,6 +120,7 @@ class DriveMux(Node):
 
         self.state = "arrival"
         self.get_logger().info("Switched to arrival state")
+        response.success = True
         return response
 
     def led_timer_callback(self):

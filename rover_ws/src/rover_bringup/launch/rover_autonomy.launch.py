@@ -150,11 +150,11 @@ def generate_launch_description():
     ld = LaunchDescription()
     ld.add_action(declare_sim_mode_cmd)
 
-    # robot state publisher launch
-    ld.add_action(description_cmd)
-
     # simulation launch
     ld.add_action(gazebo_cmd)
+
+    # robot state publisher launch
+    ld.add_action(description_cmd)
 
     # robot localization launch
     ld.add_action(robot_localization_cmd)

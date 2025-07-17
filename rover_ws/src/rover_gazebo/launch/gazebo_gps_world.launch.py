@@ -29,9 +29,7 @@ def generate_launch_description():
             "GAZEBO_MODEL_PATH", models_dir
         )
 
-    set_tb3_model_cmd = SetEnvironmentVariable("TURTLEBOT3_MODEL", "waffle")
-
-
+    # Spawn the rover in the simulation
     spawn_rover_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
@@ -83,7 +81,6 @@ def generate_launch_description():
 
     # Set gazebo up to find models properly
     ld.add_action(set_gazebo_model_path_cmd)
-    ld.add_action(set_tb3_model_cmd)
 
     # simulator launch
     ld.add_action(start_gazebo_server_cmd)

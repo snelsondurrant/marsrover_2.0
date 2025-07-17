@@ -64,7 +64,7 @@
       <child link="${prefix}_rocker_link"/>
       <origin xyz="${base_offset_x} ${y_reflect*(base_width/2+wheel_ygap+wheel_width/2)} ${-wheel_zoff}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <limit lower="-${pi/6}" upper="${pi/6}" effort="100" velocity="1.0"/>
+      <limit lower="-${pi/6}" upper="${pi/36}" effort="100" velocity="1.0"/>
       <dynamics damping="0.5"/>
     </joint>
   </xacro:macro>

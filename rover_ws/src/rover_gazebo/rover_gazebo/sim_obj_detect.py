@@ -68,7 +68,7 @@ class SimObjDetect(Node):
             # Request to get the state of the mallet
             self.mallet_request = GetEntityState.Request()
             self.mallet_request.name = "hammer"
-            self.mallet_request.reference_frame = "base_link"
+            self.mallet_request.reference_frame = "zed_camera_link"
 
         if self.enable_bottle:
             self.get_logger().info("Bottle detection enabled")
@@ -76,7 +76,7 @@ class SimObjDetect(Node):
             # Request to get the state of the bottle
             self.bottle_request = GetEntityState.Request()
             self.bottle_request.name = "coke_can"
-            self.bottle_request.reference_frame = "base_link"
+            self.bottle_request.reference_frame = "zed_camera_link"
 
         # Publisher for the ZED detections
         self.zed_pub = self.create_publisher(
@@ -116,7 +116,7 @@ class SimObjDetect(Node):
             # Create a Detection3Darray
             zed_msg = ObjectsStamped()
             zed_msg.header.stamp = self.get_clock().now().to_msg()
-            zed_msg.header.frame_id = "base_link"  # will be different in real life
+            zed_msg.header.frame_id = "zed_camera_link"  # will be different in real life
 
             if self.enable_mallet:
 

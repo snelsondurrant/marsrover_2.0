@@ -11,36 +11,69 @@
   <!--                      GAZEBO PLUGINS                                 -->
   <!-- =================================================================== -->
 
-  <!-- Differential Drive Plugin for controlling the rover -->
+  <!-- Kind of a hacky way to get all-wheel drive in sim, but hey it works -->
+
+  <!-- Middle wheel drive plugin -->
   <gazebo>
-    <plugin name="gazebo_ros_diff_drive" filename="libgazebo_ros_diff_drive.so">
-
+    <plugin name="gazebo_ros_diff_drive_middle" filename="libgazebo_ros_diff_drive.so">
       <update_rate>30</update_rate>
-
-      <!-- Wheel and joint parameters -->
       <left_joint>wheel_left_middle_joint</left_joint>
       <right_joint>wheel_right_middle_joint</right_joint>
-
       <wheel_separation>${base_width + 2*wheel_ygap + wheel_width}</wheel_separation>
       <wheel_diameter>${2*wheel_radius}</wheel_diameter>
-
-      <!-- Physics limits -->
-      <max_wheel_torque>2000</max_wheel_torque>
-      <max_wheel_acceleration>100.0</max_wheel_acceleration>
-
-      <!-- Frame and TF parameters -->
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>10.0</max_wheel_acceleration>
       <odometry_frame>odom</odometry_frame>
       <robot_base_frame>zed_camera_link</robot_base_frame>
-      <publish_odom>true</publish_odom>
+      <publish_odom>true</publish_odom> <!-- only publish here! -->
       <publish_odom_tf>false</publish_odom_tf>
       <publish_wheel_tf>false</publish_wheel_tf>
-
-      <!-- ROS 2 specific topic remapping -->
       <ros>
         <remapping>cmd_vel:=cmd_vel_mux</remapping>
         <remapping>odom:=zed/zed_node/odom</remapping>
       </ros>
+    </plugin>
+  </gazebo>
 
+  <!-- Front wheel drive plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros_diff_drive_front" filename="libgazebo_ros_diff_drive.so">
+      <update_rate>30</update_rate>
+      <left_joint>wheel_left_front_joint</left_joint>
+      <right_joint>wheel_right_front_joint</right_joint>
+      <wheel_separation>${base_width + 2*wheel_ygap + wheel_width}</wheel_separation>
+      <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>10.0</max_wheel_acceleration>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>zed_camera_link</robot_base_frame>
+      <publish_odom>false</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <ros>
+        <remapping>cmd_vel:=cmd_vel_mux</remapping>
+      </ros>
+    </plugin>
+  </gazebo>
+
+  <!-- Rear wheel drive plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros_diff_drive_rear" filename="libgazebo_ros_diff_drive.so">
+      <update_rate>30</update_rate>
+      <left_joint>wheel_left_rear_joint</left_joint>
+      <right_joint>wheel_right_rear_joint</right_joint>
+      <wheel_separation>${base_width + 2*wheel_ygap + wheel_width}</wheel_separation>
+      <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>10.0</max_wheel_acceleration>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>zed_camera_link</robot_base_frame>
+      <publish_odom>false</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <ros>
+        <remapping>cmd_vel:=cmd_vel_mux</remapping>
+      </ros>
     </plugin>
   </gazebo>
 
@@ -51,6 +84,8 @@
           <remapping>~/out:=joint_states</remapping>
       </ros>
       <update_rate>30</update_rate>
+      <joint_name>left_rocker_joint</joint_name>
+      <joint_name>right_rocker_joint</joint_name>
       <joint_name>wheel_left_front_joint</joint_name>
       <joint_name>wheel_left_middle_joint</joint_name>
       <joint_name>wheel_left_rear_joint</joint_name>
@@ -74,8 +109,6 @@
   </gazebo>
 
   <!-- Macro for wheel physics and appearance -->
-  <!-- IMPORTANT! The physics is way easier when you just drive with two wheels -->
-  <!-- The others have no friction at all -->
   <xacro:macro name="wheel_gazebo" params="prefix mu1:=1.0 mu2:=1.0">
     <gazebo reference="${prefix}_link">
         <material>Gazebo/DarkGrey</material>
@@ -84,10 +117,10 @@
     </gazebo>
   </xacro:macro>
 
-  <xacro:wheel_gazebo prefix="wheel_left_front"  mu1="0.1" mu2="0.1"/>
-  <xacro:wheel_gazebo prefix="wheel_left_rear"   mu1="0.1" mu2="0.1"/>
-  <xacro:wheel_gazebo prefix="wheel_right_front" mu1="0.1" mu2="0.1"/>
-  <xacro:wheel_gazebo prefix="wheel_right_rear"  mu1="0.1" mu2="0.1"/>
+  <xacro:wheel_gazebo prefix="wheel_left_front"  mu1="50.0" mu2="50.0"/>
+  <xacro:wheel_gazebo prefix="wheel_left_rear"   mu1="50.0" mu2="50.0"/>
+  <xacro:wheel_gazebo prefix="wheel_right_front" mu1="50.0" mu2="50.0"/>
+  <xacro:wheel_gazebo prefix="wheel_right_rear"  mu1="50.0" mu2="50.0"/>
 
   <xacro:wheel_gazebo prefix="wheel_left_middle"  mu1="200.0" mu2="200.0"/>
   <xacro:wheel_gazebo prefix="wheel_right_middle" mu1="200.0" mu2="200.0"/>
