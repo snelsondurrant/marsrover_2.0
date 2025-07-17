@@ -20,10 +20,10 @@
       </sky>
     </scene>
     <include>
-      <uri>model://sun</uri> <!-- Requires an internet connection to grab -->
+      <uri>model://sun</uri> <!-- Requires an internet connection to pull -->
     </include>
     <include>
-      <uri>model://sonoma_raceway</uri> <!-- Requires an internet connection to grab -->
+      <uri>model://sonoma_raceway</uri> <!-- Requires an internet connection to pull -->
       <pose>-287.5 143.5 -7 0 0 0</pose>
     </include>
     <spherical_coordinates>
