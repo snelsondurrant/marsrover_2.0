@@ -34,7 +34,7 @@ state_machine:
 bt_navigator:
   ros__parameters:
     global_frame: map
-    robot_base_frame: zed_camera_link
+    robot_base_frame: base_link
     odom_topic: /zed/zed_node/odom
     bt_loop_duration: 10
     default_server_timeout: 200
@@ -172,7 +172,7 @@ local_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: odom
-      robot_base_frame: zed_camera_link
+      robot_base_frame: base_link
       rolling_window: True
       width: 5
       height: 5
@@ -193,35 +193,24 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        # IMPORTANT! Nav2 can be customized to use both/either of the depth camera or the lidar
+        # IMPORTANT! Nav2 can be customized to use both/either of a depth camera or a lidar
         # for obstacle detection. The depth camera is more accurate and can see bushes, etc,
-        # but is more CPU intensive. (There may be a way to convert it to a simpler LaserScan type tho).
+        # but is more CPU intensive.
         # https://github.com/stereolabs/zed-ros2-examples/tree/master/examples/zed_depth_to_laserscan
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-        observation_sources: scan #, points
-        scan:
-          # This is launched in simulation only
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-        points:
-          # This is launched in real life only
-          topic: /zed/zed_node/point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
+        observation_sources: depth_camera_points
+        depth_camera_points:
+          topic: /zed/zed_node/point_cloud/cloud_registered
           data_type: "PointCloud2"
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 5.0
           obstacle_min_range: 0.0
-          raytrace_max_range: 3.0
+          raytrace_max_range: 6.0
           raytrace_min_range: 0.0
           marking: True
           clearing: True
+          inf_is_valid: True
       always_send_full_costmap: False # 'False' is kinder to the CPU
 
 global_costmap:
@@ -230,7 +219,7 @@ global_costmap:
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: zed_camera_link
+      robot_base_frame: base_link
       # front right corner, back right corner, back left corner, front left corner
       footprint: "[ [0.85, 0.55], [0.85, -0.55], [-0.85, -0.55], [-0.85, 0.55] ]"
       resolution: 0.2
@@ -245,33 +234,20 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        # IMPORTANT! Nav2 can be customized to use both/either of the depth camera or the lidar
+        # IMPORTANT! Nav2 can be customized to use both/either of a depth camera or a lidar
         # for obstacle detection. The depth camera is more accurate and can see bushes, etc,
-        # but is more CPU intensive. (There may be a way to convert it to a simpler LaserScan type tho).
+        # but is more CPU intensive.
         # https://github.com/stereolabs/zed-ros2-examples/tree/master/examples/zed_depth_to_laserscan
         # https://www.stereolabs.com/docs/ros2/020_zed-node#published-topics
-        observation_sources: scan #, points # Set in launch file - Nelson Durrant, July 2025
-        scan:
-          # This is launched in simulation only
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-          inf_is_valid: True
-        points:
-          # This is launched in real life only
-          topic: /zed/zed_node/point_cloud/cloud_registered # ZED depth camera (we can see bushes!)
+        observation_sources: depth_camera_points
+        depth_camera_points:
+          topic: /zed/zed_node/point_cloud/cloud_registered
           data_type: "PointCloud2"
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 5.0
           obstacle_min_range: 0.0
-          raytrace_max_range: 3.0
+          raytrace_max_range: 6.0
           raytrace_min_range: 0.0
           marking: True
           clearing: True
@@ -291,7 +267,7 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 20.0 # EKF update speed
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
@@ -329,7 +305,7 @@ behavior_server:
       plugin: "nav2_behaviors/AssistedTeleop"
     local_frame: odom
     global_frame: map
-    robot_base_frame: zed_camera_link
+    robot_base_frame: base_link
     transform_tolerance: 0.1
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
@@ -348,7 +324,7 @@ waypoint_follower:
 
 velocity_smoother:
   ros__parameters:
-    smoothing_frequency: 20.0
+    smoothing_frequency: 20.0 # EKF update speed
     scale_velocities: False
     feedback: "OPEN_LOOP"
     max_velocity: [0.52, 0.0, 2.0]
