@@ -14,6 +14,7 @@ def generate_launch_description():
     world = os.path.join(gz_dir, "worlds", "sonoma_raceway.world")
     models_dir = os.path.join(gz_dir, "models")
     models_dir += os.pathsep
+    set_gz_model_path_cmd = None
 
     if "GAZEBO_MODEL_PATH" in os.environ:
         gz_model_path = os.environ["GAZEBO_MODEL_PATH"] + os.pathsep + models_dir
@@ -40,7 +41,7 @@ def generate_launch_description():
     )
 
     # Start the Gazebo server
-    start_gazebo_server_cmd = ExecuteProcess(
+    start_gz_server_cmd = ExecuteProcess(
         cmd=[
             "gzserver",
             "-s",
@@ -54,7 +55,7 @@ def generate_launch_description():
     )
 
     # Start the Gazebo client
-    start_gazebo_client_cmd = ExecuteProcess(
+    start_gz_client_cmd = ExecuteProcess(
         cmd=["gzclient"], cwd=[gz_launch_dir], output="both"
     )
 
@@ -76,8 +77,8 @@ def generate_launch_description():
     )
 
     ld.add_action(set_gz_model_path_cmd)
-    ld.add_action(start_gazebo_server_cmd)
-    ld.add_action(start_gazebo_client_cmd)
+    ld.add_action(start_gz_server_cmd)
+    ld.add_action(start_gz_client_cmd)
     ld.add_action(spawn_rover_cmd)
 
     return ld

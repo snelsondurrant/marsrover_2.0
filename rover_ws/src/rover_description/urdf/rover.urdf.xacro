@@ -180,7 +180,7 @@
   <joint name="zed_camera_joint" type="fixed">
     <parent link="zed_camera_link"/>
     <child link="pole_link"/>
-    <origin xyz="${-pole_length/2-0.1} 0 -0.05" rpy="0 -0.2 0"/>
+    <origin xyz="${-pole_length/2-0.1} 0 -0.05" rpy="0 -0.1 0"/>
   </joint>
 
   <!-- NOTE: As the top of the URDF tree, this can't have an intertial attribute -->
