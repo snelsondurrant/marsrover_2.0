@@ -1,7 +1,43 @@
 # Created by Nelson Durrant, Feb 2025
-# ekf_filter_node_odom:
-  # The ZED calculates and manages the odom->zed_camera_link transform internally
-  # https://www.stereolabs.com/docs/ros2/positional-tracking
+ekf_filter_node_odom: # outputs to the odometry/local topic
+  # This publishes the odom->zed_camera_link transform
+  # THIS ONLY RUNS IN SIMULATION!
+  # - When not in sim, the ZED calculates and manages the odom->zed_camera_link transform 
+  #   internally: https://www.stereolabs.com/docs/ros2/positional-tracking
+  ros__parameters:
+    frequency: 20.0
+    two_d_mode: true
+    print_diagnostics: false
+    debug: false
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: zed_camera_link
+    world_frame: odom
+
+    odom0: zed/zed_node/odom
+    odom0_config: [false, false, false,
+                  false, false, false,
+                  true,  true,  true,
+                  false, false, true,
+                  false, false, false]
+    odom0_queue_size: 10
+    odom0_differential: false
+    odom0_relative: false
+
+    imu0: zed/zed_node/imu/data
+    imu0_config: [false, false, false,
+                  false,  false,  true,
+                  false, false, false,
+                  false,  false,  false,
+                  false,  false,  false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    use_control: false
 
 ekf_filter_node_map: # outputs to the odometry/global topic
   # This publishes the map->odom transform
@@ -18,7 +54,7 @@ ekf_filter_node_map: # outputs to the odometry/global topic
 
     map_frame: map
     odom_frame: odom
-    base_link_frame: zed_camera_link # base_footprint is used in Gazebo
+    base_link_frame: zed_camera_link
     world_frame: map
 
     # https://docs.nav2.org/tutorials/docs/integrating_vio.html

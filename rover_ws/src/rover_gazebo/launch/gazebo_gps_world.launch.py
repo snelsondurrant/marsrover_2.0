@@ -31,6 +31,20 @@ def generate_launch_description():
 
     set_tb3_model_cmd = SetEnvironmentVariable("TURTLEBOT3_MODEL", "waffle")
 
+
+    spawn_rover_cmd = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        name='urdf_spawner',
+        output='screen',
+        arguments=["-topic", "/robot_description",
+                   "-entity", "rover",
+                   "-x", "-54.5",
+                   "-y", "127.8",
+                   "-z", "0.3",
+                   "-Y", "0.0"]
+    )
+
     # Specify the actions
     start_gazebo_server_cmd = ExecuteProcess(
         cmd=[
@@ -74,5 +88,6 @@ def generate_launch_description():
     # simulator launch
     ld.add_action(start_gazebo_server_cmd)
     ld.add_action(start_gazebo_client_cmd)
+    ld.add_action(spawn_rover_cmd)
 
     return ld

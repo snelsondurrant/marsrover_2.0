@@ -575,7 +575,7 @@ def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
     twist_msg.angular = Vector3(x=0.0, y=0.0, z=angular_z)
 
     return ROS_NODE.publish_message(
-        topic_name="/cmd_vel", msg_type=Twist, message=twist_msg, publish_count=3
+        topic_name="/cmd_vel_teleop", msg_type=Twist, message=twist_msg, publish_count=3
     )
 
 

@@ -1,8 +1,6 @@
 # Created by Nelson Durrant, Feb 2025
 from launch import LaunchDescription
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 import launch_ros.actions
@@ -18,9 +16,6 @@ def generate_launch_description():
     )
 
     loc_dir = get_package_share_directory("rover_localization")
-    sim_rl_params_file = os.path.join(
-        loc_dir, "config", "sim_localization_params.yaml"
-    )
     rl_params_file = os.path.join(loc_dir, "config", "localization_params.yaml")
 
     return LaunchDescription(
@@ -38,34 +33,21 @@ def generate_launch_description():
                 executable="ekf_node",
                 name="ekf_filter_node_odom",
                 output="screen",
-                parameters=[sim_rl_params_file, {"use_sim_time": use_sim_time}],
+                parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[("odometry/filtered", "odometry/local")],
                 condition=IfCondition(use_sim_time),
             ),
             # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
             launch_ros.actions.Node(
-                # This only launches in real life
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node_map",
                 output="screen",
                 parameters=[rl_params_file, {"use_sim_time": use_sim_time}],
                 remappings=[("odometry/filtered", "odometry/global")],
-                condition=UnlessCondition(use_sim_time),
-            ),
-            launch_ros.actions.Node(
-                # This only launches in simulation
-                package="robot_localization",
-                executable="ekf_node",
-                name="ekf_filter_node_map",
-                output="screen",
-                parameters=[sim_rl_params_file, {"use_sim_time": use_sim_time}],
-                remappings=[("odometry/filtered", "odometry/global")],
-                condition=IfCondition(use_sim_time),
             ),
             # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
             launch_ros.actions.Node(
-                # This only launches in real life
                 package="robot_localization",
                 executable="navsat_transform_node",
                 name="navsat_transform",
@@ -78,23 +60,6 @@ def generate_launch_description():
                     ("odometry/gps", "odometry/gps"),
                     ("odometry/filtered", "odometry/global"),
                 ],
-                condition=UnlessCondition(use_sim_time),
-            ),
-            launch_ros.actions.Node(
-                # This only launches in simulation
-                package="robot_localization",
-                executable="navsat_transform_node",
-                name="navsat_transform",
-                output="screen",
-                parameters=[sim_rl_params_file, {"use_sim_time": use_sim_time}],
-                remappings=[
-                    ("imu/data", "imu/data"),
-                    ("gps/fix", "gps/fix"),
-                    ("gps/filtered", "gps/filtered"),
-                    ("odometry/gps", "odometry/gps"),
-                    ("odometry/filtered", "odometry/global"),
-                ],
-                condition=IfCondition(use_sim_time),
             ),
             launch_ros.actions.Node(
                 # This only launches in real life

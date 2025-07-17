@@ -59,11 +59,6 @@
       </ode>
     </physics>
 
-    <include>
-      <uri>model://turtlebot_waffle_gps</uri>
-      <pose>-54.5 127.8 0.3 0 0 0</pose> <!-- Changed this - Nelson Durrant, Feb 2025 -->
-    </include>
-
     <!-- Added these objects - Nelson Durrant, Feb 2025 -->
 
     <gui>
@@ -74,12 +69,12 @@
 
     <include>
       <uri>model://urc_aruco_0</uri>
-      <pose>-54 127.3 -0.6 0 0 0</pose>
+      <pose>-54 127.3 -0.1 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://urc_aruco_1</uri>
-      <pose>-60 160 0.6 0 0 0</pose>
+      <pose>-60 160 1.1 0 0 0</pose>
     </include>
 
     <include>

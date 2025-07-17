@@ -71,8 +71,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-joy ros-humble-teleop-twist-joy ros-humble-teleop-twist-keyboard ros-humble-topic-tools \
     # ROS2 and tf2 tutorial installs - Nelson Durrant, Feb 2025
     ros-humble-turtle-tf2-py ros-humble-tf2-ros ros-humble-tf2-tools ros-humble-turtlesim \
-    # Required by the unitree lidar package - Nelson Durrant, Mar 2025
-    ros-humble-pcl-conversions \
     # URDF tools and launch configs - Nelson Durrant, Mar 2025
     ros-humble-xacro ros-humble-joint-state-publisher-gui ros-humble-urdf-launch \
     # Official ROS2 interfaces for the ZED camera - Nelson Durrant, Mar 2025

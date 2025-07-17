@@ -3,7 +3,7 @@ from launch import LaunchDescription
 from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 import launch_ros.actions
 import os
 
@@ -17,14 +17,12 @@ def generate_launch_description():
 
     nav_dir = get_package_share_directory("rover_navigation")
     config_file = os.path.join(nav_dir, "config", "navigation_params.yaml")
-    sim_config_file = os.path.join(nav_dir, "config", "sim_navigation_params.yaml")
 
     return LaunchDescription(
         [
             declare_use_sim_time_cmd,
             launch_ros.actions.Node(
                 # This only launches in simulation
-                # Easier to include this in the sim than refactor services
                 package="rover_control",
                 executable="drive_mux",
                 output="screen",
@@ -32,7 +30,6 @@ def generate_launch_description():
                 parameters=[{"use_sim_time": use_sim_time}],
             ),
             launch_ros.actions.Node(
-                # This only launches in real life
                 package="rover_navigation",
                 executable="state_machine",
                 output="screen",
@@ -40,18 +37,6 @@ def generate_launch_description():
                     config_file,
                     {"use_sim_time": use_sim_time},
                 ],
-                condition=UnlessCondition(use_sim_time),
-            ),
-            launch_ros.actions.Node(
-                # This only launches in simulation
-                package="rover_navigation",
-                executable="state_machine",
-                output="screen",
-                parameters=[
-                    sim_config_file,
-                    {"use_sim_time": use_sim_time},
-                ],
-                condition=IfCondition(use_sim_time),
             ),
         ]
     )

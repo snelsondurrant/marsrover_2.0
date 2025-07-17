@@ -41,7 +41,6 @@ def generate_launch_description():
     gz_dir = get_package_share_directory("rover_gazebo")
     description_dir = get_package_share_directory("rover_description")
     ublox_dir = get_package_share_directory("ublox_read_2")
-    unitree_dir = get_package_share_directory("unitree_lidar_ros2")
 
     # Get the launch directories
     nav_launch_dir = os.path.join(nav_dir, "launch")
@@ -54,11 +53,7 @@ def generate_launch_description():
 
     # Get the params directories
     nav_params_dir = os.path.join(nav_dir, "config")
-    sim_nav2_params = os.path.join(nav_params_dir, "sim_navigation_params.yaml")
     nav2_params = os.path.join(nav_params_dir, "navigation_params.yaml")
-    sim_configured_params = RewrittenYaml(
-        source_file=sim_nav2_params, root_key="", param_rewrites="", convert_types=True
-    )
     configured_params = RewrittenYaml(
         source_file=nav2_params, root_key="", param_rewrites="", convert_types=True
     )
@@ -89,25 +84,10 @@ def generate_launch_description():
         }.items(),
     )
 
-    sim_navigation2_cmd = IncludeLaunchDescription(
-        # This only launches in simulation
-        PythonLaunchDescriptionSource(
-            os.path.join(bringup_dir, "launch", "navigation_launch.py")
-        ),
-        condition=IfCondition(sim_mode),
-        launch_arguments={
-            "use_sim_time": sim_mode,
-            "params_file": sim_configured_params,
-            "autostart": "True",
-        }.items(),
-    )
-
     navigation2_cmd = IncludeLaunchDescription(
-        # This only launches in real life
         PythonLaunchDescriptionSource(
             os.path.join(bringup_dir, "launch", "navigation_launch.py")
         ),
-        condition=UnlessCondition(sim_mode),
         launch_arguments={
             "use_sim_time": sim_mode,
             "params_file": configured_params,
@@ -157,12 +137,6 @@ def generate_launch_description():
         condition=UnlessCondition(sim_mode),
     )
 
-    lidar_cmd = IncludeLaunchDescription(
-        # This only launches in real life
-        PythonLaunchDescriptionSource(os.path.join(unitree_dir, "launch.py")),
-        condition=UnlessCondition(sim_mode),
-    )
-
     state_machine_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav_launch_dir, "state_machine.launch.py")
@@ -187,7 +161,6 @@ def generate_launch_description():
 
     # navigation2 launch
     ld.add_action(navigation2_cmd)
-    ld.add_action(sim_navigation2_cmd)
 
     # viz launch
     ld.add_action(declare_use_rviz_cmd)
@@ -199,7 +172,6 @@ def generate_launch_description():
     # custom launch
     ld.add_action(aruco_opencv_cmd)
     # ld.add_action(gps_cmd) # We launch the GPS individually right now
-    # ld.add_action(lidar_cmd) # We don't use the lidar right now
     ld.add_action(state_machine_cmd)
 
     return ld
