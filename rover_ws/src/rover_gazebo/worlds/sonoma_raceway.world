@@ -69,7 +69,7 @@
 
     <include>
       <uri>model://urc_aruco_0</uri>
-      <pose>-55 128.3 -0.1 0 0 0</pose>
+      <pose>-53 126.3 -0.1 0 0 0</pose>
     </include>
 
     <include>
@@ -80,7 +80,7 @@
     <include>
       <!-- This is floating bc otherwise the turtlebot gets stuck on it - Nelson Durrant, Apr 2025 -->
       <uri>model://hammer</uri>
-      <pose>-14 129 0.4 0 0 0</pose>
+      <pose>-14 129 0.3 0 0 0</pose>
     </include>
 
   </world>

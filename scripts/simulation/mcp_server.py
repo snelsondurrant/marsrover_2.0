@@ -263,7 +263,7 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
-    msg = ROS_NODE.get_message("/imu", Imu, QoSProfile(depth=1), timeout_sec)
+    msg = ROS_NODE.get_message("/zed/zed_node/imu/data", Imu, QoSProfile(depth=1), timeout_sec)
     return (
         str(msg)
         if msg
