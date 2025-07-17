@@ -8,7 +8,7 @@ import os
 def generate_launch_description():
 
     control_dir = get_package_share_directory("rover_control")
-    teleop_config = os.path.join(control_dir, "config/teleop_twist_params.yaml")
+    params = os.path.join(control_dir, "config/control_params.yaml")
 
     return launch.LaunchDescription(
         [
@@ -23,7 +23,7 @@ def generate_launch_description():
                 # https://github.com/ros2/teleop_twist_joy
                 package="teleop_twist_joy",
                 executable="teleop_node",
-                parameters=[teleop_config],
+                parameters=[params],
                 output="screen",
                 remappings=[
                     ("cmd_vel", "cmd_vel_teleop"),
