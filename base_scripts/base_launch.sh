@@ -53,7 +53,7 @@ case $mission in
         ;;
     *)
         printError "No mission specified"
-        echo "Specify a mission using 'bash base_launch.sh -m <mission>' (ex. 'bash base_launch.sh -t autonomy')"
+        echo "Specify a mission using 'bash base_launch.sh -m <mission>' (ex. 'bash base_launch.sh -m autonomy')"
         exit 1
         ;;
 esac
