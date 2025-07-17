@@ -72,6 +72,16 @@ def generate_launch_description():
                         "enable_bottle": False,
                     }
                 ],
+            ),
+            # Remap the point cloud to what we'd see in real life
+            Node(
+                package="topic_tools",
+                executable="relay",
+                output="screen",
+                arguments=[
+                    "/intel_realsense_r200_depth/points",
+                    "/zed/zed_node/point_cloud/cloud_registered"
+                ]
             )
         ]
     )

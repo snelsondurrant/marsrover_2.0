@@ -160,7 +160,7 @@
       <camera name="realsense_depth_camera">
       </camera>
       <plugin name="intel_realsense_r200_depth_driver" filename="libgazebo_ros_camera.so">
-        <!-- For some reason or another, the below doesn't work here - we'll use a different approach.
+        <!-- For some reason or another, the below doesn't work here. Use 'topic_tools' instead.
         <ros>
           <remapping>~/points:=/zed/zed_node/point_cloud/cloud_registered</remapping>
         </ros> -->
