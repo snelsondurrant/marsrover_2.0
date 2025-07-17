@@ -27,4 +27,3 @@ stateDiagram
   rover_autonomy.launch.py --> rover_perception.launch.py:rover_perception
   rover_autonomy.launch.py --> rover_navigation.launch.py:rover_navigation
   rover_common.launch.py --> rover_control.launch.py:rover_control
-  rover_common.launch.py --> peripherals.launch.py:rover_control

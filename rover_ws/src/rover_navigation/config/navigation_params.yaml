@@ -210,7 +210,6 @@ local_costmap:
           raytrace_min_range: 0.0
           marking: True
           clearing: True
-          inf_is_valid: True
       always_send_full_costmap: False # 'False' is kinder to the CPU
 
 global_costmap:
@@ -251,7 +250,6 @@ global_costmap:
           raytrace_min_range: 0.0
           marking: True
           clearing: True
-          inf_is_valid: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0

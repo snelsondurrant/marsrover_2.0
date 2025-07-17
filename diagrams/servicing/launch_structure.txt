@@ -16,4 +16,3 @@ stateDiagram
   rover_launch.sh --> rover_servicing.launch.py:rover_bringup
   rover_launch.sh --> rover_common.launch.py:rover_bringup
   rover_common.launch.py --> rover_control.launch.py:rover_control
-  rover_common.launch.py --> peripherals.launch.py:rover_control
