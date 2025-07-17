@@ -1,6 +1,5 @@
 # Created by Nelson Durrant, Mar 2025
-# SCIENCE TASK BASE LAUNCH CONFIG
-#
+# SCIENCE MISSION BASE LAUNCH CONFIG
 # https://tmuxp.git-pull.com/configuration/examples.html
 session_name: base_launch
 start_directory: "~/rover_ws" # inside the container

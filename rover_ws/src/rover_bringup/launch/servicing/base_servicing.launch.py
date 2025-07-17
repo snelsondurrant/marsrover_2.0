@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# # SERVICING TASK BASE LAUNCH FILE
+# # SERVICING MISSION BASE LAUNCH FILE
 from launch import LaunchDescription
 
 

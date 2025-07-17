@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# SCIENCE TASK ROVER LAUNCH FILE
+# SCIENCE MISSION ROVER LAUNCH FILE
 from launch import LaunchDescription
 
 

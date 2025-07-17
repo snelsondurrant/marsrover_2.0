@@ -1,6 +1,5 @@
 # Created by Nelson Durrant, Mar 2025
-# DELIVERY TASK BASE LAUNCH CONFIG
-#
+# DELIVERY MISSION BASE LAUNCH CONFIG
 # https://tmuxp.git-pull.com/configuration/examples.html
 session_name: base_launch
 start_directory: "~/rover_ws" # inside the container

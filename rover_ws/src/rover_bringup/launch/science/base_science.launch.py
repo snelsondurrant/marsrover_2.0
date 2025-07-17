@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# SCIENCE TASK BASE LAUNCH FILE
+# SCIENCE MISSION BASE LAUNCH FILE
 from launch import LaunchDescription
 
 

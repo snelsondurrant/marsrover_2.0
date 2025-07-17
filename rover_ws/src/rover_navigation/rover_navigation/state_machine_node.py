@@ -788,7 +788,7 @@ class StateMachine(Node):
     ###########################
 
     ###############################
-    ### TASK FEEDBACK FUNCTIONS ###
+    ### MISSION FEEDBACK FUNCTIONS ###
     ###############################
 
     def mission_info(self, string):
@@ -847,7 +847,7 @@ class StateMachine(Node):
         self.mission_goal_handle.publish_feedback(mission_feedback)
 
     ###################################
-    ### END TASK FEEDBACK FUNCTIONS ###
+    ### END MISSION FEEDBACK FUNCTIONS ###
     ###################################
 
     ########################

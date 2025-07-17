@@ -1,6 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# SERVICING TASK SOFTWARE OVERVIEW
-#
+# SERVICING MISSION SOFTWARE OVERVIEW
 # You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
 ---
 config:

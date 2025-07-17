@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Mar 2025
-# AUTONOMY TASK BASE LAUNCH FILE
+# AUTONOMY MISSION BASE LAUNCH FILE
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription

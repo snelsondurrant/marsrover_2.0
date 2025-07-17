@@ -1,5 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# SERVICING TASK ROVER LAUNCH FILE
+# SERVICING MISSION ROVER LAUNCH FILE
 from launch import LaunchDescription
 
 
