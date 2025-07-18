@@ -1,9 +1,8 @@
 # Created by Braden Meyers, Mar 2025
 /teleop_twist_joy_node:
   ros__parameters:
-    
     ########### ALL axis and button lists are 0 indexed!! ###############
-    
+
     require_enable_button: false
     enable_button: 7 # (int, default: 0) Joystick button to enable regular-speed movement.
     enable_turbo_button: 5 # (int, default: -1) Joystick button to enable high-speed movement (disabled when -1).
@@ -45,6 +44,5 @@
     publish_stamped_twist: false # (bool, default: false)
 
     # Frame name used for the header of TwistStamped messages.
-    frame: 'teleop_twist_joy' # (string, default: 'teleop_twist_joy')
-
+    frame: "teleop_twist_joy" # (string, default: 'teleop_twist_joy')
 

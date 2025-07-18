@@ -39,7 +39,9 @@ def generate_launch_description():
     )
 
     gui_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(gui_launch_dir, "autonomy_gui.launch.py")),
+        PythonLaunchDescriptionSource(
+            os.path.join(gui_launch_dir, "autonomy_gui.launch.py")
+        ),
     )
 
     ublox_cmd = IncludeLaunchDescription(

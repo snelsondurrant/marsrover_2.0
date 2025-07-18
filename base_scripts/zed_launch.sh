@@ -29,7 +29,7 @@ printInfo "Setting up the 'zed_launch' tmux session..."
 envsubst < tmuxp/autonomy/zed_launch.yaml > tmuxp/tmp/zed_launch.yaml
 scp tmuxp/tmp/zed_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
 ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-	"docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
+    "docker exec zed-ct tmuxp load -d /home/marsrover-zed/.tmuxp/zed_launch.yaml"
 
 # Attach to the 'zed_launch' tmux session (with mosh)
 # https://github.com/mobile-shell/mosh

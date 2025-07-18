@@ -8,17 +8,17 @@ source $script_dir/tools/base_common.sh
 
 # Check for a "-m <mission>" argument
 while getopts ":m:" opt; do
-  case $opt in
-    t)
-      mission=$OPTARG
-      ;;
-  esac
+    case $opt in
+        m)
+            mission=$OPTARG
+            ;;
+    esac
 done
 
 # Start the Docker containers if not already running
 if [ $(docker ps | grep marsrover-ct | wc -l) -eq 0 ]; then
-		printWarning "Starting the marsrover-ct container..."
-		cd ~/marsrover_2.0/docker && docker compose up -d
+	printWarning "Starting the marsrover-ct container..."
+	cd ~/marsrover_2.0/docker && docker compose up -d
 fi
 if [ $(docker ps | grep mapproxy | wc -l) -eq 0 ]; then
     printWarning "Starting the mapproxy container..."

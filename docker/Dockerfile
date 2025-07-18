@@ -87,7 +87,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     # Tools for visualizing the robot's location - Nelson Durrant, Feb 2025
     ros-humble-mapviz ros-humble-mapviz-plugins ros-humble-tile-map \
     && rm -rf /var/lib/apt/lists/*; \
-fi
+    fi
 
 USER $NAME
 WORKDIR /home/$NAME

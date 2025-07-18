@@ -46,36 +46,36 @@ ENV ZED_SDK_URL="https://stereolabs.sfo2.cdn.digitaloceanspaces.com/zedsdk/${ZED
 
 # Check that this SDK exists
 RUN if [ "$(curl -I "${ZED_SDK_URL}" -o /dev/null -s -w '%{http_code}\n' | head -n 1)" = "200" ]; then \
-        echo "The URL points to something."; \
+    echo "The URL points to something."; \
     else \
-        echo "The URL does not point to a .run file or the file does not exist."; \
-        exit 1; \
+    echo "The URL does not point to a .run file or the file does not exist."; \
+    exit 1; \
     fi
 
 # Disable apt-get warnings
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 42D5A192B819C5DA || true && \
-  apt-get update || true && apt-get install -y --no-install-recommends apt-utils dialog && \
-  rm -rf /var/lib/apt/lists/*
+    apt-get update || true && apt-get install -y --no-install-recommends apt-utils dialog && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Europe/Paris
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \ 
-  apt-get update && \
-  apt-get install --yes lsb-release wget less udev sudo build-essential cmake python3 python3-dev python3-pip python3-wheel git jq libpq-dev zstd usbutils && \    
-  rm -rf /var/lib/apt/lists/*
+    apt-get update && \
+    apt-get install --yes lsb-release wget less udev sudo build-essential cmake python3 python3-dev python3-pip python3-wheel git jq libpq-dev zstd usbutils && \    
+    rm -rf /var/lib/apt/lists/*
 
 RUN echo "# R${L4T_MAJOR} (release), REVISION: ${L4T_MINOR}" > /etc/nv_tegra_release && \
-  apt-get update -y || true && \
-  apt-get install -y --no-install-recommends zstd wget less cmake curl gnupg2 \
-  build-essential python3 python3-pip python3-dev python3-setuptools libusb-1.0-0-dev \ 
-  libgeographic-dev libdraco-dev zlib1g-dev -y && \
-  pip install protobuf && \
-  wget -q --no-check-certificate -O ZED_SDK_Linux_JP.run \
-  ${ZED_SDK_URL} && \
-  chmod +x ZED_SDK_Linux_JP.run ; ./ZED_SDK_Linux_JP.run silent skip_tools && \
-  rm -rf /usr/local/zed/resources/* && \
-  rm -rf ZED_SDK_Linux_JP.run && \
-  rm -rf /var/lib/apt/lists/*
+    apt-get update -y || true && \
+    apt-get install -y --no-install-recommends zstd wget less cmake curl gnupg2 \
+    build-essential python3 python3-pip python3-dev python3-setuptools libusb-1.0-0-dev \ 
+    libgeographic-dev libdraco-dev zlib1g-dev -y && \
+    pip install protobuf && \
+    wget -q --no-check-certificate -O ZED_SDK_Linux_JP.run \
+    ${ZED_SDK_URL} && \
+    chmod +x ZED_SDK_Linux_JP.run ; ./ZED_SDK_Linux_JP.run silent skip_tools && \
+    rm -rf /usr/local/zed/resources/* && \
+    rm -rf ZED_SDK_Linux_JP.run && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install the ZED ROS2 Wrapper
 ENV ROS_DISTRO=${ROS2_DIST}
@@ -97,7 +97,7 @@ RUN apt update && apt install -y \
     ros-humble-stereo-msgs \
     ros-humble-image-transport \     
     ros-humble-visualization-msgs
-    
+
 # Install cython
 RUN python3 -m pip install --upgrade cython
 

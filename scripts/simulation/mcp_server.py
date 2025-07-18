@@ -3,8 +3,8 @@
 
 """
 I created this MCP server as an quick experiment for a summer internship project I was working on,
-but it's actually turned out pretty well haha. Right now it's configured to just work with the
-simulator, but could be adapted to run on the base station (with an internet connection or some local
+but it's actually turned out pretty well haha. Right now I've only tested it with the simulator,
+but it could be adapted to run on the base station (with an internet connection or some local
 model work -- ollama?). It does incur a significant amount of processing overhead. Not sure how much
 of our real competition performance we trust off-loading to an LLM, but if future teams are curious
 or just want to play around with a simple way to hook up an LLM to our workflow or testing, here's
@@ -19,7 +19,7 @@ the steps to get started:
             "type": "command",
             "command": "docker",
             "args": [
-                "exec", "-i", "marsrover-ct", "bash", "-c", 
+                "exec", "-i", "marsrover-ct", "bash", "-c",
                 "source /home/marsrover-docker/rover_ws/install/setup.bash && uv run /home/marsrover-docker/scripts/simulation/mcp_server.py"
             ]
         }
@@ -102,7 +102,7 @@ def _ros_image_to_mcp_image(ros_image: RosImage, bridge: CvBridge) -> Image:
         pil_image = PILImage.fromarray(cv_image)
         buffered = io.BytesIO()
         pil_image.save(buffered, format="JPEG")
-        raw_image_bytes = buffered.getvalue() 
+        raw_image_bytes = buffered.getvalue()
         return Image(data=raw_image_bytes, format="jpeg")
     except Exception as e:
         return f"[ERROR: Image Conversion] Failed to convert ROS Image to MCP Image. Details: {e}"
@@ -233,6 +233,7 @@ ROS_NODE: Optional[Simple_ROS2_MCP_Node] = None
 
 # Rover Sensor Tools
 
+
 @mcp.tool(name="rover_sensors_getGpsFix")
 def rover_sensors_getGpsFix(timeout_sec: float = 5.0) -> str:
     """
@@ -274,7 +275,9 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
-    msg = ROS_NODE.get_message("/zed/zed_node/imu/data", Imu, QoSProfile(depth=1), timeout_sec)
+    msg = ROS_NODE.get_message(
+        "/zed/zed_node/imu/data", Imu, QoSProfile(depth=1), timeout_sec
+    )
     return (
         str(msg)
         if msg
@@ -282,7 +285,6 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     )
 
 
-# NOTE: The below is mapped to work in simulation right now
 @mcp.tool(name="rover_sensors_getCameraImage")
 def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
     """
@@ -300,7 +302,7 @@ def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
     ros_image = ROS_NODE.get_message(
-        "/intel_realsense_r200_depth/image_raw",
+        "/zed/zed_node/rgb/image_rect_color",
         RosImage,
         QoSProfile(depth=1),
         timeout_sec,
@@ -311,6 +313,7 @@ def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
 
 
 # Rover Data Tools
+
 
 @mcp.tool(name="rover_data_getLocalOdometry")
 def rover_data_getLocalOdometry(timeout_sec: float = 5.0) -> str:

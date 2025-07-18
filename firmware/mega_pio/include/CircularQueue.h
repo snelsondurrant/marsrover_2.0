@@ -5,7 +5,7 @@
 #include "Globals.h"
 #include "Communication.h"
 
-void queuePrint(const char* msg);
-void dequeuePrint(char* output, int maxLength);
+void queuePrint(const char *msg);
+void dequeuePrint(char *output, int maxLength);
 
 #endif

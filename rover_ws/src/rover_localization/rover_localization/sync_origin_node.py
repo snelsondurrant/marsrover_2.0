@@ -27,7 +27,9 @@ class SyncOrigin(Node):
         publish_rate = (
             self.get_parameter("publish_rate_hz").get_parameter_value().double_value
         )
-        self.timer_period = 1.0 / publish_rate if publish_rate > 0 else 1.0  # in seconds
+        self.timer_period = (
+            1.0 / publish_rate if publish_rate > 0 else 1.0
+        )  # in seconds
 
         self.origin_msg: NavSatFix = None
         self.origin_set_attempted = False

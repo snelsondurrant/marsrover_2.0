@@ -1019,12 +1019,16 @@ class StateMachine(Node):
         """
 
         if self.leg.type == "obj":
-            self.mission_info(f"{'Enabling' if enabled else 'Disabling'} object detection")
+            self.mission_info(
+                f"{'Enabling' if enabled else 'Disabling'} object detection"
+            )
             self.detection_enabled = enabled
             self.obj_request.data = enabled
             asyncio.run(self.async_service_call(self.obj_client, self.obj_request))
         elif self.leg.type == "aruco":
-            self.mission_info(f"{'Enabling' if enabled else 'Disabling'} aruco detection")
+            self.mission_info(
+                f"{'Enabling' if enabled else 'Disabling'} aruco detection"
+            )
             self.detection_enabled = enabled
             if enabled:
                 self.aruco_request.transition.id = Transition.TRANSITION_ACTIVATE

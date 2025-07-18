@@ -191,7 +191,7 @@ class AutonomyGUI(Node, QWidget):
         QWidget.__init__(self)
 
         self.resize(800, 800)
-        
+
         # Lock for thread-safe access to shared data (waypoints, goal_handle, etc.)
         self.lock = threading.Lock()
 
@@ -324,23 +324,68 @@ class AutonomyGUI(Node, QWidget):
         self.layout.setStretch(7, 20)  # Feedback Display
 
         self.setLayout(self.layout)
-        
+
         # Connect the UI update signal to its slot
         self.ui_update_signal.connect(self.do_ui_update)
-        
+
         ########################
         # MCP GUI INTEGRATIONS #
         ########################
 
-        self.create_service(GetWaypoints, "~/get_waypoints", self.get_waypoints_callback, callback_group=self.callback_group)
-        self.create_service(AddWaypoint, "~/add_waypoint", self.add_waypoint_callback, callback_group=self.callback_group)
-        self.create_service(RemoveWaypoint, "~/remove_waypoint", self.remove_waypoint_callback, callback_group=self.callback_group)
-        self.create_service(IsMissionRunning, "~/is_mission_running", self.is_mission_running_callback, callback_group=self.callback_group)
-        self.create_service(SetBool, "~/set_terrain_planning", self.set_terrain_planning_callback, callback_group=self.callback_group)
-        self.create_service(SendWaypoint, "~/send_waypoint", self.send_waypoint_callback, callback_group=self.callback_group)
-        self.create_service(Trigger, "~/send_all_waypoints", self.send_all_waypoints_callback, callback_group=self.callback_group)
-        self.create_service(GetFeedback, "~/get_feedback", self.get_feedback_callback, callback_group=self.callback_group)
-        self.create_service(Trigger, "~/cancel_mission", self.cancel_mission_callback, callback_group=self.callback_group)
+        self.create_service(
+            GetWaypoints,
+            "~/get_waypoints",
+            self.get_waypoints_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            AddWaypoint,
+            "~/add_waypoint",
+            self.add_waypoint_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            RemoveWaypoint,
+            "~/remove_waypoint",
+            self.remove_waypoint_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            IsMissionRunning,
+            "~/is_mission_running",
+            self.is_mission_running_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            SetBool,
+            "~/set_terrain_planning",
+            self.set_terrain_planning_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            SendWaypoint,
+            "~/send_waypoint",
+            self.send_waypoint_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            Trigger,
+            "~/send_all_waypoints",
+            self.send_all_waypoints_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            GetFeedback,
+            "~/get_feedback",
+            self.get_feedback_callback,
+            callback_group=self.callback_group,
+        )
+        self.create_service(
+            Trigger,
+            "~/cancel_mission",
+            self.cancel_mission_callback,
+            callback_group=self.callback_group,
+        )
         self.get_logger().info("MCP GUI integration services are running.")
 
         ############################
@@ -352,7 +397,7 @@ class AutonomyGUI(Node, QWidget):
 
         self.load_default_waypoints()
         self.update_button_states()
-    
+
     @pyqtSlot(object)
     def do_ui_update(self, func):
         """
@@ -370,7 +415,10 @@ class AutonomyGUI(Node, QWidget):
         base_fields = ["name", "type", "latitude", "longitude"]
         for field in base_fields:
             if field not in leg_data:
-                return False, f"Waypoint '{leg_data.get('name', 'N/A')}' is missing required field: '{field}'."
+                return (
+                    False,
+                    f"Waypoint '{leg_data.get('name', 'N/A')}' is missing required field: '{field}'.",
+                )
 
         # Check name
         wp_name = leg_data.get("name", "").strip()
@@ -381,31 +429,52 @@ class AutonomyGUI(Node, QWidget):
         try:
             lat = float(leg_data["latitude"])
             if not -90.0 <= lat <= 90.0:
-                return False, f"Latitude for '{wp_name}' ({lat}) is out of bounds [-90, 90]."
-            
+                return (
+                    False,
+                    f"Latitude for '{wp_name}' ({lat}) is out of bounds [-90, 90].",
+                )
+
             lon = float(leg_data["longitude"])
             if not -180.0 <= lon <= 180.0:
-                return False, f"Longitude for '{wp_name}' ({lon}) is out of bounds [-180, 180]."
+                return (
+                    False,
+                    f"Longitude for '{wp_name}' ({lon}) is out of bounds [-180, 180].",
+                )
         except (ValueError, TypeError):
-             return False, f"Waypoint '{wp_name}' has invalid latitude/longitude. They must be numbers."
+            return (
+                False,
+                f"Waypoint '{wp_name}' has invalid latitude/longitude. They must be numbers.",
+            )
 
         # Check type-specific fields and bounds
         wp_type = leg_data.get("type")
         if wp_type == "aruco":
             if "tag_id" not in leg_data:
-                return False, f"Aruco waypoint '{wp_name}' is missing required field: 'tag_id'."
+                return (
+                    False,
+                    f"Aruco waypoint '{wp_name}' is missing required field: 'tag_id'.",
+                )
             try:
                 tag_id = int(leg_data["tag_id"])
                 if tag_id not in [1, 2, 3]:
-                    return False, f"Tag ID for '{wp_name}' must be 1, 2, or 3, but was {tag_id}."
+                    return (
+                        False,
+                        f"Tag ID for '{wp_name}' must be 1, 2, or 3, but was {tag_id}.",
+                    )
             except (ValueError, TypeError):
                 return False, f"Tag ID for '{wp_name}' must be an integer."
         elif wp_type == "obj":
             if "object" not in leg_data:
-                return False, f"Object waypoint '{wp_name}' is missing required field: 'object'."
+                return (
+                    False,
+                    f"Object waypoint '{wp_name}' is missing required field: 'object'.",
+                )
             obj_name = leg_data.get("object", "").strip()
-            if obj_name not in ['mallet', 'bottle']:
-                return False, f"Object for '{wp_name}' must be 'mallet' or 'bottle', but was '{obj_name}'."
+            if obj_name not in ["mallet", "bottle"]:
+                return (
+                    False,
+                    f"Object for '{wp_name}' must be 'mallet' or 'bottle', but was '{obj_name}'.",
+                )
         elif wp_type != "gps":
             return False, f"Waypoint '{wp_name}' has an unknown type: '{wp_type}'."
 
@@ -442,7 +511,9 @@ class AutonomyGUI(Node, QWidget):
                         return
 
                 # Check for duplicate names
-                names_in_file = [leg.get("name") for leg in legs_data if leg.get("name")]
+                names_in_file = [
+                    leg.get("name") for leg in legs_data if leg.get("name")
+                ]
                 if len(names_in_file) != len(set(names_in_file)):
                     self.get_logger().error(
                         f"Default waypoints file '{default_file_path}' contains duplicate names. Aborting load."
@@ -491,7 +562,9 @@ class AutonomyGUI(Node, QWidget):
             self.duplicate_button.setEnabled(len(self.waypoints) > 0)
             self.remove_button.setEnabled(len(self.waypoints) > 0)
             self.clear_button.setEnabled(len(self.waypoints) > 0)
-            self.start_button.setEnabled(not mission_running and len(self.waypoints) > 0)
+            self.start_button.setEnabled(
+                not mission_running and len(self.waypoints) > 0
+            )
             self.start_selected_button.setEnabled(
                 not mission_running and len(self.waypoints) > 0
             )
@@ -531,7 +604,7 @@ class AutonomyGUI(Node, QWidget):
                 return
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
-        
+
         dialog = WaypointDialog(self)
         dialog.name_edit.setText(waypoint_data["name"])
         dialog.type_combo.setCurrentText(waypoint_data["type"])
@@ -554,9 +627,7 @@ class AutonomyGUI(Node, QWidget):
 
                 with self.lock:
                     existing_names = {
-                        wp["name"]
-                        for i, wp in enumerate(self.waypoints)
-                        if i != index
+                        wp["name"] for i, wp in enumerate(self.waypoints) if i != index
                     }
                     if updated_waypoint_data["name"] in existing_names:
                         QMessageBox.critical(
@@ -576,7 +647,7 @@ class AutonomyGUI(Node, QWidget):
             selected_item = self.waypoint_list.currentItem()
             if not selected_item:
                 return
-            
+
             index = self.waypoint_list.row(selected_item)
             waypoint_data = self.waypoints[index]
             new_waypoint_data = waypoint_data.copy()
@@ -592,7 +663,7 @@ class AutonomyGUI(Node, QWidget):
             new_waypoint_data["name"] = new_name_candidate
 
             self.waypoints.insert(index + 1, new_waypoint_data)
-        
+
         self.update_waypoint_list()
         self.waypoint_list.setCurrentRow(index + 1)
         self.update_button_states()
@@ -603,10 +674,10 @@ class AutonomyGUI(Node, QWidget):
             selected_item = self.waypoint_list.currentItem()
             if not selected_item:
                 return
-            
+
             index = self.waypoint_list.row(selected_item)
             del self.waypoints[index]
-            
+
             new_index = -1
             if index < len(self.waypoints):
                 new_index = index
@@ -729,7 +800,7 @@ class AutonomyGUI(Node, QWidget):
                         raise ValueError(
                             "Invalid waypoint file format. 'legs' array not found."
                         )
-                
+
                 self.ui_update_signal.emit(self.update_waypoint_list)
                 self.ui_update_signal.emit(self.update_button_states)
 
@@ -791,7 +862,9 @@ class AutonomyGUI(Node, QWidget):
         self.preview_pub.publish(marker_array)
 
     def mapviz_clicked_point_callback(self, msg):
-        self.get_logger().info(f"Received clicked point from mapviz: {msg.point.x}, {msg.point.y}")
+        self.get_logger().info(
+            f"Received clicked point from mapviz: {msg.point.x}, {msg.point.y}"
+        )
         lat, lon = msg.point.y, msg.point.x
         self.ui_update_signal.emit(lambda: self.add_mapviz_waypoint(lat, lon))
 
@@ -811,7 +884,7 @@ class AutonomyGUI(Node, QWidget):
             }
             self.waypoints.append(waypoint_data)
             self.mapviz_wp_count += 1
-        
+
         self.update_waypoint_list()
         self.update_button_states()
 
@@ -835,7 +908,7 @@ class AutonomyGUI(Node, QWidget):
                 return
 
             waypoints_to_send = [self.waypoints[current_selection_index]]
-        
+
         self._send_mission(waypoints_to_send)
 
     def start_mission(self):
@@ -845,14 +918,18 @@ class AutonomyGUI(Node, QWidget):
                 QMessageBox.warning(self, "Warning", "No waypoints to send.")
                 return
             waypoints_to_send = self.waypoints.copy()
-            
+
         self._send_mission(waypoints_to_send)
 
     def _send_mission(self, waypoints_to_send):
         """Internal method to send a mission with a given list of waypoints."""
         if not self._action_client.wait_for_server(timeout_sec=2.0):
             self.get_logger().error("Action server not available after 2 seconds!")
-            self.ui_update_signal.emit(lambda: QMessageBox.critical(self, "Error", "Action server not available!"))
+            self.ui_update_signal.emit(
+                lambda: QMessageBox.critical(
+                    self, "Error", "Action server not available!"
+                )
+            )
             return
 
         with self.lock:
@@ -876,7 +953,7 @@ class AutonomyGUI(Node, QWidget):
                     leg_msg.tag_id = 0
                     leg_msg.object = ""
                 goal_msg.legs.append(leg_msg)
-            
+
             self.sent_waypoints = waypoints_to_send
 
         self.ui_update_signal.emit(lambda: self.feedback_display.clear())
@@ -894,7 +971,9 @@ class AutonomyGUI(Node, QWidget):
     def handle_goal_response(self):
         with self.lock:
             if not self.goal_handle.accepted:
-                item = self.format_feedback_text("[ERROR] [gui] Goal rejected by action server")
+                item = self.format_feedback_text(
+                    "[ERROR] [gui] Goal rejected by action server"
+                )
                 self.feedback_display.addItem(item)
             else:
                 self.feedback_display.addItem(
@@ -948,7 +1027,11 @@ class AutonomyGUI(Node, QWidget):
                 self.get_logger().error(
                     "CancelGoal service not available after 2 seconds!"
                 )
-                self.ui_update_signal.emit(lambda: QMessageBox.critical(self, "Error", "CancelGoal service not available!"))
+                self.ui_update_signal.emit(
+                    lambda: QMessageBox.critical(
+                        self, "Error", "CancelGoal service not available!"
+                    )
+                )
             else:
                 self.get_logger().warn(
                     "CancelGoal service not available after 2 seconds!"
@@ -964,7 +1047,7 @@ class AutonomyGUI(Node, QWidget):
         """ROS2 Callback: Handles the response from a cancel request."""
         response = future.result()
         self.ui_update_signal.emit(lambda: self.handle_cancel_response(response))
-    
+
     def handle_cancel_response(self, response):
         """Helper method to display cancel response. Runs in GUI thread."""
         if response.return_code == CancelGoal.Response.ERROR_NONE:
@@ -989,14 +1072,14 @@ class AutonomyGUI(Node, QWidget):
             self.get_logger().info("Servicing request for all waypoints...")
             for wp_dict in self.waypoints:
                 leg = AutonomyLeg()
-                leg.name = wp_dict.get('name', '')
-                leg.type = wp_dict.get('type', '')
-                leg.latitude = float(wp_dict.get('latitude', 0.0))
-                leg.longitude = float(wp_dict.get('longitude', 0.0))
-                if leg.type == 'aruco':
-                    leg.tag_id = int(wp_dict.get('tag_id', 0))
-                elif leg.type == 'obj':
-                    leg.object = wp_dict.get('object', '')
+                leg.name = wp_dict.get("name", "")
+                leg.type = wp_dict.get("type", "")
+                leg.latitude = float(wp_dict.get("latitude", 0.0))
+                leg.longitude = float(wp_dict.get("longitude", 0.0))
+                if leg.type == "aruco":
+                    leg.tag_id = int(wp_dict.get("tag_id", 0))
+                elif leg.type == "obj":
+                    leg.object = wp_dict.get("object", "")
                 response.legs.append(leg)
         return response
 
@@ -1024,12 +1107,14 @@ class AutonomyGUI(Node, QWidget):
             existing_names = {wp["name"] for wp in self.waypoints}
             if wp_data["name"] in existing_names:
                 response.success = False
-                response.message = f"Waypoint with name '{wp_data['name']}' already exists."
+                response.message = (
+                    f"Waypoint with name '{wp_data['name']}' already exists."
+                )
                 self.get_logger().warn(response.message)
                 return response
 
             self.waypoints.append(wp_data)
-        
+
         self.ui_update_signal.emit(self.update_waypoint_list)
         self.ui_update_signal.emit(self.update_button_states)
         response.success = True
@@ -1040,7 +1125,9 @@ class AutonomyGUI(Node, QWidget):
         self.get_logger().info(f"Servicing request to remove waypoint: {request.name}")
         with self.lock:
             original_len = len(self.waypoints)
-            self.waypoints = [wp for wp in self.waypoints if wp.get("name") != request.name]
+            self.waypoints = [
+                wp for wp in self.waypoints if wp.get("name") != request.name
+            ]
             if len(self.waypoints) < original_len:
                 response.success = True
                 response.message = f"Waypoint '{request.name}' removed."
@@ -1055,38 +1142,50 @@ class AutonomyGUI(Node, QWidget):
 
     def is_mission_running_callback(self, request, response):
         with self.lock:
-            response.is_running = (self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING)
+            response.is_running = (
+                self.goal_handle is not None
+                and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
+            )
         return response
 
     def set_terrain_planning_callback(self, request, response):
-        self.get_logger().info(f"Servicing request to set terrain planning to: {request.data}")
+        self.get_logger().info(
+            f"Servicing request to set terrain planning to: {request.data}"
+        )
         # This must be run in the GUI thread.
-        self.ui_update_signal.emit(lambda: self.terrain_planning_checkbox.setChecked(request.data))
+        self.ui_update_signal.emit(
+            lambda: self.terrain_planning_checkbox.setChecked(request.data)
+        )
         response.success = True
         response.message = f"Terrain planning set to {request.data}"
         return response
 
     def send_waypoint_callback(self, request, response):
-        self.get_logger().info(f"Servicing request to send waypoint by name: {request.name}")
+        self.get_logger().info(
+            f"Servicing request to send waypoint by name: {request.name}"
+        )
         with self.lock:
-            if self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING:
+            if (
+                self.goal_handle is not None
+                and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
+            ):
                 response.success = False
                 response.message = "A mission is already running."
                 self.get_logger().warn(response.message)
                 return response
-            
+
             waypoint_to_send = None
             for wp in self.waypoints:
                 if wp.get("name") == request.name:
                     waypoint_to_send = wp
                     break
-            
+
             if waypoint_to_send is None:
                 response.success = False
                 response.message = f"Waypoint '{request.name}' not found."
                 self.get_logger().warn(response.message)
                 return response
-            
+
             waypoints_to_send_list = [waypoint_to_send]
 
         self._send_mission(waypoints_to_send_list)
@@ -1097,20 +1196,23 @@ class AutonomyGUI(Node, QWidget):
     def send_all_waypoints_callback(self, request, response):
         self.get_logger().info("Servicing request to send all waypoints.")
         with self.lock:
-            if self.goal_handle is not None and self.goal_handle.status == GoalStatus.STATUS_EXECUTING:
+            if (
+                self.goal_handle is not None
+                and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
+            ):
                 response.success = False
                 response.message = "A mission is already running."
                 self.get_logger().warn(response.message)
                 return response
-            
+
             if not self.waypoints:
                 response.success = False
                 response.message = "No waypoints to send."
                 self.get_logger().warn(response.message)
                 return response
-            
+
             waypoints_to_send = self.waypoints.copy()
-        
+
         self._send_mission(waypoints_to_send)
         response.success = True
         response.message = "Mission sent successfully."
@@ -1126,15 +1228,23 @@ class AutonomyGUI(Node, QWidget):
                 feedback_list.append(self.feedback_display.item(i).text())
 
         # Blocking call to safely get data from the GUI thread
-        QMetaObject.invokeMethod(self, "do_ui_update", Qt.BlockingQueuedConnection, Q_ARG(object, get_text_from_gui))
-        
+        QMetaObject.invokeMethod(
+            self,
+            "do_ui_update",
+            Qt.BlockingQueuedConnection,
+            Q_ARG(object, get_text_from_gui),
+        )
+
         response.feedback_log = feedback_list
         return response
 
     def cancel_mission_callback(self, request, response):
         self.get_logger().info("Servicing request to cancel current mission.")
         with self.lock:
-            if self.goal_handle is None or self.goal_handle.status != GoalStatus.STATUS_EXECUTING:
+            if (
+                self.goal_handle is None
+                or self.goal_handle.status != GoalStatus.STATUS_EXECUTING
+            ):
                 response.success = False
                 response.message = "No mission is currently running to cancel."
                 self.get_logger().warn(response.message)
@@ -1148,6 +1258,7 @@ class AutonomyGUI(Node, QWidget):
     ############################
     # END MCP GUI INTEGRATIONS #
     ############################
+
 
 def main(args=None):
     rclpy.init(args=args)

@@ -18,19 +18,27 @@ class PVT2NSF(Node):
     """
 
     def __init__(self):
-        super().__init__('pvt_to_nsf')
+        super().__init__("pvt_to_nsf")
 
-        self.pvt_sub = self.create_subscription(PositionVelocityTime, 'rover/PosVelTime', self.pvt_callback, 10)
-        self.nsf_pub = self.create_publisher(NavSatFix, 'gps/fix', 10)
+        self.pvt_sub = self.create_subscription(
+            PositionVelocityTime, "rover/PosVelTime", self.pvt_callback, 10
+        )
+        self.nsf_pub = self.create_publisher(NavSatFix, "gps/fix", 10)
 
     def pvt_callback(self, msg):
 
-        h_var = (msg.h_acc)**2
-        v_var = (msg.v_acc)**2
+        h_var = (msg.h_acc) ** 2
+        v_var = (msg.v_acc) ** 2
         pos_covariance = [
-            h_var, 0, 0,
-            0, h_var, 0,
-            0, 0, v_var,
+            h_var,
+            0,
+            0,
+            0,
+            h_var,
+            0,
+            0,
+            0,
+            v_var,
         ]
 
         nsf_msg = NavSatFix(
@@ -41,7 +49,7 @@ class PVT2NSF(Node):
             position_covariance=pos_covariance,
             position_covariance_type=NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN,
         )
-        nsf_msg.header.frame_id = 'gps_link'  # set frame id (urdf)
+        nsf_msg.header.frame_id = "gps_link"  # set frame id (urdf)
         self.nsf_pub.publish(nsf_msg)
 
 
@@ -53,5 +61,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
