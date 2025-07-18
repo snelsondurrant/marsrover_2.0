@@ -104,7 +104,7 @@
 
 [Running the Simulation](https://youtu.be/ZFADRaRCdOU)
 
-![Running the Simulation](https://github.com/user-attachments/assets/f2f3021f-cc53-4660-a336-561d8dabb6ed)
+![Running the Simulation](https://github.com/user-attachments/assets/8bd13980-68e5-4fbb-a2c9-ef8e18b2c6d9)
 
 [Localization Debugging](https://youtu.be/X4Mq1sxr7JY)
 
