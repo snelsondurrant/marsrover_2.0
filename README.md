@@ -110,9 +110,9 @@
 
 ![Localization Debugging](https://github.com/user-attachments/assets/9eb8dd06-bbb7-4d36-8745-458301bda33f)
 
-[LLM Control with MCP](https://youtu.be/itFrfAUPw_0)
+[LLM Control with MCP](https://youtu.be/rluqQbQE0hE)
 
-![LLM_Control_with_MCP](https://github.com/user-attachments/assets/2d8b87f5-8cdd-4bf0-903f-97f98ee1a754)
+![LLM_Control with MCP](https://github.com/user-attachments/assets/b066e76d-600f-4168-be79-4cf39f913346)
 
 --
 
