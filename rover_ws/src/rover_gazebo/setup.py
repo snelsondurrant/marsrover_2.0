@@ -58,7 +58,7 @@ setup(
     maintainer='Nelson Durrant',
     maintainer_email='snelsondurrant@gmail.com',
     description='Gazebo simulation for the Mars Rover',
-    license='MIT',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
