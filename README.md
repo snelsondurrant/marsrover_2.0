@@ -34,7 +34,7 @@
 
 ### Get Started
 
-![ASCII Art](https://github.com/user-attachments/assets/b9a8e8b7-9f1c-44c6-b7b7-b2add7c5d788)
+![ASCII Art](https://github.com/user-attachments/assets/18a7825f-216c-4df9-b4f3-7c91c4bf0153)
 
 > **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support, and have not been extensively tested.
 
