@@ -664,13 +664,13 @@ class StateMachine(Node):
             Exception
         ) as e:  # catch exceptions to ensure we disable detections, return to teleop state
             self.mission_fatal(str(e))
-            self.mission_info("Autonomy mission failed")
 
             # Disable aruco/object detection
             if self.leg is not None:
                 self.set_detection_enabled(False)
                 self.leg = None
 
+            self.mission_info("Autonomy mission failed")
             result.msg = "Okay, Houston, we've had a problem."
             self.mission_goal_handle.abort()
 
