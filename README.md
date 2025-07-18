@@ -106,9 +106,9 @@
 
 ![Running the Simulation](https://github.com/user-attachments/assets/f2f3021f-cc53-4660-a336-561d8dabb6ed)
 
-[Localization Debugging](https://youtu.be/r0U6DLKrkSk)
+[Localization Debugging](https://youtu.be/X4Mq1sxr7JY)
 
-![Localization Debugging](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
+![Localization Debugging](https://github.com/user-attachments/assets/9eb8dd06-bbb7-4d36-8745-458301bda33f)
 
 [LLM Control with MCP](https://youtu.be/itFrfAUPw_0)
 
