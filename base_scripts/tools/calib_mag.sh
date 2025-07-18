@@ -6,15 +6,6 @@
 script_dir=$(dirname "$(readlink -f "$0")")
 source $script_dir/base_common.sh
 
-# Check for a "-u <username>" argument
-while getopts ":u:" opt; do
-  case $opt in
-    u)
-      ROVER_USERNAME=$OPTARG
-      ;;
-  esac
-done
-
 # Check for an SSH connection to the rover
 checkConnection # defined in base_common.sh
 

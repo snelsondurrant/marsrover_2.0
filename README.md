@@ -11,16 +11,16 @@
 --
 
 > **TO THE 2026 MARS ROVER TEAM:** I've helped with writing a decent amount of robot software from scratch here at BYU, and oftentimes have been part of a team that runs up against some architecture-based limitations later on (usually too integrated into our software at that point to change) that we really wished we would have understood better before we started. With the shift from ROS1 to ROS2 in the 2024-2025 Capstone year, I saw an opportunity to prevent some of those future problems and put in 30+ hours of research on robotics development best practices at the beginning of the Winter 2025 semester -- and learned A TON about the open-source tools and software structure professional robotic projects use. After a short coding spree, this repository is the synthesis of our current approach with some of those best practices, including:
-> - A Dockerized full-task simulator for rapid development and validation
+> - A Dockerized full-mission Gazebo simulator for rapid development and validation
 > - Industry-standard Nav2 dynamic path planning and hazard avoidance
 > - Tuned and tested EKF for fusing odometry sources with GPS data
 > - A fully-defined map->odom->robot TF tree and rover URDF
 > - LLM integration using MCP for natural language control of the rover
 > - Lots and lots of QOL and scripting updates
 > 
-> I've successfully completed GPS, aruco, and object detection legs with this code running on the rover just behind the EB (even navigating between and around the trees and posts!). I've probably completed hundreds more in simulation, testing outlier cases like blocked hex points. However, when I've tried to increase the rover speed on our physical hardware to as quick as we'd need to run it at competition, the CPU can't keep up with the depth cloud processing from the ZED camera for object avoidance and we don't recognize obstacles in time before crashing into them. Even with CPU cost-cutting measures, it's clear that we simply just don't have the processing power on the Jetson Orin to run Nav2 hazard avoidance at the speed we need to to compete. We need a more powerful computer -- a laptop with a GPU or similar -- or another SBC in addition to the Orin. (Admittedly, I haven't had enough rover time to test using less-dense LiDAR data instead or mapping the point cloud to a laser scan to lower the costmap computation load, but I don't think we should be so close to the CPU limit regardless.)
+> I've successfully completed GPS, aruco, and object detection legs with this code running on the rover just behind the EB (even navigating between and around the trees and posts!). I've probably completed hundreds more in simulation, testing outlier cases like blocked hex points. However, when I've tried to increase the rover speed on our physical hardware to as quick as we'd need to run it at competition, the CPU can't keep up with the depth cloud processing from the ZED camera for object avoidance and we don't recognize obstacles in time before crashing into them. Even with CPU cost-cutting measures, it's clear that we simply just don't have the processing power on the Jetson Orin to run Nav2 hazard avoidance at the speed we need to to compete. We need a more powerful computer -- a laptop with a GPU or similar -- or another SBC in addition to the Orin. (Admittedly, I haven't had enough rover time to test mapping the point cloud to a laser scan or just using a LiDAR instead to lower the costmap computation load, but I don't think we should be so close to the CPU limit regardless.)
 >
-> Due to the needed structural changes, this code was written mostly from scratch and doesn't share a lot of similarities with the Autonomy-ROS2 repo. It definitely is a marked shift in a new direction. <mark>In short, however, I think there's clear 100-point potential in this approach and these open-source tools. I'd encourage the 2026 team to [mess around with the simulator to understand a bit better how it all works](https://youtu.be/sQmkes66p2w), run some tests on the rover, consider investing in a more powerful computing stack, and then revisit development on this code base.</mark>
+> Due to the needed structural changes, this code was written mostly from scratch and doesn't share a lot of similarities with the Autonomy-ROS2 repo. It definitely is a marked shift in a new direction. <mark>In short, however, I think there's clear 100-point potential in this approach and these open-source tools. I'd encourage the 2026 team to [mess around with the simulator to understand a bit better how it all works](https://youtu.be/ZFADRaRCdOU), run some tests on the rover, consider investing in a more powerful computing stack, and then revisit development on this code base.</mark>
 >
 > I'll be starting my Master's program at BYU in Fall 2025, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant leap for roverkind!
 >
@@ -34,7 +34,7 @@
 
 ### Get Started
 
-![ASCII Art](https://github.com/user-attachments/assets/b9a8e8b7-9f1c-44c6-b7b7-b2add7c5d788)
+![ASCII Art](https://github.com/user-attachments/assets/18a7825f-216c-4df9-b4f3-7c91c4bf0153)
 
 > **NOTE:** Newer Macs that use ARM64 architecture (M1, M2, etc) are not able to run the Gazebo simulation due to missing package support, and have not been extensively tested.
 
@@ -102,17 +102,17 @@
 
 ### How-To Videos
 
-[Running the Simulation](https://youtu.be/sQmkes66p2w)
+[Running the Simulation](https://youtu.be/ZFADRaRCdOU)
 
-![Running the Simulation](https://github.com/user-attachments/assets/d8187778-da11-4283-baff-5666b0f0cbd0)
+![Running the Simulation](https://github.com/user-attachments/assets/fb015c0e-7106-4704-8ae2-223fffd4caff)
 
-[Localization Debugging](https://youtu.be/r0U6DLKrkSk)
+[Localization Debugging](https://youtu.be/X4Mq1sxr7JY)
 
-![Localization Debugging](https://github.com/user-attachments/assets/1a3ea3f7-68d4-4e45-81bb-1a60fd6bbf9c)
+![Localization Debugging](https://github.com/user-attachments/assets/9eb8dd06-bbb7-4d36-8745-458301bda33f)
 
-[LLM Control with MCP](https://youtu.be/itFrfAUPw_0)
+[LLM Control with MCP](https://youtu.be/rluqQbQE0hE)
 
-![LLM_Control_with_MCP](https://github.com/user-attachments/assets/2d8b87f5-8cdd-4bf0-903f-97f98ee1a754)
+![LLM_Control with MCP](https://github.com/user-attachments/assets/b066e76d-600f-4168-be79-4cf39f913346)
 
 --
 
@@ -127,6 +127,8 @@
 [Launch Structure](diagrams/autonomy/launch_structure.png)
 
 [State Machine](diagrams/autonomy/state_machine.png)
+
+[Transform Tree](diagrams/autonomy/transform_tree.pdf)
 
 [Sim Software Overview](diagrams/autonomy/simulation/sim_software_overview.png)
 

@@ -168,7 +168,6 @@ RUN groupadd docker
 RUN usermod -aG docker $NAME
 RUN echo "$NAME:$PASS" | chpasswd
 
-
 # Allow the new user to access the ZED SDK
 RUN chown -R $NAME:$NAME /usr/local/
 

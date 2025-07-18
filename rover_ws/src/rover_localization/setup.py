@@ -24,8 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'pvt_to_nsf = rover_localization.pvt_to_nsf:main',
-            'sync_origin = rover_localization.sync_origin:main',
+            'pvt_to_nsf = rover_localization.pvt_to_nsf_node:main',
+            'sync_origin = rover_localization.sync_origin_node:main',
         ],
     },
 )

@@ -1,5 +1,5 @@
 # AutonomyLeg.msg - Nelson Durrant, Feb 2025
-# Used to define a leg of the autonomy task
+# Used to define a leg of the autonomy mission
 
 string name
 string type         # type of leg ("gps", "aruco", "obj")

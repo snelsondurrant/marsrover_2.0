@@ -1,6 +1,5 @@
 # Created by Nelson Durrant, Mar 2025
-# DELIVERY TASK ROVER LAUNCH CONFIG
-#
+# DELIVERY MISSION ROVER LAUNCH CONFIG
 # https://tmuxp.git-pull.com/configuration/examples.html
 session_name: rover_launch
 start_directory: "~/rover_ws" # inside the container

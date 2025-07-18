@@ -1,16 +1,16 @@
 #!/bin/bash
 # Created by Nelson Durrant, Feb 2025
 #
-# Launches tasks on the base station using the 'base_launch' tmux session
+# Launches missions on the base station using the 'base_launch' tmux session
 
 script_dir=$(dirname "$(readlink -f "$0")")
 source $script_dir/tools/base_common.sh
 
-# Check for a "-t <task>" argument
-while getopts ":t:" opt; do
+# Check for a "-m <mission>" argument
+while getopts ":m:" opt; do
   case $opt in
     t)
-      task=$OPTARG
+      mission=$OPTARG
       ;;
   esac
 done
@@ -25,35 +25,35 @@ if [ $(docker ps | grep mapproxy | wc -l) -eq 0 ]; then
     docker run -p 8080:8080 -d -t -v ~/mapproxy:/mapproxy danielsnider/mapproxy
 fi
 
-# Launch the specified task configuration over SSH
-case $task in
+# Launch the specified mission configuration over SSH
+case $mission in
     "autonomy")
-        printInfo "Setting up the autonomy task..."
+        printInfo "Setting up the autonomy mission..."
         # This envsubst allows for the use of environment variables in the tmuxp config
         envsubst < tmuxp/autonomy/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "servicing")
-        printInfo "Setting up the servicing task..."
+        printInfo "Setting up the servicing mission..."
         # This envsubst allows for the use of environment variables in the tmuxp config
         envsubst < tmuxp/servicing/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "delivery")
-        printInfo "Setting up the delivery task..."
+        printInfo "Setting up the delivery mission..."
         # This envsubst allows for the use of environment variables in the tmuxp config
         envsubst < tmuxp/delivery/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     "science")
-        printInfo "Setting up the science task..."
+        printInfo "Setting up the science mission..."
         # This envsubst allows for the use of environment variables in the tmuxp config
         envsubst < tmuxp/science/base_launch.yaml > tmuxp/tmp/base_launch.yaml
         docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/base_launch.yaml
         ;;
     *)
-        printError "No task specified"
-        echo "Specify a task using 'bash base_launch.sh -t <task>' (ex. 'bash base_launch.sh -t autonomy')"
+        printError "No mission specified"
+        echo "Specify a mission using 'bash base_launch.sh -m <mission>' (ex. 'bash base_launch.sh -m autonomy')"
         exit 1
         ;;
 esac

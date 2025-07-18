@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+<xacro:robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Created by Nelson Durrant, July 2025 -->
+
+  <!-- https://docs.nav2.org/setup_guides/urdf/setup_urdf.html
+    https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html
+    https://docs.nav2.org/setup_guides/sensors/setup_sensors_gz_classic.html -->
+
+  <!-- Diff drive plugin for the rover's middle wheels -->
+  <gazebo>
+    <plugin name="gazebo_ros_diff_drive_middle" filename="libgazebo_ros_diff_drive.so">
+      <update_rate>30</update_rate>
+      <left_joint>wheel_left_middle_joint</left_joint>
+      <right_joint>wheel_right_middle_joint</right_joint>
+      <wheel_separation>${base_width + 2*wheel_ygap + wheel_width}</wheel_separation>
+      <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>10.0</max_wheel_acceleration>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>zed_camera_link</robot_base_frame>
+      <publish_odom>true</publish_odom> <!-- only publish here! -->
+      <publish_odom_tf>false</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <ros>
+        <remapping>cmd_vel:=cmd_vel_mux</remapping>
+        <remapping>odom:=zed/zed_node/odom</remapping> <!-- only publish here! -->
+      </ros>
+    </plugin>
+  </gazebo>
+
+  <!-- Diff drive plugin for the rover's front wheels -->
+  <gazebo>
+    <plugin name="gazebo_ros_diff_drive_front" filename="libgazebo_ros_diff_drive.so">
+      <update_rate>30</update_rate>
+      <left_joint>wheel_left_front_joint</left_joint>
+      <right_joint>wheel_right_front_joint</right_joint>
+      <wheel_separation>${base_width + 2*wheel_ygap + wheel_width}</wheel_separation>
+      <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>10.0</max_wheel_acceleration>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>zed_camera_link</robot_base_frame>
+      <publish_odom>false</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <ros>
+        <remapping>cmd_vel:=cmd_vel_mux</remapping>
+      </ros>
+    </plugin>
+  </gazebo>
+
+  <!-- Diff drive plugin for the rover's rear wheels -->
+  <gazebo>
+    <plugin name="gazebo_ros_diff_drive_rear" filename="libgazebo_ros_diff_drive.so">
+      <update_rate>30</update_rate>
+      <left_joint>wheel_left_rear_joint</left_joint>
+      <right_joint>wheel_right_rear_joint</right_joint>
+      <wheel_separation>${base_width + 2*wheel_ygap + wheel_width}</wheel_separation>
+      <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>10.0</max_wheel_acceleration>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>zed_camera_link</robot_base_frame>
+      <publish_odom>false</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <ros>
+        <remapping>cmd_vel:=cmd_vel_mux</remapping>
+      </ros>
+    </plugin>
+  </gazebo>
+
+  <!-- Joint State Publisher for all wheel joints -->
+  <gazebo>
+    <plugin name="gazebo_ros_joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
+      <ros>
+          <remapping>~/out:=joint_states</remapping>
+      </ros>
+      <update_rate>30</update_rate>
+      <joint_name>left_rocker_joint</joint_name>
+      <joint_name>right_rocker_joint</joint_name>
+      <joint_name>wheel_left_front_joint</joint_name>
+      <joint_name>wheel_left_middle_joint</joint_name>
+      <joint_name>wheel_left_rear_joint</joint_name>
+      <joint_name>wheel_right_front_joint</joint_name>
+      <joint_name>wheel_right_middle_joint</joint_name>
+      <joint_name>wheel_right_rear_joint</joint_name>
+    </plugin>
+  </gazebo>
+
+  <!-- =================================================================== -->
+  <!--                      VISUAL & SENSOR PROPERTIES                     -->
+  <!-- =================================================================== -->
+
+  <!-- Materials for links -->
+  <gazebo reference="base_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="pole_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <!-- Function for wheel friction physics and appearance -->
+  <xacro:macro name="wheel_gazebo" params="prefix mu1:=1.0 mu2:=1.0">
+    <gazebo reference="${prefix}_link">
+        <material>Gazebo/DarkGrey</material>
+        <mu1>${mu1}</mu1>
+        <mu2>${mu2}</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:wheel_gazebo prefix="wheel_left_front"  mu1="50.0" mu2="50.0"/>
+  <xacro:wheel_gazebo prefix="wheel_left_rear"   mu1="50.0" mu2="50.0"/>
+  <xacro:wheel_gazebo prefix="wheel_right_front" mu1="50.0" mu2="50.0"/>
+  <xacro:wheel_gazebo prefix="wheel_right_rear"  mu1="50.0" mu2="50.0"/>
+
+  <!-- Increase the friction on the middle wheels for tighter turns -->
+  <xacro:wheel_gazebo prefix="wheel_left_middle"  mu1="200.0" mu2="200.0"/>
+  <xacro:wheel_gazebo prefix="wheel_right_middle" mu1="200.0" mu2="200.0"/>
+
+  <!-- GPS Sensor (from turtlebot3) -->
+  <gazebo reference="gps_link">
+    <sensor name="tb3_gps" type="gps">
+      <always_on>true</always_on>
+      <update_rate>1</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <gps>
+        <position_sensing>
+          <horizontal>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </horizontal>
+          <vertical>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </vertical>
+        </position_sensing>
+      </gps>
+      <plugin name="turtlebot3_gps" filename="libgazebo_ros_gps_sensor.so">
+        <ros>
+          <remapping>~/out:=/gps/fix</remapping>
+        </ros>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Depth Camera (from turtlebot3, only in sim)-->
+  <!-- In real life, we'll use the ZED 2 camera, not the Intel Realsense -->
+  <gazebo reference="zed_camera_link">
+    <sensor name="intel_realsense_r200_depth" type="depth">
+      <always_on>true</always_on>
+      <update_rate>5</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <camera name="realsense_depth_camera">
+      </camera>
+      <plugin name="intel_realsense_r200_depth_driver" filename="libgazebo_ros_camera.so">
+        <!-- For some reason or another, the below doesn't work here. Use 'topic_tools' instead.
+        <ros>
+          <remapping>~/points:=/zed/zed_node/point_cloud/cloud_registered</remapping>
+        </ros> -->
+        <camera_name>intel_realsense_r200_depth</camera_name>
+        <frame_name>intel_realsense_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- IMU Sensor (from turtlebot3) -->
+  <gazebo reference="zed_camera_link">
+    <sensor name="tb3_imu" type="imu">
+      <always_on>true</always_on>
+      <update_rate>200</update_rate>
+      <imu>
+        <angular_velocity>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>2e-4</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>2e-4</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>2e-4</stddev>
+            </noise>
+          </z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>1.7e-2</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>1.7e-2</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>1.7e-2</stddev>
+            </noise>
+          </z>
+        </linear_acceleration>
+      </imu>
+      <plugin name="turtlebot3_imu" filename="libgazebo_ros_imu_sensor.so">
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+        <ros>
+          <remapping>~/out:=/zed/zed_node/imu/data</remapping>
+        </ros>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</xacro:robot>

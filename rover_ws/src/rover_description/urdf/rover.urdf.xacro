@@ -7,31 +7,32 @@
     since the ZED publishes the odom->zed_camera_link transform instead of odom->base_link.
     https://docs.nav2.org/setup_guides/urdf/setup_urdf.html#writing-the-urdf -->
 
-  <!-- NOTE: Future teams might decide to try and get this custom model running in the Gazebo
-    simulation instead of the modified turtlebot3. We think the turtlebot3 is pretty great stand-in
-    for our rover sensor-wise, but for resources on getting this model hooked better into our control 
-    system (other than just providing static transforms) and simulating it in Gazebo, see:
-    https://docs.nav2.org/setup_guides/urdf/setup_urdf.html
-    https://docs.nav2.org/setup_guides/odom/setup_odom_gz_classic.html
-    https://docs.nav2.org/setup_guides/sensors/setup_sensors_gz_classic.html -->
-
   <!-- Rover constants -->
   <xacro:property name="base_width" value="0.5"/>
   <xacro:property name="base_length" value="0.4"/>
   <xacro:property name="base_height" value="0.15"/>
+
   <!-- How far back the rover carriage is compared to the center of the middle wheel -->
   <xacro:property name="base_offset_x" value="0.135"/>
+
   <xacro:property name="wheel_radius" value="0.15"/>
   <xacro:property name="wheel_width" value="0.2"/>
+
   <!-- How far the center of the front wheel is from the center of the middle wheel -->
   <xacro:property name="wheel_xoff" value="0.7"/>
+
   <!-- How far the center of the wheel is from the outside of the base -->
   <xacro:property name="wheel_ygap" value="0.1"/>
+
   <!-- How far down the center of the wheels are from the base center -->
   <xacro:property name="wheel_zoff" value="0.15"/>
+
   <xacro:property name="pole_length" value="0.04"/>
   <xacro:property name="pole_width" value="0.08"/>
   <xacro:property name="pole_height" value="1.2"/>
+
+  <!-- Gazebo simulation plugins -->
+  <xacro:include filename="$(find rover_description)/urdf/rover.gazebo.xacro" />
 
   <!-- Rover base -->
   <link name="base_link">
@@ -43,10 +44,43 @@
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
+    <collision>
+        <geometry>
+            <box size="${base_length} ${base_width} ${base_height}"/>
+        </geometry>
+    </collision>
+    <inertial>
+        <mass value="10"/>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
   </link>
 
+  <!-- Rocker assembly function -->
+  <xacro:macro name="rocker_assembly" params="prefix y_reflect">
+    <link name="${prefix}_rocker_link">
+      <inertial>
+        <mass value="2"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}_rocker_joint" type="revolute">
+      <parent link="base_link"/>
+      <child link="${prefix}_rocker_link"/>
+      <origin xyz="${base_offset_x} ${y_reflect*(base_width/2+wheel_ygap+wheel_width/2)} ${-wheel_zoff}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-${pi/6}" upper="${pi/36}" effort="100" velocity="1.0"/>
+      <dynamics damping="0.5"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Rocker assemblies -->
+  <xacro:rocker_assembly prefix="left" y_reflect="1"/>
+  <xacro:rocker_assembly prefix="right" y_reflect="-1"/>
+
   <!-- Rover wheels function -->
-  <xacro:macro name="wheel" params="prefix x_reflect y_reflect wheel_pos">
+  <xacro:macro name="wheel" params="prefix x_reflect y_reflect wheel_pos y_reflect_prefix">
     <link name="${prefix}_link">
       <visual>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
@@ -57,22 +91,34 @@
           <color rgba="1 1 1 1"/>
         </material>
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+            <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="1"/>
+        <inertia ixx="0.009" ixy="0.0" ixz="0.0" iyy="0.011" iyz="0.0" izz="0.009"/>
+      </inertial>
     </link>
 
-    <joint name="${prefix}_joint" type="fixed">
-      <parent link="base_link"/>
+    <joint name="${prefix}_joint" type="continuous">
+      <parent link="${y_reflect_prefix}_rocker_link"/>
       <child link="${prefix}_link"/>
-      <origin xyz="${x_reflect*(wheel_xoff*(wheel_pos-1))+base_offset_x} ${y_reflect*(base_width/2+wheel_ygap+wheel_width/2)} ${-wheel_zoff}" rpy="0 0 0"/>
+      <origin xyz="${x_reflect*(wheel_xoff*(wheel_pos-1))} 0 0" rpy="0 0 0"/>      <axis xyz="0 1 0"/>
     </joint>
   </xacro:macro>
 
   <!-- Rover wheels -->
-  <xacro:wheel prefix="wheel_left_front" x_reflect="-1" y_reflect="1" wheel_pos="0"/>
-  <xacro:wheel prefix="wheel_left_middle" x_reflect="-1" y_reflect="1" wheel_pos="1"/>
-  <xacro:wheel prefix="wheel_left_rear" x_reflect="-1" y_reflect="1" wheel_pos="2"/>
-  <xacro:wheel prefix="wheel_right_front" x_reflect="-1" y_reflect="-1" wheel_pos="0"/>
-  <xacro:wheel prefix="wheel_right_middle" x_reflect="-1" y_reflect="-1" wheel_pos="1"/>
-  <xacro:wheel prefix="wheel_right_rear" x_reflect="-1" y_reflect="-1" wheel_pos="2"/>
+  <xacro:wheel prefix="wheel_left_middle"  x_reflect="-1" y_reflect="1" wheel_pos="1" y_reflect_prefix="left"/>
+  <xacro:wheel prefix="wheel_right_middle" x_reflect="-1" y_reflect="-1" wheel_pos="1" y_reflect_prefix="right"/>
+
+  <xacro:wheel prefix="wheel_left_front"   x_reflect="-1" y_reflect="1" wheel_pos="0" y_reflect_prefix="left"/>
+  <xacro:wheel prefix="wheel_left_rear"    x_reflect="-1" y_reflect="1" wheel_pos="2" y_reflect_prefix="left"/>
+
+  <xacro:wheel prefix="wheel_right_front"  x_reflect="-1" y_reflect="-1" wheel_pos="0" y_reflect_prefix="right"/>
+  <xacro:wheel prefix="wheel_right_rear"   x_reflect="-1" y_reflect="-1" wheel_pos="2" y_reflect_prefix="right"/>
 
   <!-- Antenna pole -->
   <link name="pole_link">
@@ -84,6 +130,15 @@
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
+    <collision>
+        <geometry>
+            <box size="${pole_length} ${pole_width} ${pole_height}"/>
+        </geometry>
+    </collision>
+    <inertial>
+        <mass value="1"/>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
   </link>
 
   <joint name="pole_joint" type="fixed">
@@ -92,33 +147,43 @@
     <origin xyz="${-base_length/2-pole_length/2} 0 ${-pole_height/2+base_height/2}" rpy="0 0 0"/>
   </joint>
 
-  <!-- Sensors -->
+  <!-- GPS Sensor -->
   <joint name="gps_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gps_link"/>
     <origin xyz="${-base_length/2} 0 ${base_height/2}" rpy="0 0 0"/>
   </joint>
 
-  <link name="gps_link"/>
+  <link name="gps_link">
+    <inertial>
+        <mass value="0.1"/>
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0" iyy="0.1" iyz="0.0" izz="0.1"/>
+    </inertial>
+  </link>
 
-  <!-- https://github.com/unitreerobotics/unilidar_sdk/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/README.md -->
-
-  <joint name="unilidar_lidar_joint" type="fixed">
-    <parent link="pole_link"/>
-    <child link="unilidar_link"/>
-    <origin xyz="${pole_length/2+0.1} 0 -0.05" rpy="0 ${pi/2} 0"/>
+  <!-- Intel Realsense Camera (used by the simulator) -->
+  <joint name="intel_realsense_joint" type="fixed">
+    <parent link="zed_camera_link"/>
+    <child link="intel_realsense_link"/>
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
   </joint>
+  
+  <link name="intel_realsense_link">
+    <inertial>
+        <mass value="0.1"/>
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0" iyy="0.1" iyz="0.0" izz="0.1"/>
+    </inertial>
+  </link>
 
-  <link name="unilidar_link"/>
-
+  <!-- ZED Camera -->
+  <!-- The ZED manages its own internal TF tree -->
   <!-- https://www.stereolabs.com/docs/ros2/140_ros2-robot-integration -->
-
   <joint name="zed_camera_joint" type="fixed">
     <parent link="zed_camera_link"/>
     <child link="pole_link"/>
-    <origin xyz="${-pole_length/2-0.1} 0 -0.05" rpy="0 -0.2 0"/>
+    <origin xyz="${-pole_length/2-0.1} 0 -0.05" rpy="0 -0.1 0"/>
   </joint>
-
+  <!-- NOTE: As the top of the URDF tree, this can't have an intertial attribute -->
   <link name="zed_camera_link"/>
 
 </robot>

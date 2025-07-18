@@ -1,5 +1,5 @@
 # GetFeedback.srv - Nelson Durrant, July 2025
-# Used to retrieve task feedback logs from the rover's GUI
+# Used to retrieve mission feedback logs from the rover's GUI
 
 ---
 string[] feedback_log   # output, the feedback log from the rover GUI

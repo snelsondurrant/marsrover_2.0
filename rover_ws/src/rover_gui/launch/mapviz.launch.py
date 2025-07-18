@@ -3,7 +3,6 @@ import launch
 import launch.actions
 import launch.substitutions
 import launch_ros.actions
-from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 import os

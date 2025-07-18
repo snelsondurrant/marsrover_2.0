@@ -1,6 +1,5 @@
 # Created by Nelson Durrant, Jun 2025
-# SERVICING TASK LAUNCH STRUCTURE
-#
+# SERVICING MISSION LAUNCH STRUCTURE
 # You can edit this code and generate a new PNG file at: https://www.mermaidchart.com/
 ---
 config:
@@ -15,5 +14,4 @@ stateDiagram
   base_launch.sh --> base_servicing.launch.py:rover_bringup
   rover_launch.sh --> rover_servicing.launch.py:rover_bringup
   rover_launch.sh --> rover_common.launch.py:rover_bringup
-  rover_common.launch.py --> mobility.launch.py:rover_control
-  rover_common.launch.py --> peripherals.launch.py:rover_control
+  rover_common.launch.py --> rover_control.launch.py:rover_control

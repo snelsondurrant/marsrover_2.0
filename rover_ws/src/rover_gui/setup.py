@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'autonomy_gui = rover_gui.autonomy_gui:main',
+            'autonomy_gui = rover_gui.autonomy_gui_node:main',
         ],
     },
 )

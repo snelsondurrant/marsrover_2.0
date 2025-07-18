@@ -27,12 +27,12 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "action/AutonomyTask.action"
+  "action/AutonomyMission.action"
   "msg/AutonomyLeg.msg"
   "srv/AddWaypoint.srv"
   "srv/GetFeedback.srv"
   "srv/GetWaypoints.srv"
-  "srv/IsTaskRunning.srv"
+  "srv/IsMissionRunning.srv"
   "srv/RemoveWaypoint.srv"
   "srv/SendWaypoint.srv"
   DEPENDENCIES std_msgs

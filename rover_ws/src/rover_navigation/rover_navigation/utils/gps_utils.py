@@ -72,11 +72,8 @@ def latLon2Meters(lat1, lon1, lat2, lon2):
     Convert GPS coordinates to meters using the UTM library
     """
 
-    # Convert GPS coordinates to UTM
     utm1 = utm.from_latlon(lat1, lon1)
     utm2 = utm.from_latlon(lat2, lon2)
-
-    # Calculate the distance between the two points
     distance = ((utm2[0] - utm1[0]) ** 2 + (utm2[1] - utm1[1]) ** 2) ** 0.5
 
     return distance
@@ -87,13 +84,8 @@ def meters2LatLon(lat, lon, x_offset, y_offset):
     Convert meters to GPS coordinates using the UTM library
     """
 
-    # Convert GPS coordinates to UTM
     utm1 = utm.from_latlon(lat, lon)
-
-    # Calculate the new UTM coordinates
     utm2 = (utm1[0] + x_offset, utm1[1] + y_offset)
-
-    # Convert UTM coordinates back to GPS
     lat2, lon2 = utm.to_latlon(utm2[0], utm2[1], utm1[2], utm1[3])
 
     return lat2, lon2

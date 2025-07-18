@@ -1,0 +1,5 @@
+# IsMissionRunning.srv - Nelson Durrant, July 2025
+# Used to check if a mission is currently running in the GUI
+
+---
+bool is_running     # output, whether a mission is currently running

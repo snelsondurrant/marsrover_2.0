@@ -14,7 +14,9 @@ stateDiagram
   State_Machine --> Nav2:Planned Path WPs
   State_Machine --> Path_Planner:Destination WP
   Path_Planner --> State_Machine:Planned Path WPs
-  Nav2 --> Gazebo:Drive Commands
+  XBox_Controller --> Drive_Mux:Drive Commands
+  Nav2 --> Drive_Mux:Drive Commands
+  Drive_Mux --> Gazebo:Motor Commands
   Gazebo --> EKF:IMU Data
   Gazebo --> EKF:Wheel Odometry
   Gazebo --> EKF:GPS Data

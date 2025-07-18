@@ -24,9 +24,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'drive_mux = rover_control.drive_mux:main',
-            'mega_wrapper = rover_control.mega_wrapper:main',
-            'nano_wrapper = rover_control.nano_wrapper:main',
+            'drive_mux = rover_control.drive_mux_node:main',
+            'mega_wrapper = rover_control.mega_wrapper_node:main',
+            'nano_wrapper = rover_control.nano_wrapper_node:main',
         ],
     },
 )

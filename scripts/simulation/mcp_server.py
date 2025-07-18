@@ -36,7 +36,7 @@ the steps to get started:
 3.  Launch the simulation and try out some commands! Here's a few suggestions to get started:
     - "What city is the rover in? What is it doing rn?"
     - "Describe to me what the rover is seeing right now. What's around it?"
-    - "Add a new GPS waypoint to the GUI. Is a task running already?"
+    - "Add a new GPS waypoint to the GUI. Is a mission running already?"
     - "Navigate to a waypoint 20m north of the rover and look for an ArUco tag."
     - "Drive around and look for anything that could vaguely be a water bottle."
 
@@ -79,7 +79,7 @@ from rover_interfaces.srv import (
     GetWaypoints,
     AddWaypoint,
     RemoveWaypoint,
-    IsTaskRunning,
+    IsMissionRunning,
     SendWaypoint,
     GetFeedback,
 )
@@ -94,7 +94,9 @@ mcp = FastMCP("rover-mcp-server-experimental")
 
 
 def _ros_image_to_mcp_image(ros_image: RosImage, bridge: CvBridge) -> Image:
-    """Converts a sensor_msgs/Image to an MCP Image."""
+    """
+    Converts a sensor_msgs/Image to an MCP Image.
+    """
     try:
         cv_image = bridge.imgmsg_to_cv2(ros_image, desired_encoding="rgb8")
         pil_image = PILImage.fromarray(cv_image)
@@ -107,7 +109,9 @@ def _ros_image_to_mcp_image(ros_image: RosImage, bridge: CvBridge) -> Image:
 
 
 def _occupancy_grid_to_mcp_image(grid_msg: OccupancyGrid) -> Image:
-    """Converts a nav_msgs/OccupancyGrid to an MCP Image."""
+    """
+    Converts a nav_msgs/OccupancyGrid to an MCP Image.
+    """
     width, height = grid_msg.info.width, grid_msg.info.height
     costmap_data = np.array(grid_msg.data, dtype=np.int8).reshape((height, width))
     pixels = np.zeros((height, width, 3), dtype=np.uint8)
@@ -148,13 +152,17 @@ class Simple_ROS2_MCP_Node(Node):
         self.publisher_cache: Dict[str, Publisher] = {}
 
     def _spin_for_future(self, future: Future, timeout_sec: Optional[float] = None):
-        """Spins the node until a future is complete."""
+        """
+        Spins the node until a future is complete.
+        """
         rclpy.spin_until_future_complete(self, future, timeout_sec=timeout_sec)
 
     def get_message(
         self, topic: str, msg_type: Any, qos: QoSProfile, timeout_sec: float
     ) -> Optional[Any]:
-        """Subscribes to a topic and retrieves a single message."""
+        """
+        Subscribes to a topic and retrieves a single message.
+        """
         future = Future()
         sub = self.create_subscription(
             msg_type,
@@ -176,7 +184,9 @@ class Simple_ROS2_MCP_Node(Node):
         publish_count: int = 3,
         qos_profile: QoSProfile = QoSProfile(depth=10),
     ) -> str:
-        """Publishes a pre-made message to a topic a specified number of times."""
+        """
+        Publishes a pre-made message to a topic a specified number of times.
+        """
         publisher = self.publisher_cache.get(topic_name)
         if not publisher:
             publisher = self.create_publisher(msg_type, topic_name, qos_profile)
@@ -193,7 +203,9 @@ class Simple_ROS2_MCP_Node(Node):
     def call_service(
         self, srv_name: str, srv_type: Any, request: Any, timeout_sec: float = 5.0
     ) -> Optional[Any]:
-        """Calls a ROS2 service and waits for the response."""
+        """
+        Calls a ROS2 service and waits for the response.
+        """
         client = self.create_client(srv_type, srv_name)
         try:
             if not client.wait_for_service(timeout_sec=timeout_sec):
@@ -220,7 +232,6 @@ ROS_NODE: Optional[Simple_ROS2_MCP_Node] = None
 ########################
 
 # Rover Sensor Tools
-
 
 @mcp.tool(name="rover_sensors_getGpsFix")
 def rover_sensors_getGpsFix(timeout_sec: float = 5.0) -> str:
@@ -263,7 +274,7 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     """
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
-    msg = ROS_NODE.get_message("/imu", Imu, QoSProfile(depth=1), timeout_sec)
+    msg = ROS_NODE.get_message("/zed/zed_node/imu/data", Imu, QoSProfile(depth=1), timeout_sec)
     return (
         str(msg)
         if msg
@@ -271,6 +282,7 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     )
 
 
+# NOTE: The below is mapped to work in simulation right now
 @mcp.tool(name="rover_sensors_getCameraImage")
 def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
     """
@@ -299,7 +311,6 @@ def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
 
 
 # Rover Data Tools
-
 
 @mcp.tool(name="rover_data_getLocalOdometry")
 def rover_data_getLocalOdometry(timeout_sec: float = 5.0) -> str:
@@ -555,8 +566,8 @@ def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
     function again with both linear_x and angular_z set to 0.
 
     **IMPORTANT!** This will not execute as planned if the rover is currently
-    executing an autonomy task. You must cancel the task first using the
-    rover_autonomy_cancelTask tool.
+    executing an autonomy mission. You must cancel the mission first using the
+    rover_autonomy_cancelMission tool.
 
     Args:
         linear_x: The forward (positive) or backward (negative) velocity in m/s.
@@ -575,7 +586,7 @@ def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
     twist_msg.angular = Vector3(x=0.0, y=0.0, z=angular_z)
 
     return ROS_NODE.publish_message(
-        topic_name="/cmd_vel", msg_type=Twist, message=twist_msg, publish_count=3
+        topic_name="/cmd_vel_teleop", msg_type=Twist, message=twist_msg, publish_count=3
     )
 
 
@@ -613,7 +624,7 @@ def rover_gui_addWaypoint(
     """
     Adds a new waypoint to the mission plan in the Autonomy GUI.
 
-    This allows for building a sequence of tasks for the rover to execute.
+    This allows for building a sequence of missions for the rover to execute.
     Waypoints must have a unique name.
 
     Args:
@@ -676,7 +687,7 @@ def rover_gui_removeWaypoint(name: str) -> str:
 @mcp.tool(name="rover_gui_setTerrainPlanning")
 def rover_gui_setTerrainPlanning(enable: bool) -> str:
     """
-    Enables or disables terrain-aided path planning for autonomy tasks.
+    Enables or disables terrain-aided path planning for autonomy missions.
 
     When enabled, the rover uses a pre-loaded terrain map to plan more efficient paths.
 
@@ -698,23 +709,23 @@ def rover_gui_setTerrainPlanning(enable: bool) -> str:
 # Rover Autonomy Tools
 
 
-@mcp.tool(name="rover_autonomy_isTaskRunning")
-def rover_autonomy_isTaskRunning() -> str:
+@mcp.tool(name="rover_autonomy_isMissionRunning")
+def rover_autonomy_isMissionRunning() -> str:
     """
-    Checks if an autonomy task (a mission plan) is currently being executed by the rover.
+    Checks if an autonomy mission plan is currently being executed by the rover.
 
     Returns:
         The full service response as a string.
     """
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
-    req = IsTaskRunning.Request()
+    req = IsMissionRunning.Request()
     response = ROS_NODE.call_service(
-        "/autonomy_gui/is_task_running", IsTaskRunning, req
+        "/autonomy_gui/is_mission_running", IsMissionRunning, req
     )
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_isTaskRunning] Service call to '/autonomy_gui/is_task_running' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_autonomy_isMissionRunning] Service call to '/autonomy_gui/is_mission_running' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
 @mcp.tool(name="rover_autonomy_sendWaypoint")
@@ -722,7 +733,7 @@ def rover_autonomy_sendWaypoint(name: str) -> str:
     """
     Commands the rover to execute a single waypoint from the mission plan.
 
-    This will fail if a task is already running.
+    This will fail if a mission is already running.
 
     Args:
         name: The unique name of the waypoint to execute.
@@ -744,7 +755,7 @@ def rover_autonomy_sendAllWaypoints() -> str:
     """
     Commands the rover to execute the entire mission plan (all loaded waypoints).
 
-    This will fail if a task is already running.
+    This will fail if a mission is already running.
 
     Returns:
         The full service response as a string.
@@ -761,7 +772,7 @@ def rover_autonomy_sendAllWaypoints() -> str:
 @mcp.tool(name="rover_autonomy_getFeedback")
 def rover_autonomy_getFeedback() -> str:
     """
-    Retrieves the full text log from the Autonomy GUI's 'Task Feedback' display.
+    Retrieves the full text log from the Autonomy GUI's 'Mission Feedback' display.
 
     Returns:
         The full service response as a string.
@@ -775,12 +786,12 @@ def rover_autonomy_getFeedback() -> str:
     return "[ERROR: rover_autonomy_getFeedback] Service call to '/autonomy_gui/get_feedback' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_autonomy_cancelTask")
-def rover_autonomy_cancelTask() -> str:
+@mcp.tool(name="rover_autonomy_cancelMission")
+def rover_autonomy_cancelMission() -> str:
     """
-    Immediately cancels any autonomy task that is currently running.
+    Immediately cancels any autonomy mission that is currently running.
 
-    If no task is running, this will report a failure.
+    If no mission is running, this will report a failure.
 
     Returns:
         The full service response as a string.
@@ -788,10 +799,10 @@ def rover_autonomy_cancelTask() -> str:
     if not ROS_NODE:
         return "[ERROR: System] The ROS 2 gateway node is not running. Please restart the server."
     req = Trigger.Request()
-    response = ROS_NODE.call_service("/autonomy_gui/cancel_task", Trigger, req)
+    response = ROS_NODE.call_service("/autonomy_gui/cancel_mission", Trigger, req)
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_cancelTask] Service call to '/autonomy_gui/cancel_task' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_autonomy_cancelMission] Service call to '/autonomy_gui/cancel_mission' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
 def main():

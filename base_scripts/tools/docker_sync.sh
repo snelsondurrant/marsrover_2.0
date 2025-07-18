@@ -6,19 +6,9 @@
 script_dir=$(dirname "$(readlink -f "$0")")
 source $script_dir/base_common.sh
 
-# Check for a "-u <username>" argument
-while getopts ":u:" opt; do
-  case $opt in
-    u)
-      ROVER_USERNAME=$OPTARG
-      ;;
-  esac
-done
-
 # Check for an SSH connection to the rover
 checkConnection # defined in base_common.sh
 
-# Check the architecture of the rover
 rover_arch=$(ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS "uname -m")
 if [[ "$rover_arch" == "aarch64" ]]; then
     rover_id="linux/arm64"
@@ -26,7 +16,6 @@ else
     rover_id="linux/amd64"
 fi
 
-# Pull the platform-specific version of the Docker image
 printInfo "Pulling the $rover_id version of the Docker image onto the base station..."
 docker pull --platform $rover_id byuawesomerover/marsrover_2.0:latest
 docker image list
