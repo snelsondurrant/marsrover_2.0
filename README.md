@@ -1,34 +1,12 @@
-[Get Started](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#get-started)
+[Get Started](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#get-started)
 
-[Essential Tutorials](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
+[Essential Tutorials](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#essential-tutorials)
 
-[How-To Videos](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#how-to-videos)
+[How-To Videos](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#how-to-videos)
 
-[Software Diagrams](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#software-diagrams)
+[Software Diagrams](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#software-diagrams)
 
-[Contributing](https://github.com/BYUMarsRover/marsrover_2.0?tab=readme-ov-file#contributing)
-
---
-
-> **TO THE 2026 MARS ROVER TEAM:** I've helped with writing a decent amount of robot software from scratch here at BYU, and oftentimes have been part of a team that runs up against some architecture-based limitations later on (usually too integrated into our software at that point to change) that we really wished we would have understood better before we started. With the shift from ROS1 to ROS2 in the 2024-2025 Capstone year, I saw an opportunity to prevent some of those future problems and put in 30+ hours of research on robotics development best practices at the beginning of the Winter 2025 semester -- and learned A TON about the open-source tools and software structure professional robotic projects use. After a short coding spree, this repository is the synthesis of our current approach with some of those best practices, including:
-> - A Dockerized full-mission Gazebo simulator for rapid development and validation
-> - Industry-standard Nav2 dynamic path planning and hazard avoidance
-> - Tuned and tested EKF for fusing odometry sources with GPS data
-> - A fully-defined map->odom->robot TF tree and rover URDF
-> - LLM integration using MCP for natural language control of the rover
-> - Lots and lots of QOL and scripting updates
-> 
-> I've successfully completed GPS, aruco, and object detection legs with this code running on the rover just behind the EB (even navigating between and around the trees and posts!). I've probably completed hundreds more in simulation, testing outlier cases like blocked hex points. However, when I've tried to increase the rover speed on our physical hardware to as quick as we'd need to run it at competition, the CPU can't keep up with the depth cloud processing from the ZED camera for object avoidance and we don't recognize obstacles in time before crashing into them. Even with CPU cost-cutting measures, it's clear that we simply just don't have the processing power on the Jetson Orin to run Nav2 hazard avoidance at the speed we need to to compete. We need a more powerful computer -- a laptop with a GPU or similar -- or another SBC in addition to the Orin. (Admittedly, I haven't had enough rover time to test mapping the point cloud to a laser scan or just using a LiDAR sensor instead to lower the costmap computation load, but I don't think we should be so close to the CPU limit regardless.)
->
-> Due to the needed structural changes, this code was written mostly from scratch and doesn't share a lot of similarities with the Autonomy-ROS2 repo. It definitely is a marked shift in a new direction. <mark>In short, however, I think there's clear 100-point potential in this approach and these open-source tools. I'd encourage the 2026 team to [mess around with the simulator to understand a bit better how it all works](https://youtu.be/ZFADRaRCdOU), run some tests on the rover, consider investing in a more powerful computing stack, and then revisit development on this code base.</mark>
->
-> I'll be starting my Master's program at BYU in Fall 2025, but would be more than happy to help answer any questions or help you get started with it. One small step for a rover, one giant leap for roverkind!
->
-> Nelson Durrant
->
-> --
->
-> **MAY 2025 UPDATE:** We actually acquired a laptop with a GPU a couple of weeks before competition! However, we determined our team's familiarity with debugging and working with the previous software was more of an asset than the advantages this new stack would offer for the 2025 competition.
+[Contributing](https://github.com/snelsondurrant/marsrover_2.0?tab=readme-ov-file#contributing)
 
 --
 
