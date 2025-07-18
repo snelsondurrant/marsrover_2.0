@@ -1,7 +1,7 @@
 ~
 Hello there, wonderful wizard of ROS! 🧙‍♂️
 Here are some useful tmux commands to get you started: https://tmuxcheatsheet.com/
-Use 'Ctrl+b d' to detach from the session when you're done (do NOT use 'exit').
+Use 'Ctrl+b d' to detach from the session when you're done (or 'exit' to discard it).
 
 This dev environment is not configured to use the rover's ROS_DISCOVERY_SERVER.
 ~
