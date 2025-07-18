@@ -18,7 +18,9 @@ class TerrainGraph(AStar):
     :date: Apr 2025
     """
 
-    def __init__(self, elevation_data, transform, elev_cost, elev_limit, roll_cost, roll_limit):
+    def __init__(
+        self, elevation_data, transform, elev_cost, elev_limit, roll_cost, roll_limit
+    ):
         self.elevation_data = elevation_data
         self.transform = transform
         self.rows, self.cols = elevation_data.shape
@@ -90,11 +92,11 @@ class TerrainGraph(AStar):
             left_elevation = self.elevation_data[left_neighbor]
             right_elevation = self.elevation_data[right_neighbor]
             roll_diff = abs(left_elevation - right_elevation)
-            
+
         if elevation_diff > self.elev_limit:
             # If it's too steep, report an infinite cost
             return float("inf")
-        
+
         if roll_diff > self.roll_limit:
             # If the roll is too steep, report an infinite cost
             return float("inf")
@@ -160,7 +162,9 @@ def downsample_points(num_points, des_dist):
     return sorted(list(selected_indices_set))
 
 
-def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost, elev_limit, roll_cost, roll_limit):
+def terrainPathPlanner(
+    start_geopose, end_geopose, wp_dist, elev_cost, elev_limit, roll_cost, roll_limit
+):
     """
     Generate intermediary waypoints between two GPS coordinates with terrain consideration
 
@@ -206,7 +210,9 @@ def terrainPathPlanner(start_geopose, end_geopose, wp_dist, elev_cost, elev_limi
         utm_zone = start_utm_zone
 
         # Initialize and run A*
-        terrain_graph = TerrainGraph(elevation_data, transform, elev_cost, elev_limit, roll_cost, roll_limit)
+        terrain_graph = TerrainGraph(
+            elevation_data, transform, elev_cost, elev_limit, roll_cost, roll_limit
+        )
         path_pixels = terrain_graph.astar(start_pixel, end_pixel)
         if not path_pixels:
             raise Exception("No viable path found by terrain-based AStar planner")

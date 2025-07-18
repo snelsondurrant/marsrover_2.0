@@ -9,7 +9,7 @@ ekf_filter_node_odom: # outputs to the odometry/local topic
   # This publishes the odom->zed_camera_link transform
 
   # THIS ONLY RUNS IN SIMULATION!
-  # - When not in sim, the ZED calculates and manages the odom->zed_camera_link transform 
+  # - When not in sim, the ZED calculates and manages the odom->zed_camera_link transform
   #   internally: https://www.stereolabs.com/docs/ros2/positional-tracking
 
   ros__parameters:

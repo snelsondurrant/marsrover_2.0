@@ -33,9 +33,7 @@ class DriveMux(Node):
     def __init__(self):
         super().__init__("drive_mux")
 
-        self.nav_sub = self.create_subscription(
-            Twist, "cmd_vel", self.nav_callback, 10
-        )
+        self.nav_sub = self.create_subscription(Twist, "cmd_vel", self.nav_callback, 10)
         self.nav_sub  # prevent unused variable warning
         self.teleop_sub = self.create_subscription(
             Twist, "cmd_vel_teleop", self.teleop_callback, 10

@@ -7,7 +7,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    
+
     gz_dir = get_package_share_directory("rover_gazebo")
     gz_launch_dir = os.path.join(gz_dir, "launch")
 
@@ -22,22 +22,28 @@ def generate_launch_description():
             "GAZEBO_MODEL_PATH", gz_model_path
         )
     else:
-        set_gz_model_path_cmd = SetEnvironmentVariable(
-            "GAZEBO_MODEL_PATH", models_dir
-        )
+        set_gz_model_path_cmd = SetEnvironmentVariable("GAZEBO_MODEL_PATH", models_dir)
 
     # Spawn the rover in the simulation
     spawn_rover_cmd = Node(
-        package='gazebo_ros',
-        executable='spawn_entity.py',
-        name='urdf_spawner',
-        output='screen',
-        arguments=["-topic", "/robot_description",
-                   "-entity", "rover",
-                   "-x", "-54.5",
-                   "-y", "127.8",
-                   "-z", "0.3",
-                   "-Y", "0.0"]
+        package="gazebo_ros",
+        executable="spawn_entity.py",
+        name="urdf_spawner",
+        output="screen",
+        arguments=[
+            "-topic",
+            "/robot_description",
+            "-entity",
+            "rover",
+            "-x",
+            "-54.5",
+            "-y",
+            "127.8",
+            "-z",
+            "0.3",
+            "-Y",
+            "0.0",
+        ],
     )
 
     # Start the Gazebo server
@@ -77,12 +83,24 @@ def generate_launch_description():
             Node(
                 package="topic_tools",
                 executable="relay",
+                name="gz_points_relay",
                 output="screen",
                 arguments=[
                     "/intel_realsense_r200_depth/points",
-                    "/zed/zed_node/point_cloud/cloud_registered"
-                ]
-            )
+                    "/zed/zed_node/point_cloud/cloud_registered",
+                ],
+            ),
+            # Remap the camera feed to what we'd see in real life (for experimental MCP server)
+            Node(
+                package="topic_tools",
+                executable="relay",
+                name="gz_image_relay",
+                output="screen",
+                arguments=[
+                    "/intel_realsense_r200_depth/image_raw",
+                    "/zed/zed_node/rgb/image_rect_color",
+                ],
+            ),
         ]
     )
 

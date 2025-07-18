@@ -60,7 +60,7 @@ def basicOrderPlanner(legs, fix):
     """
     Brute force the optimal order to complete the mission legs (based on distance)
 
-    This is an NP-hard problem, but we deal with such small numbers of legs that we can brute force a 
+    This is an NP-hard problem, but we deal with such small numbers of legs that we can brute force a
     basic optimal solution in a reasonable time.
 
     TODO: In the future, order planning should probably be done on the base station before sending the

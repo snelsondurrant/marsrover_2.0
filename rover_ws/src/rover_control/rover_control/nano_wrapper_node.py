@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 import serial
 from std_msgs.msg import Int8
+
 # from rover_msgs.msg import NavState, Battery, Gripper, RawBattery, Laser, Clicker
 import time
 import threading
@@ -22,14 +23,14 @@ class NanoWrapper(Node):
     """
 
     def __init__(self):
-        super().__init__('nano_wrapper')
-        
+        super().__init__("nano_wrapper")
+
         self.q = queue.Queue()
         # Publishers
         # self.battery_pub = self.create_publisher(RawBattery, '/raw_battery_info', 10)
-        
+
         # Subscribers
-        self.create_subscription(Int8, '/nav_state', self.led_callback, 10)
+        self.create_subscription(Int8, "/nav_state", self.led_callback, 10)
         # self.create_subscription(Gripper, '/gripper', self.gripper_callback, 10)
         # self.create_subscription(Laser, '/laser_state', self.laser_callback, 10)
         # self.create_subscription(Clicker, '/click', self.click_callback, 10)
@@ -53,7 +54,6 @@ class NanoWrapper(Node):
         # Default no-operation values
         # self.gripper = 0
         # self.navigation_state = -1
-        
 
     def led_callback(self, data):
         # Update LED based on the rover state

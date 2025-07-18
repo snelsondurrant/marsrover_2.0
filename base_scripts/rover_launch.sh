@@ -8,11 +8,11 @@ source $script_dir/tools/base_common.sh
 
 # Check for a "-m <mission>" argument
 while getopts ":m:" opt; do
-  case $opt in
-    t)
-      mission=$OPTARG
-      ;;
-  esac
+    case $opt in
+        m)
+            mission=$OPTARG
+        ;;
+    esac
 done
 
 # Check for an SSH connection to the rover
@@ -32,7 +32,7 @@ case $mission in
         envsubst < tmuxp/autonomy/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
         scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
         ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
+            "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "servicing")
         printInfo "Setting up the servicing mission..."
@@ -40,7 +40,7 @@ case $mission in
         envsubst < tmuxp/servicing/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
         scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
         ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
+            "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "delivery")
         printInfo "Setting up the delivery mission..."
@@ -48,7 +48,7 @@ case $mission in
         envsubst < tmuxp/delivery/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
         scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
         ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
+            "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     "science")
         printInfo "Setting up the science mission..."
@@ -56,7 +56,7 @@ case $mission in
         envsubst < tmuxp/science/rover_launch.yaml > tmuxp/tmp/rover_launch.yaml
         scp tmuxp/tmp/rover_launch.yaml $ROVER_USERNAME@$ROVER_IP_ADDRESS:~/marsrover_2.0/base_scripts/tmuxp/tmp/
         ssh $ROVER_USERNAME@$ROVER_IP_ADDRESS \
-          "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
+            "docker exec marsrover-ct tmuxp load -d /home/marsrover-docker/.tmuxp/rover_launch.yaml"
         ;;
     *)
         printError "No mission specified"

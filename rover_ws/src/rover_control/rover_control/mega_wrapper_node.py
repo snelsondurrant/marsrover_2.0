@@ -129,7 +129,7 @@ class MegaWrapper(Node):
             self.ser.close()
 
     def serial_writer_loop(self):
-        while rclpy.ok(): # Checks if the node is still running
+        while rclpy.ok():  # Checks if the node is still running
             if not self.handshake:
                 self.write_debug("Orin: Waiting for Arduino handshake")
                 time.sleep(1)

@@ -29,65 +29,65 @@
 
 namespace rover_behaviors
 {
-using SpinAction = nav2_msgs::action::Spin;
+    using SpinAction = nav2_msgs::action::Spin;
 
-/**
- * @class nav2_behaviors::CustomSpin
- * @brief An action server behavior for spinning in
- */
-class CustomSpin : public nav2_behaviors::TimedBehavior<SpinAction>
-{
-public:
-  /**
-   * @brief A constructor for nav2_behaviors::CustomSpin
-   */
-  CustomSpin();
-  ~CustomSpin();
+    /**
+     * @class nav2_behaviors::CustomSpin
+     * @brief An action server behavior for spinning in
+     */
+    class CustomSpin : public nav2_behaviors::TimedBehavior<SpinAction>
+    {
+    public:
+        /**
+         * @brief A constructor for nav2_behaviors::CustomSpin
+         */
+        CustomSpin();
+        ~CustomSpin();
 
-  /**
-   * @brief Initialization to run behavior
-   * @param command Goal to execute
-   * @return Status of behavior
-   */
-   nav2_behaviors::Status onRun(const std::shared_ptr<const SpinAction::Goal> command) override;
+        /**
+         * @brief Initialization to run behavior
+         * @param command Goal to execute
+         * @return Status of behavior
+         */
+        nav2_behaviors::Status onRun(const std::shared_ptr<const SpinAction::Goal> command) override;
 
-  /**
-   * @brief Configuration of behavior action
-   */
-  void onConfigure() override;
+        /**
+         * @brief Configuration of behavior action
+         */
+        void onConfigure() override;
 
-  /**
-   * @brief Loop function to run behavior
-   * @return Status of behavior
-   */
-   nav2_behaviors::Status onCycleUpdate() override;
+        /**
+         * @brief Loop function to run behavior
+         * @return Status of behavior
+         */
+        nav2_behaviors::Status onCycleUpdate() override;
 
-protected:
-  /**
-   * @brief Check if pose is collision free
-   * @param distance Distance to check forward
-   * @param cmd_vel current commanded velocity
-   * @param pose2d Current pose
-   * @return is collision free or not
-   */
-  bool isCollisionFree(
-    const double & distance,
-    geometry_msgs::msg::Twist * cmd_vel,
-    geometry_msgs::msg::Pose2D & pose2d);
+    protected:
+        /**
+         * @brief Check if pose is collision free
+         * @param distance Distance to check forward
+         * @param cmd_vel current commanded velocity
+         * @param pose2d Current pose
+         * @return is collision free or not
+         */
+        bool isCollisionFree(
+            const double &distance,
+            geometry_msgs::msg::Twist *cmd_vel,
+            geometry_msgs::msg::Pose2D &pose2d);
 
-  SpinAction::Feedback::SharedPtr feedback_;
+        SpinAction::Feedback::SharedPtr feedback_;
 
-  double min_rotational_vel_;
-  double max_rotational_vel_;
-  double rotational_acc_lim_;
-  double cmd_yaw_;
-  double prev_yaw_;
-  double relative_yaw_;
-  double simulate_ahead_time_;
-  rclcpp::Duration command_time_allowance_{0, 0};
-  rclcpp::Time end_time_;
-};
+        double min_rotational_vel_;
+        double max_rotational_vel_;
+        double rotational_acc_lim_;
+        double cmd_yaw_;
+        double prev_yaw_;
+        double relative_yaw_;
+        double simulate_ahead_time_;
+        rclcpp::Duration command_time_allowance_{0, 0};
+        rclcpp::Time end_time_;
+    };
 
-}  // namespace nav2_behaviors
+} // namespace nav2_behaviors
 
-#endif  // NAV2_BEHAVIORS__PLUGINS__CUSTOM_SPIN_HPP_
+#endif // NAV2_BEHAVIORS__PLUGINS__CUSTOM_SPIN_HPP_
