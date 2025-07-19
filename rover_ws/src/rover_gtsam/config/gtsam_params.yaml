@@ -1,6 +1,13 @@
 # Created by Nelson Durrant, July 2025
 gtsam_localizer_node:
   ros__parameters:
+    imu_topic: "/imu"
+    gps_odom_topic: "/odometry/gps"
+    global_odom_topic: "/odometry/global"
     map_frame: "map"
     odom_frame: "odom"
-    base_link_frame: "base_footprint"
+    base_link_frame: "zed_camera_link"
+    factor_graph_update_rate: 1.0 # Hz
+    odom_publish_rate: 10.0 # Hz
+    # Enable publishing of map->odom transform
+    publish_global_tf: true # true or false
