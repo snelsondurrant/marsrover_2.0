@@ -54,7 +54,7 @@ def generate_launch_description():
                     ("gps/fix", "gps/fix"),
                     ("gps/filtered", "gps/filtered"),
                     ("odometry/gps", "odometry/gps"),
-                    ("odometry/filtered", "odometry/global"),
+                    ("odometry/filtered", "odometry/local"), # fix for GTSAM setup
                 ],
             ),
             launch_ros.actions.Node(

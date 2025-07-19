@@ -1,7 +1,7 @@
 # Created by Nelson Durrant, July 2025
 gtsam_localizer_node:
   ros__parameters:
-    imu_topic: "/imu"
+    imu_topic: "zed/zed_node/imu/data"
     gps_odom_topic: "/odometry/gps"
     global_odom_topic: "/odometry/global"
     map_frame: "map"
