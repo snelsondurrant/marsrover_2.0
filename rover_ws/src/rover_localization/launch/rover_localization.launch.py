@@ -32,15 +32,16 @@ def generate_launch_description():
                 remappings=[("odometry/filtered", "odometry/local")],
                 condition=IfCondition(use_sim_time),
             ),
+            # We'll use GTSAM for the global estimate instead of the EKF
             # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
-            launch_ros.actions.Node(
-                package="robot_localization",
-                executable="ekf_node",
-                name="ekf_filter_node_map",
-                output="screen",
-                parameters=[loc_params_file, {"use_sim_time": use_sim_time}],
-                remappings=[("odometry/filtered", "odometry/global")],
-            ),
+            # launch_ros.actions.Node(
+            #     package="robot_localization",
+            #     executable="ekf_node",
+            #     name="ekf_filter_node_map",
+            #     output="screen",
+            #     parameters=[loc_params_file, {"use_sim_time": use_sim_time}],
+            #     remappings=[("odometry/filtered", "odometry/global")],
+            # ),
             # https://docs.ros.org/en/melodic/api/robot_localization/html/navsat_transform_node.html
             launch_ros.actions.Node(
                 package="robot_localization",
