@@ -69,7 +69,7 @@ private:
         this->declare_parameter<std::string>("base_link_frame", "base_link");
         this->declare_parameter<double>("factor_graph_update_rate", 1.0); // Hz
         this->declare_parameter<double>("odom_publish_rate", 10.0);       // Hz
-        this->declare_parameter<bool>("publish_global_tf", true);       // true or false
+        this->declare_parameter<bool>("publish_global_tf", true);         // true or false
 
         imu_topic_ = this->get_parameter("imu_topic").as_string();
         gps_odom_topic_ = this->get_parameter("gps_odom_topic").as_string();
