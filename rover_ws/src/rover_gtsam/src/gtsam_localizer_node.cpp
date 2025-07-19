@@ -66,7 +66,7 @@ private:
         this->declare_parameter<std::string>("global_odom_topic", "/odometry/global");
         this->declare_parameter<std::string>("map_frame", "map");
         this->declare_parameter<std::string>("odom_frame", "odom");
-        this->declare_parameter<std::string>("base_link_frame", "base_link");
+        this->declare_parameter<std::string>("base_frame", "base_link");
         this->declare_parameter<double>("factor_graph_update_rate", 1.0); // Hz
         this->declare_parameter<double>("odom_publish_rate", 10.0);       // Hz
         this->declare_parameter<bool>("publish_global_tf", true);         // true or false
@@ -76,7 +76,7 @@ private:
         global_odom_topic_ = this->get_parameter("global_odom_topic").as_string();
         map_frame_ = this->get_parameter("map_frame").as_string();
         odom_frame_ = this->get_parameter("odom_frame").as_string();
-        base_link_frame_ = this->get_parameter("base_link_frame").as_string();
+        base_frame_ = this->get_parameter("base_frame").as_string();
         factor_graph_update_rate_ = this->get_parameter("factor_graph_update_rate").as_double();
         odom_publish_rate_ = this->get_parameter("odom_publish_rate").as_double();
         publish_global_tf_ = this->get_parameter("publish_global_tf").as_bool();
@@ -86,7 +86,7 @@ private:
         RCLCPP_INFO(this->get_logger(), "Global odometry topic: %s", global_odom_topic_.c_str());
         RCLCPP_INFO(this->get_logger(), "Map frame: %s", map_frame_.c_str());
         RCLCPP_INFO(this->get_logger(), "Odometry frame: %s", odom_frame_.c_str());
-        RCLCPP_INFO(this->get_logger(), "Base link frame: %s", base_link_frame_.c_str());
+        RCLCPP_INFO(this->get_logger(), "Base frame: %s", base_frame_.c_str());
         RCLCPP_INFO(this->get_logger(), "Factor graph update rate: %.2f Hz", factor_graph_update_rate_);
         RCLCPP_INFO(this->get_logger(), "Odometry publish rate: %.2f Hz", odom_publish_rate_);
         RCLCPP_INFO(this->get_logger(), "Publish global TF: %s", publish_global_tf_ ? "true" : "false");
@@ -191,7 +191,7 @@ private:
             try
             {
                 odom_to_base_transform = tf_buffer_->lookupTransform(
-                    base_link_frame_, odom_frame_, tf2::TimePointZero);
+                    base_frame_, odom_frame_, tf2::TimePointZero);
             }
             catch (const tf2::TransformException &ex)
             {
@@ -226,7 +226,7 @@ private:
         nav_msgs::msg::Odometry odom_msg;
         odom_msg.header.stamp = this->get_clock()->now();
         odom_msg.header.frame_id = map_frame_;
-        odom_msg.child_frame_id = base_link_frame_;
+        odom_msg.child_frame_id = base_frame_;
         odom_msg.pose.pose.position.x = prev_pose_.x();
         odom_msg.pose.pose.position.y = prev_pose_.y();
         odom_msg.pose.pose.position.z = prev_pose_.z();
@@ -263,7 +263,7 @@ private:
 
     // Parameters
     std::string imu_topic_, gps_odom_topic_, global_odom_topic_;
-    std::string map_frame_, odom_frame_, base_link_frame_;
+    std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
     bool publish_global_tf_;
 };
