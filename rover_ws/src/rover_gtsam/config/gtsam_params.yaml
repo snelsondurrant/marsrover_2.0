@@ -9,5 +9,5 @@ gtsam_localizer_node:
     base_link_frame: "zed_camera_link"
     factor_graph_update_rate: 1.0 # Hz
     odom_publish_rate: 10.0 # Hz
-    # Enable publishing of map->odom transform
+    # Enable publishing of map_frame->odom_frame transform
     publish_global_tf: true # true or false
