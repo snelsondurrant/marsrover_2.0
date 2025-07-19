@@ -22,12 +22,6 @@ def generate_launch_description():
     return LaunchDescription(
         [
             declare_use_sim_time_cmd,
-            launch.actions.DeclareLaunchArgument(
-                "output_final_position", default_value="false"
-            ),
-            launch.actions.DeclareLaunchArgument(
-                "output_location", default_value="~/dual_ekf_navsat_example_debug.txt"
-            ),
             launch_ros.actions.Node(
                 # This only launches in simulation
                 package="robot_localization",
