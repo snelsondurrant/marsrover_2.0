@@ -22,12 +22,12 @@ class GtsamLocalizerNode : public rclcpp::Node
      * NOTE: The below topics and frames can be configured via parameters.
      *
      * Subscribers:
-     * - /imu (sensor_msgs::msg::Imu): IMU data from the onboard sensor.
-     * - /odometry/gps (nav_msgs::msg::Odometry): GPS odometry from 'navsat_transform_node'
-     * - odom->base_link (tf2_ros::Buffer): Odom coordinate transform from the EKF.
+     * - imu_sub_ (sensor_msgs::msg::Imu): IMU data from the onboard sensor.
+     * - gps_odom_sub_ (nav_msgs::msg::Odometry): GPS odometry from 'navsat_transform_node'
+     * - odom_frame_->base_frame_ (tf2_ros::Buffer): Odom coordinate transform from the EKF.
      * Publishers:
-     * - /odometry/global (nav_msgs::msg::Odometry): Global odometry estimate.
-     * - map->odom (tf2_ros::TransformBroadcaster): Calculated map coordinate transform.
+     * - global_odom_pub_ (nav_msgs::msg::Odometry): Global odometry estimate.
+     * - map_frame_->odom_frame_ (tf2_ros::TransformBroadcaster): Calculated map coordinate transform.
      */
 public:
     GtsamLocalizerNode() : Node("gtsam_localizer_node")
