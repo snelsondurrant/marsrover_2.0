@@ -1,5 +1,5 @@
 {
-  "name": "rover-extension",
+  "name": "rover-mcp-extension",
   "version": "1.0.0",
   "mcpServers": {
     "roverMcpServerExperimental": {
