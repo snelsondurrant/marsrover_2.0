@@ -15,14 +15,14 @@ the steps to get started:
     of the filesystem tools, add the following config to 'claude_desktop_config.json':
 
     "mcpServers": {
-        "roverMcpServerExperimental": {
-            "type": "command",
-            "command": "docker",
-            "args": [
-                "exec", "-i", "marsrover-ct", "bash", "-c",
-                "source /home/marsrover-docker/rover_ws/install/setup.bash && uv run /home/marsrover-docker/scripts/simulation/mcp_server.py"
-            ]
-        }
+      "roverMcpServerExperimental": {
+        "type": "command",
+        "command": "docker",
+        "args": [
+          "exec", "-i", "marsrover-ct", "bash", "-c",
+          "source /home/marsrover-docker/rover_ws/install/setup.bash && uv run /home/marsrover-docker/scripts/simulation/mcp_server.py"
+        ]
+      }
     }
 
 2.  Make sure the Docker container is up and running in the background and relaunch Claude Desktop.
@@ -47,8 +47,9 @@ the steps to get started:
 
 NOTE: As of now this also works (besides the image-based tools) with Gemini CLI as well, and I'm
 sure other multi-modal LLM providers will add MCP support in the near future -- it's a pretty
-quickly-growing standard. Claude Desktop is the best I've found so far tho.
+quickly-growing standard. Claude Desktop is the best-performing I've found so far tho.
 https://github.com/google-gemini/gemini-cli?tab=readme-ov-file#quickstart
+https://github.com/google-gemini/gemini-cli/issues/2136
 
 Nelson Durrant, July 2025
 """
