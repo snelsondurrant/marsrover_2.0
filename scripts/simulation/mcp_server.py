@@ -55,6 +55,8 @@ Nelson Durrant, July 2025
 """
 
 import io
+import random
+import string
 from typing import Any, Dict, Optional
 
 import matplotlib.pyplot as plt
@@ -148,7 +150,12 @@ class Simple_ROS2_MCP_Node(Node):
     """
 
     def __init__(self):
-        super().__init__("simple_ros2_mcp_node")
+
+        # Fix for multiple MCP clients
+        unique_suffix = ''.join(random.choices(string.digits, k=5))
+        node_name = f"simple_ros2_mcp_node_{unique_suffix}"
+
+        super().__init__(node_name)
         self.bridge = CvBridge()
         self.publisher_cache: Dict[str, Publisher] = {}
 
