@@ -43,6 +43,8 @@ target_include_directories(gtsam_localizer_node PUBLIC
 target_link_libraries(gtsam_localizer_node
   ${GTSAM_LIBRARIES}
   gtsam
+  # The IncrementalFixedLagSmoother requires the unstable GTSAM library
+  gtsam_unstable
 )
 
 # Install the executable

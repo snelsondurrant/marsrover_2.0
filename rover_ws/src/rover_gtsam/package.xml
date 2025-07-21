@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <!-- <depend>gtsam</depend> -->
+  <depend>gtsam</depend>
   <depend>eigen</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>

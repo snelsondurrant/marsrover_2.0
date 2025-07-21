@@ -7,7 +7,27 @@ gtsam_localizer_node:
     map_frame: "map"
     odom_frame: "odom"
     base_frame: "zed_camera_link"
-    factor_graph_update_rate: 1.0 # Hz
-    odom_publish_rate: 10.0 # Hz
+    factor_graph_update_rate: 10.0 # Hz (Corrected from 1.0)
+    odom_publish_rate: 10.0        # Hz
     # Enable publishing of map_frame->odom_frame transform
-    publish_global_tf: true # true or false
+    publish_global_tf: true      # true or false
+
+    # Smoother lag in seconds
+    smoother_lag: 2.0
+
+    # --- Measurement Noise ---
+    # Lower value = more trust in the sensor
+    accel_noise_sigma: 0.1       # Corrected from 10.0
+    gyro_noise_sigma: 0.01      # Corrected from 1.0
+    gps_noise_sigma: 0.05
+    # IMU bias random walk noise
+    accel_bias_rw_sigma: 0.01
+    gyro_bias_rw_sigma: 0.001
+
+    # --- Initial State Prior Noise ---
+    # Certainty of the very first state based on the first GPS message
+    # Lower value = more confident in the initial state
+    prior_pose_rot_sigma: 0.01
+    prior_pose_pos_sigma: 0.01
+    prior_vel_sigma: 0.1
+    prior_bias_sigma: 0.1
