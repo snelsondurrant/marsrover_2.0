@@ -15,7 +15,7 @@ the steps to get started:
     of the filesystem tools, add the following config to 'claude_desktop_config.json':
 
     "mcpServers": {
-      "roverMcpServerExperimental": {
+      "rover-experimental": {
         "type": "command",
         "command": "docker",
         "args": [
@@ -242,8 +242,8 @@ ROS_NODE: Optional[Simple_ROS2_MCP_Node] = None
 # Rover Sensor Tools
 
 
-@mcp.tool(name="rover_sensors_getGpsFix")
-def rover_sensors_getGpsFix(timeout_sec: float = 5.0) -> str:
+@mcp.tool(name="rover_get_gps_fix")
+def rover_get_gps_fix(timeout_sec: float = 5.0) -> str:
     """
     Retrieves the latest raw GPS data (a NavSatFix message) from the rover.
 
@@ -262,12 +262,12 @@ def rover_sensors_getGpsFix(timeout_sec: float = 5.0) -> str:
     return (
         str(msg)
         if msg
-        else "[ERROR: rover_sensors_getGpsFix] Timed out waiting for a message on the '/gps/fix' topic. Is the GPS publisher running?"
+        else "[ERROR: rover_get_gps_fix] Timed out waiting for a message on the '/gps/fix' topic. Is the GPS publisher running?"
     )
 
 
-@mcp.tool(name="rover_sensors_getImuData")
-def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
+@mcp.tool(name="rover_get_imu_data")
+def rover_get_imu_data(timeout_sec: float = 5.0) -> str:
     """
     Retrieves the latest Inertial Measurement Unit (IMU) data.
 
@@ -289,12 +289,12 @@ def rover_sensors_getImuData(timeout_sec: float = 5.0) -> str:
     return (
         str(msg)
         if msg
-        else "[ERROR: rover_sensors_getImuData] Timed out waiting for a message on the '/imu' topic. Is the IMU publisher running?"
+        else "[ERROR: rover_get_imu_data] Timed out waiting for a message on the '/imu' topic. Is the IMU publisher running?"
     )
 
 
-@mcp.tool(name="rover_sensors_getCameraImage")
-def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
+@mcp.tool(name="rover_get_camera_image")
+def rover_get_camera_image(timeout_sec: float = 10.0) -> Image:
     """
     Retrieves a single color image from the rover's forward-facing camera.
 
@@ -316,15 +316,15 @@ def rover_sensors_getCameraImage(timeout_sec: float = 10.0) -> Image:
         timeout_sec,
     )
     if not ros_image:
-        return "[ERROR: rover_sensors_getCameraImage] Timed out waiting for an image on the '/intel_realsense_r200_depth/image_raw' topic. Is the camera node publishing?"
+        return "[ERROR: rover_get_camera_image] Timed out waiting for an image on the '/intel_realsense_r200_depth/image_raw' topic. Is the camera node publishing?"
     return _ros_image_to_mcp_image(ros_image, ROS_NODE.bridge)
 
 
 # Rover Data Tools
 
 
-@mcp.tool(name="rover_data_getLocalOdometry")
-def rover_data_getLocalOdometry(timeout_sec: float = 5.0) -> str:
+@mcp.tool(name="rover_get_local_odometry")
+def rover_get_local_odometry(timeout_sec: float = 5.0) -> str:
     """
     Retrieves the rover's local odometry data.
 
@@ -346,12 +346,12 @@ def rover_data_getLocalOdometry(timeout_sec: float = 5.0) -> str:
     return (
         str(msg)
         if msg
-        else "[ERROR: rover_data_getLocalOdometry] Timed out waiting for a message on the '/odometry/local' topic. Is the odometry node running?"
+        else "[ERROR: rover_get_local_odometry] Timed out waiting for a message on the '/odometry/local' topic. Is the odometry node running?"
     )
 
 
-@mcp.tool(name="rover_data_getGlobalOdometry")
-def rover_data_getGlobalOdometry(timeout_sec: float = 5.0) -> str:
+@mcp.tool(name="rover_get_global_odometry")
+def rover_get_global_odometry(timeout_sec: float = 5.0) -> str:
     """
     Retrieves the rover's global odometry data.
 
@@ -373,12 +373,12 @@ def rover_data_getGlobalOdometry(timeout_sec: float = 5.0) -> str:
     return (
         str(msg)
         if msg
-        else "[ERROR: rover_data_getGlobalOdometry] Timed out waiting for a message on the '/odometry/global' topic. Is the sensor fusion (e.g., EKF) node running?"
+        else "[ERROR: rover_get_global_odometry] Timed out waiting for a message on the '/odometry/global' topic. Is the sensor fusion (e.g., EKF) node running?"
     )
 
 
-@mcp.tool(name="rover_data_getArucoDetections")
-def rover_data_getArucoDetections(timeout_sec: int = 5) -> str:
+@mcp.tool(name="rover_get_aruco_detections")
+def rover_get_aruco_detections(timeout_sec: int = 5) -> str:
     """
     Retrieves the latest detected ArUco (visual fiducial) markers.
 
@@ -398,12 +398,12 @@ def rover_data_getArucoDetections(timeout_sec: int = 5) -> str:
     return (
         str(msg)
         if msg
-        else "[ERROR: rover_data_getArucoDetections] Timed out waiting for a message on the '/aruco_detections' topic. Is ArUco detection enabled?"
+        else "[ERROR: rover_get_aruco_detections] Timed out waiting for a message on the '/aruco_detections' topic. Is ArUco detection enabled?"
     )
 
 
-@mcp.tool(name="rover_data_getObjectDetections")
-def rover_data_getObjectDetections(timeout_sec: int = 5) -> str:
+@mcp.tool(name="rover_get_object_detections")
+def rover_get_object_detections(timeout_sec: int = 5) -> str:
     """
     Retrieves the latest object detections from the camera's neural network.
 
@@ -426,12 +426,12 @@ def rover_data_getObjectDetections(timeout_sec: int = 5) -> str:
     return (
         str(msg)
         if msg
-        else "[ERROR: rover_data_getObjectDetections] Timed out waiting for a message on the '/zed/zed_node/obj_det/objects' topic. Is ZED object detection enabled?"
+        else "[ERROR: rover_get_object_detections] Timed out waiting for a message on the '/zed/zed_node/obj_det/objects' topic. Is ZED object detection enabled?"
     )
 
 
-@mcp.tool(name="rover_data_getLocalCostmapImage")
-def rover_data_getLocalCostmapImage(timeout_sec: int = 10) -> Image:
+@mcp.tool(name="rover_get_local_costmap_image")
+def rover_get_local_costmap_image(timeout_sec: int = 10) -> Image:
     """
     Generates an image of the rover's local costmap for immediate obstacle avoidance.
 
@@ -459,12 +459,12 @@ def rover_data_getLocalCostmapImage(timeout_sec: int = 10) -> Image:
         "/local_costmap/costmap", OccupancyGrid, qos, timeout_sec
     )
     if not msg:
-        return "[ERROR: rover_data_getLocalCostmapImage] Timed out waiting for data on the '/local_costmap/costmap' topic. Is the navigation stack running?"
+        return "[ERROR: rover_get_local_costmap_image] Timed out waiting for data on the '/local_costmap/costmap' topic. Is the navigation stack running?"
     return _occupancy_grid_to_mcp_image(msg)
 
 
-@mcp.tool(name="rover_data_getGlobalCostmapImage")
-def rover_data_getGlobalCostmapImage(timeout_sec: int = 10) -> Image:
+@mcp.tool(name="rover_get_global_costmap_image")
+def rover_get_global_costmap_image(timeout_sec: int = 10) -> Image:
     """
     Generates an image of the rover's global costmap for long-range path planning.
 
@@ -492,22 +492,22 @@ def rover_data_getGlobalCostmapImage(timeout_sec: int = 10) -> Image:
         "/global_costmap/costmap", OccupancyGrid, qos, timeout_sec
     )
     if not msg:
-        return "[ERROR: rover_data_getGlobalCostmapImage] Timed out waiting for data on the '/global_costmap/costmap' topic. Is the navigation stack running?"
+        return "[ERROR: rover_get_global_costmap_image] Timed out waiting for data on the '/global_costmap/costmap' topic. Is the navigation stack running?"
     return _occupancy_grid_to_mcp_image(msg)
 
 
 # Rover Mode Tools
 
 
-@mcp.tool(name="rover_mode_enableArucoDetection")
-def rover_mode_enableArucoDetection(enable: bool, timeout_sec: float = 5.0) -> str:
+@mcp.tool(name="rover_enable_aruco_detection")
+def rover_enable_aruco_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     """
     Enables or disables the ArUco marker detection node.
 
     **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
 
     This function controls a lifecycle node. Enabling activates it, and disabling
-    deactivates it. This is necessary before using rover_data_getArucoDetections.
+    deactivates it. This is necessary before using rover_get_aruco_detections.
 
     Args:
         enable: Set to True to enable detection, False to disable.
@@ -531,17 +531,17 @@ def rover_mode_enableArucoDetection(enable: bool, timeout_sec: float = 5.0) -> s
 
     if response:
         return str(response)
-    return "[ERROR: rover_mode_enableArucoDetection] Service call to '/aruco_tracker/change_state' timed out or the service is unavailable. Is the ArUco tracker node running?"
+    return "[ERROR: rover_enable_aruco_detection] Service call to '/aruco_tracker/change_state' timed out or the service is unavailable. Is the ArUco tracker node running?"
 
 
-@mcp.tool(name="rover_mode_enableObjectDetection")
-def rover_mode_enableObjectDetection(enable: bool, timeout_sec: float = 5.0) -> str:
+@mcp.tool(name="rover_enable_object_detection")
+def rover_enable_object_detection(enable: bool, timeout_sec: float = 5.0) -> str:
     """
     Enables or disables the ZED camera's object detection module.
 
     **IMPORTANT!** Disable when not in use to avoid unnecessary resource usage.
 
-    This must be enabled before using rover_data_getObjectDetections.
+    This must be enabled before using rover_get_object_detections.
 
     Args:
         enable: Set to True to enable detection, False to disable.
@@ -561,14 +561,14 @@ def rover_mode_enableObjectDetection(enable: bool, timeout_sec: float = 5.0) -> 
 
     if response:
         return str(response)
-    return "[ERROR: rover_mode_enableObjectDetection] Service call to '/zed/zed_node/enable_obj_det' timed out or the service is unavailable. Is the ZED node running?"
+    return "[ERROR: rover_enable_object_detection] Service call to '/zed/zed_node/enable_obj_det' timed out or the service is unavailable. Is the ZED node running?"
 
 
 # Rover Actuator Tools
 
 
-@mcp.tool(name="rover_actuators_driveRover")
-def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
+@mcp.tool(name="rover_drive_rover")
+def rover_drive_rover(linear_x: float, angular_z: float) -> str:
     """
     Sends a non-blocking velocity command to the rover.
 
@@ -578,7 +578,7 @@ def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
 
     **IMPORTANT!** This will not execute as planned if the rover is currently
     executing an autonomy mission. You must cancel the mission first using the
-    rover_autonomy_cancelMission tool.
+    rover_cancel_mission tool.
 
     Args:
         linear_x: The forward (positive) or backward (negative) velocity in m/s.
@@ -604,8 +604,8 @@ def rover_actuators_driveRover(linear_x: float, angular_z: float) -> str:
 # Rover GUI Tools
 
 
-@mcp.tool(name="rover_gui_getAllWaypoints")
-def rover_gui_getAllWaypoints() -> str:
+@mcp.tool(name="rover_get_all_waypoints")
+def rover_get_all_waypoints() -> str:
     """
     Retrieves a list of all waypoints currently loaded in the Autonomy GUI.
 
@@ -620,11 +620,11 @@ def rover_gui_getAllWaypoints() -> str:
     response = ROS_NODE.call_service("/autonomy_gui/get_waypoints", GetWaypoints, req)
     if response:
         return str(response)
-    return "[ERROR: rover_gui_getAllWaypoints] Service call to '/autonomy_gui/get_waypoints' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_get_all_waypoints] Service call to '/autonomy_gui/get_waypoints' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_gui_addWaypoint")
-def rover_gui_addWaypoint(
+@mcp.tool(name="rover_add_waypoint")
+def rover_add_waypoint(
     name: str,
     waypoint_type: str,
     latitude: float,
@@ -660,21 +660,21 @@ def rover_gui_addWaypoint(
 
     if waypoint_type == "aruco":
         if tag_id is None:
-            return "[ERROR: rover_gui_addWaypoint] Invalid arguments. The 'tag_id' parameter is required for 'aruco' waypoint types."
+            return "[ERROR: rover_add_waypoint] Invalid arguments. The 'tag_id' parameter is required for 'aruco' waypoint types."
         req.leg.tag_id = tag_id
     elif waypoint_type == "obj":
         if object_name is None:
-            return "[ERROR: rover_gui_addWaypoint] Invalid arguments. The 'object_name' parameter is required for 'obj' waypoint types."
+            return "[ERROR: rover_add_waypoint] Invalid arguments. The 'object_name' parameter is required for 'obj' waypoint types."
         req.leg.object = object_name
 
     response = ROS_NODE.call_service("/autonomy_gui/add_waypoint", AddWaypoint, req)
     if response:
         return str(response)
-    return "[ERROR: rover_gui_addWaypoint] Service call to '/autonomy_gui/add_waypoint' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_add_waypoint] Service call to '/autonomy_gui/add_waypoint' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_gui_removeWaypoint")
-def rover_gui_removeWaypoint(name: str) -> str:
+@mcp.tool(name="rover_remove_waypoint")
+def rover_remove_waypoint(name: str) -> str:
     """
     Removes a waypoint from the mission plan by its unique name.
 
@@ -692,11 +692,11 @@ def rover_gui_removeWaypoint(name: str) -> str:
     )
     if response:
         return str(response)
-    return "[ERROR: rover_gui_removeWaypoint] Service call to '/autonomy_gui/remove_waypoint' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_remove_waypoint] Service call to '/autonomy_gui/remove_waypoint' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_gui_setTerrainPlanning")
-def rover_gui_setTerrainPlanning(enable: bool) -> str:
+@mcp.tool(name="rover_set_terrain_planning")
+def rover_set_terrain_planning(enable: bool) -> str:
     """
     Enables or disables terrain-aided path planning for autonomy missions.
 
@@ -714,14 +714,14 @@ def rover_gui_setTerrainPlanning(enable: bool) -> str:
     response = ROS_NODE.call_service("/autonomy_gui/set_terrain_planning", SetBool, req)
     if response:
         return str(response)
-    return "[ERROR: rover_gui_setTerrainPlanning] Service call to '/autonomy_gui/set_terrain_planning' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_set_terrain_planning] Service call to '/autonomy_gui/set_terrain_planning' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
 # Rover Autonomy Tools
 
 
-@mcp.tool(name="rover_autonomy_isMissionRunning")
-def rover_autonomy_isMissionRunning() -> str:
+@mcp.tool(name="rover_is_mission_running")
+def rover_is_mission_running() -> str:
     """
     Checks if an autonomy mission plan is currently being executed by the rover.
 
@@ -736,11 +736,11 @@ def rover_autonomy_isMissionRunning() -> str:
     )
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_isMissionRunning] Service call to '/autonomy_gui/is_mission_running' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_is_mission_running] Service call to '/autonomy_gui/is_mission_running' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_autonomy_sendWaypoint")
-def rover_autonomy_sendWaypoint(name: str) -> str:
+@mcp.tool(name="rover_send_waypoint")
+def rover_send_waypoint(name: str) -> str:
     """
     Commands the rover to execute a single waypoint from the mission plan.
 
@@ -758,11 +758,11 @@ def rover_autonomy_sendWaypoint(name: str) -> str:
     response = ROS_NODE.call_service("/autonomy_gui/send_waypoint", SendWaypoint, req)
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_sendWaypoint] Service call to '/autonomy_gui/send_waypoint' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_send_waypoint] Service call to '/autonomy_gui/send_waypoint' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_autonomy_sendAllWaypoints")
-def rover_autonomy_sendAllWaypoints() -> str:
+@mcp.tool(name="rover_send_all_waypoints")
+def rover_send_all_waypoints() -> str:
     """
     Commands the rover to execute the entire mission plan (all loaded waypoints).
 
@@ -777,11 +777,11 @@ def rover_autonomy_sendAllWaypoints() -> str:
     response = ROS_NODE.call_service("/autonomy_gui/send_all_waypoints", Trigger, req)
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_sendAllWaypoints] Service call to '/autonomy_gui/send_all_waypoints' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_send_all_waypoints] Service call to '/autonomy_gui/send_all_waypoints' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_autonomy_getFeedback")
-def rover_autonomy_getFeedback() -> str:
+@mcp.tool(name="rover_get_mission_feedback")
+def rover_get_mission_feedback() -> str:
     """
     Retrieves the full text log from the Autonomy GUI's 'Mission Feedback' display.
 
@@ -794,11 +794,11 @@ def rover_autonomy_getFeedback() -> str:
     response = ROS_NODE.call_service("/autonomy_gui/get_feedback", GetFeedback, req)
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_getFeedback] Service call to '/autonomy_gui/get_feedback' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_get_mission_feedback] Service call to '/autonomy_gui/get_feedback' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
-@mcp.tool(name="rover_autonomy_cancelMission")
-def rover_autonomy_cancelMission() -> str:
+@mcp.tool(name="rover_cancel_mission")
+def rover_cancel_mission() -> str:
     """
     Immediately cancels any autonomy mission that is currently running.
 
@@ -813,7 +813,7 @@ def rover_autonomy_cancelMission() -> str:
     response = ROS_NODE.call_service("/autonomy_gui/cancel_mission", Trigger, req)
     if response:
         return str(response)
-    return "[ERROR: rover_autonomy_cancelMission] Service call to '/autonomy_gui/cancel_mission' timed out or the service is unavailable. Is the autonomy GUI running?"
+    return "[ERROR: rover_cancel_mission] Service call to '/autonomy_gui/cancel_mission' timed out or the service is unavailable. Is the autonomy GUI running?"
 
 
 def main():

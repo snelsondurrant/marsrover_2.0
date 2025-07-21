@@ -1,8 +1,8 @@
 {
-  "name": "rover-mcp-extension",
+  "name": "rover-extension",
   "version": "1.0.0",
   "mcpServers": {
-    "roverMcpServerExperimental": {
+    "rover-experimental": {
       "type": "command",
       "command": "docker",
       "args": [
