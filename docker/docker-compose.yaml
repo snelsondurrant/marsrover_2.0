@@ -5,7 +5,7 @@ services:
     container_name: marsrover-ct
     build: 
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: gtsam/Dockerfile
     user: marsrover-docker
     network_mode: host
     privileged: true
