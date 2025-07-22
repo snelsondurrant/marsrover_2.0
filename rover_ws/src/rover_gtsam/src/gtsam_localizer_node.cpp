@@ -293,7 +293,7 @@ private:
 
         // --- Configure IMU Pre-integration ---
         auto imu_params = gtsam::PreintegratedCombinedMeasurements::Params::MakeSharedU();
-        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81); // ENU, so gravity is in the negative Z direction
+        // With a NED frame, the default from MakeSharedU() is correct.
         imu_params->accelerometerCovariance = gtsam::Matrix33::Identity() * pow(accel_noise_sigma_, 2);
         imu_params->gyroscopeCovariance = gtsam::Matrix33::Identity() * pow(gyro_noise_sigma_, 2);
         imu_params->biasAccCovariance = gtsam::Matrix33::Identity() * pow(accel_bias_rw_sigma_, 2);
@@ -303,14 +303,39 @@ private:
         // --- Set Initial State ---
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
 
-        gtsam::Rot3 initial_rotation = gtsam::Rot3::Quaternion(
+        // To properly initialize, we use the IMU's filtered orientation for roll and pitch,
+        // and the GPS/compass odometry for the initial yaw.
+        if (imu_queue_.empty())
+        {
+            RCLCPP_FATAL(this->get_logger(), "IMU queue is empty during initialization! Cannot determine initial orientation.");
+            return;
+        }
+
+        // Get the orientation from the latest IMU message.
+        auto last_imu = imu_queue_.back();
+        gtsam::Rot3 imu_orientation = gtsam::Rot3::Quaternion(last_imu->orientation.w,
+                                                            last_imu->orientation.x,
+                                                            last_imu->orientation.y,
+                                                            last_imu->orientation.z);
+
+        // Get the initial yaw from the GPS odometry message.
+        gtsam::Rot3 gps_orientation = gtsam::Rot3::Quaternion(
             initial_gps->pose.pose.orientation.w, initial_gps->pose.pose.orientation.x,
             initial_gps->pose.pose.orientation.y, initial_gps->pose.pose.orientation.z);
+        
+        // Extract roll/pitch from IMU and yaw from GPS.
+        double imu_roll = imu_orientation.roll();
+        double imu_pitch = imu_orientation.pitch();
+        double gps_yaw = gps_orientation.yaw();
+
+        // Combine them for a complete and accurate initial rotation.
+        gtsam::Rot3 initial_rotation = gtsam::Rot3::Ypr(gps_yaw, imu_pitch, imu_roll);
+
         gtsam::Point3 initial_position(
             initial_gps->pose.pose.position.x, initial_gps->pose.pose.position.y, initial_gps->pose.pose.position.z);
 
         prev_pose_ = gtsam::Pose3(initial_rotation, initial_position);
-        prev_vel_ = gtsam::Vector3(0, 0, 0);         // Assume starting from rest
+        prev_vel_ = gtsam::Vector3(0, 0, 0);       // Assume starting from rest
         prev_bias_ = gtsam::imuBias::ConstantBias(); // Assume zero initial bias
 
         imu_preintegrator_ = std::make_unique<gtsam::PreintegratedCombinedMeasurements>(imu_params, prev_bias_);
@@ -322,7 +347,7 @@ private:
         // Priors define the initial uncertainty in our state.
         auto pose_noise = gtsam::noiseModel::Diagonal::Sigmas(
             (gtsam::Vector(6) << gtsam::Vector3::Constant(prior_pose_rot_sigma_),
-             gtsam::Vector3::Constant(prior_pose_pos_sigma_))
+            gtsam::Vector3::Constant(prior_pose_pos_sigma_))
                 .finished());
         auto vel_noise = gtsam::noiseModel::Isotropic::Sigma(3, prior_vel_sigma_);
         auto bias_noise = gtsam::noiseModel::Isotropic::Sigma(6, prior_bias_sigma_);
