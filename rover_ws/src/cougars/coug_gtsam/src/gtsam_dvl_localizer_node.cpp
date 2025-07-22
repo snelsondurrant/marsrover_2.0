@@ -1,12 +1,15 @@
 /**
  * @file gtsam_dvl_localizer_node.cpp
- * @brief Fuses IMU, GPS, DVL, depth, and heading data using a GTSAM Fixed-Lag Smoother with IMU pre-integration.
+ * @brief Fuses IMU, GPS, DVL, Depth, and Heading data using a GTSAM Fixed-Lag Smoother.
  * @author Nelson Durrant
  * @date July 2025
  *
  * Subscribes:
  * - /imu/data (sensor_msgs/msg/Imu)
  * - /odometry/gps (nav_msgs/msg/Odometry)
+ * - /dvl/data (geometry_msgs/msg/TwistWithCovarianceStamped)
+ * - /depth/data (sensor_msgs/msg/Range)
+ * - /heading/data (sensor_msgs/msg/Imu)
  * - 'odom' -> 'base_link' transform
  * Publishes:
  * - /odometry/global (nav_msgs/msg/Odometry)
@@ -23,6 +26,8 @@
 #include <deque>
 #include <cmath>
 
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/range.hpp>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Rot3.h>
 #include <gtsam/navigation/CombinedImuFactor.h>
@@ -36,11 +41,89 @@
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/navigation/NavState.h>
 #include <gtsam_unstable/nonlinear/IncrementalFixedLagSmoother.h>
+#include <gtsam/nonlinear/NonlinearFactor.h>
 
 // GTSAM symbol shorthand
 using gtsam::symbol_shorthand::B; // Bias (ax,ay,az,gx,gy,gz)
 using gtsam::symbol_shorthand::V; // Velocity (x,y,z)
 using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
+
+/**
+ * @brief Unary factor for a DVL measurement. Assumes DVL velocity is in the global frame.
+ * TODO: Gemini 2.5 Pro helped convert these from Matthew's code, needs to be tested.
+ */
+class DVLFactor : public gtsam::NoiseModelFactor1<gtsam::Vector3>
+{
+    gtsam::Vector3 measured_velocity_;
+
+public:
+    DVLFactor(gtsam::Key velKey, const gtsam::Vector3 &measured_velocity, const gtsam::SharedNoiseModel &model)
+        : NoiseModelFactor1<gtsam::Vector3>(model, velKey), measured_velocity_(measured_velocity) {}
+
+    gtsam::Vector evaluateError(const gtsam::Vector3 &vel,
+                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+    {
+        if (H)
+        {
+            (*H) = gtsam::Matrix33::Identity();
+        }
+        return vel - measured_velocity_;
+    }
+};
+
+/**
+ * @brief Unary factor for a depth measurement (constrains the Z component of a Pose3).
+ * TODO: Gemini 2.5 Pro helped convert these from Matthew's code, needs to be tested.
+ */
+class DepthFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
+{
+    double measured_depth_; // Expects negative value for depth (Z-down)
+
+public:
+    DepthFactor(gtsam::Key poseKey, double measured_depth, const gtsam::SharedNoiseModel &model)
+        : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_depth_(measured_depth) {}
+
+    gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
+                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+    {
+        if (H)
+        {
+            // Jacobian of the error wrt the Pose3's 6 DOF local coordinates (body-centric)
+            // Error = pose.z - measured_z.
+            // d(error)/d(pose) = [0,0,0, 0,0,1] * d(pose.translation)/d(pose)
+            // The derivative of world z wrt local perturbations is (0,0,0, 0,0,1) for Pose3.
+            *H = (gtsam::Matrix(1, 6) << 0.0, 0.0, 0.0, 0.0, 0.0, 1.0).finished();
+        }
+        return gtsam::Vector1(pose.z() - measured_depth_);
+    }
+};
+
+/**
+ * @brief Unary factor for an absolute heading/orientation measurement.
+ * TODO: Gemini 2.5 Pro helped convert these from Matthew's code, needs to be tested.
+ */
+class HeadingFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
+{
+    gtsam::Rot3 measured_rot_;
+
+public:
+    HeadingFactor(gtsam::Key poseKey, const gtsam::Rot3 &measured_rot, const gtsam::SharedNoiseModel &model)
+        : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_rot_(measured_rot) {}
+
+    gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
+                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+    {
+        if (H)
+        {
+            // Jacobian of the error wrt the Pose3's 6 DOF local coordinates
+            // Error depends only on rotation, so derivative wrt translation is zero.
+            // Derivative wrt rotation is Identity.
+            *H = (gtsam::Matrix(3, 6) << gtsam::Matrix3::Identity(), gtsam::Matrix3::Zero()).finished();
+        }
+        // Error is the difference in tangent space
+        return measured_rot_.localCoordinates(pose.rotation());
+    }
+};
 
 class GtsamLocalizerNode : public rclcpp::Node
 {
@@ -68,6 +151,9 @@ private:
         map_frame_ = this->declare_parameter<std::string>("map_frame", "map");
         odom_frame_ = this->declare_parameter<std::string>("odom_frame", "odom");
         base_frame_ = this->declare_parameter<std::string>("base_frame", "base_link");
+        dvl_topic_ = this->declare_parameter<std::string>("dvl_topic", "/dvl/data");
+        depth_topic_ = this->declare_parameter<std::string>("depth_topic", "/depth/data");
+        heading_topic_ = this->declare_parameter<std::string>("heading_topic", "/heading/data");
 
         // --- Node Settings ---
         factor_graph_update_rate_ = this->declare_parameter<double>("factor_graph_update_rate", 10.0); // Hz
@@ -81,6 +167,9 @@ private:
         accel_bias_rw_sigma_ = this->declare_parameter<double>("imu.accel_bias_rw_sigma", 1.0e-4); // m/s^3
         gyro_bias_rw_sigma_ = this->declare_parameter<double>("imu.gyro_bias_rw_sigma", 1.0e-5);   // rad/s^2
         gps_noise_sigma_ = this->declare_parameter<double>("gps.noise_sigma", 0.5);                // meters
+        dvl_noise_sigma_ = this->declare_parameter<double>("dvl.noise_sigma", 0.1);                // m/s
+        depth_noise_sigma_ = this->declare_parameter<double>("depth.noise_sigma", 0.1);            // meters
+        heading_noise_sigma_ = this->declare_parameter<double>("heading.noise_sigma", 0.05);       // rad
 
         // --- Initial State Prior Uncertainty (Standard Deviations) ---
         prior_pose_rot_sigma_ = this->declare_parameter<double>("prior.pose_rot_sigma", 0.05); // rad
@@ -104,6 +193,12 @@ private:
             imu_topic_, 200, std::bind(&GtsamLocalizerNode::imuCallback, this, std::placeholders::_1));
         gps_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
             gps_odom_topic_, 20, std::bind(&GtsamLocalizerNode::gpsOdomCallback, this, std::placeholders::_1));
+        dvl_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
+            dvl_topic_, 20, std::bind(&GtsamLocalizerNode::dvlCallback, this, std::placeholders::_1));
+        depth_sub_ = this->create_subscription<sensor_msgs::msg::Range>(
+            depth_topic_, 20, std::bind(&GtsamLocalizerNode::depthCallback, this, std::placeholders::_1));
+        heading_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
+            heading_topic_, 20, std::bind(&GtsamLocalizerNode::headingCallback, this, std::placeholders::_1));
 
         factor_graph_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(1000.0 / factor_graph_update_rate_)),
@@ -114,20 +209,34 @@ private:
             std::bind(&GtsamLocalizerNode::odomPublishTimerCallback, this));
     }
 
-    /**
-     * @brief Stores incoming IMU messages in a (thread-safe) queue.
-     */
+    /** @brief Stores incoming IMU messages. */
     void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         imu_queue_.push_back(msg);
     }
 
-    /**
-     * @brief Stores incoming GPS odometry messages in a (thread-safe) queue.
-     */
+    /** @brief Stores incoming GPS odometry messages. */
     void gpsOdomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         gps_queue_.push_back(msg);
+    }
+
+    /** @brief Stores incoming DVL messages. */
+    void dvlCallback(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
+    {
+        dvl_queue_.push_back(msg);
+    }
+
+    /** @brief Stores incoming Depth messages. */
+    void depthCallback(const sensor_msgs::msg::Range::SharedPtr msg)
+    {
+        depth_queue_.push_back(msg);
+    }
+
+    /** @brief Stores incoming Heading messages. */
+    void headingCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    {
+        heading_queue_.push_back(msg);
     }
 
     /**
@@ -166,6 +275,27 @@ private:
             gps_queue_.clear();
         }
 
+        geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr latest_dvl;
+        if (!dvl_queue_.empty())
+        {
+            latest_dvl = dvl_queue_.back();
+            dvl_queue_.clear();
+        }
+
+        sensor_msgs::msg::Range::SharedPtr latest_depth;
+        if (!depth_queue_.empty())
+        {
+            latest_depth = depth_queue_.back();
+            depth_queue_.clear();
+        }
+
+        sensor_msgs::msg::Imu::SharedPtr latest_heading;
+        if (!heading_queue_.empty())
+        {
+            latest_heading = heading_queue_.back();
+            heading_queue_.clear();
+        }
+
         // --- IMU Pre-integration ---
         double last_imu_time = prev_time_;
         for (const auto &imu_msg : imu_measurements)
@@ -177,7 +307,7 @@ private:
             {
                 gtsam::Vector3 accel(imu_msg->linear_acceleration.x, imu_msg->linear_acceleration.y, imu_msg->linear_acceleration.z);
                 gtsam::Vector3 gyro(imu_msg->angular_velocity.x, imu_msg->angular_velocity.y, imu_msg->angular_velocity.z);
-                
+
                 // Transform IMU data into the base frame (to account for different mounting configs).
                 try
                 {
@@ -233,7 +363,7 @@ private:
 
             // Determine which node (previous or current) is closer in time.
             // This seems like a simple way to solve the problem Matthew and Braden identified before.
-            bool closer_to_prev = (gps_time - prev_time_) < (last_imu_time - gps_time);
+            bool closer_to_prev = std::abs(gps_time - prev_time_) < std::abs(last_imu_time - gps_time);
             long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
 
             RCLCPP_DEBUG(this->get_logger(), "GPS measurement at time %.4f. Attaching to node %lu (time %.4f).",
@@ -247,6 +377,48 @@ private:
 
             // Add the GPS unary factor to the graph, connected to the chosen target node.
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
+        }
+
+        // If we have a DVL measurement, add a DVL unary factor to the closest node in time.
+        if (latest_dvl)
+        {
+            // Do we need to convert this into the base frame? I think so
+            double dvl_time = rclcpp::Time(latest_dvl->header.stamp).seconds();
+            bool closer_to_prev = std::abs(dvl_time - prev_time_) < std::abs(last_imu_time - dvl_time);
+            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
+
+            gtsam::Vector3 dvl_vel(latest_dvl->twist.twist.linear.x, latest_dvl->twist.twist.linear.y, latest_dvl->twist.twist.linear.z);
+            auto dvl_noise = gtsam::noiseModel::Isotropic::Sigma(3, dvl_noise_sigma_);
+            new_graph.emplace_shared<DVLFactor>(V(target_node_key), dvl_vel, dvl_noise);
+        }
+
+        // If we have a depth measurement, add a Depth unary factor to the closest node in time.
+        if (latest_depth)
+        {
+            double depth_time = rclcpp::Time(latest_depth->header.stamp).seconds();
+            bool closer_to_prev = std::abs(depth_time - prev_time_) < std::abs(last_imu_time - depth_time);
+            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
+
+            // ROS Range reports positive distance. Depth is negative Z in ENU frame.
+            double depth_z = -latest_depth->range;
+            auto depth_noise = gtsam::noiseModel::Isotropic::Sigma(1, depth_noise_sigma_);
+            new_graph.emplace_shared<DepthFactor>(X(target_node_key), depth_z, depth_noise);
+        }
+
+        // If we have a heading measurement, add a Heading unary factor to the closest node in time.
+        if (latest_heading)
+        {
+            // Do we need to convert this into the base frame? I think so
+            double heading_time = rclcpp::Time(latest_heading->header.stamp).seconds();
+            bool closer_to_prev = std::abs(heading_time - prev_time_) < std::abs(last_imu_time - heading_time);
+            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
+
+            gtsam::Rot3 heading_rot = gtsam::Rot3::Quaternion(latest_heading->orientation.w,
+                                                              latest_heading->orientation.x,
+                                                              latest_heading->orientation.y,
+                                                              latest_heading->orientation.z);
+            auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
+            new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot, heading_noise);
         }
 
         // Insert the predicted state as an initial estimate for the new state.
@@ -448,6 +620,9 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr global_odom_pub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr gps_odom_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr dvl_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::Range>::SharedPtr depth_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr heading_sub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -457,6 +632,9 @@ private:
     // --- Message Queues ---
     std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue_;
     std::deque<nav_msgs::msg::Odometry::SharedPtr> gps_queue_;
+    std::deque<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> dvl_queue_;
+    std::deque<sensor_msgs::msg::Range::SharedPtr> depth_queue_;
+    std::deque<sensor_msgs::msg::Imu::SharedPtr> heading_queue_;
 
     // --- System State ---
     bool system_initialized_ = false;
@@ -472,14 +650,15 @@ private:
     gtsam::imuBias::ConstantBias prev_bias_;
 
     // --- Parameters ---
-    std::string imu_topic_, gps_odom_topic_, global_odom_topic_;
+    std::string imu_topic_, gps_odom_topic_, dvl_topic_, depth_topic_, heading_topic_;
+    std::string global_odom_topic_;
     std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
     bool publish_global_tf_;
     double smoother_lag_;
     double accel_noise_sigma_, gyro_noise_sigma_;
     double accel_bias_rw_sigma_, gyro_bias_rw_sigma_;
-    double gps_noise_sigma_;
+    double gps_noise_sigma_, dvl_noise_sigma_, depth_noise_sigma_, heading_noise_sigma_;
     double prior_pose_rot_sigma_, prior_pose_pos_sigma_;
     double prior_vel_sigma_;
     double prior_bias_sigma_;
