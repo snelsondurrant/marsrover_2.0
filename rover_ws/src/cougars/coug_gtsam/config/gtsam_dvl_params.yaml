@@ -2,15 +2,15 @@
 gtsam_dvl_localizer_node:
   ros__parameters:
     # --- ROS Topics and Frames ---
-    imu_topic: "imu/data"
+    imu_topic: "/imu/data" # TODO: Update this! Do we even have a main IMU on the CougUV rn tho?
     gps_odom_topic: "/odometry/gps"
-    dvl_topic: "/dvl/data"
-    depth_odom_topic: "/odometry/depth"
-    heading_topic: "/heading/data"
+    dvl_topic: "/dvl/data" # TODO: Update this! Should be the DVL velocity topic.
+    depth_odom_topic: "/odometry/depth" # TODO: Update this! Might need conversion to odom first.
+    heading_topic: "/heading/data" # TODO: Update this! From the SeaTrac modem?
     global_odom_topic: "/odometry/global"
     map_frame: "map"
     odom_frame: "odom"
-    base_frame: "zed_camera_link"
+    base_frame: "base_link"
 
     # --- Node Settings ---
     factor_graph_update_rate: 10.0 # Hz

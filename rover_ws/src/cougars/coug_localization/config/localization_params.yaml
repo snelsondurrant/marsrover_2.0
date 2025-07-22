@@ -12,8 +12,8 @@ ekf_filter_node_odom:
     base_link_frame: base_link
     world_frame: odom
 
-    # Input 0: DVL for body-frame velocity.
-    twist0: /dvl/data
+    # Input 0: Velocity from the Waterlinked DVL.
+    twist0: /dvl/data # TODO: Update this!
     twist0_config: [false, false, false, # X, Y, Z
                     false, false, false, # Roll, Pitch, Yaw
                     true,  true,  true,  # Vx, Vy, Vz
@@ -22,7 +22,7 @@ ekf_filter_node_odom:
     twist0_queue_size: 5
 
     # Input 1: Main IMU for angular velocity and linear acceleration.
-    imu0: /imu/data
+    imu0: /imu/data # TODO: Update this! Do we even have a main IMU on the CougUV rn tho?
     imu0_config: [false, false, false, # X, Y, Z
                   false, false, false, # Roll, Pitch, Yaw
                   false, false, false, # Vx, Vy, Vz
@@ -60,8 +60,7 @@ ekf_filter_node_map:
     odom0_differential: false # This is a state estimate, not a differential measurement.
     odom0_relative: false
 
-    # Input 1: GPS data, converted to map-frame odometry by navsat_transform_node.
-    # We only fuse X and Y, as Z comes from the depth sensor.
+    # Input 1: GPS data, converted to 'map' frame odometry by navsat_transform_node.
     odom1: /odometry/gps
     odom1_config: [true,  true,  false, # X, Y, Z
                    false, false, false, # Roll, Pitch, Yaw
@@ -72,8 +71,8 @@ ekf_filter_node_map:
     odom1_differential: false
     odom1_relative: false
 
-    # Input 2: Depth sensor, providing absolute Z position.
-    odom2: /odometry/depth
+    # Input 2: Depth sensor, providing absolute Z position (one of two?)
+    odom2: /odometry/depth # TODO: Update this! Might need conversion to odom first.
     odom2_config: [false, false, true,  # X, Y, Z
                    false, false, false, # Roll, Pitch, Yaw
                    false, false, false, # Vx, Vy, Vz
@@ -84,7 +83,7 @@ ekf_filter_node_map:
     odom2_relative: false
 
     # Input 3: Magnetometer heading sensor for absolute yaw.
-    imu0: /heading/data
+    imu0: /heading/data # TODO: Update this! From the SeaTrac modem?
     imu0_config: [false, false, false, # X, Y, Z
                   false, false, true,  # Roll, Pitch, Yaw
                   false, false, false, # Vx, Vy, Vz
