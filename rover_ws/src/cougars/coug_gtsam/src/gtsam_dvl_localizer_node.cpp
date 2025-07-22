@@ -49,31 +49,54 @@ using gtsam::symbol_shorthand::V; // Velocity (x,y,z)
 using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 
 /**
- * @brief Unary factor for a DVL measurement. Assumes DVL velocity is in the global frame.
- * TODO: Gemini 2.5 Pro helped convert these from Matthew's code, needs to be tested.
+ * @brief Binary factor for a DVL measurement in the robot's body frame.
+ * 
+ * In think bc the DVL velocity reading is in the body frame, its interpretation in the
+ * map frame depends on the robot's current pose. This factor must therefore connect
+ * both the Pose (X) and Velocity (V) state variables to rotate the measurement into
+ * the map frame for comparison.
+ * 
+ * TODO: Gemini 2.5 Pro helped convert the values from Matthew's code, needs to be tested.
  */
-class DVLFactor : public gtsam::NoiseModelFactor1<gtsam::Vector3>
+class BodyFrameVelocityFactor : public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>
 {
-    gtsam::Vector3 measured_velocity_;
+    gtsam::Vector3 measured_velocity_body_;
 
 public:
-    DVLFactor(gtsam::Key velKey, const gtsam::Vector3 &measured_velocity, const gtsam::SharedNoiseModel &model)
-        : NoiseModelFactor1<gtsam::Vector3>(model, velKey), measured_velocity_(measured_velocity) {}
+    BodyFrameVelocityFactor(gtsam::Key poseKey, gtsam::Key velKey, const gtsam::Vector3 &measured_velocity_body, const gtsam::SharedNoiseModel &model)
+        : NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>(model, poseKey, velKey), measured_velocity_body_(measured_velocity_body) {}
 
-    gtsam::Vector evaluateError(const gtsam::Vector3 &vel,
-                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+    gtsam::Vector evaluateError(const gtsam::Pose3 &pose, const gtsam::Vector3 &vel,
+                                boost::optional<gtsam::Matrix &> H_pose = boost::none,
+                                boost::optional<gtsam::Matrix &> H_vel = boost::none) const override
     {
-        if (H)
+        gtsam::Rot3 R_map_body = pose.rotation();
+        gtsam::Vector3 vel_in_map = R_map_body * measured_velocity_body_;
+
+        if (H_pose)
         {
-            (*H) = gtsam::Matrix33::Identity();
+            // Jacobian of error w.r.t. pose
+            // error = vel - R_map_body * measured_velocity_body
+            // d(error)/d(pose) = [d(error)/d(rot) d(error)/d(trans)]
+            // d(error)/d(rot) = R_map_body * skewSymmetric(measured_velocity_body)
+            // d(error)/d(trans) = 0
+            gtsam::Matrix3 J_rot = R_map_body.matrix() * gtsam::skewSymmetric(measured_velocity_body_.x(), measured_velocity_body_.y(), measured_velocity_body_.z());
+            *H_pose = (gtsam::Matrix(3, 6) << J_rot, gtsam::Matrix3::Zero()).finished();
         }
-        return vel - measured_velocity_;
+        if (H_vel)
+        {
+            // Jacobian of error w.r.t. velocity is identity
+            *H_vel = gtsam::Matrix3::Identity();
+        }
+
+        return vel - vel_in_map;
     }
 };
 
 /**
  * @brief Unary factor for a depth measurement (constrains the Z component of a Pose3).
- * TODO: Gemini 2.5 Pro helped convert these from Matthew's code, needs to be tested.
+ * 
+ * TODO: Gemini 2.5 Pro helped convert the values from Matthew's code, needs to be tested.
  */
 class DepthFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
 {
@@ -100,7 +123,8 @@ public:
 
 /**
  * @brief Unary factor for an absolute heading/orientation measurement.
- * TODO: Gemini 2.5 Pro helped convert these from Matthew's code, needs to be tested.
+ * 
+ * TODO: Gemini 2.5 Pro helped convert the values from Matthew's code, needs to be tested.
  */
 class HeadingFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
 {
@@ -379,17 +403,33 @@ private:
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
         }
 
-        // If we have a DVL measurement, add a DVL unary factor to the closest node in time.
+        // If we have a DVL measurement, add a DVL binary factor to the closest node in time.
         if (latest_dvl)
         {
-            // Do we need to convert this into the base frame? I think so
+            gtsam::Vector3 dvl_vel_body(latest_dvl->twist.twist.linear.x, latest_dvl->twist.twist.linear.y, latest_dvl->twist.twist.linear.z);
+
+            // Transform DVL velocity from its frame into the base_link frame.
+            try
+            {
+                geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
+                    base_frame_, latest_dvl->header.frame_id, latest_dvl->header.stamp, rclcpp::Duration::from_seconds(0.1));
+
+                geometry_msgs::msg::Vector3 transformed_vel;
+                tf2::doTransform(latest_dvl->twist.twist.linear, transformed_vel, tf_stamped);
+                dvl_vel_body = gtsam::Vector3(transformed_vel.x, transformed_vel.y, transformed_vel.z);
+            }
+            catch (const tf2::TransformException &ex)
+            {
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "DVL transform failed from '%s' to '%s': %s. Using untransformed data.",
+                                     latest_dvl->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+            }
+
             double dvl_time = rclcpp::Time(latest_dvl->header.stamp).seconds();
             bool closer_to_prev = std::abs(dvl_time - prev_time_) < std::abs(last_imu_time - dvl_time);
             long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
 
-            gtsam::Vector3 dvl_vel(latest_dvl->twist.twist.linear.x, latest_dvl->twist.twist.linear.y, latest_dvl->twist.twist.linear.z);
             auto dvl_noise = gtsam::noiseModel::Isotropic::Sigma(3, dvl_noise_sigma_);
-            new_graph.emplace_shared<DVLFactor>(V(target_node_key), dvl_vel, dvl_noise);
+            new_graph.emplace_shared<BodyFrameVelocityFactor>(X(target_node_key), V(target_node_key), dvl_vel_body, dvl_noise);
         }
 
         // If we have a depth measurement, add a Depth unary factor to the closest node in time.
@@ -399,7 +439,7 @@ private:
             bool closer_to_prev = std::abs(depth_time - prev_time_) < std::abs(last_imu_time - depth_time);
             long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
 
-            // ROS Range reports positive distance. Depth is negative Z in ENU frame.
+            // This should be directly in the 'map' frame, given 0 is the surface
             double depth_z = -latest_depth->range;
             auto depth_noise = gtsam::noiseModel::Isotropic::Sigma(1, depth_noise_sigma_);
             new_graph.emplace_shared<DepthFactor>(X(target_node_key), depth_z, depth_noise);
@@ -408,17 +448,37 @@ private:
         // If we have a heading measurement, add a Heading unary factor to the closest node in time.
         if (latest_heading)
         {
-            // Do we need to convert this into the base frame? I think so
+            gtsam::Rot3 heading_rot_sensor = gtsam::Rot3::Quaternion(latest_heading->orientation.w,
+                                                                     latest_heading->orientation.x,
+                                                                     latest_heading->orientation.y,
+                                                                     latest_heading->orientation.z);
+
+            // Transform heading from sensor frame to base_link frame (upside-down mounting config, etc).
+            // R_map_base = R_map_sensor * (R_base_sensor)^-1
+            try
+            {
+                geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
+                    base_frame_, latest_heading->header.frame_id, latest_heading->header.stamp, rclcpp::Duration::from_seconds(0.1));
+
+                gtsam::Rot3 R_base_sensor = gtsam::Rot3::Quaternion(tf_stamped.transform.rotation.w,
+                                                                    tf_stamped.transform.rotation.x,
+                                                                    tf_stamped.transform.rotation.y,
+                                                                    tf_stamped.transform.rotation.z);
+
+                heading_rot_sensor = heading_rot_sensor * R_base_sensor.inverse();
+            }
+            catch (const tf2::TransformException &ex)
+            {
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Heading transform failed from '%s' to '%s': %s. Using untransformed data.",
+                                     latest_heading->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+            }
+
             double heading_time = rclcpp::Time(latest_heading->header.stamp).seconds();
             bool closer_to_prev = std::abs(heading_time - prev_time_) < std::abs(last_imu_time - heading_time);
             long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
 
-            gtsam::Rot3 heading_rot = gtsam::Rot3::Quaternion(latest_heading->orientation.w,
-                                                              latest_heading->orientation.x,
-                                                              latest_heading->orientation.y,
-                                                              latest_heading->orientation.z);
             auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
-            new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot, heading_noise);
+            new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }
 
         // Insert the predicted state as an initial estimate for the new state.
