@@ -51,12 +51,12 @@ using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 /**
  * @brief Binary factor for a DVL measurement in the robot's body frame.
  * 
- * In think bc the DVL velocity reading is in the body frame, its interpretation in the
- * map frame depends on the robot's current pose. This factor must therefore connect
+ * I'm pretty sure that bc the DVL velocity reading is in the body frame, its interpretation 
+ * in the map frame depends on the robot's current pose. This factor must then connect
  * both the Pose (X) and Velocity (V) state variables to rotate the measurement into
  * the map frame for comparison.
- * 
- * TODO: Gemini 2.5 Pro helped convert the values from Matthew's code, needs to be tested.
+ *
+ * TODO: Gemini 2.5 Pro helped convert the Jacobean stuff from Matthew's code, needs to be tested.
  */
 class BodyFrameVelocityFactor : public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>
 {
@@ -96,7 +96,7 @@ public:
 /**
  * @brief Unary factor for a depth measurement (constrains the Z component of a Pose3).
  * 
- * TODO: Gemini 2.5 Pro helped convert the values from Matthew's code, needs to be tested.
+ * TODO: Gemini 2.5 Pro helped convert the Jacobean stuff from Matthew's code, needs to be tested.
  */
 class DepthFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
 {
@@ -124,7 +124,7 @@ public:
 /**
  * @brief Unary factor for an absolute heading/orientation measurement.
  * 
- * TODO: Gemini 2.5 Pro helped convert the values from Matthew's code, needs to be tested.
+ * TODO: Gemini 2.5 Pro helped convert the Jacobean stuff from Matthew's code, needs to be tested.
  */
 class HeadingFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
 {
@@ -213,16 +213,16 @@ private:
 
         global_odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(global_odom_topic_, 10);
 
-        imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
-            imu_topic_, 200, std::bind(&GtsamLocalizerNode::imuCallback, this, std::placeholders::_1));
-        gps_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-            gps_odom_topic_, 20, std::bind(&GtsamLocalizerNode::gpsOdomCallback, this, std::placeholders::_1));
-        dvl_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-            dvl_topic_, 20, std::bind(&GtsamLocalizerNode::dvlCallback, this, std::placeholders::_1));
-        depth_sub_ = this->create_subscription<sensor_msgs::msg::Range>(
-            depth_topic_, 20, std::bind(&GtsamLocalizerNode::depthCallback, this, std::placeholders::_1));
-        heading_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
-            heading_topic_, 20, std::bind(&GtsamLocalizerNode::headingCallback, this, std::placeholders::_1));
+        imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_, 200, 
+            [this](const sensor_msgs::msg::Imu::SharedPtr msg) { imu_queue_.push_back(msg); });
+        gps_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(gps_odom_topic_, 20, 
+            [this](const nav_msgs::msg::Odometry::SharedPtr msg) { gps_queue_.push_back(msg); });
+        dvl_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(dvl_topic_, 20,
+            [this](const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg) { dvl_queue_.push_back(msg); });
+        depth_sub_ = this->create_subscription<sensor_msgs::msg::Range>(depth_topic_, 20,
+            [this](const sensor_msgs::msg::Range::SharedPtr msg) { depth_queue_.push_back(msg); });
+        heading_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(heading_topic_, 20,
+            [this](const sensor_msgs::msg::Imu::SharedPtr msg) { heading_queue_.push_back(msg); });
 
         factor_graph_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(1000.0 / factor_graph_update_rate_)),
@@ -233,34 +233,14 @@ private:
             std::bind(&GtsamLocalizerNode::odomPublishTimerCallback, this));
     }
 
-    /** @brief Stores incoming IMU messages. */
-    void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    /**
+     * @brief Determines which graph node (previous or current) is closer in time to a measurement.
+     */
+    unsigned long getClosestNodeKey(const rclcpp::Time &msg_stamp, double current_update_time) const
     {
-        imu_queue_.push_back(msg);
-    }
-
-    /** @brief Stores incoming GPS odometry messages. */
-    void gpsOdomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
-    {
-        gps_queue_.push_back(msg);
-    }
-
-    /** @brief Stores incoming DVL messages. */
-    void dvlCallback(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
-    {
-        dvl_queue_.push_back(msg);
-    }
-
-    /** @brief Stores incoming Depth messages. */
-    void depthCallback(const sensor_msgs::msg::Range::SharedPtr msg)
-    {
-        depth_queue_.push_back(msg);
-    }
-
-    /** @brief Stores incoming Heading messages. */
-    void headingCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
-    {
-        heading_queue_.push_back(msg);
+        double msg_time = msg_stamp.seconds();
+        bool closer_to_prev = std::abs(msg_time - prev_time_) < std::abs(current_update_time - msg_time);
+        return closer_to_prev ? prev_step_ : current_step_;
     }
 
     /**
@@ -329,8 +309,8 @@ private:
 
             if (dt > 1e-4) // Ensure we have a reasonable timestep to work with
             {
-                gtsam::Vector3 accel(imu_msg->linear_acceleration.x, imu_msg->linear_acceleration.y, imu_msg->linear_acceleration.z);
-                gtsam::Vector3 gyro(imu_msg->angular_velocity.x, imu_msg->angular_velocity.y, imu_msg->angular_velocity.z);
+                gtsam::Vector3 accel = toGtsam(imu_msg->linear_acceleration);
+                gtsam::Vector3 gyro = toGtsam(imu_msg->angular_velocity);
 
                 // Transform IMU data into the base frame (to account for different mounting configs).
                 try
@@ -343,8 +323,8 @@ private:
                     tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, tf_stamped);
                     tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, tf_stamped);
 
-                    accel = gtsam::Vector3(transformed_accel.x, transformed_accel.y, transformed_accel.z);
-                    gyro = gtsam::Vector3(transformed_gyro.x, transformed_gyro.y, transformed_gyro.z);
+                    accel = toGtsam(transformed_accel);
+                    gyro = toGtsam(transformed_gyro);
                 }
                 catch (const tf2::TransformException &ex)
                 {
@@ -383,20 +363,14 @@ private:
         // If we have a GPS measurement, add a GPS unary factor to the closest node in time.
         if (latest_gps)
         {
-            double gps_time = rclcpp::Time(latest_gps->header.stamp).seconds();
-
             // Determine which node (previous or current) is closer in time.
             // This seems like a simple way to solve the problem Matthew and Braden identified before.
-            bool closer_to_prev = std::abs(gps_time - prev_time_) < std::abs(last_imu_time - gps_time);
-            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
-
-            RCLCPP_DEBUG(this->get_logger(), "GPS measurement at time %.4f. Attaching to node %lu (time %.4f).",
-                         gps_time, target_node_key, closer_to_prev ? prev_time_ : last_imu_time);
+            unsigned long target_node_key = getClosestNodeKey(latest_gps->header.stamp, last_imu_time);
+            RCLCPP_DEBUG(this->get_logger(), "GPS measurement at time %.4f. Attaching to node %lu.",
+                         rclcpp::Time(latest_gps->header.stamp).seconds(), target_node_key);
 
             // No transform needed, GPS data arrives pre-converted into the 'map' frame.
-            gtsam::Point3 gps_position(latest_gps->pose.pose.position.x,
-                                       latest_gps->pose.pose.position.y,
-                                       latest_gps->pose.pose.position.z);
+            gtsam::Point3 gps_position = toGtsam(latest_gps->pose.pose.position);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
 
             // Add the GPS unary factor to the graph, connected to the chosen target node.
@@ -406,7 +380,7 @@ private:
         // If we have a DVL measurement, add a DVL binary factor to the closest node in time.
         if (latest_dvl)
         {
-            gtsam::Vector3 dvl_vel_body(latest_dvl->twist.twist.linear.x, latest_dvl->twist.twist.linear.y, latest_dvl->twist.twist.linear.z);
+            gtsam::Vector3 dvl_vel_body = toGtsam(latest_dvl->twist.twist.linear);
 
             // Transform DVL velocity from its frame into the base_link frame.
             try
@@ -416,7 +390,7 @@ private:
 
                 geometry_msgs::msg::Vector3 transformed_vel;
                 tf2::doTransform(latest_dvl->twist.twist.linear, transformed_vel, tf_stamped);
-                dvl_vel_body = gtsam::Vector3(transformed_vel.x, transformed_vel.y, transformed_vel.z);
+                dvl_vel_body = toGtsam(transformed_vel);
             }
             catch (const tf2::TransformException &ex)
             {
@@ -424,10 +398,7 @@ private:
                                      latest_dvl->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
             }
 
-            double dvl_time = rclcpp::Time(latest_dvl->header.stamp).seconds();
-            bool closer_to_prev = std::abs(dvl_time - prev_time_) < std::abs(last_imu_time - dvl_time);
-            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
-
+            unsigned long target_node_key = getClosestNodeKey(latest_dvl->header.stamp, last_imu_time);
             auto dvl_noise = gtsam::noiseModel::Isotropic::Sigma(3, dvl_noise_sigma_);
             new_graph.emplace_shared<BodyFrameVelocityFactor>(X(target_node_key), V(target_node_key), dvl_vel_body, dvl_noise);
         }
@@ -435,9 +406,7 @@ private:
         // If we have a depth measurement, add a Depth unary factor to the closest node in time.
         if (latest_depth)
         {
-            double depth_time = rclcpp::Time(latest_depth->header.stamp).seconds();
-            bool closer_to_prev = std::abs(depth_time - prev_time_) < std::abs(last_imu_time - depth_time);
-            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
+            unsigned long target_node_key = getClosestNodeKey(latest_depth->header.stamp, last_imu_time);
 
             // This should be directly in the 'map' frame, given 0 is the surface
             double depth_z = -latest_depth->range;
@@ -448,10 +417,7 @@ private:
         // If we have a heading measurement, add a Heading unary factor to the closest node in time.
         if (latest_heading)
         {
-            gtsam::Rot3 heading_rot_sensor = gtsam::Rot3::Quaternion(latest_heading->orientation.w,
-                                                                     latest_heading->orientation.x,
-                                                                     latest_heading->orientation.y,
-                                                                     latest_heading->orientation.z);
+            gtsam::Rot3 heading_rot_sensor = toGtsam(latest_heading->orientation);
 
             // Transform heading from sensor frame to base_link frame (upside-down mounting config, etc).
             // R_map_base = R_map_sensor * (R_base_sensor)^-1
@@ -460,11 +426,7 @@ private:
                 geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
                     base_frame_, latest_heading->header.frame_id, latest_heading->header.stamp, rclcpp::Duration::from_seconds(0.1));
 
-                gtsam::Rot3 R_base_sensor = gtsam::Rot3::Quaternion(tf_stamped.transform.rotation.w,
-                                                                    tf_stamped.transform.rotation.x,
-                                                                    tf_stamped.transform.rotation.y,
-                                                                    tf_stamped.transform.rotation.z);
-
+                gtsam::Rot3 R_base_sensor = toGtsam(tf_stamped.transform.rotation);
                 heading_rot_sensor = heading_rot_sensor * R_base_sensor.inverse();
             }
             catch (const tf2::TransformException &ex)
@@ -473,10 +435,7 @@ private:
                                      latest_heading->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
             }
 
-            double heading_time = rclcpp::Time(latest_heading->header.stamp).seconds();
-            bool closer_to_prev = std::abs(heading_time - prev_time_) < std::abs(last_imu_time - heading_time);
-            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
-
+            unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
             auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
             new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }
@@ -533,13 +492,7 @@ private:
         // --- Set Initial State ---
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
 
-        gtsam::Rot3 initial_rotation = gtsam::Rot3::Quaternion(
-            initial_gps->pose.pose.orientation.w, initial_gps->pose.pose.orientation.x,
-            initial_gps->pose.pose.orientation.y, initial_gps->pose.pose.orientation.z);
-        gtsam::Point3 initial_position(
-            initial_gps->pose.pose.position.x, initial_gps->pose.pose.position.y, initial_gps->pose.pose.position.z);
-
-        prev_pose_ = gtsam::Pose3(initial_rotation, initial_position);
+        prev_pose_ = toGtsam(initial_gps->pose.pose);
         prev_vel_ = gtsam::Vector3(0, 0, 0);         // Assume starting from rest
         prev_bias_ = gtsam::imuBias::ConstantBias(); // Assume zero initial bias
 
@@ -615,11 +568,11 @@ private:
         // --- Publish map->odom transform ---
         if (publish_global_tf_)
         {
-            geometry_msgs::msg::TransformStamped odom_to_base_tf;
+            geometry_msgs::msg::TransformStamped odom_to_base_tf_msg;
             try
             {
                 // Look up the odom->base_link transform from another source (e.g., local EKF node)
-                odom_to_base_tf = tf_buffer_->lookupTransform(odom_frame_, base_frame_, tf2::TimePointZero);
+                odom_to_base_tf_msg = tf_buffer_->lookupTransform(odom_frame_, base_frame_, tf2::TimePointZero);
             }
             catch (const tf2::TransformException &ex)
             {
@@ -630,11 +583,8 @@ private:
 
             // Convert the odom->base transform to a GTSAM type.
             tf2::Transform odom_to_base_tf2;
-            tf2::fromMsg(odom_to_base_tf.transform, odom_to_base_tf2);
-            gtsam::Pose3 odom_to_base_gtsam(
-                gtsam::Rot3(odom_to_base_tf2.getRotation().w(), odom_to_base_tf2.getRotation().x(),
-                            odom_to_base_tf2.getRotation().y(), odom_to_base_tf2.getRotation().z()),
-                gtsam::Point3(odom_to_base_tf2.getOrigin().x(), odom_to_base_tf2.getOrigin().y(), odom_to_base_tf2.getOrigin().z()));
+            tf2::fromMsg(odom_to_base_tf_msg.transform, odom_to_base_tf2);
+            gtsam::Pose3 odom_to_base_gtsam = toGtsam(odom_to_base_tf2);
 
             // Calculate map->odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
             // Mangelson's EN EN 433 class really seeing some direct application here haha.
@@ -645,13 +595,8 @@ private:
             map_to_odom_tf_msg.header.stamp = this->get_clock()->now();
             map_to_odom_tf_msg.header.frame_id = map_frame_;
             map_to_odom_tf_msg.child_frame_id = odom_frame_;
-            map_to_odom_tf_msg.transform.translation.x = map_to_odom_gtsam.x();
-            map_to_odom_tf_msg.transform.translation.y = map_to_odom_gtsam.y();
-            map_to_odom_tf_msg.transform.translation.z = map_to_odom_gtsam.z();
-            map_to_odom_tf_msg.transform.rotation.w = map_to_odom_gtsam.rotation().toQuaternion().w();
-            map_to_odom_tf_msg.transform.rotation.x = map_to_odom_gtsam.rotation().toQuaternion().x();
-            map_to_odom_tf_msg.transform.rotation.y = map_to_odom_gtsam.rotation().toQuaternion().y();
-            map_to_odom_tf_msg.transform.rotation.z = map_to_odom_gtsam.rotation().toQuaternion().z();
+            map_to_odom_tf_msg.transform.translation = toVectorMsg(map_to_odom_gtsam.translation());
+            map_to_odom_tf_msg.transform.rotation = toQuatMsg(map_to_odom_gtsam.rotation());
             tf_broadcaster_->sendTransform(map_to_odom_tf_msg);
         }
 
@@ -661,17 +606,9 @@ private:
         odom_msg.header.frame_id = map_frame_;
         odom_msg.child_frame_id = base_frame_;
         // Pose
-        odom_msg.pose.pose.position.x = prev_pose_.x();
-        odom_msg.pose.pose.position.y = prev_pose_.y();
-        odom_msg.pose.pose.position.z = prev_pose_.z();
-        odom_msg.pose.pose.orientation.w = prev_pose_.rotation().toQuaternion().w();
-        odom_msg.pose.pose.orientation.x = prev_pose_.rotation().toQuaternion().x();
-        odom_msg.pose.pose.orientation.y = prev_pose_.rotation().toQuaternion().y();
-        odom_msg.pose.pose.orientation.z = prev_pose_.rotation().toQuaternion().z();
+        odom_msg.pose.pose = toPoseMsg(prev_pose_);
         // Twist (velocity)
-        odom_msg.twist.twist.linear.x = prev_vel_.x();
-        odom_msg.twist.twist.linear.y = prev_vel_.y();
-        odom_msg.twist.twist.linear.z = prev_vel_.z();
+        odom_msg.twist.twist.linear = toVectorMsg(prev_vel_);
 
         global_odom_pub_->publish(odom_msg);
     }
@@ -722,7 +659,64 @@ private:
     double prior_pose_rot_sigma_, prior_pose_pos_sigma_;
     double prior_vel_sigma_;
     double prior_bias_sigma_;
+
+    // --- Conversion Utilities (Static Methods) ---
+    static gtsam::Point3 toGtsam(const geometry_msgs::msg::Point &msg);
+    static gtsam::Vector3 toGtsam(const geometry_msgs::msg::Vector3 &msg);
+    static gtsam::Rot3 toGtsam(const geometry_msgs::msg::Quaternion &msg);
+    static gtsam::Pose3 toGtsam(const geometry_msgs::msg::Pose &msg);
+    static gtsam::Pose3 toGtsam(const tf2::Transform &tf);
+    static geometry_msgs::msg::Point toPointMsg(const gtsam::Point3 &gtsam_obj);
+    static geometry_msgs::msg::Quaternion toQuatMsg(const gtsam::Rot3 &gtsam_obj);
+    static geometry_msgs::msg::Pose toPoseMsg(const gtsam::Pose3 &gtsam_obj);
+    static geometry_msgs::msg::Vector3 toVectorMsg(const gtsam::Vector3 &gtsam_obj);
 };
+
+// --- Definitions for Static Member Functions ---
+
+gtsam::Point3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Point &msg) { return {msg.x, msg.y, msg.z}; }
+gtsam::Vector3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Vector3 &msg) { return {msg.x, msg.y, msg.z}; }
+gtsam::Rot3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Quaternion &msg) { return gtsam::Rot3::Quaternion(msg.w, msg.x, msg.y, msg.z); }
+gtsam::Pose3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Pose &msg) { return {toGtsam(msg.orientation), toGtsam(msg.position)}; }
+gtsam::Pose3 GtsamLocalizerNode::toGtsam(const tf2::Transform &tf)
+{
+    const auto &rot = tf.getRotation();
+    const auto &trans = tf.getOrigin();
+    return {gtsam::Rot3::Quaternion(rot.w(), rot.x(), rot.y(), rot.z()), gtsam::Point3(trans.x(), trans.y(), trans.z())};
+}
+geometry_msgs::msg::Point GtsamLocalizerNode::toPointMsg(const gtsam::Point3 &gtsam_obj)
+{
+    geometry_msgs::msg::Point msg;
+    msg.x = gtsam_obj.x();
+    msg.y = gtsam_obj.y();
+    msg.z = gtsam_obj.z();
+    return msg;
+}
+geometry_msgs::msg::Quaternion GtsamLocalizerNode::toQuatMsg(const gtsam::Rot3 &gtsam_obj)
+{
+    gtsam::Quaternion q = gtsam_obj.toQuaternion();
+    geometry_msgs::msg::Quaternion msg;
+    msg.w = q.w();
+    msg.x = q.x();
+    msg.y = q.y();
+    msg.z = q.z();
+    return msg;
+}
+geometry_msgs::msg::Pose GtsamLocalizerNode::toPoseMsg(const gtsam::Pose3 &gtsam_obj)
+{
+    geometry_msgs::msg::Pose msg;
+    msg.position = toPointMsg(gtsam_obj.translation());
+    msg.orientation = toQuatMsg(gtsam_obj.rotation());
+    return msg;
+}
+geometry_msgs::msg::Vector3 GtsamLocalizerNode::toVectorMsg(const gtsam::Vector3 &gtsam_obj)
+{
+    geometry_msgs::msg::Vector3 msg;
+    msg.x = gtsam_obj.x();
+    msg.y = gtsam_obj.y();
+    msg.z = gtsam_obj.z();
+    return msg;
+}
 
 int main(int argc, char *argv[])
 {
