@@ -14,6 +14,8 @@ def generate_launch_description():
     coug_loc_launch_dir = os.path.join(coug_loc_dir, "launch")
     coug_gui_dir = get_package_share_directory("coug_gui")
     coug_gui_launch_dir = os.path.join(coug_gui_dir, "launch")
+    coug_gtsam_dir = get_package_share_directory("coug_gtsam")
+    coug_gtsam_launch_dir = os.path.join(coug_gtsam_dir, "launch")
 
     coug_des_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -39,10 +41,17 @@ def generate_launch_description():
         ),
     )
 
+    coug_gtsam_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(coug_gtsam_launch_dir, "coug_gtsam.launch.py")
+        ),
+    )
+
     ld = LaunchDescription()
     ld.add_action(coug_des_cmd)
     ld.add_action(coug_loc_cmd)
     ld.add_action(coug_mapviz_cmd)
     ld.add_action(coug_rviz_cmd)
+    # ld.add_action(coug_gtsam_cmd)
 
     return ld
