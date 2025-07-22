@@ -29,14 +29,14 @@ def generate_launch_description():
                 condition=IfCondition(use_sim_time),
                 parameters=[{"use_sim_time": use_sim_time}],
             ),
-            launch_ros.actions.Node(
-                package="rover_navigation",
-                executable="state_machine",
-                output="screen",
-                parameters=[
-                    config_file,
-                    {"use_sim_time": use_sim_time},
-                ],
-            ),
+            # launch_ros.actions.Node(
+            #     package="rover_navigation",
+            #     executable="state_machine",
+            #     output="screen",
+            #     parameters=[
+            #         config_file,
+            #         {"use_sim_time": use_sim_time},
+            #     ],
+            # ),
         ]
     )

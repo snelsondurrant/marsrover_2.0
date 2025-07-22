@@ -38,6 +38,8 @@ def generate_launch_description():
     des_dir = get_package_share_directory("rover_description")
     ublox_dir = get_package_share_directory("ublox_read_2")
 
+    gtsam_dir = get_package_share_directory("rover_gtsam")
+
     nav_launch_dir = os.path.join(nav_dir, "launch")
     loc_launch_dir = os.path.join(loc_dir, "launch")
     gui_launch_dir = os.path.join(gui_dir, "launch")
@@ -45,6 +47,8 @@ def generate_launch_description():
     gz_launch_dir = os.path.join(gz_dir, "launch")
     des_launch_dir = os.path.join(des_dir, "launch")
     ublox_launch_dir = os.path.join(ublox_dir, "launch")
+
+    gtsam_launch_dir = os.path.join(gtsam_dir, "launch")
 
     nav_params_dir = os.path.join(nav_dir, "config")
     nav2_params = os.path.join(nav_params_dir, "navigation_params.yaml")
@@ -140,6 +144,12 @@ def generate_launch_description():
         }.items(),
     )
 
+    gtsam_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(gtsam_launch_dir, "rover_gtsam.launch.py")
+        ),
+    )
+
     ld = LaunchDescription()
     ld.add_action(declare_sim_mode_cmd)
     ld.add_action(declare_use_rviz_cmd)
@@ -147,7 +157,7 @@ def generate_launch_description():
 
     # Only launched in simulation
     ld.add_action(gazebo_cmd)
-    ld.add_action(gui_cmd)
+    # ld.add_action(gui_cmd)
 
     # Only launched in real life
     # ld.add_action(gps_cmd) # We launch the GPS individually right now
@@ -155,10 +165,12 @@ def generate_launch_description():
     # Both sim and real
     ld.add_action(description_cmd)
     ld.add_action(localization_cmd)
-    ld.add_action(navigation2_cmd)
-    ld.add_action(aruco_opencv_cmd)
+    # ld.add_action(navigation2_cmd)
+    # ld.add_action(aruco_opencv_cmd)
     ld.add_action(state_machine_cmd)
     ld.add_action(rviz_cmd)
     ld.add_action(mapviz_cmd)
+
+    ld.add_action(gtsam_cmd)
 
     return ld
