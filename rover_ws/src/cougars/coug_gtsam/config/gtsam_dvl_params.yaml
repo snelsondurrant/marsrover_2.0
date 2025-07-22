@@ -5,7 +5,7 @@ gtsam_dvl_localizer_node:
     imu_topic: "imu/data"
     gps_odom_topic: "/odometry/gps"
     dvl_topic: "/dvl/data"
-    depth_topic: "/depth/data"
+    depth_odom_topic: "/odometry/depth"
     heading_topic: "/heading/data"
     global_odom_topic: "/odometry/global"
     map_frame: "map"

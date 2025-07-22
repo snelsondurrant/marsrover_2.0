@@ -8,7 +8,7 @@
  * - /imu/data (sensor_msgs/msg/Imu)
  * - /odometry/gps (nav_msgs/msg/Odometry)
  * - /dvl/data (geometry_msgs/msg/TwistWithCovarianceStamped)
- * - /depth/data (sensor_msgs/msg/Range)
+ * - /odometry/depth (nav_msgs/msg/Odometry)
  * - /heading/data (sensor_msgs/msg/Imu)
  * - 'odom' -> 'base_link' transform
  * Publishes:
@@ -27,7 +27,6 @@
 #include <cmath>
 
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
-#include <sensor_msgs/msg/range.hpp>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Rot3.h>
 #include <gtsam/navigation/CombinedImuFactor.h>
@@ -176,7 +175,7 @@ private:
         odom_frame_ = this->declare_parameter<std::string>("odom_frame", "odom");
         base_frame_ = this->declare_parameter<std::string>("base_frame", "base_link");
         dvl_topic_ = this->declare_parameter<std::string>("dvl_topic", "/dvl/data");
-        depth_topic_ = this->declare_parameter<std::string>("depth_topic", "/depth/data");
+        depth_odom_topic_ = this->declare_parameter<std::string>("depth_odom_topic", "/odometry/depth");
         heading_topic_ = this->declare_parameter<std::string>("heading_topic", "/heading/data");
 
         // --- Node Settings ---
@@ -219,8 +218,8 @@ private:
             [this](const nav_msgs::msg::Odometry::SharedPtr msg) { gps_queue_.push_back(msg); });
         dvl_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(dvl_topic_, 20,
             [this](const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg) { dvl_queue_.push_back(msg); });
-        depth_sub_ = this->create_subscription<sensor_msgs::msg::Range>(depth_topic_, 20,
-            [this](const sensor_msgs::msg::Range::SharedPtr msg) { depth_queue_.push_back(msg); });
+        depth_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(depth_odom_topic_, 20,
+            [this](const nav_msgs::msg::Odometry::SharedPtr msg) { depth_odom_queue_.push_back(msg); });
         heading_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(heading_topic_, 20,
             [this](const sensor_msgs::msg::Imu::SharedPtr msg) { heading_queue_.push_back(msg); });
 
@@ -286,11 +285,11 @@ private:
             dvl_queue_.clear();
         }
 
-        sensor_msgs::msg::Range::SharedPtr latest_depth;
-        if (!depth_queue_.empty())
+        nav_msgs::msg::Odometry::SharedPtr latest_depth_odom;
+        if (!depth_odom_queue_.empty())
         {
-            latest_depth = depth_queue_.back();
-            depth_queue_.clear();
+            latest_depth_odom = depth_odom_queue_.back();
+            depth_odom_queue_.clear();
         }
 
         sensor_msgs::msg::Imu::SharedPtr latest_heading;
@@ -404,12 +403,13 @@ private:
         }
 
         // If we have a depth measurement, add a Depth unary factor to the closest node in time.
-        if (latest_depth)
+        if (latest_depth_odom)
         {
-            unsigned long target_node_key = getClosestNodeKey(latest_depth->header.stamp, last_imu_time);
+            unsigned long target_node_key = getClosestNodeKey(latest_depth_odom->header.stamp, last_imu_time);
 
-            // This should be directly in the 'map' frame, given 0 is the surface
-            double depth_z = -latest_depth->range;
+            // The z-position from the odometry message is assumed to be the absolute depth in the map frame.
+            // For an ENU frame, depth is a negative Z value.
+            double depth_z = latest_depth_odom->pose.pose.position.z;
             auto depth_noise = gtsam::noiseModel::Isotropic::Sigma(1, depth_noise_sigma_);
             new_graph.emplace_shared<DepthFactor>(X(target_node_key), depth_z, depth_noise);
         }
@@ -618,7 +618,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr gps_odom_sub_;
     rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr dvl_sub_;
-    rclcpp::Subscription<sensor_msgs::msg::Range>::SharedPtr depth_sub_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr depth_odom_sub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr heading_sub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
@@ -630,7 +630,7 @@ private:
     std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue_;
     std::deque<nav_msgs::msg::Odometry::SharedPtr> gps_queue_;
     std::deque<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> dvl_queue_;
-    std::deque<sensor_msgs::msg::Range::SharedPtr> depth_queue_;
+    std::deque<nav_msgs::msg::Odometry::SharedPtr> depth_odom_queue_;
     std::deque<sensor_msgs::msg::Imu::SharedPtr> heading_queue_;
 
     // --- System State ---
@@ -647,7 +647,7 @@ private:
     gtsam::imuBias::ConstantBias prev_bias_;
 
     // --- Parameters ---
-    std::string imu_topic_, gps_odom_topic_, dvl_topic_, depth_topic_, heading_topic_;
+    std::string imu_topic_, gps_odom_topic_, dvl_topic_, depth_odom_topic_, heading_topic_;
     std::string global_odom_topic_;
     std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
