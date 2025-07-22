@@ -28,7 +28,7 @@ gtsam_dvl_localizer_node:
       gyro_noise_sigma: 0.01
       # IMU bias random walk noise. Models how quickly the bias can change.
       accel_bias_rw_sigma: 1.0e-4 # (m/s^3/√Hz)
-      gyro_bias_rw_sigma: 1.0e-7 # (rad/s^2/√Hz), probably won't be this low in practice
+      gyro_bias_rw_sigma: 1.0e-5 # (rad/s^2/√Hz)
 
     gps:
       # Standard deviation of GPS position measurements (meters).

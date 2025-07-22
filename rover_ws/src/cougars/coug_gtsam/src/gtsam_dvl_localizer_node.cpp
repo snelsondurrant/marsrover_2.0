@@ -1,10 +1,8 @@
 /**
  * @file gtsam_dvl_localizer_node.cpp
- * @brief Fuses IMU and GPS Odometry data using a GTSAM Fixed-Lag Smoother with IMU pre-integration.
+ * @brief Fuses IMU, GPS, DVL, depth, and heading data using a GTSAM Fixed-Lag Smoother with IMU pre-integration.
  * @author Nelson Durrant
  * @date July 2025
- *
- * NOTE: This takes too much compute to run at the same time as Nav2.
  *
  * Subscribes:
  * - /imu/data (sensor_msgs/msg/Imu)
@@ -47,7 +45,7 @@ using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 class GtsamLocalizerNode : public rclcpp::Node
 {
 public:
-    GtsamLocalizerNode() : Node("gtsam_dvl_localizer")
+    GtsamLocalizerNode() : Node("gtsam_dvl_localizer_node")
     {
         RCLCPP_INFO(this->get_logger(), "Starting GTSAM Localizer Node...");
 
@@ -150,7 +148,8 @@ private:
             {
                 initializeSystem(gps_queue_.back());
                 system_initialized_ = true;
-                gps_queue_.clear(); // Clear queue after initialization
+                gps_queue_.clear();
+                imu_queue_.clear();
             }
             return;
         }
@@ -172,12 +171,32 @@ private:
         for (const auto &imu_msg : imu_measurements)
         {
             double current_imu_time = rclcpp::Time(imu_msg->header.stamp).seconds();
-            double dt = current_imu_time - last_imu_time;
+            double dt = current_imu_time - last_imu_time; // Get the exact time difference
 
             if (dt > 1e-4) // Ensure we have a reasonable timestep to work with
             {
                 gtsam::Vector3 accel(imu_msg->linear_acceleration.x, imu_msg->linear_acceleration.y, imu_msg->linear_acceleration.z);
                 gtsam::Vector3 gyro(imu_msg->angular_velocity.x, imu_msg->angular_velocity.y, imu_msg->angular_velocity.z);
+                
+                // Transform IMU data into the base frame (to account for different mounting configs).
+                try
+                {
+                    geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
+                        base_frame_, imu_msg->header.frame_id, imu_msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+
+                    geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
+                    // For vectors, doTransform() applies only the rotational part of the transform.
+                    tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, tf_stamped);
+                    tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, tf_stamped);
+
+                    accel = gtsam::Vector3(transformed_accel.x, transformed_accel.y, transformed_accel.z);
+                    gyro = gtsam::Vector3(transformed_gyro.x, transformed_gyro.y, transformed_gyro.z);
+                }
+                catch (const tf2::TransformException &ex)
+                {
+                    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "IMU transform failed from '%s' to '%s': %s. Using untransformed data.",
+                                         imu_msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+                }
                 imu_preintegrator_->integrateMeasurement(accel, gyro, dt); // Use GTSAM's pre-integrator
             }
             last_imu_time = current_imu_time;
@@ -191,12 +210,13 @@ private:
         auto predicted_state = imu_preintegrator_->predict(
             gtsam::NavState(prev_pose_, prev_vel_), prev_bias_);
 
-        // Add an IMU factor to constrain the two state estimates.
+        // Add a new IMU between factor to constrain the two state estimates.
         new_graph.emplace_shared<gtsam::CombinedImuFactor>(
             X(prev_step_), V(prev_step_), X(current_step_), V(current_step_),
             B(prev_step_), B(current_step_), *imu_preintegrator_);
 
         // Add a between factor on the IMU bias to model it as a random walk.
+        // https://github.com/borglab/gtsam/blob/develop/examples/CombinedImuFactorsExample.cpp
         double dt_since_last_factor = last_imu_time - prev_time_;
         double dt_sqrt = sqrt(dt_since_last_factor);
         gtsam::Vector6 bias_sigmas;
@@ -206,26 +226,26 @@ private:
             B(prev_step_), B(current_step_), gtsam::imuBias::ConstantBias(),
             gtsam::noiseModel::Diagonal::Sigmas(bias_sigmas));
 
-        // If we have a GPS measurement, add a GPS factor to the closest node in time.
+        // If we have a GPS measurement, add a GPS unary factor to the closest node in time.
         if (latest_gps)
         {
             double gps_time = rclcpp::Time(latest_gps->header.stamp).seconds();
 
             // Determine which node (previous or current) is closer in time.
-            // prev_time_ is the timestamp of the previous node (X(prev_step_)).
-            // last_imu_time is the timestamp of the current node (X(current_step_)).
+            // This seems like a simple way to solve the problem Matthew and Braden identified before.
             bool closer_to_prev = (gps_time - prev_time_) < (last_imu_time - gps_time);
             long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
 
             RCLCPP_DEBUG(this->get_logger(), "GPS measurement at time %.4f. Attaching to node %lu (time %.4f).",
                          gps_time, target_node_key, closer_to_prev ? prev_time_ : last_imu_time);
 
+            // No transform needed, GPS data arrives pre-converted into the 'map' frame.
             gtsam::Point3 gps_position(latest_gps->pose.pose.position.x,
                                        latest_gps->pose.pose.position.y,
                                        latest_gps->pose.pose.position.z);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
 
-            // Add the GPS factor to the graph, connected to the chosen target node.
+            // Add the GPS unary factor to the graph, connected to the chosen target node.
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
         }
 
@@ -234,8 +254,15 @@ private:
         new_values.insert(V(current_step_), predicted_state.velocity());
         new_values.insert(B(current_step_), prev_bias_);
 
+        // Create timestamp map for new variables
+        // The Fixed-lag smoother uses this to know when to drop old data.
+        gtsam::IncrementalFixedLagSmoother::KeyTimestampMap new_timestamps;
+        new_timestamps[X(current_step_)] = last_imu_time;
+        new_timestamps[V(current_step_)] = last_imu_time;
+        new_timestamps[B(current_step_)] = last_imu_time;
+
         // --- Update the Smoother ---
-        smoother_->update(new_graph, new_values);
+        smoother_->update(new_graph, new_values, new_timestamps);
 
         // Update the state with the new optimized estimate.
         prev_pose_ = smoother_->calculateEstimate<gtsam::Pose3>(X(current_step_));
@@ -264,12 +291,12 @@ private:
 
         // --- Configure IMU Pre-integration ---
         auto imu_params = gtsam::PreintegratedCombinedMeasurements::Params::MakeSharedU();
-        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81); // Z is up, so gravity is in the negative Z direction
+        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81); // ENU, so gravity is in the negative Z direction
         imu_params->accelerometerCovariance = gtsam::Matrix33::Identity() * pow(accel_noise_sigma_, 2);
         imu_params->gyroscopeCovariance = gtsam::Matrix33::Identity() * pow(gyro_noise_sigma_, 2);
         imu_params->biasAccCovariance = gtsam::Matrix33::Identity() * pow(accel_bias_rw_sigma_, 2);
         imu_params->biasOmegaCovariance = gtsam::Matrix33::Identity() * pow(gyro_bias_rw_sigma_, 2);
-        imu_params->integrationCovariance = gtsam::Matrix33::Identity() * 1e-8; // Numerical integration error
+        imu_params->integrationCovariance = gtsam::Matrix33::Identity() * 1e-8; // Seems to work haha
 
         // --- Set Initial State ---
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
@@ -306,8 +333,15 @@ private:
         initial_values.insert(V(0), prev_vel_);
         initial_values.insert(B(0), prev_bias_);
 
-        // Update the smoother with the initial state.
-        smoother_->update(initial_graph, initial_values);
+        // Create timestamp map for initial variables
+        // The Fixed-lag smoother uses this to know when to drop old data.
+        gtsam::IncrementalFixedLagSmoother::KeyTimestampMap initial_timestamps;
+        initial_timestamps[X(0)] = prev_time_;
+        initial_timestamps[V(0)] = prev_time_;
+        initial_timestamps[B(0)] = prev_time_;
+
+        // --- Update the Smoother with the Initial State ---
+        smoother_->update(initial_graph, initial_values, initial_timestamps);
 
         RCLCPP_INFO(this->get_logger(), "System initialized and is now live.");
     }
@@ -371,6 +405,7 @@ private:
                 gtsam::Point3(odom_to_base_tf2.getOrigin().x(), odom_to_base_tf2.getOrigin().y(), odom_to_base_tf2.getOrigin().z()));
 
             // Calculate map->odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
+            // Mangelson's EN EN 433 class really seeing some direct application here haha.
             gtsam::Pose3 map_to_odom_gtsam = prev_pose_ * odom_to_base_gtsam.inverse();
 
             // Broadcast the calculated transform.
@@ -453,6 +488,8 @@ private:
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
+    // A single-threaded executor simplifies data access management.
+    // We'd need to use a mutex or lock if we ever use a MuliThreadedExecutor.
     rclcpp::spin(std::make_shared<GtsamLocalizerNode>());
     rclcpp::shutdown();
     return 0;
