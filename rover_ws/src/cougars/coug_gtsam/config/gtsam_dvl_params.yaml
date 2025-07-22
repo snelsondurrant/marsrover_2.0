@@ -2,8 +2,11 @@
 gtsam_dvl_localizer_node:
   ros__parameters:
     # --- ROS Topics and Frames ---
-    imu_topic: "zed/zed_node/imu/data"
+    imu_topic: "imu/data"
     gps_odom_topic: "/odometry/gps"
+    dvl_topic: "/dvl/data"
+    depth_topic: "/depth/data"
+    heading_topic: "/heading/data"
     global_odom_topic: "/odometry/global"
     map_frame: "map"
     odom_frame: "odom"
@@ -33,6 +36,18 @@ gtsam_dvl_localizer_node:
     gps:
       # Standard deviation of GPS position measurements (meters).
       noise_sigma: 0.5
+
+    dvl:
+      # Standard deviation of DVL body-frame velocity measurements (m/s).
+      noise_sigma: 0.1
+
+    depth:
+      # Standard deviation of depth measurements (meters).
+      noise_sigma: 0.1
+
+    heading:
+      # Standard deviation of absolute heading measurements (radians).
+      noise_sigma: 0.05
 
     # --- Initial State Uncertainty (Priors) ---
     # Defines the certainty of the very first state estimate.

@@ -179,7 +179,7 @@ private:
             {
                 gtsam::Vector3 accel(imu_msg->linear_acceleration.x, imu_msg->linear_acceleration.y, imu_msg->linear_acceleration.z);
                 gtsam::Vector3 gyro(imu_msg->angular_velocity.x, imu_msg->angular_velocity.y, imu_msg->angular_velocity.z);
-                
+
                 // Transform IMU data into the base frame (to account for different mounting configs).
                 try
                 {
@@ -378,11 +378,11 @@ private:
     }
 
     /**
-     * @brief Publishes the fused odometry message and the map->odom transform.
+     * @brief Publishes the fused odometry message and the map -> odom transform.
      */
     void publishFusedState()
     {
-        // --- Publish map->odom transform ---
+        // --- Publish map -> odom transform ---
         if (publish_global_tf_)
         {
             geometry_msgs::msg::TransformStamped odom_to_base_tf;
@@ -406,7 +406,7 @@ private:
                             odom_to_base_tf2.getRotation().y(), odom_to_base_tf2.getRotation().z()),
                 gtsam::Point3(odom_to_base_tf2.getOrigin().x(), odom_to_base_tf2.getOrigin().y(), odom_to_base_tf2.getOrigin().z()));
 
-            // Calculate map->odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
+            // Calculate map -> odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
             // Mangelson's EN EN 433 class really seeing some direct application here haha.
             gtsam::Pose3 map_to_odom_gtsam = prev_pose_ * odom_to_base_gtsam.inverse();
 

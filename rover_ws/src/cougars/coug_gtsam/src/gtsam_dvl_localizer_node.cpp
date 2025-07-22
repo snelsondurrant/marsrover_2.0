@@ -561,11 +561,11 @@ private:
     }
 
     /**
-     * @brief Publishes the fused odometry message and the map->odom transform.
+     * @brief Publishes the fused odometry message and the map -> odom transform.
      */
     void publishFusedState()
     {
-        // --- Publish map->odom transform ---
+        // --- Publish map -> odom transform ---
         if (publish_global_tf_)
         {
             geometry_msgs::msg::TransformStamped odom_to_base_tf_msg;
@@ -586,7 +586,7 @@ private:
             tf2::fromMsg(odom_to_base_tf_msg.transform, odom_to_base_tf2);
             gtsam::Pose3 odom_to_base_gtsam = toGtsam(odom_to_base_tf2);
 
-            // Calculate map->odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
+            // Calculate map -> odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
             // Mangelson's EN EN 433 class really seeing some direct application here haha.
             gtsam::Pose3 map_to_odom_gtsam = prev_pose_ * odom_to_base_gtsam.inverse();
 
