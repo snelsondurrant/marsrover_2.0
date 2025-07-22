@@ -9,7 +9,7 @@
 
   <depend>coug_description</depend>
   <depend>coug_localization</depend>
-  <depend>rover_gui</depend>
+  <depend>coug_gui</depend>
 
   <export>
     <build_type>ament_python</build_type>

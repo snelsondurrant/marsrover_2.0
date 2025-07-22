@@ -50,6 +50,7 @@ def generate_launch_description():
             launch_ros.actions.Node(
                 package="rover_localization",
                 executable="sync_origin",
+                name="sync_origin",
                 output="screen",
                 parameters=[coug_loc_params_file],
             ),

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'coug_localization'
+package_name = 'coug_gui'
 
 setup(
     name=package_name,
@@ -19,12 +19,10 @@ setup(
     zip_safe=True,
     maintainer='Nelson Durrant',
     maintainer_email='snelsondurrant@gmail.com',
-    description='Localization capabilities for the CougUV',
+    description='Graphical user interfaces for the CougUV',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-            'sync_origin = coug_localization.sync_origin_node:main',
-        ],
+        'console_scripts': [],
     },
 )
