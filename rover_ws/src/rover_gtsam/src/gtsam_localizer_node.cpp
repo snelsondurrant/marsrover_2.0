@@ -1,8 +1,10 @@
 /**
  * @file gtsam_localizer_node.cpp
- * @brief Fuses IMU and GPS Odometry data using a GTSAM Fixed-Lag Smoother.
+ * @brief Fuses IMU and GPS Odometry data using a GTSAM Fixed-Lag Smoother with IMU pre-integration.
  * @author Nelson Durrant
  * @date July 2025
+ *
+ * NOTE: This takes too much compute to run at the same time as Nav2.
  *
  * Subscribes:
  * - /imu/data (sensor_msgs/msg/Imu)
@@ -52,7 +54,7 @@ public:
         loadParameters();
         setupRosInterfaces();
 
-        RCLCPP_INFO(this->get_logger(), "Initialization complete. Waiting for first IMU and GPS messages...");
+        RCLCPP_INFO(this->get_logger(), "Initialization complete! Waiting for first IMU and GPS messages...");
     }
 
 private:
@@ -115,7 +117,7 @@ private:
     }
 
     /**
-     * @brief Stores incoming IMU messages in a thread-safe queue.
+     * @brief Stores incoming IMU messages in a (thread-safe) queue.
      */
     void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
@@ -123,7 +125,7 @@ private:
     }
 
     /**
-     * @brief Stores incoming GPS odometry messages in a thread-safe queue.
+     * @brief Stores incoming GPS odometry messages in a (thread-safe) queue.
      */
     void gpsOdomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
@@ -172,11 +174,11 @@ private:
             double current_imu_time = rclcpp::Time(imu_msg->header.stamp).seconds();
             double dt = current_imu_time - last_imu_time;
 
-            if (dt > 1e-4) // Ensure a positive, sensible timestep
+            if (dt > 1e-4) // Ensure we have a reasonable timestep to work with
             {
                 gtsam::Vector3 accel(imu_msg->linear_acceleration.x, imu_msg->linear_acceleration.y, imu_msg->linear_acceleration.z);
                 gtsam::Vector3 gyro(imu_msg->angular_velocity.x, imu_msg->angular_velocity.y, imu_msg->angular_velocity.z);
-                imu_preintegrator_->integrateMeasurement(accel, gyro, dt);
+                imu_preintegrator_->integrateMeasurement(accel, gyro, dt); // Use GTSAM's pre-integrator
             }
             last_imu_time = current_imu_time;
         }
@@ -204,14 +206,27 @@ private:
             B(prev_step_), B(current_step_), gtsam::imuBias::ConstantBias(),
             gtsam::noiseModel::Diagonal::Sigmas(bias_sigmas));
 
-        // If we have a GPS measurement, add a GPS factor.
+        // If we have a GPS measurement, add a GPS factor to the closest node in time.
         if (latest_gps)
         {
+            double gps_time = rclcpp::Time(latest_gps->header.stamp).seconds();
+
+            // Determine which node (previous or current) is closer in time.
+            // prev_time_ is the timestamp of the previous node (X(prev_step_)).
+            // last_imu_time is the timestamp of the current node (X(current_step_)).
+            bool closer_to_prev = (gps_time - prev_time_) < (last_imu_time - gps_time);
+            long unsigned int target_node_key = closer_to_prev ? prev_step_ : current_step_;
+
+            RCLCPP_DEBUG(this->get_logger(), "GPS measurement at time %.4f. Attaching to node %lu (time %.4f).",
+                         gps_time, target_node_key, closer_to_prev ? prev_time_ : last_imu_time);
+
             gtsam::Point3 gps_position(latest_gps->pose.pose.position.x,
                                        latest_gps->pose.pose.position.y,
                                        latest_gps->pose.pose.position.z);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
-            new_graph.emplace_shared<gtsam::GPSFactor>(X(current_step_), gps_position, gps_noise);
+
+            // Add the GPS factor to the graph, connected to the chosen target node.
+            new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
         }
 
         // Insert the predicted state as an initial estimate for the new state.
@@ -249,7 +264,7 @@ private:
 
         // --- Configure IMU Pre-integration ---
         auto imu_params = gtsam::PreintegratedCombinedMeasurements::Params::MakeSharedU();
-        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81); // ENU convention, gravity is negative Z
+        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81); // Z is up, so gravity is in the negative Z direction
         imu_params->accelerometerCovariance = gtsam::Matrix33::Identity() * pow(accel_noise_sigma_, 2);
         imu_params->gyroscopeCovariance = gtsam::Matrix33::Identity() * pow(gyro_noise_sigma_, 2);
         imu_params->biasAccCovariance = gtsam::Matrix33::Identity() * pow(accel_bias_rw_sigma_, 2);
@@ -302,8 +317,8 @@ private:
      */
     void odomPublishTimerCallback()
     {
+        // IMPORTANT! Fix for integration with the 'navsat_transform_node':
         // Before initialization, publish a zero-position odometry message with IMU heading.
-        // This is useful for initializing other nodes like navsat_transform_node.
         if (!system_initialized_)
         {
             if (!imu_queue_.empty())
@@ -322,16 +337,16 @@ private:
         }
         else // System is initialized, publish the fused state.
         {
-            publishFusedEstimate();
+            publishFusedState();
         }
     }
 
     /**
      * @brief Publishes the fused odometry message and the map->odom transform.
      */
-    void publishFusedEstimate()
+    void publishFusedState()
     {
-        // --- Publish map -> odom transform ---
+        // --- Publish map->odom transform ---
         if (publish_global_tf_)
         {
             geometry_msgs::msg::TransformStamped odom_to_base_tf;
@@ -355,7 +370,7 @@ private:
                             odom_to_base_tf2.getRotation().y(), odom_to_base_tf2.getRotation().z()),
                 gtsam::Point3(odom_to_base_tf2.getOrigin().x(), odom_to_base_tf2.getOrigin().y(), odom_to_base_tf2.getOrigin().z()));
 
-            // Calculate map -> odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
+            // Calculate map->odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
             gtsam::Pose3 map_to_odom_gtsam = prev_pose_ * odom_to_base_gtsam.inverse();
 
             // Broadcast the calculated transform.

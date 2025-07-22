@@ -11,7 +11,7 @@ gtsam_localizer_node:
 
     # --- Node Settings ---
     factor_graph_update_rate: 10.0 # Hz
-    odom_publish_rate: 50.0 # Hz, increased for a smoother TF tree
+    odom_publish_rate: 50.0 # Hz
     publish_global_tf: true # Whether to publish the map -> odom transform
 
     # --- GTSAM Smoother Settings ---
@@ -20,7 +20,7 @@ gtsam_localizer_node:
 
     # --- Sensor Noise Models ---
     # Defines the standard deviation of sensor measurements.
-    # Lower values indicate higher trust in the sensor.
+    # Lower values indicate higher trust in the sensor!
     imu:
       # Continuous-time noise density for accelerometer (m/s^2/√Hz).
       accel_noise_sigma: 0.1
@@ -38,7 +38,7 @@ gtsam_localizer_node:
     # Defines the certainty of the very first state estimate.
     # Lower values indicate higher confidence in the initial state.
     prior:
-      # Uncertainty in initial orientation (radians). 0.05 rad ≈ 3 degrees.
+      # Uncertainty in initial orientation (radians).
       pose_rot_sigma: 0.05
       # Uncertainty in initial position (meters). Should roughly match GPS noise.
       pose_pos_sigma: 0.5
