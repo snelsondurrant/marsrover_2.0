@@ -23,6 +23,7 @@ def generate_launch_description():
                 parameters=[coug_loc_params_file],
                 remappings=[("odometry/filtered", "odometry/local")],
             ),
+            # GTSAM will replace this node in the future (all goes well)
             # https://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
             launch_ros.actions.Node(
                 package="robot_localization",
