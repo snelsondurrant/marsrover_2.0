@@ -40,7 +40,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[coug_loc_params_file],
                 remappings=[
-                    ("imu/data", "imu/data"),
+                    ("imu/data", "heading/data"), # use the global heading from the modem
                     ("gps/fix", "gps/fix"),
                     ("gps/filtered", "gps/filtered"),
                     ("odometry/gps", "odometry/gps"),

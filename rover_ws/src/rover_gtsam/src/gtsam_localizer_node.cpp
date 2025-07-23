@@ -135,6 +135,7 @@ private:
         if (imu_queue_.empty())
             return;
 
+        // Attempt to initialize the system on the first valid GPS message.
         if (!system_initialized_)
         {
             if (!gps_queue_.empty())
@@ -166,9 +167,9 @@ private:
         for (const auto &imu_msg : imu_measurements)
         {
             double current_imu_time = rclcpp::Time(imu_msg->header.stamp).seconds();
-            double dt = current_imu_time - last_imu_time;
+            double dt = current_imu_time - last_imu_time; // Get the exact time difference
 
-            if (dt > 1e-4)
+            if (dt > 1e-4) // Ensure we have a reasonable timestep to work with
             {
                 gtsam::Vector3 accel = toGtsam(imu_msg->linear_acceleration);
                 gtsam::Vector3 gyro = toGtsam(imu_msg->angular_velocity);
@@ -192,7 +193,6 @@ private:
                         "IMU transform failed from '%s' to '%s': %s. Using untransformed data.",
                         imu_msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
                 }
-
                 imu_preintegrator_->integrateMeasurement(accel, gyro, dt);
             }
             last_imu_time = current_imu_time;
@@ -203,7 +203,8 @@ private:
         gtsam::Values new_values;
 
         // Predict the next state using the pre-integrated IMU measurements.
-        auto predicted_state = imu_preintegrator_->predict(gtsam::NavState(prev_pose_, prev_vel_), prev_bias_);
+        auto predicted_state = imu_preintegrator_->predict(
+            gtsam::NavState(prev_pose_, prev_vel_), prev_bias_);
 
         // Add a new IMU between factor to constrain the two state estimates.
         new_graph.emplace_shared<gtsam::CombinedImuFactor>(
@@ -239,7 +240,8 @@ private:
         new_values.insert(V(current_step_), predicted_state.velocity());
         new_values.insert(B(current_step_), prev_bias_);
 
-        // Create timestamp map for new variables for the Fixed-lag smoother.
+        // Create timestamp map for new variables.
+        // The Fixed-lag smoother uses this to know when to drop old data.
         gtsam::IncrementalFixedLagSmoother::KeyTimestampMap new_timestamps;
         new_timestamps[X(current_step_)] = last_imu_time;
         new_timestamps[V(current_step_)] = last_imu_time;
@@ -427,7 +429,8 @@ private:
     gtsam::imuBias::ConstantBias prev_bias_;
 
     // --- Parameters ---
-    std::string imu_topic_, gps_odom_topic_, global_odom_topic_;
+    std::string imu_topic_, gps_odom_topic_;
+    std::string global_odom_topic_;
     std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
     bool publish_global_tf_;

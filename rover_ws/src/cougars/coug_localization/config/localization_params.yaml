@@ -102,5 +102,5 @@ navsat_transform:
     zero_altitude: true
     broadcast_utm_transform: true
     publish_filtered_gps: true
-    use_odometry_yaw: true
+    use_odometry_yaw: false # use the global heading from the modem instead
     wait_for_datum: true # from the 'sync_origin' node

@@ -49,13 +49,6 @@ using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 
 /**
  * @brief Binary factor for a DVL measurement in the robot's body frame.
- * 
- * I'm pretty sure that bc the DVL velocity reading is in the body frame, its interpretation 
- * in the map frame depends on the robot's current pose. This factor must then connect
- * both the Pose (X) and Velocity (V) state variables to rotate the measurement into
- * the map frame for comparison.
- *
- * TODO: Gemini 2.5 Pro helped convert the Jacobean stuff from Matthew's code, needs to be tested.
  */
 class BodyFrameVelocityFactor : public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>
 {
@@ -69,33 +62,13 @@ public:
                                 boost::optional<gtsam::Matrix &> H_pose = boost::none,
                                 boost::optional<gtsam::Matrix &> H_vel = boost::none) const override
     {
-        gtsam::Rot3 R_map_body = pose.rotation();
-        gtsam::Vector3 vel_in_map = R_map_body * measured_velocity_body_;
-
-        if (H_pose)
-        {
-            // Jacobian of error w.r.t. pose
-            // error = vel - R_map_body * measured_velocity_body
-            // d(error)/d(pose) = [d(error)/d(rot) d(error)/d(trans)]
-            // d(error)/d(rot) = R_map_body * skewSymmetric(measured_velocity_body)
-            // d(error)/d(trans) = 0
-            gtsam::Matrix3 J_rot = R_map_body.matrix() * gtsam::skewSymmetric(measured_velocity_body_.x(), measured_velocity_body_.y(), measured_velocity_body_.z());
-            *H_pose = (gtsam::Matrix(3, 6) << J_rot, gtsam::Matrix3::Zero()).finished();
-        }
-        if (H_vel)
-        {
-            // Jacobian of error w.r.t. velocity is identity
-            *H_vel = gtsam::Matrix3::Identity();
-        }
-
-        return vel - vel_in_map;
+        // TODO: Add here
+        return gtsam::Vector3(); // Placeholder, implement actual error calculation
     }
 };
 
 /**
  * @brief Unary factor for a depth measurement (constrains the Z component of a Pose3).
- * 
- * TODO: Gemini 2.5 Pro helped convert the Jacobean stuff from Matthew's code, needs to be tested.
  */
 class DepthFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
 {
@@ -108,22 +81,13 @@ public:
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
                                 boost::optional<gtsam::Matrix &> H = boost::none) const override
     {
-        if (H)
-        {
-            // Jacobian of the error wrt the Pose3's 6 DOF local coordinates (body-centric)
-            // Error = pose.z - measured_z.
-            // d(error)/d(pose) = [0,0,0, 0,0,1] * d(pose.translation)/d(pose)
-            // The derivative of world z wrt local perturbations is (0,0,0, 0,0,1) for Pose3.
-            *H = (gtsam::Matrix(1, 6) << 0.0, 0.0, 0.0, 0.0, 0.0, 1.0).finished();
-        }
-        return gtsam::Vector1(pose.z() - measured_depth_);
+        // TODO: Add here
+        return gtsam::Vector1(); // Placeholder, implement actual error calculation
     }
 };
 
 /**
  * @brief Unary factor for an absolute heading/orientation measurement.
- * 
- * TODO: Gemini 2.5 Pro helped convert the Jacobean stuff from Matthew's code, needs to be tested.
  */
 class HeadingFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
 {
@@ -136,15 +100,8 @@ public:
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
                                 boost::optional<gtsam::Matrix &> H = boost::none) const override
     {
-        if (H)
-        {
-            // Jacobian of the error wrt the Pose3's 6 DOF local coordinates
-            // Error depends only on rotation, so derivative wrt translation is zero.
-            // Derivative wrt rotation is Identity.
-            *H = (gtsam::Matrix(3, 6) << gtsam::Matrix3::Identity(), gtsam::Matrix3::Zero()).finished();
-        }
-        // Error is the difference in tangent space
-        return measured_rot_.localCoordinates(pose.rotation());
+        // TODO: Add here
+        return gtsam::Vector3(); // Placeholder, implement actual error calculation
     }
 };
 
@@ -247,11 +204,8 @@ private:
      */
     void factorGraphTimerCallback()
     {
-        // Wait until we have at least one IMU message.
         if (imu_queue_.empty())
-        {
             return;
-        }
 
         // Attempt to initialize the system on the first valid GPS message.
         if (!system_initialized_)
@@ -259,9 +213,11 @@ private:
             if (!gps_queue_.empty())
             {
                 initializeSystem(gps_queue_.back());
-                system_initialized_ = true;
-                gps_queue_.clear();
-                imu_queue_.clear();
+                // On successful initialization, clear queues
+                if(system_initialized_) {
+                    gps_queue_.clear();
+                    imu_queue_.clear();
+                }
             }
             return;
         }
@@ -311,14 +267,13 @@ private:
                 gtsam::Vector3 accel = toGtsam(imu_msg->linear_acceleration);
                 gtsam::Vector3 gyro = toGtsam(imu_msg->angular_velocity);
 
-                // Transform IMU data into the base frame (to account for different mounting configs).
+                // Transform IMU data from sensor frame to base_frame before integration
                 try
                 {
                     geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
                         base_frame_, imu_msg->header.frame_id, imu_msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
 
                     geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
-                    // For vectors, doTransform() applies only the rotational part of the transform.
                     tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, tf_stamped);
                     tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, tf_stamped);
 
@@ -327,10 +282,11 @@ private:
                 }
                 catch (const tf2::TransformException &ex)
                 {
-                    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "IMU transform failed from '%s' to '%s': %s. Using untransformed data.",
-                                         imu_msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+                    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                        "IMU transform failed from '%s' to '%s': %s. Using untransformed data.",
+                        imu_msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
                 }
-                imu_preintegrator_->integrateMeasurement(accel, gyro, dt); // Use GTSAM's pre-integrator
+                imu_preintegrator_->integrateMeasurement(accel, gyro, dt);
             }
             last_imu_time = current_imu_time;
         }
@@ -359,29 +315,25 @@ private:
             B(prev_step_), B(current_step_), gtsam::imuBias::ConstantBias(),
             gtsam::noiseModel::Diagonal::Sigmas(bias_sigmas));
 
-        // If we have a GPS measurement, add a GPS unary factor to the closest node in time.
+        // If we have a GPS measurement, add a GPS unary factor.
         if (latest_gps)
         {
             // Determine which node (previous or current) is closer in time.
             // This seems like a simple way to solve the problem Matthew and Braden identified before.
             unsigned long target_node_key = getClosestNodeKey(latest_gps->header.stamp, last_imu_time);
-            RCLCPP_DEBUG(this->get_logger(), "GPS measurement at time %.4f. Attaching to node %lu.",
-                         rclcpp::Time(latest_gps->header.stamp).seconds(), target_node_key);
 
-            // No transform needed, GPS data arrives pre-converted into the 'map' frame.
+            // GPS data is assumed to be in the 'map' frame, no transform needed.
             gtsam::Point3 gps_position = toGtsam(latest_gps->pose.pose.position);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
-
-            // Add the GPS unary factor to the graph, connected to the chosen target node.
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
         }
 
-        // If we have a DVL measurement, add a DVL binary factor to the closest node in time.
+        // If we have a DVL measurement, add a DVL binary factor.
         if (latest_dvl)
         {
             gtsam::Vector3 dvl_vel_body = toGtsam(latest_dvl->twist.twist.linear);
 
-            // Transform DVL velocity from its frame into the base_link frame.
+            // Transform DVL velocity into the base_link frame.
             try
             {
                 geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
@@ -402,7 +354,7 @@ private:
             new_graph.emplace_shared<BodyFrameVelocityFactor>(X(target_node_key), V(target_node_key), dvl_vel_body, dvl_noise);
         }
 
-        // If we have a depth measurement, add a Depth unary factor to the closest node in time.
+        // If we have a depth measurement, add a Depth unary factor.
         if (latest_depth_odom)
         {
             unsigned long target_node_key = getClosestNodeKey(latest_depth_odom->header.stamp, last_imu_time);
@@ -414,13 +366,14 @@ private:
             new_graph.emplace_shared<DepthFactor>(X(target_node_key), depth_z, depth_noise);
         }
 
-        // If we have a heading measurement, add a Heading unary factor to the closest node in time.
+        // If we have a heading measurement, add a Heading unary factor.
         if (latest_heading)
         {
             gtsam::Rot3 heading_rot_sensor = toGtsam(latest_heading->orientation);
 
-            // Transform heading from sensor frame to base_link frame (upside-down mounting config, etc).
+            // Transform heading into the base_link frame (upside-down mounting config, etc).
             // R_map_base = R_map_sensor * (R_base_sensor)^-1
+            // Mangelson's EC EN 433 class again, haha.
             try
             {
                 geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
@@ -436,6 +389,7 @@ private:
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
+            // TODO: Double check the isotropic noise model here.
             auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
             new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }
@@ -445,7 +399,7 @@ private:
         new_values.insert(V(current_step_), predicted_state.velocity());
         new_values.insert(B(current_step_), prev_bias_);
 
-        // Create timestamp map for new variables
+        // Create timestamp map for new variables.
         // The Fixed-lag smoother uses this to know when to drop old data.
         gtsam::IncrementalFixedLagSmoother::KeyTimestampMap new_timestamps;
         new_timestamps[X(current_step_)] = last_imu_time;
@@ -481,8 +435,9 @@ private:
         smoother_ = std::make_unique<gtsam::IncrementalFixedLagSmoother>(smoother_lag_, isam2_params);
 
         // --- Configure IMU Pre-integration ---
+        // MakeSharedU() configures for ENU frame, where gravity is negative Z.
         auto imu_params = gtsam::PreintegratedCombinedMeasurements::Params::MakeSharedU();
-        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81); // ENU, so gravity is in the negative Z direction
+        imu_params->n_gravity = gtsam::Vector3(0, 0, -9.81);
         imu_params->accelerometerCovariance = gtsam::Matrix33::Identity() * pow(accel_noise_sigma_, 2);
         imu_params->gyroscopeCovariance = gtsam::Matrix33::Identity() * pow(gyro_noise_sigma_, 2);
         imu_params->biasAccCovariance = gtsam::Matrix33::Identity() * pow(accel_bias_rw_sigma_, 2);
@@ -490,15 +445,14 @@ private:
         imu_params->integrationCovariance = gtsam::Matrix33::Identity() * 1e-8; // Seems to work haha
 
         // --- Set Initial State ---
+        // GPS is assumed to be in the 'map' frame, no transform needed.
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
-
         prev_pose_ = toGtsam(initial_gps->pose.pose);
         prev_vel_ = gtsam::Vector3(0, 0, 0);         // Assume starting from rest
         prev_bias_ = gtsam::imuBias::ConstantBias(); // Assume zero initial bias
-
         imu_preintegrator_ = std::make_unique<gtsam::PreintegratedCombinedMeasurements>(imu_params, prev_bias_);
 
-        // --- Add Prior Factors to the Graph ---
+        // --- Add Prior Factors to Graph ---
         gtsam::NonlinearFactorGraph initial_graph;
         gtsam::Values initial_values;
 
@@ -518,8 +472,7 @@ private:
         initial_values.insert(V(0), prev_vel_);
         initial_values.insert(B(0), prev_bias_);
 
-        // Create timestamp map for initial variables
-        // The Fixed-lag smoother uses this to know when to drop old data.
+        // Add timestamps for initial variables.
         gtsam::IncrementalFixedLagSmoother::KeyTimestampMap initial_timestamps;
         initial_timestamps[X(0)] = prev_time_;
         initial_timestamps[V(0)] = prev_time_;
@@ -527,7 +480,7 @@ private:
 
         // --- Update the Smoother with the Initial State ---
         smoother_->update(initial_graph, initial_values, initial_timestamps);
-
+        system_initialized_ = true;
         RCLCPP_INFO(this->get_logger(), "System initialized and is now live.");
     }
 
@@ -538,23 +491,20 @@ private:
     {
         // IMPORTANT! Fix for integration with the 'navsat_transform_node':
         // Before initialization, publish a zero-position odometry message with IMU heading.
-        if (!system_initialized_)
+        if (!system_initialized_ && !imu_queue_.empty())
         {
-            if (!imu_queue_.empty())
-            {
-                auto last_imu = imu_queue_.back();
-                nav_msgs::msg::Odometry odom_msg;
-                odom_msg.header.stamp = this->get_clock()->now();
-                odom_msg.header.frame_id = odom_frame_;
-                odom_msg.child_frame_id = base_frame_;
-                odom_msg.pose.pose.orientation = last_imu->orientation;
-                // Indicate high confidence in yaw, low confidence elsewhere.
-                odom_msg.pose.covariance.fill(1e3);
-                odom_msg.pose.covariance[35] = 0.01; // Yaw covariance
-                global_odom_pub_->publish(odom_msg);
-            }
+            auto last_imu = imu_queue_.back();
+            nav_msgs::msg::Odometry odom_msg;
+            odom_msg.header.stamp = this->get_clock()->now();
+            odom_msg.header.frame_id = odom_frame_;
+            odom_msg.child_frame_id = base_frame_;
+            odom_msg.pose.pose.orientation = last_imu->orientation;
+            // Indicate high confidence in yaw, low confidence elsewhere.
+            odom_msg.pose.covariance.fill(1e3);
+            odom_msg.pose.covariance[35] = 0.01; // Yaw covariance
+            global_odom_pub_->publish(odom_msg);
         }
-        else // System is initialized, publish the fused state.
+        else if (system_initialized_)
         {
             publishFusedState();
         }
@@ -605,11 +555,8 @@ private:
         odom_msg.header.stamp = this->get_clock()->now();
         odom_msg.header.frame_id = map_frame_;
         odom_msg.child_frame_id = base_frame_;
-        // Pose
         odom_msg.pose.pose = toPoseMsg(prev_pose_);
-        // Twist (velocity)
         odom_msg.twist.twist.linear = toVectorMsg(prev_vel_);
-
         global_odom_pub_->publish(odom_msg);
     }
 
@@ -657,8 +604,7 @@ private:
     double accel_bias_rw_sigma_, gyro_bias_rw_sigma_;
     double gps_noise_sigma_, dvl_noise_sigma_, depth_noise_sigma_, heading_noise_sigma_;
     double prior_pose_rot_sigma_, prior_pose_pos_sigma_;
-    double prior_vel_sigma_;
-    double prior_bias_sigma_;
+    double prior_vel_sigma_, prior_bias_sigma_;
 
     // --- Conversion Utilities (Static Methods) ---
     static gtsam::Point3 toGtsam(const geometry_msgs::msg::Point &msg);
@@ -667,13 +613,12 @@ private:
     static gtsam::Pose3 toGtsam(const geometry_msgs::msg::Pose &msg);
     static gtsam::Pose3 toGtsam(const tf2::Transform &tf);
     static geometry_msgs::msg::Point toPointMsg(const gtsam::Point3 &gtsam_obj);
+    static geometry_msgs::msg::Vector3 toVectorMsg(const gtsam::Vector3 &gtsam_obj);
     static geometry_msgs::msg::Quaternion toQuatMsg(const gtsam::Rot3 &gtsam_obj);
     static geometry_msgs::msg::Pose toPoseMsg(const gtsam::Pose3 &gtsam_obj);
-    static geometry_msgs::msg::Vector3 toVectorMsg(const gtsam::Vector3 &gtsam_obj);
 };
 
 // --- Definitions for Static Member Functions ---
-
 gtsam::Point3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Point &msg) { return {msg.x, msg.y, msg.z}; }
 gtsam::Vector3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Vector3 &msg) { return {msg.x, msg.y, msg.z}; }
 gtsam::Rot3 GtsamLocalizerNode::toGtsam(const geometry_msgs::msg::Quaternion &msg) { return gtsam::Rot3::Quaternion(msg.w, msg.x, msg.y, msg.z); }
@@ -687,6 +632,14 @@ gtsam::Pose3 GtsamLocalizerNode::toGtsam(const tf2::Transform &tf)
 geometry_msgs::msg::Point GtsamLocalizerNode::toPointMsg(const gtsam::Point3 &gtsam_obj)
 {
     geometry_msgs::msg::Point msg;
+    msg.x = gtsam_obj.x();
+    msg.y = gtsam_obj.y();
+    msg.z = gtsam_obj.z();
+    return msg;
+}
+geometry_msgs::msg::Vector3 GtsamLocalizerNode::toVectorMsg(const gtsam::Vector3 &gtsam_obj)
+{
+    geometry_msgs::msg::Vector3 msg;
     msg.x = gtsam_obj.x();
     msg.y = gtsam_obj.y();
     msg.z = gtsam_obj.z();
@@ -709,20 +662,12 @@ geometry_msgs::msg::Pose GtsamLocalizerNode::toPoseMsg(const gtsam::Pose3 &gtsam
     msg.orientation = toQuatMsg(gtsam_obj.rotation());
     return msg;
 }
-geometry_msgs::msg::Vector3 GtsamLocalizerNode::toVectorMsg(const gtsam::Vector3 &gtsam_obj)
-{
-    geometry_msgs::msg::Vector3 msg;
-    msg.x = gtsam_obj.x();
-    msg.y = gtsam_obj.y();
-    msg.z = gtsam_obj.z();
-    return msg;
-}
 
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     // A single-threaded executor simplifies data access management.
-    // We'd need to use a mutex or lock if we ever use a MuliThreadedExecutor.
+    // We'd need to use a mutex or lock if we ever use a MultiThreadedExecutor.
     rclcpp::spin(std::make_shared<GtsamLocalizerNode>());
     rclcpp::shutdown();
     return 0;
