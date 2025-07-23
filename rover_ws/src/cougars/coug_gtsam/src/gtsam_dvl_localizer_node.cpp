@@ -350,6 +350,7 @@ private:
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_dvl->header.stamp, last_imu_time);
+            // TODO: Double check the isotropic noise model here.
             auto dvl_noise = gtsam::noiseModel::Isotropic::Sigma(3, dvl_noise_sigma_);
             new_graph.emplace_shared<BodyFrameVelocityFactor>(X(target_node_key), V(target_node_key), dvl_vel_body, dvl_noise);
         }
@@ -362,6 +363,7 @@ private:
             // The z-position from the odometry message is assumed to be the absolute depth in the map frame.
             // For an ENU frame, depth is a negative Z value.
             double depth_z = latest_depth_odom->pose.pose.position.z;
+            // TODO: Double check the isotropic noise model here.
             auto depth_noise = gtsam::noiseModel::Isotropic::Sigma(1, depth_noise_sigma_);
             new_graph.emplace_shared<DepthFactor>(X(target_node_key), depth_z, depth_noise);
         }
