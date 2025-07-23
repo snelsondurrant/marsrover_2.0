@@ -466,6 +466,8 @@ private:
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
+            // TODO: We might not want an isotropic noise model here in the future.
+            // We probably just want to use the yaw component of the heading measurement.
             auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
             new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }
@@ -506,8 +508,8 @@ private:
 
         // --- Configure Fixed-Lag Smoother ---
         gtsam::ISAM2Params isam2_params;
-        isam2_params.relinearizeThreshold = 0.1;
-        isam2_params.relinearizeSkip = 1;
+        isam2_params.relinearizeThreshold = 0.1; // From example code
+        isam2_params.relinearizeSkip = 1; // From example code
         smoother_ = std::make_unique<gtsam::IncrementalFixedLagSmoother>(smoother_lag_, isam2_params);
 
         // --- Configure IMU Pre-integration ---
@@ -597,7 +599,7 @@ private:
             geometry_msgs::msg::TransformStamped odom_to_base_tf_msg;
             try
             {
-                // Look up the odom->base_link transform from another source (e.g., local EKF node)
+                // Look up the odom -> base_link transform from another source (e.g., local EKF node)
                 odom_to_base_tf_msg = tf_buffer_->lookupTransform(odom_frame_, base_frame_, tf2::TimePointZero);
             }
             catch (const tf2::TransformException &ex)
@@ -607,7 +609,7 @@ private:
                 return;
             }
 
-            // Convert the odom->base transform to a GTSAM type.
+            // Convert the odom -> base transform to a GTSAM type.
             tf2::Transform odom_to_base_tf2;
             tf2::fromMsg(odom_to_base_tf_msg.transform, odom_to_base_tf2);
             gtsam::Pose3 odom_to_base_gtsam = toGtsam(odom_to_base_tf2);
