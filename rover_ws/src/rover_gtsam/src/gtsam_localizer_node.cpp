@@ -140,10 +140,11 @@ private:
             if (!gps_queue_.empty())
             {
                 initializeSystem(gps_queue_.back());
-                system_initialized_ = true;
-                // Clear queues after initialization to prevent using old data
-                gps_queue_.clear();
-                imu_queue_.clear();
+                // On successful initialization, clear queues
+                if(system_initialized_) {
+                    gps_queue_.clear();
+                    imu_queue_.clear();
+                }
             }
             return;
         }
@@ -171,6 +172,27 @@ private:
             {
                 gtsam::Vector3 accel = toGtsam(imu_msg->linear_acceleration);
                 gtsam::Vector3 gyro = toGtsam(imu_msg->angular_velocity);
+                
+                // Transform IMU data from sensor frame to base_frame before integration
+                try
+                {
+                    geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
+                        base_frame_, imu_msg->header.frame_id, imu_msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+                    
+                    geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
+                    tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, tf_stamped);
+                    tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, tf_stamped);
+
+                    accel = toGtsam(transformed_accel);
+                    gyro = toGtsam(transformed_gyro);
+                }
+                catch (const tf2::TransformException &ex)
+                {
+                    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, 
+                        "IMU transform failed from '%s' to '%s': %s. Using untransformed data.",
+                        imu_msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+                }
+
                 imu_preintegrator_->integrateMeasurement(accel, gyro, dt);
             }
             last_imu_time = current_imu_time;
@@ -206,7 +228,7 @@ private:
             // This seems like a simple way to solve the problem Matthew and Braden identified before.
             unsigned long target_node_key = getClosestNodeKey(latest_gps->header.stamp, last_imu_time);
 
-            // GPS data arrives pre-converted into the 'map' frame.
+            // GPS data is assumed to be in the 'map' frame, no transform needed.
             gtsam::Point3 gps_position = toGtsam(latest_gps->pose.pose.position);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
@@ -262,6 +284,7 @@ private:
         imu_params->integrationCovariance = gtsam::Matrix33::Identity() * 1e-8; // Seems to work haha
 
         // --- Set Initial State ---
+        // GPS is assumed to be in the 'map' frame, no transform needed.
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
         prev_pose_ = toGtsam(initial_gps->pose.pose);
         prev_vel_ = gtsam::Vector3(0, 0, 0);         // Assume starting from rest
@@ -296,6 +319,7 @@ private:
 
         // --- Update the Smoother with the Initial State ---
         smoother_->update(initial_graph, initial_values, initial_timestamps);
+        system_initialized_ = true;
         RCLCPP_INFO(this->get_logger(), "System initialized and is now live.");
     }
 
