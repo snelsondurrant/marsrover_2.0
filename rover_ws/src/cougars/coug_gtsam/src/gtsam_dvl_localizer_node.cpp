@@ -52,6 +52,11 @@ using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
  */
 class BodyFrameVelocityFactor : public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>
 {
+    // NOTE: This doesn't match Matthew's code -- his code seemed to assume that the DVL reported
+    // velocity measurements in the global frame, but I think it's probably the local sensor frame?
+    // If so, then I think we need to use a binary factor here to link to both the pose and velocity
+    // variables, bc the estimated velocity in global frame should be a function of both the current
+    // pose and the measured velocity?
     gtsam::Vector3 measured_velocity_body_;
 
 public:
@@ -59,11 +64,40 @@ public:
         : NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>(model, poseKey, velKey), measured_velocity_body_(measured_velocity_body) {}
 
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose, const gtsam::Vector3 &vel,
-                                boost::optional<gtsam::Matrix &> H_pose = boost::none,
-                                boost::optional<gtsam::Matrix &> H_vel = boost::none) const override
+                            boost::optional<gtsam::Matrix &> H_pose = boost::none,
+                            boost::optional<gtsam::Matrix &> H_vel = boost::none) const override
     {
-        // TODO: Add here
-        return gtsam::Vector3(); // Placeholder, implement actual error calculation
+        // TODO: I just used Gemini 2.5 Pro to generate this error function, it needs to be verified.
+
+        // Get the rotation from the world to the body frame
+        gtsam::Rot3 R_wb = pose.rotation();
+        gtsam::Rot3 R_bw = R_wb.inverse();
+
+        // Predict the velocity in the body frame by rotating the world velocity
+        gtsam::Vector3 predicted_velocity_body = R_bw.rotate(vel);
+
+        // The error is the difference between the predicted and measured velocity
+        gtsam::Vector3 error = predicted_velocity_body - measured_velocity_body_;
+
+        if (H_pose)
+        {
+            // Jacobian of the error with respect to the pose
+            // The error is e = R_bw * v_w - v_b_measured
+            // The derivative w.r.t. a rotation perturbation d_omega is [R_bw*v_w]x
+            // The error is not dependent on the pose's translation.
+            gtsam::Matrix3 H_rot = gtsam::skewSymmetric(predicted_velocity_body);
+            gtsam::Matrix3 H_trans = gtsam::Matrix3::Zero();
+            *H_pose = (gtsam::Matrix(3, 6) << H_rot, H_trans).finished();
+        }
+
+        if (H_vel)
+        {
+            // Jacobian of the error with respect to the world velocity
+            // The derivative w.r.t v_w is just the rotation matrix R_bw
+            *H_vel = R_bw.matrix();
+        }
+
+        return error;
     }
 };
 
@@ -79,10 +113,28 @@ public:
         : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_depth_(measured_depth) {}
 
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
-                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+                            boost::optional<gtsam::Matrix &> H = boost::none) const override
     {
-        // TODO: Add here
-        return gtsam::Vector1(); // Placeholder, implement actual error calculation
+        // TODO: I just used Gemini 2.5 Pro to convert these error functions from Matthew's code,
+        // they need to be verified.
+
+        // The error is the difference between the pose's z-coordinate and the measurement.
+        double error = pose.z() - measured_depth_;
+
+        if (H)
+        {
+            // Jacobian of the error with respect to the pose
+            // The error is e = pose.z() - z_measured.
+            // The derivative of pose.z() w.r.t a rotation perturbation is zero.
+            // The derivative of pose.z() w.r.t a translation perturbation (in body frame)
+            // is the 3rd row of the pose's rotation matrix R_wb.
+            gtsam::Matrix H_matrix = gtsam::Matrix::Zero(1, 6);
+            H_matrix.block<1, 3>(0, 3) = pose.rotation().matrix().row(2);
+            *H = H_matrix;
+        }
+
+        // Return the error as a 1-dimensional vector
+        return gtsam::Vector1(error);
     }
 };
 
@@ -98,10 +150,35 @@ public:
         : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_rot_(measured_rot) {}
 
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
-                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+                            boost::optional<gtsam::Matrix &> H = boost::none) const override
     {
-        // TODO: Add here
-        return gtsam::Vector3(); // Placeholder, implement actual error calculation
+        // TODO: I just used Gemini 2.5 Pro to convert these error functions from Matthew's code,
+        // they need to be verified.
+
+        // Get the rotation from the pose
+        const gtsam::Rot3& pose_rot = pose.rotation();
+
+        // Calculate the error rotation: R_err = R_measured^{-1} * R_pose
+        gtsam::Rot3 error_rot = measured_rot_.inverse() * pose_rot;
+
+        // The error vector is the tangent space representation of the error rotation
+        gtsam::Vector3 error = gtsam::Rot3::Logmap(error_rot);
+
+        if (H)
+        {
+            // Jacobian of the error with respect to the pose
+            // The error is e = Logmap(R_measured^{-1} * R_pose).
+            // The derivative w.r.t. rotation is d Log(R_err * exp(w)) / dw at w=0.
+            // GTSAM provides LogmapDerivative for this.
+            gtsam::Matrix3 H_rot = gtsam::Rot3::LogmapDerivative(error_rot);
+            
+            // The error does not depend on translation.
+            gtsam::Matrix3 H_trans = gtsam::Matrix3::Zero();
+
+            *H = (gtsam::Matrix(3, 6) << H_rot, H_trans).finished();
+        }
+
+        return error;
     }
 };
 
@@ -350,7 +427,6 @@ private:
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_dvl->header.stamp, last_imu_time);
-            // TODO: Double check the isotropic noise model here.
             auto dvl_noise = gtsam::noiseModel::Isotropic::Sigma(3, dvl_noise_sigma_);
             new_graph.emplace_shared<BodyFrameVelocityFactor>(X(target_node_key), V(target_node_key), dvl_vel_body, dvl_noise);
         }
@@ -363,7 +439,6 @@ private:
             // The z-position from the odometry message is assumed to be the absolute depth in the map frame.
             // For an ENU frame, depth is a negative Z value.
             double depth_z = latest_depth_odom->pose.pose.position.z;
-            // TODO: Double check the isotropic noise model here.
             auto depth_noise = gtsam::noiseModel::Isotropic::Sigma(1, depth_noise_sigma_);
             new_graph.emplace_shared<DepthFactor>(X(target_node_key), depth_z, depth_noise);
         }
@@ -391,7 +466,6 @@ private:
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
-            // TODO: Double check the isotropic noise model here.
             auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
             new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }

@@ -49,7 +49,7 @@ def generate_launch_description():
 
     ld = LaunchDescription()
     ld.add_action(coug_des_cmd)
-    ld.add_action(coug_loc_cmd)
+    ld.add_action(coug_loc_cmd) # disable the map EKF in here to use GTSAM instead
     ld.add_action(coug_mapviz_cmd)
     ld.add_action(coug_rviz_cmd)
     # ld.add_action(coug_gtsam_cmd)
