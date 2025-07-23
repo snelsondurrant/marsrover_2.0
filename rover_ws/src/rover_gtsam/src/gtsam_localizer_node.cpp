@@ -1,6 +1,6 @@
 /**
  * @file gtsam_localizer_node.cpp
- * @brief Fuses IMU, GPS, and optional Heading data using a GTSAM Fixed-Lag Smoother.
+ * @brief Fuses IMU and GPS data using a GTSAM Fixed-Lag Smoother.
  * @author Nelson Durrant
  * @date July 2025
  *
@@ -9,7 +9,6 @@
  * Subscribes:
  * - /imu/data (sensor_msgs/msg/Imu)
  * - /odometry/gps (nav_msgs/msg/Odometry)
- * - /heading/data (sensor_msgs/msg/Imu) [Optional, for heading constraint]
  * - 'odom' -> 'base_link' transform
  * Publishes:
  * - /odometry/global (nav_msgs/msg/Odometry)
@@ -46,34 +45,6 @@ using gtsam::symbol_shorthand::B; // Bias (ax,ay,az,gx,gy,gz)
 using gtsam::symbol_shorthand::V; // Velocity (x,y,z)
 using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 
-/**
- * @brief Unary factor for an absolute heading/orientation measurement.
- * @details This factor calculates the error between a measured absolute orientation and
- * the orientation of a Pose3 state variable. The error is computed in the tangent space.
- */
-class HeadingFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
-{
-    gtsam::Rot3 measured_rot_;
-
-public:
-    HeadingFactor(gtsam::Key poseKey, const gtsam::Rot3 &measured_rot, const gtsam::SharedNoiseModel &model)
-        : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_rot_(measured_rot) {}
-
-    gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
-                                  boost::optional<gtsam::Matrix &> H = boost::none) const override
-    {
-        if (H)
-        {
-            // Jacobian of the error wrt the Pose3's 6 DOF local coordinates
-            // Error depends only on rotation, so derivative wrt translation is zero.
-            // Derivative wrt rotation is Identity.
-            *H = (gtsam::Matrix(3, 6) << gtsam::Matrix3::Identity(), gtsam::Matrix3::Zero()).finished();
-        }
-        // Error is the difference in tangent space
-        return measured_rot_.localCoordinates(pose.rotation());
-    }
-};
-
 class GtsamLocalizerNode : public rclcpp::Node
 {
 public:
@@ -96,7 +67,6 @@ private:
         // --- ROS Topics and Frames ---
         imu_topic_ = this->declare_parameter<std::string>("imu_topic", "/imu/data");
         gps_odom_topic_ = this->declare_parameter<std::string>("gps_odom_topic", "/odometry/gps");
-        heading_topic_ = this->declare_parameter<std::string>("heading_topic", "/heading/data");
         global_odom_topic_ = this->declare_parameter<std::string>("global_odom_topic", "/odometry/global");
         map_frame_ = this->declare_parameter<std::string>("map_frame", "map");
         odom_frame_ = this->declare_parameter<std::string>("odom_frame", "odom");
@@ -114,8 +84,6 @@ private:
         accel_bias_rw_sigma_ = this->declare_parameter<double>("imu.accel_bias_rw_sigma", 1.0e-4); // m/s^3
         gyro_bias_rw_sigma_ = this->declare_parameter<double>("imu.gyro_bias_rw_sigma", 1.0e-5);  // rad/s^2
         gps_noise_sigma_ = this->declare_parameter<double>("gps.noise_sigma", 0.5);          // meters
-        heading_noise_yaw_sigma_ = this->declare_parameter<double>("heading.yaw_noise_sigma", 0.05);   // rad
-        heading_noise_rp_sigma_ = this->declare_parameter<double>("heading.roll_pitch_noise_sigma", 1.0); // rad
 
         // --- Initial State Prior Uncertainty (Standard Deviations) ---
         prior_pose_rot_sigma_ = this->declare_parameter<double>("prior.pose_rot_sigma", 0.05); // rad
@@ -139,8 +107,6 @@ private:
             [this](const sensor_msgs::msg::Imu::SharedPtr msg) { imu_queue_.push_back(msg); });
         gps_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(gps_odom_topic_, 20, 
             [this](const nav_msgs::msg::Odometry::SharedPtr msg) { gps_queue_.push_back(msg); });
-        heading_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(heading_topic_, 20,
-            [this](const sensor_msgs::msg::Imu::SharedPtr msg) { heading_queue_.push_back(msg); });
 
         factor_graph_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(1000.0 / factor_graph_update_rate_)),
@@ -177,7 +143,6 @@ private:
                 // Clear queues after initialization to prevent using old data
                 gps_queue_.clear();
                 imu_queue_.clear();
-                heading_queue_.clear();
             }
             return;
         }
@@ -192,13 +157,6 @@ private:
         {
             latest_gps = gps_queue_.back();
             gps_queue_.clear();
-        }
-
-        sensor_msgs::msg::Imu::SharedPtr latest_heading;
-        if (!heading_queue_.empty())
-        {
-            latest_heading = heading_queue_.back();
-            heading_queue_.clear();
         }
 
         // --- IMU Pre-integration ---
@@ -251,22 +209,6 @@ private:
             gtsam::Point3 gps_position = toGtsam(latest_gps->pose.pose.position);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
-        }
-
-        // If we have a heading measurement, add a Heading unary factor.
-        if (latest_heading)
-        {
-            unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
-            gtsam::Rot3 heading_rot_sensor = toGtsam(latest_heading->orientation);
-
-            // Create an anisotropic noise model. We are very certain about yaw, but
-            // not roll and pitch, which are better estimated by the IMU's gravity vector.
-            gtsam::Vector3 sigmas(heading_noise_rp_sigma_,   // roll
-                                  heading_noise_rp_sigma_,   // pitch
-                                  heading_noise_yaw_sigma_); // yaw
-            auto heading_noise = gtsam::noiseModel::Diagonal::Sigmas(sigmas);
-
-            new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }
 
         // Insert the predicted state as an initial estimate for the new state.
@@ -437,7 +379,6 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr global_odom_pub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr gps_odom_sub_;
-    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr heading_sub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -447,7 +388,6 @@ private:
     // --- Message Queues ---
     std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue_;
     std::deque<nav_msgs::msg::Odometry::SharedPtr> gps_queue_;
-    std::deque<sensor_msgs::msg::Imu::SharedPtr> heading_queue_;
 
     // --- System State ---
     bool system_initialized_ = false;
@@ -463,7 +403,7 @@ private:
     gtsam::imuBias::ConstantBias prev_bias_;
 
     // --- Parameters ---
-    std::string imu_topic_, gps_odom_topic_, heading_topic_, global_odom_topic_;
+    std::string imu_topic_, gps_odom_topic_, global_odom_topic_;
     std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
     bool publish_global_tf_;
@@ -471,7 +411,6 @@ private:
     double accel_noise_sigma_, gyro_noise_sigma_;
     double accel_bias_rw_sigma_, gyro_bias_rw_sigma_;
     double gps_noise_sigma_;
-    double heading_noise_yaw_sigma_, heading_noise_rp_sigma_;
     double prior_pose_rot_sigma_, prior_pose_pos_sigma_;
     double prior_vel_sigma_, prior_bias_sigma_;
 
