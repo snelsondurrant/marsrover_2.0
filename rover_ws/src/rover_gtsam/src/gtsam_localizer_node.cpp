@@ -74,21 +74,21 @@ private:
 
         // --- Node Settings ---
         factor_graph_update_rate_ = this->declare_parameter<double>("factor_graph_update_rate", 10.0); // Hz
-        odom_publish_rate_ = this->declare_parameter<double>("odom_publish_rate", 50.0);           // Hz
+        odom_publish_rate_ = this->declare_parameter<double>("odom_publish_rate", 50.0);               // Hz
         publish_global_tf_ = this->declare_parameter<bool>("publish_global_tf", true);
         smoother_lag_ = this->declare_parameter<double>("smoother_lag", 3.0); // seconds
 
         // --- Measurement Noise (Standard Deviations) ---
-        accel_noise_sigma_ = this->declare_parameter<double>("imu.accel_noise_sigma", 0.1);     // m/s^2
-        gyro_noise_sigma_ = this->declare_parameter<double>("imu.gyro_noise_sigma", 0.01);      // rad/s
+        accel_noise_sigma_ = this->declare_parameter<double>("imu.accel_noise_sigma", 0.1);        // m/s^2
+        gyro_noise_sigma_ = this->declare_parameter<double>("imu.gyro_noise_sigma", 0.01);         // rad/s
         accel_bias_rw_sigma_ = this->declare_parameter<double>("imu.accel_bias_rw_sigma", 1.0e-4); // m/s^3
-        gyro_bias_rw_sigma_ = this->declare_parameter<double>("imu.gyro_bias_rw_sigma", 1.0e-5);  // rad/s^2
-        gps_noise_sigma_ = this->declare_parameter<double>("gps.noise_sigma", 0.5);          // meters
+        gyro_bias_rw_sigma_ = this->declare_parameter<double>("imu.gyro_bias_rw_sigma", 1.0e-5);   // rad/s^2
+        gps_noise_sigma_ = this->declare_parameter<double>("gps.noise_sigma", 0.5);                // meters
 
         // --- Initial State Prior Uncertainty (Standard Deviations) ---
         prior_pose_rot_sigma_ = this->declare_parameter<double>("prior.pose_rot_sigma", 0.05); // rad
         prior_pose_pos_sigma_ = this->declare_parameter<double>("prior.pose_pos_sigma", 0.5);  // meters
-        prior_vel_sigma_ = this->declare_parameter<double>("prior.vel_sigma", 0.1);          // m/s
+        prior_vel_sigma_ = this->declare_parameter<double>("prior.vel_sigma", 0.1);            // m/s
         prior_bias_sigma_ = this->declare_parameter<double>("prior.bias_sigma", 1e-3);
     }
 
@@ -132,7 +132,8 @@ private:
      */
     void factorGraphTimerCallback()
     {
-        if (imu_queue_.empty()) return;
+        if (imu_queue_.empty())
+            return;
 
         if (!system_initialized_)
         {
@@ -193,18 +194,18 @@ private:
         double dt_sqrt = sqrt(dt_since_last_factor);
         gtsam::Vector6 bias_sigmas;
         bias_sigmas << gtsam::Vector3::Constant(dt_sqrt * accel_bias_rw_sigma_),
-                       gtsam::Vector3::Constant(dt_sqrt * gyro_bias_rw_sigma_);
+            gtsam::Vector3::Constant(dt_sqrt * gyro_bias_rw_sigma_);
         new_graph.emplace_shared<gtsam::BetweenFactor<gtsam::imuBias::ConstantBias>>(
             B(prev_step_), B(current_step_), gtsam::imuBias::ConstantBias(),
             gtsam::noiseModel::Diagonal::Sigmas(bias_sigmas));
-        
+
         // If we have a GPS measurement, add a GPS unary factor.
         if (latest_gps)
         {
             // Determine which node (previous or current) is closer in time.
             // This seems like a simple way to solve the problem Matthew and Braden identified before.
             unsigned long target_node_key = getClosestNodeKey(latest_gps->header.stamp, last_imu_time);
-            
+
             // GPS data arrives pre-converted into the 'map' frame.
             gtsam::Point3 gps_position = toGtsam(latest_gps->pose.pose.position);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
@@ -229,7 +230,7 @@ private:
         prev_pose_ = smoother_->calculateEstimate<gtsam::Pose3>(X(current_step_));
         prev_vel_ = smoother_->calculateEstimate<gtsam::Vector3>(V(current_step_));
         prev_bias_ = smoother_->calculateEstimate<gtsam::imuBias::ConstantBias>(B(current_step_));
-        
+
         // Reset the pre-integrator with the new bias estimate.
         imu_preintegrator_->resetIntegrationAndSetBias(prev_bias_);
 
@@ -263,18 +264,19 @@ private:
         // --- Set Initial State ---
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
         prev_pose_ = toGtsam(initial_gps->pose.pose);
-        prev_vel_ = gtsam::Vector3(0, 0, 0);      // Assume starting from rest
+        prev_vel_ = gtsam::Vector3(0, 0, 0);         // Assume starting from rest
         prev_bias_ = gtsam::imuBias::ConstantBias(); // Assume zero initial bias
         imu_preintegrator_ = std::make_unique<gtsam::PreintegratedCombinedMeasurements>(imu_params, prev_bias_);
 
         // --- Add Prior Factors to Graph ---
         gtsam::NonlinearFactorGraph initial_graph;
         gtsam::Values initial_values;
-        
+
         // Priors define the initial uncertainty in our state.
         auto pose_noise = gtsam::noiseModel::Diagonal::Sigmas(
             (gtsam::Vector(6) << gtsam::Vector3::Constant(prior_pose_rot_sigma_),
-             gtsam::Vector3::Constant(prior_pose_pos_sigma_)).finished());
+             gtsam::Vector3::Constant(prior_pose_pos_sigma_))
+                .finished());
         auto vel_noise = gtsam::noiseModel::Isotropic::Sigma(3, prior_vel_sigma_);
         auto bias_noise = gtsam::noiseModel::Isotropic::Sigma(6, prior_bias_sigma_);
 
@@ -285,7 +287,7 @@ private:
         initial_values.insert(X(0), prev_pose_);
         initial_values.insert(V(0), prev_vel_);
         initial_values.insert(B(0), prev_bias_);
-        
+
         // Add timestamps for initial variables.
         gtsam::IncrementalFixedLagSmoother::KeyTimestampMap initial_timestamps;
         initial_timestamps[X(0)] = prev_time_;
@@ -352,7 +354,7 @@ private:
             // Calculate map -> odom transform: T_map_odom = T_map_base * (T_odom_base)^-1
             // Mangelson's EN EN 433 class really seeing some direct application here haha.
             gtsam::Pose3 map_to_odom_gtsam = prev_pose_ * odom_to_base_gtsam.inverse();
-            
+
             // Broadcast the calculated transform.
             geometry_msgs::msg::TransformStamped map_to_odom_tf_msg;
             map_to_odom_tf_msg.header.stamp = this->get_clock()->now();
@@ -368,9 +370,7 @@ private:
         odom_msg.header.stamp = this->get_clock()->now();
         odom_msg.header.frame_id = map_frame_;
         odom_msg.child_frame_id = base_frame_;
-        // Pose
         odom_msg.pose.pose = toPoseMsg(prev_pose_);
-        // Twist (velocity)
         odom_msg.twist.twist.linear = toVectorMsg(prev_vel_);
         global_odom_pub_->publish(odom_msg);
     }
@@ -440,20 +440,27 @@ gtsam::Pose3 GtsamLocalizerNode::toGtsam(const tf2::Transform &tf)
 geometry_msgs::msg::Point GtsamLocalizerNode::toPointMsg(const gtsam::Point3 &gtsam_obj)
 {
     geometry_msgs::msg::Point msg;
-    msg.x = gtsam_obj.x(); msg.y = gtsam_obj.y(); msg.z = gtsam_obj.z();
+    msg.x = gtsam_obj.x();
+    msg.y = gtsam_obj.y();
+    msg.z = gtsam_obj.z();
     return msg;
 }
 geometry_msgs::msg::Vector3 GtsamLocalizerNode::toVectorMsg(const gtsam::Vector3 &gtsam_obj)
 {
     geometry_msgs::msg::Vector3 msg;
-    msg.x = gtsam_obj.x(); msg.y = gtsam_obj.y(); msg.z = gtsam_obj.z();
+    msg.x = gtsam_obj.x();
+    msg.y = gtsam_obj.y();
+    msg.z = gtsam_obj.z();
     return msg;
 }
 geometry_msgs::msg::Quaternion GtsamLocalizerNode::toQuatMsg(const gtsam::Rot3 &gtsam_obj)
 {
     gtsam::Quaternion q = gtsam_obj.toQuaternion();
     geometry_msgs::msg::Quaternion msg;
-    msg.w = q.w(); msg.x = q.x(); msg.y = q.y(); msg.z = q.z();
+    msg.w = q.w();
+    msg.x = q.x();
+    msg.y = q.y();
+    msg.z = q.z();
     return msg;
 }
 geometry_msgs::msg::Pose GtsamLocalizerNode::toPoseMsg(const gtsam::Pose3 &gtsam_obj)
