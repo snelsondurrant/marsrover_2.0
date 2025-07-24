@@ -28,7 +28,7 @@ ekf_filter_node_odom:
                   false, false, false, # Vx, Vy, Vz
                   true,  true,  true,  # Vroll, Vpitch, Vyaw
                   true,  true,  true]  # Ax, Ay, Az
-    imu0_differential: false # This is ignored for IMUs
+    imu0_differential: false # This is ignored when using the IMU as a velocity source.
     imu0_relative: false
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
@@ -57,7 +57,7 @@ ekf_filter_node_map:
                    true,  true,  true,  # Vroll, Vpitch, Vyaw
                    false, false, false] # Ax, Ay, Az
     odom0_queue_size: 10
-    odom0_differential: false # This is a state estimate, not a differential measurement.
+    odom0_differential: false # Irrelevant, fusing the velocity output of the first EKF.
     odom0_relative: false
 
     # Input 1: GPS data, converted to 'map' frame odometry by navsat_transform_node.
@@ -69,7 +69,7 @@ ekf_filter_node_map:
                    false, false, false] # Ax, Ay, Az
     odom1_queue_size: 2
     odom1_differential: false
-    odom1_relative: false
+    odom1_relative: false # Absolute GPS position in the map frame.
 
     # Input 2: Depth sensor, providing absolute Z position (one of two?)
     odom2: /odometry/depth # TODO: Update this! Might need conversion to odom first.
@@ -80,7 +80,7 @@ ekf_filter_node_map:
                    false, false, false] # Ax, Ay, Az
     odom2_queue_size: 2
     odom2_differential: false
-    odom2_relative: false
+    odom2_relative: false # Absolute depth in the map frame.
 
     # Input 3: Magnetometer heading sensor for absolute yaw.
     imu0: /heading/data # TODO: Update this! From the SeaTrac modem?
@@ -91,12 +91,12 @@ ekf_filter_node_map:
                   false, false, false] # Ax, Ay, Az
     imu0_queue_size: 2
     imu0_differential: false # It's an absolute heading source
-    imu0_relative: false
+    imu0_relative: false # Absolute heading in the map frame.
 
 navsat_transform:
   ros__parameters:
     frequency: 20.0
-    delay: 7.0
+    delay: 3.0 # Delay to allow for GPS data to be received and processed.
     magnetic_declination_radians: 0.0
     yaw_offset: 0.0
     zero_altitude: true
