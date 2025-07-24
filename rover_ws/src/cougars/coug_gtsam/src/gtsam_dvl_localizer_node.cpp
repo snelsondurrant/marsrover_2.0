@@ -65,8 +65,8 @@ public:
         : NoiseModelFactor2<gtsam::Pose3, gtsam::Vector3>(model, poseKey, velKey), measured_velocity_body_(measured_velocity_body) {}
 
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose, const gtsam::Vector3 &vel,
-                            boost::optional<gtsam::Matrix &> H_pose = boost::none,
-                            boost::optional<gtsam::Matrix &> H_vel = boost::none) const override
+                                boost::optional<gtsam::Matrix &> H_pose = boost::none,
+                                boost::optional<gtsam::Matrix &> H_vel = boost::none) const override
     {
         // TODO: I just used Gemini 2.5 Pro to generate this error function, it needs to be verified.
 
@@ -114,7 +114,7 @@ public:
         : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_depth_(measured_depth) {}
 
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
-                            boost::optional<gtsam::Matrix &> H = boost::none) const override
+                                boost::optional<gtsam::Matrix &> H = boost::none) const override
     {
         // TODO: I just used Gemini 2.5 Pro to convert these error functions from Matthew's code,
         // they need to be verified.
@@ -151,13 +151,13 @@ public:
         : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_rot_(measured_rot) {}
 
     gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
-                            boost::optional<gtsam::Matrix &> H = boost::none) const override
+                                boost::optional<gtsam::Matrix &> H = boost::none) const override
     {
         // TODO: I just used Gemini 2.5 Pro to convert these error functions from Matthew's code,
         // they need to be verified.
 
         // Get the rotation from the pose
-        const gtsam::Rot3& pose_rot = pose.rotation();
+        const gtsam::Rot3 &pose_rot = pose.rotation();
 
         // Calculate the error rotation: R_err = R_measured^{-1} * R_pose
         gtsam::Rot3 error_rot = measured_rot_.inverse() * pose_rot;
@@ -172,7 +172,7 @@ public:
             // The derivative w.r.t. rotation is d Log(R_err * exp(w)) / dw at w=0.
             // GTSAM provides LogmapDerivative for this.
             gtsam::Matrix3 H_rot = gtsam::Rot3::LogmapDerivative(error);
-            
+
             // The error does not depend on translation.
             gtsam::Matrix3 H_trans = gtsam::Matrix3::Zero();
 
@@ -304,6 +304,41 @@ private:
             return;
         }
 
+        // --- One-Time Transform Lookups ---
+        // Once initialized, look for the other static transforms if we haven't already.
+        if (!have_dvl_to_base_tf_ && !dvl_queue_.empty())
+        {
+            try
+            {
+                // Use a zero timestamp to get the latest available static transform.
+                dvl_to_base_tf_ = tf_buffer_->lookupTransform(
+                    base_frame_, dvl_queue_.front()->header.frame_id, tf2::TimePointZero, tf2::durationFromSec(1.0));
+                have_dvl_to_base_tf_ = true;
+                RCLCPP_INFO(this->get_logger(), "Successfully looked up static transform from '%s' to '%s'",
+                            dvl_queue_.front()->header.frame_id.c_str(), base_frame_.c_str());
+            }
+            catch (const tf2::TransformException &ex)
+            {
+                RCLCPP_WARN(this->get_logger(), "Could not get DVL transform: %s. Will keep trying.", ex.what());
+            }
+        }
+        if (!have_heading_to_base_tf_ && !heading_queue_.empty())
+        {
+            try
+            {
+                // Use a zero timestamp to get the latest available static transform.
+                heading_to_base_tf_ = tf_buffer_->lookupTransform(
+                    base_frame_, heading_queue_.front()->header.frame_id, tf2::TimePointZero, tf2::durationFromSec(1.0));
+                have_heading_to_base_tf_ = true;
+                RCLCPP_INFO(this->get_logger(), "Successfully looked up static transform from '%s' to '%s'",
+                            heading_queue_.front()->header.frame_id.c_str(), base_frame_.c_str());
+            }
+            catch (const tf2::TransformException &ex)
+            {
+                RCLCPP_WARN(this->get_logger(), "Could not get Heading transform: %s. Will keep trying.", ex.what());
+            }
+        }
+
         // Do not proceed until the static IMU -> base_link transform is available.
         if (!have_imu_to_base_tf_)
         {
@@ -350,7 +385,7 @@ private:
             if (dt > 1e-4) // Ensure we have a reasonable timestep to work with
             {
                 // Transform IMU data to the base_link frame before integration
-                    geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
+                geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
                 tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, imu_to_base_tf_);
                 tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, imu_to_base_tf_);
 
@@ -405,19 +440,16 @@ private:
             gtsam::Vector3 dvl_vel_body = toGtsam(latest_dvl->twist.twist.linear);
 
             // Transform DVL velocity into the base_link frame.
-            try
+            if (have_dvl_to_base_tf_)
             {
-                geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
-                    base_frame_, latest_dvl->header.frame_id, latest_dvl->header.stamp, rclcpp::Duration::from_seconds(0.1));
-
                 geometry_msgs::msg::Vector3 transformed_vel;
-                tf2::doTransform(latest_dvl->twist.twist.linear, transformed_vel, tf_stamped);
+                tf2::doTransform(latest_dvl->twist.twist.linear, transformed_vel, dvl_to_base_tf_);
                 dvl_vel_body = toGtsam(transformed_vel);
             }
-            catch (const tf2::TransformException &ex)
+            else
             {
-                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "DVL transform failed from '%s' to '%s': %s. Using untransformed data.",
-                                     latest_dvl->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "DVL transform from '%s' to '%s' not yet available. Using untransformed data.",
+                                     latest_dvl->header.frame_id.c_str(), base_frame_.c_str());
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_dvl->header.stamp, last_imu_time);
@@ -445,18 +477,15 @@ private:
             // Transform heading into the base_link frame (upside-down mounting config, etc).
             // R_map_base = R_map_sensor * (R_base_sensor)^-1
             // Mangelson's EC EN 433 class again, haha.
-            try
+            if (have_heading_to_base_tf_)
             {
-                geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
-                    base_frame_, latest_heading->header.frame_id, latest_heading->header.stamp, rclcpp::Duration::from_seconds(0.1));
-
-                gtsam::Rot3 R_base_sensor = toGtsam(tf_stamped.transform.rotation);
+                gtsam::Rot3 R_base_sensor = toGtsam(heading_to_base_tf_.transform.rotation);
                 heading_rot_sensor = heading_rot_sensor * R_base_sensor.inverse();
             }
-            catch (const tf2::TransformException &ex)
+            else
             {
-                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Heading transform failed from '%s' to '%s': %s. Using untransformed data.",
-                                     latest_heading->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Heading transform from '%s' to '%s' not yet available. Using untransformed data.",
+                                     latest_heading->header.frame_id.c_str(), base_frame_.c_str());
             }
 
             unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
@@ -711,8 +740,14 @@ private:
     gtsam::Pose3 prev_pose_;
     gtsam::Vector3 prev_vel_;
     gtsam::imuBias::ConstantBias prev_bias_;
+
+    // --- Transformations ---
     bool have_imu_to_base_tf_ = false;
+    bool have_dvl_to_base_tf_ = false;
+    bool have_heading_to_base_tf_ = false;
     geometry_msgs::msg::TransformStamped imu_to_base_tf_;
+    geometry_msgs::msg::TransformStamped dvl_to_base_tf_;
+    geometry_msgs::msg::TransformStamped heading_to_base_tf_;
 
     // --- Parameters ---
     std::string imu_topic_, gps_odom_topic_, dvl_topic_, depth_odom_topic_, heading_topic_;
