@@ -403,7 +403,7 @@ private:
             geometry_msgs::msg::TransformStamped odom_to_base_tf_msg;
             try
             {
-                // Look up the odom->base_link transform from another source (e.g., local EKF node)
+                // Look up the odom -> base_link transform from another source (e.g., local EKF node)
                 odom_to_base_tf_msg = tf_buffer_->lookupTransform(odom_frame_, base_frame_, tf2::TimePointZero);
             }
             catch (const tf2::TransformException &ex)
@@ -413,7 +413,7 @@ private:
                 return;
             }
 
-            // Convert the odom->base transform to a GTSAM type.
+            // Convert the odom -> base_link transform to a GTSAM type.
             tf2::Transform odom_to_base_tf2;
             tf2::fromMsg(odom_to_base_tf_msg.transform, odom_to_base_tf2);
             gtsam::Pose3 odom_to_base_gtsam = toGtsam(odom_to_base_tf2);
