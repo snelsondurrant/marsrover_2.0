@@ -5,6 +5,7 @@ gtsam_localizer_node:
     imu_topic: "/zed/zed_node/imu/data"
     gps_odom_topic: "/odometry/gps"
     global_odom_topic: "/odometry/global"
+    smoothed_path_topic: "/smoothed_path"
     map_frame: "map"
     odom_frame: "odom"
     base_frame: "zed_camera_link"
@@ -13,10 +14,11 @@ gtsam_localizer_node:
     factor_graph_update_rate: 10.0 # Hz
     odom_publish_rate: 50.0 # Hz
     publish_global_tf: true # Whether to publish the map -> odom transform
+    publish_smoothed_path: true # Whether to publish the smoothed path for visualization
 
     # --- GTSAM Smoother Settings ---
     # The time window (in seconds) over which the optimizer will smooth past states.
-    smoother_lag: 3.0
+    smoother_lag: 30.0
 
     # --- Sensor Noise Models ---
     # Defines the standard deviation of sensor measurements.
@@ -32,7 +34,7 @@ gtsam_localizer_node:
 
     gps:
       # Standard deviation of GPS position measurements (meters).
-      noise_sigma: 0.01 # Matches Gazebo GPS <stddev>
+      noise_sigma: 0.1 # Matches Gazebo GPS <stddev>
 
     # --- Initial State Uncertainty (Priors) ---
     # Defines the certainty of the very first state estimate.
