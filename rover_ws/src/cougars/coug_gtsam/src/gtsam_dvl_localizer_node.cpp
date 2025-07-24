@@ -170,7 +170,7 @@ public:
             // The error is e = Logmap(R_measured^{-1} * R_pose).
             // The derivative w.r.t. rotation is d Log(R_err * exp(w)) / dw at w=0.
             // GTSAM provides LogmapDerivative for this.
-            gtsam::Matrix3 H_rot = gtsam::Rot3::LogmapDerivative(error_rot);
+            gtsam::Matrix3 H_rot = gtsam::Rot3::LogmapDerivative(error);
             
             // The error does not depend on translation.
             gtsam::Matrix3 H_trans = gtsam::Matrix3::Zero();
