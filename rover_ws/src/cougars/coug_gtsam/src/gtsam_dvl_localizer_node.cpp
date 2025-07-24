@@ -19,6 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
@@ -206,6 +207,7 @@ private:
         imu_topic_ = this->declare_parameter<std::string>("imu_topic", "/imu/data");
         gps_odom_topic_ = this->declare_parameter<std::string>("gps_odom_topic", "/odometry/gps");
         global_odom_topic_ = this->declare_parameter<std::string>("global_odom_topic", "/odometry/global");
+        smoothed_path_topic_ = this->declare_parameter<std::string>("smoothed_path_topic", "/smoothed_path");
         map_frame_ = this->declare_parameter<std::string>("map_frame", "map");
         odom_frame_ = this->declare_parameter<std::string>("odom_frame", "odom");
         base_frame_ = this->declare_parameter<std::string>("base_frame", "base_link");
@@ -217,7 +219,8 @@ private:
         factor_graph_update_rate_ = this->declare_parameter<double>("factor_graph_update_rate", 10.0); // Hz
         odom_publish_rate_ = this->declare_parameter<double>("odom_publish_rate", 50.0);               // Hz
         publish_global_tf_ = this->declare_parameter<bool>("publish_global_tf", true);
-        smoother_lag_ = this->declare_parameter<double>("smoother_lag", 3.0); // seconds
+        publish_smoothed_path_ = this->declare_parameter<bool>("publish_smoothed_path", true);
+        smoother_lag_ = this->declare_parameter<double>("smoother_lag", 15.0); // seconds
 
         // --- Measurement Noise (Standard Deviations) ---
         accel_noise_sigma_ = this->declare_parameter<double>("imu.accel_noise_sigma", 0.1);        // m/s^2
@@ -246,6 +249,7 @@ private:
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         global_odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(global_odom_topic_, 10);
+        global_path_pub_ = this->create_publisher<nav_msgs::msg::Path>(smoothed_path_topic_, 10);
 
         imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_, 200, 
             [this](const sensor_msgs::msg::Imu::SharedPtr msg) { imu_queue_.push_back(msg); });
@@ -377,6 +381,7 @@ private:
 
         // --- IMU Pre-integration ---
         double last_imu_time = prev_time_;
+        rclcpp::Time last_imu_stamp = this->get_clock()->now();
         for (const auto &imu_msg : imu_queue_)
         {
             double current_imu_time = rclcpp::Time(imu_msg->header.stamp).seconds();
@@ -394,6 +399,7 @@ private:
                 imu_preintegrator_->integrateMeasurement(accel, gyro, dt);
             }
             last_imu_time = current_imu_time;
+            last_imu_stamp = imu_msg->header.stamp;
         }
         imu_queue_.clear();
 
@@ -506,9 +512,20 @@ private:
         new_timestamps[X(current_step_)] = last_imu_time;
         new_timestamps[V(current_step_)] = last_imu_time;
         new_timestamps[B(current_step_)] = last_imu_time;
+        key_timestamps_[X(current_step_)] = last_imu_stamp;
 
         // --- Update the Smoother ---
         smoother_->update(new_graph, new_values, new_timestamps);
+
+        // Manually prune the key_timestamps_ map to remove old entries
+        double prune_time = last_imu_time - smoother_lag_;
+        for (auto it = key_timestamps_.begin(); it != key_timestamps_.end(); ) {
+            if (it->second.seconds() < prune_time) {
+                it = key_timestamps_.erase(it);
+            } else {
+                ++it;
+            }
+        }
 
         // Update the state with the new optimized estimate.
         prev_pose_ = smoother_->calculateEstimate<gtsam::Pose3>(X(current_step_));
@@ -625,6 +642,7 @@ private:
         initial_timestamps[X(0)] = prev_time_;
         initial_timestamps[V(0)] = prev_time_;
         initial_timestamps[B(0)] = prev_time_;
+        key_timestamps_[X(0)] = initial_gps->header.stamp;
 
         // --- Update the Smoother with the Initial State ---
         smoother_->update(initial_graph, initial_values, initial_timestamps);
@@ -706,10 +724,49 @@ private:
         odom_msg.pose.pose = toPoseMsg(prev_pose_);
         odom_msg.twist.twist.linear = toVectorMsg(prev_vel_);
         global_odom_pub_->publish(odom_msg);
+
+        // --- Publish the smoothed path for visualization ---
+        if (publish_smoothed_path_)
+            publishSmoothedPath();
+    }
+
+    /**
+     * @brief Publishes the full smoothed trajectory as a nav_msgs::Path.
+     */
+    void publishSmoothedPath()
+    {
+        nav_msgs::msg::Path path_msg;
+        path_msg.header.stamp = this->get_clock()->now();
+        path_msg.header.frame_id = map_frame_;
+
+        gtsam::Values results = smoother_->calculateEstimate();
+
+        for (const auto& key_value : results)
+        {
+            gtsam::Key key = key_value.key;
+            // Check for the lowercase 'x' symbol used by the GTSAM shorthand
+            if (gtsam::Symbol(key).chr() == 'x')
+            {
+                geometry_msgs::msg::PoseStamped pose_stamped;
+                pose_stamped.header.frame_id = map_frame_;
+                if (key_timestamps_.count(key))
+                {
+                    pose_stamped.header.stamp = key_timestamps_.at(key);
+                }
+                else
+                {
+                    pose_stamped.header.stamp = this->get_clock()->now();
+                }
+                pose_stamped.pose = toPoseMsg(key_value.value.cast<gtsam::Pose3>());
+                path_msg.poses.push_back(pose_stamped);
+            }
+        }
+        global_path_pub_->publish(path_msg);
     }
 
     // --- ROS 2 Interfaces ---
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr global_odom_pub_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_pub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr gps_odom_sub_;
     rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr dvl_sub_;
@@ -733,6 +790,7 @@ private:
     double prev_time_ = 0.0;
     long unsigned int prev_step_ = 0;
     long unsigned int current_step_ = 1;
+    std::map<gtsam::Key, rclcpp::Time> key_timestamps_;
 
     // --- GTSAM Objects ---
     std::unique_ptr<gtsam::IncrementalFixedLagSmoother> smoother_;
@@ -751,10 +809,10 @@ private:
 
     // --- Parameters ---
     std::string imu_topic_, gps_odom_topic_, dvl_topic_, depth_odom_topic_, heading_topic_;
-    std::string global_odom_topic_;
+    std::string global_odom_topic_, smoothed_path_topic_;
     std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
-    bool publish_global_tf_;
+    bool publish_global_tf_, publish_smoothed_path_;
     double smoother_lag_;
     double accel_noise_sigma_, gyro_noise_sigma_;
     double accel_bias_rw_sigma_, gyro_bias_rw_sigma_;
