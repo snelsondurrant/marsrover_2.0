@@ -21,6 +21,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
+#include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <deque>
 #include <cmath>
@@ -145,7 +146,8 @@ private:
                 initializeSystem(gps_queue_.back(), imu_queue_);
 
                 // On successful initialization, clear queues
-                if(system_initialized_) {
+                if (system_initialized_)
+                {
                     gps_queue_.clear();
                     imu_queue_.clear();
                 }
@@ -153,11 +155,14 @@ private:
             return;
         }
 
-        // --- Process Queued Data ---
-        std::vector<sensor_msgs::msg::Imu::SharedPtr> imu_measurements;
-        imu_measurements.assign(imu_queue_.begin(), imu_queue_.end());
-        imu_queue_.clear();
+        // Do not proceed until the static IMU -> base_link transform is available.
+        if (!have_imu_to_base_tf_)
+        {
+            RCLCPP_WARN_ONCE(this->get_logger(), "Waiting for IMU to base_frame transform...");
+            return;
+        }
 
+        // --- Process Queued Data ---
         nav_msgs::msg::Odometry::SharedPtr latest_gps;
         if (!gps_queue_.empty())
         {
@@ -167,50 +172,25 @@ private:
 
         // --- IMU Pre-integration ---
         double last_imu_time = prev_time_;
-        for (const auto &imu_msg : imu_measurements)
+        for (const auto &imu_msg : imu_queue_)
         {
             double current_imu_time = rclcpp::Time(imu_msg->header.stamp).seconds();
             double dt = current_imu_time - last_imu_time; // Get the exact time difference
 
             if (dt > 1e-4) // Ensure we have a reasonable timestep to work with
             {
-                gtsam::Vector3 accel = toGtsam(imu_msg->linear_acceleration);
-                gtsam::Vector3 gyro = toGtsam(imu_msg->angular_velocity);
-                
-                // Transform IMU data from sensor frame to base_frame before integration
-                try
-                {
-                    geometry_msgs::msg::TransformStamped tf_stamped = tf_buffer_->lookupTransform(
-                        base_frame_, imu_msg->header.frame_id, imu_msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
-                    
-                    geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
-                    tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, tf_stamped);
-                    tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, tf_stamped);
-                    
-                    // DEBUG: Print raw and transformed IMU acceleration
-                    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-                        "IMU DATA (Time: %.2f):\n"
-                        "  Raw Accel (%s):    [%.3f, %.3f, %.3f]\n"
-                        "  Transformed Accel (%s): [%.3f, %.3f, %.3f]",
-                        rclcpp::Time(imu_msg->header.stamp).seconds(),
-                        imu_msg->header.frame_id.c_str(),
-                        imu_msg->linear_acceleration.x, imu_msg->linear_acceleration.y, imu_msg->linear_acceleration.z,
-                        base_frame_.c_str(),
-                        transformed_accel.x, transformed_accel.y, transformed_accel.z);
+                // Transform IMU data to the base_link frame before integration
+                geometry_msgs::msg::Vector3 transformed_accel, transformed_gyro;
+                tf2::doTransform(imu_msg->linear_acceleration, transformed_accel, imu_to_base_tf_);
+                tf2::doTransform(imu_msg->angular_velocity, transformed_gyro, imu_to_base_tf_);
 
-                    accel = toGtsam(transformed_accel);
-                    gyro = toGtsam(transformed_gyro);
-                }
-                catch (const tf2::TransformException &ex)
-                {
-                    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, 
-                        "IMU transform failed from '%s' to '%s': %s. Using untransformed data.",
-                        imu_msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
-                }
+                gtsam::Vector3 accel = toGtsam(transformed_accel);
+                gtsam::Vector3 gyro = toGtsam(transformed_gyro);
                 imu_preintegrator_->integrateMeasurement(accel, gyro, dt);
             }
             last_imu_time = current_imu_time;
         }
+        imu_queue_.clear();
 
         // --- Factor Graph Construction ---
         gtsam::NonlinearFactorGraph new_graph;
@@ -268,22 +248,6 @@ private:
         prev_pose_ = smoother_->calculateEstimate<gtsam::Pose3>(X(current_step_));
         prev_vel_ = smoother_->calculateEstimate<gtsam::Vector3>(V(current_step_));
         prev_bias_ = smoother_->calculateEstimate<gtsam::imuBias::ConstantBias>(B(current_step_));
-        
-        // DEBUG: Log the full state and bias after smoother update
-        gtsam::Vector3 rpy = prev_pose_.rotation().rpy();
-        RCLCPP_INFO(this->get_logger(),
-            "SMOOTHER UPDATE (Step %lu):\n"
-            "  Pose (x,y,z):      [%.2f, %.2f, %.2f]\n"
-            "  Pose (R,P,Y):      [%.2f, %.2f, %.2f] rad\n"
-            "  Velocity:          [%.2f, %.2f, %.2f]\n"
-            "  Accel Bias (ax,ay,az): [%.4f, %.4f, %.4f]\n"
-            "  Gyro Bias (gx,gy,gz):  [%.4f, %.4f, %.4f]",
-            current_step_,
-            prev_pose_.x(), prev_pose_.y(), prev_pose_.z(),
-            rpy.x(), rpy.y(), rpy.z(),
-            prev_vel_.x(), prev_vel_.y(), prev_vel_.z(),
-            prev_bias_.accelerometer().x(), prev_bias_.accelerometer().y(), prev_bias_.accelerometer().z(),
-            prev_bias_.gyroscope().x(), prev_bias_.gyroscope().y(), prev_bias_.gyroscope().z());
 
         // Reset the pre-integrator with the new bias estimate.
         imu_preintegrator_->resetIntegrationAndSetBias(prev_bias_);
@@ -298,8 +262,24 @@ private:
     void initializeSystem(const nav_msgs::msg::Odometry::SharedPtr &initial_gps,
                           const std::deque<sensor_msgs::msg::Imu::SharedPtr> &imu_buffer)
     {
-        // This assumes the robot is stationary on startup.
+        // IMPORTANT! This assumes the robot is stationary on startup.
         RCLCPP_INFO(this->get_logger(), "GPS and IMU data received. Dynamically initializing orientation...");
+
+        // --- Get the static transform from the IMU frame to the base_link frame ---
+        try
+        {
+            // Use a zero timestamp to get the latest available static transform.
+            imu_to_base_tf_ = tf_buffer_->lookupTransform(
+                base_frame_, imu_buffer.back()->header.frame_id, tf2::TimePointZero, tf2::durationFromSec(5.0));
+            have_imu_to_base_tf_ = true;
+            RCLCPP_INFO(this->get_logger(), "Successfully looked up static transform from '%s' to '%s'",
+                        imu_buffer.back()->header.frame_id.c_str(), base_frame_.c_str());
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Could not get transform: %s. Aborting initialization.", ex.what());
+            return;
+        }
 
         // --- Configure Fixed-Lag Smoother ---
         gtsam::ISAM2Params isam2_params;
@@ -308,7 +288,6 @@ private:
         smoother_ = std::make_unique<gtsam::IncrementalFixedLagSmoother>(smoother_lag_, isam2_params);
 
         // --- Configure IMU Pre-integration ---
-        // MakeSharedU() configures for ENU frame, where gravity is negative Z.
         auto imu_params = gtsam::PreintegratedCombinedMeasurements::Params::MakeSharedU();
         imu_params->n_gravity = gtsam::Vector3(0, 0, -9.8); // Exactly 9.8 in Gazebo
         imu_params->accelerometerCovariance = gtsam::Matrix33::Identity() * pow(accel_noise_sigma_, 2);
@@ -319,35 +298,36 @@ private:
 
         // --- Dynamically Determine Initial Orientation ---
 
-        // 1. Average recent IMU messages to get a stable gravity vector.
-        gtsam::Vector3 avg_accel(0,0,0);
-        // Use up to 50 messages, but don't fail if we have fewer.
+        // Average recent IMU messages to get a stable gravity vector in the IMU frame.
+        gtsam::Vector3 avg_accel_imu_frame(0, 0, 0);
         size_t num_to_average = std::min((size_t)50, imu_buffer.size());
-        if (num_to_average == 0) {
+        if (num_to_average == 0)
+        {
             RCLCPP_WARN(this->get_logger(), "Cannot initialize dynamically, IMU buffer is empty. Aborting.");
             return;
         }
-        // Average from the back of the queue (most recent messages)
-        for(size_t i = imu_buffer.size() - num_to_average; i < imu_buffer.size(); ++i) {
-            avg_accel += toGtsam(imu_buffer[i]->linear_acceleration);
+        for (size_t i = imu_buffer.size() - num_to_average; i < imu_buffer.size(); ++i)
+        {
+            avg_accel_imu_frame += toGtsam(imu_buffer[i]->linear_acceleration);
         }
-        avg_accel /= num_to_average;
+        avg_accel_imu_frame = avg_accel_imu_frame / num_to_average;
 
-        // 2. Calculate roll and pitch from the measured gravity vector.
-        double roll = std::atan2(avg_accel.y(), avg_accel.z());
-        double pitch = std::atan2(-avg_accel.x(), std::sqrt(avg_accel.y() * avg_accel.y() + avg_accel.z() * avg_accel.z()));
-        RCLCPP_INFO(this->get_logger(), "Calculated initial tilt: Roll=%.2f deg, Pitch=%.2f deg", roll * 180/M_PI, pitch * 180/M_PI);
+        // Transform the averaged acceleration into the base frame.
+        geometry_msgs::msg::Vector3 avg_accel_base_frame_msg;
+        tf2::doTransform(toVectorMsg(avg_accel_imu_frame), avg_accel_base_frame_msg, imu_to_base_tf_);
+        gtsam::Vector3 avg_accel_base_frame = toGtsam(avg_accel_base_frame_msg);
 
-        // 3. Get yaw from the initial GPS odometry message.
+        // Get roll, pitch, and yaw from the average acceleration and GPS odometry.
+        double roll = std::atan2(avg_accel_base_frame.y(), avg_accel_base_frame.z());
+        double pitch = std::atan2(-avg_accel_base_frame.x(), std::sqrt(pow(avg_accel_base_frame.y(), 2) + pow(avg_accel_base_frame.z(), 2)));
         gtsam::Pose3 gps_pose = toGtsam(initial_gps->pose.pose);
         double yaw = gps_pose.rotation().yaw();
 
-        // 4. Construct the full initial orientation and pose.
+        // Construct the full initial orientation and pose.
         gtsam::Rot3 initial_orientation = gtsam::Rot3::Ypr(yaw, pitch, roll);
         prev_pose_ = gtsam::Pose3(initial_orientation, gps_pose.translation());
 
         // --- Set Initial State ---
-        // GPS is assumed to be in the 'map' frame, no transform needed.
         prev_time_ = rclcpp::Time(initial_gps->header.stamp).seconds();
         prev_pose_ = toGtsam(initial_gps->pose.pose);
         prev_vel_ = gtsam::Vector3(0, 0, 0);         // Assume starting from rest
@@ -488,6 +468,8 @@ private:
     gtsam::Pose3 prev_pose_;
     gtsam::Vector3 prev_vel_;
     gtsam::imuBias::ConstantBias prev_bias_;
+    bool have_imu_to_base_tf_ = false;
+    geometry_msgs::msg::TransformStamped imu_to_base_tf_;
 
     // --- Parameters ---
     std::string imu_topic_, gps_odom_topic_;
