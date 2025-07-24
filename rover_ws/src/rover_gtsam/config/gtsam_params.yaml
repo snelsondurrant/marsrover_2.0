@@ -4,6 +4,7 @@ gtsam_localizer_node:
     # --- ROS Topics and Frames ---
     imu_topic: "/zed/zed_node/imu/data"
     gps_odom_topic: "/odometry/gps"
+    heading_topic: "/zed/zed_node/imu/data"
     global_odom_topic: "/odometry/global"
     smoothed_path_topic: "/smoothed_path"
     map_frame: "map"
@@ -35,6 +36,10 @@ gtsam_localizer_node:
     gps:
       # Standard deviation of GPS position measurements (meters).
       noise_sigma: 0.1 # Matches Gazebo GPS <stddev>
+
+    heading:
+      # Standard deviation of absolute heading measurements (radians).
+      noise_sigma: 0.05 # TODO: Figure this out
 
     # --- Initial State Uncertainty (Priors) ---
     # Defines the certainty of the very first state estimate.

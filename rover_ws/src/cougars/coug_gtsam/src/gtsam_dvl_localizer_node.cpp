@@ -13,6 +13,7 @@
  * - 'odom' -> 'base_link' transform
  * Publishes:
  * - /odometry/global (nav_msgs/msg/Odometry)
+ * - /smoothed_path (nav_msgs/msg/Path)
  * - 'map' -> 'odom' transform
  */
 

@@ -21,7 +21,7 @@ gtsam_dvl_localizer_node:
 
     # --- GTSAM Smoother Settings ---
     # The time window (in seconds) over which the optimizer will smooth past states.
-    smoother_lag: 15.0
+    smoother_lag: 30.0
 
     # --- Sensor Noise Models ---
     # Defines the standard deviation of sensor measurements.

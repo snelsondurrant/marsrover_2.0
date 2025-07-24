@@ -9,6 +9,7 @@
  * Subscribes:
  * - /imu/data (sensor_msgs/msg/Imu)
  * - /odometry/gps (nav_msgs/msg/Odometry)
+ * - /heading/data (sensor_msgs/msg/Imu)
  * - 'odom' -> 'base_link' transform
  * Publishes:
  * - /odometry/global (nav_msgs/msg/Odometry)
@@ -48,6 +49,50 @@ using gtsam::symbol_shorthand::B; // Bias (ax,ay,az,gx,gy,gz)
 using gtsam::symbol_shorthand::V; // Velocity (x,y,z)
 using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 
+/**
+ * @brief Unary factor for an absolute heading/orientation measurement.
+ */
+class HeadingFactor : public gtsam::NoiseModelFactor1<gtsam::Pose3>
+{
+    gtsam::Rot3 measured_rot_;
+
+public:
+    HeadingFactor(gtsam::Key poseKey, const gtsam::Rot3 &measured_rot, const gtsam::SharedNoiseModel &model)
+        : NoiseModelFactor1<gtsam::Pose3>(model, poseKey), measured_rot_(measured_rot) {}
+
+    gtsam::Vector evaluateError(const gtsam::Pose3 &pose,
+                                boost::optional<gtsam::Matrix &> H = boost::none) const override
+    {
+        // TODO: I just used Gemini 2.5 Pro to convert these error functions from Matthew's code,
+        // they need to be verified.
+
+        // Get the rotation from the pose
+        const gtsam::Rot3 &pose_rot = pose.rotation();
+
+        // Calculate the error rotation: R_err = R_measured^{-1} * R_pose
+        gtsam::Rot3 error_rot = measured_rot_.inverse() * pose_rot;
+
+        // The error vector is the tangent space representation of the error rotation
+        gtsam::Vector3 error = gtsam::Rot3::Logmap(error_rot);
+
+        if (H)
+        {
+            // Jacobian of the error with respect to the pose
+            // The error is e = Logmap(R_measured^{-1} * R_pose).
+            // The derivative w.r.t. rotation is d Log(R_err * exp(w)) / dw at w=0.
+            // GTSAM provides LogmapDerivative for this.
+            gtsam::Matrix3 H_rot = gtsam::Rot3::LogmapDerivative(error);
+
+            // The error does not depend on translation.
+            gtsam::Matrix3 H_trans = gtsam::Matrix3::Zero();
+
+            *H = (gtsam::Matrix(3, 6) << H_rot, H_trans).finished();
+        }
+
+        return error;
+    }
+};
+
 class GtsamLocalizerNode : public rclcpp::Node
 {
 public:
@@ -75,6 +120,7 @@ private:
         map_frame_ = this->declare_parameter<std::string>("map_frame", "map");
         odom_frame_ = this->declare_parameter<std::string>("odom_frame", "odom");
         base_frame_ = this->declare_parameter<std::string>("base_frame", "base_link");
+        heading_topic_ = this->declare_parameter<std::string>("heading_topic", "/heading/data");
 
         // --- Node Settings ---
         factor_graph_update_rate_ = this->declare_parameter<double>("factor_graph_update_rate", 10.0); // Hz
@@ -89,6 +135,7 @@ private:
         accel_bias_rw_sigma_ = this->declare_parameter<double>("imu.accel_bias_rw_sigma", 1.0e-4); // m/s^3
         gyro_bias_rw_sigma_ = this->declare_parameter<double>("imu.gyro_bias_rw_sigma", 1.0e-5);   // rad/s^2
         gps_noise_sigma_ = this->declare_parameter<double>("gps.noise_sigma", 0.5);                // meters
+        heading_noise_sigma_ = this->declare_parameter<double>("heading.noise_sigma", 0.05);       // rad
 
         // --- Initial State Prior Uncertainty (Standard Deviations) ---
         prior_pose_rot_sigma_ = this->declare_parameter<double>("prior.pose_rot_sigma", 0.05); // rad
@@ -113,6 +160,8 @@ private:
             [this](const sensor_msgs::msg::Imu::SharedPtr msg) { imu_queue_.push_back(msg); });
         gps_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(gps_odom_topic_, 20, 
             [this](const nav_msgs::msg::Odometry::SharedPtr msg) { gps_queue_.push_back(msg); });
+        heading_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(heading_topic_, 20,
+            [this](const sensor_msgs::msg::Imu::SharedPtr msg) { heading_queue_.push_back(msg); });
 
         factor_graph_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(1000.0 / factor_graph_update_rate_)),
@@ -160,6 +209,25 @@ private:
             return;
         }
 
+        // --- One-Time Transform Lookups ---
+        // Once initialized, look for the other static transforms if we haven't already.
+        if (!have_heading_to_base_tf_ && !heading_queue_.empty())
+        {
+            try
+            {
+                // Use a zero timestamp to get the latest available static transform.
+                heading_to_base_tf_ = tf_buffer_->lookupTransform(
+                    base_frame_, heading_queue_.front()->header.frame_id, tf2::TimePointZero, tf2::durationFromSec(1.0));
+                have_heading_to_base_tf_ = true;
+                RCLCPP_INFO(this->get_logger(), "Successfully looked up static transform from '%s' to '%s'",
+                            heading_queue_.front()->header.frame_id.c_str(), base_frame_.c_str());
+            }
+            catch (const tf2::TransformException &ex)
+            {
+                RCLCPP_WARN(this->get_logger(), "Could not get Heading transform: %s. Will keep trying.", ex.what());
+            }
+        }
+
         // Do not proceed until the static IMU -> base_link transform is available.
         if (!have_imu_to_base_tf_)
         {
@@ -173,6 +241,13 @@ private:
         {
             latest_gps = gps_queue_.back();
             gps_queue_.clear();
+        }
+
+        sensor_msgs::msg::Imu::SharedPtr latest_heading;
+        if (!heading_queue_.empty())
+        {
+            latest_heading = heading_queue_.back();
+            heading_queue_.clear();
         }
 
         // --- IMU Pre-integration ---
@@ -234,6 +309,32 @@ private:
             gtsam::Point3 gps_position = toGtsam(latest_gps->pose.pose.position);
             auto gps_noise = gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3::Constant(gps_noise_sigma_));
             new_graph.emplace_shared<gtsam::GPSFactor>(X(target_node_key), gps_position, gps_noise);
+        }
+        
+        // If we have a heading measurement, add a Heading unary factor.
+        if (latest_heading)
+        {
+            gtsam::Rot3 heading_rot_sensor = toGtsam(latest_heading->orientation);
+
+            // Transform heading into the base_link frame (upside-down mounting config, etc).
+            // R_map_base = R_map_sensor * (R_base_sensor)^-1
+            // Mangelson's EC EN 433 class again, haha.
+            if (have_heading_to_base_tf_)
+            {
+                gtsam::Rot3 R_base_sensor = toGtsam(heading_to_base_tf_.transform.rotation);
+                heading_rot_sensor = heading_rot_sensor * R_base_sensor.inverse();
+            }
+            else
+            {
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Heading transform from '%s' to '%s' not yet available. Using untransformed data.",
+                                     latest_heading->header.frame_id.c_str(), base_frame_.c_str());
+            }
+
+            unsigned long target_node_key = getClosestNodeKey(latest_heading->header.stamp, last_imu_time);
+            // TODO: We might not want an isotropic noise model here in the future.
+            // We probably just want to use the yaw component of the heading measurement.
+            auto heading_noise = gtsam::noiseModel::Isotropic::Sigma(3, heading_noise_sigma_);
+            new_graph.emplace_shared<HeadingFactor>(X(target_node_key), heading_rot_sensor, heading_noise);
         }
 
         // Insert the predicted state as an initial estimate for the new state.
@@ -504,6 +605,7 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_pub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr gps_odom_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr heading_sub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -513,6 +615,7 @@ private:
     // --- Message Queues ---
     std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue_;
     std::deque<nav_msgs::msg::Odometry::SharedPtr> gps_queue_;
+    std::deque<sensor_msgs::msg::Imu::SharedPtr> heading_queue_;
 
     // --- System State ---
     bool system_initialized_ = false;
@@ -527,11 +630,15 @@ private:
     gtsam::Pose3 prev_pose_;
     gtsam::Vector3 prev_vel_;
     gtsam::imuBias::ConstantBias prev_bias_;
+
+    // --- Transformations ---
     bool have_imu_to_base_tf_ = false;
+    bool have_heading_to_base_tf_ = false;
     geometry_msgs::msg::TransformStamped imu_to_base_tf_;
+    geometry_msgs::msg::TransformStamped heading_to_base_tf_;
 
     // --- Parameters ---
-    std::string imu_topic_, gps_odom_topic_;
+    std::string imu_topic_, gps_odom_topic_, heading_topic_;
     std::string global_odom_topic_, smoothed_path_topic_;
     std::string map_frame_, odom_frame_, base_frame_;
     double factor_graph_update_rate_, odom_publish_rate_;
@@ -539,7 +646,7 @@ private:
     double smoother_lag_;
     double accel_noise_sigma_, gyro_noise_sigma_;
     double accel_bias_rw_sigma_, gyro_bias_rw_sigma_;
-    double gps_noise_sigma_;
+    double gps_noise_sigma_, heading_noise_sigma_;
     double prior_pose_rot_sigma_, prior_pose_pos_sigma_;
     double prior_vel_sigma_, prior_bias_sigma_;
 
