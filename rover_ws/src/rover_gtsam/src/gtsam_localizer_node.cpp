@@ -1,6 +1,6 @@
 /**
  * @file gtsam_localizer_node.cpp
- * @brief Fuses IMU and GPS data using a GTSAM Fixed-Lag Smoother.
+ * @brief Fuses IMU, GPS, and Heading data using a GTSAM Fixed-Lag Smoother.
  * @author Nelson Durrant
  * @date July 2025
  *

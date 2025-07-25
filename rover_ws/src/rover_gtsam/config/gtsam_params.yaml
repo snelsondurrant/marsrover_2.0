@@ -39,7 +39,7 @@ gtsam_localizer_node:
 
     heading:
       # Standard deviation of absolute heading measurements (radians).
-      noise_sigma: 0.05 # TODO: Figure this out
+      noise_sigma: 0.05
 
     # --- Initial State Uncertainty (Priors) ---
     # Defines the certainty of the very first state estimate.

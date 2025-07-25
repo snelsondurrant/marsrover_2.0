@@ -226,19 +226,4 @@
     </sensor>
   </gazebo>
 
-  <!-- Used for simulated DVL and depth data -->
-  <gazebo>
-    <plugin name="gazebo_ros_ground_truth" filename="libgazebo_ros_p3d.so">
-      <ros>
-        <remapping>~/out:=/odometry/ground_truth</remapping>
-      </ros>
-      <update_rate>20</update_rate>
-      <body_name>zed_camera_link</body_name>
-      <frame_name>map</frame_name>
-      <xyz_offset>0 0 0</xyz_offset>
-      <rpy_offset>0 0 0</rpy_offset>
-      <gaussian_noise>0.01</gaussian_noise>
-    </plugin>
-  </gazebo>
-
 </xacro:robot>

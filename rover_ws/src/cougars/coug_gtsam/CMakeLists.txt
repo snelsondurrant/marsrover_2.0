@@ -20,7 +20,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
-# Add the executable for the pose graph node
+# Add the executable for the GTSAM node
 add_executable(gtsam_dvl_localizer_node src/gtsam_dvl_localizer_node.cpp)
 ament_target_dependencies(gtsam_dvl_localizer_node
   rclcpp 
