@@ -7,6 +7,15 @@
 
 set -e
 
+# Fix initial write permission errors on Linux computers
+sudo chmod -R a+w /home/marsrover-docker/rover_ws
+sudo chmod -R a+w /home/marsrover-docker/firmware
+sudo chmod -R a+w /home/marsrover-docker/scripts
+sudo chmod -R a+w /home/marsrover-docker/tutorial_ws
+sudo chmod -R a+w /home/marsrover-docker/.tmuxp
+sudo chmod -R a+w /startup
+echo "Successfully applied write permissions patch."
+
 # Any tasks that need to be run on startup should be added here
 
 exec /bin/bash
