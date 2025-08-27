@@ -56,7 +56,7 @@
 
 - Run `cd marsrover_2.0 && bash compose.sh` to pull and launch the latest Docker image from DockerHub.
 
-- Once inside the container, run `bash ~/scripts/linux_write_fix.sh` to patch a few initial permission bugs.
+- Once inside the container, run `bash ~/scripts/linux_write_patch.sh` to fix a few initial permission bugs.
 
 --
 
