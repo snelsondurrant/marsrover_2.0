@@ -1,7 +1,7 @@
 #!/bin/bash
 # Created by Nelson Durrant, Aug 2025
 # 
-# Quick fix for initial write permission errors on Linux computers
+# Quick patch for initial write permission errors on Linux computers
 
 sudo chmod -R a+w /home/marsrover-docker/rover_ws
 sudo chmod -R a+w /home/marsrover-docker/firmware
